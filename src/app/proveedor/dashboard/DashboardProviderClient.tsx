@@ -18,7 +18,16 @@ interface DashboardProviderClientProps {
 }
 
 export default function DashboardProviderClient({ resumen, perfil }: DashboardProviderClientProps) {
+  if (!perfil || !perfil.proveedor) {
+    return <div className="p-10 text-red-500 font-bold">Error Crítico: Perfil de Proveedor incompleto en el sistema.</div>;
+  }
+  
   const proveedor = perfil.proveedor;
+  
+  // Proveer valores por defecto en caso de datos nulos para evitar caídas de React
+  const nombre = proveedor.nombre || 'Proveedor';
+  const categoriaStr = typeof proveedor.categoria === 'string' ? proveedor.categoria.toLowerCase() : 'servicio';
+  const estadoNegocio = proveedor.activo ? 'activo' : 'pausado';
   
   const stats = [
     { 
@@ -51,12 +60,12 @@ export default function DashboardProviderClient({ resumen, perfil }: DashboardPr
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-bold italic">Bienvenido, {proveedor.nombre}</h1>
-          <p className="text-[var(--color-texto-suave)]">Tu negocio de {proveedor.categoria.toLowerCase()} está {proveedor.activo ? 'activo' : 'pausado'}.</p>
+          <h1 className="text-3xl font-bold italic">Bienvenido, {nombre}</h1>
+          <p className="text-[var(--color-texto-suave)]">Tu negocio de {categoriaStr} está {estadoNegocio}.</p>
         </div>
         <div className="text-right hidden md:block">
            <p className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest leading-none mb-1">Ubicación</p>
-           <p className="text-sm font-bold">{proveedor.ciudad}, {proveedor.estado}</p>
+           <p className="text-sm font-bold">{proveedor.ciudad || 'N/A'}, {proveedor.estado || 'N/A'}</p>
         </div>
       </div>
 
