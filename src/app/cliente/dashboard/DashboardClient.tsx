@@ -58,7 +58,7 @@ export default function DashboardClient({ initialEventos, perfil }: DashboardCli
 
     setLoading(true);
     const res = await createEvento({
-      clienteId: perfil.cliente.id,
+      clienteId: perfil.cliente?.id || '',
       nombre: nuevoEvento.nombre,
       tipo: nuevoEvento.tipo,
       fecha: nuevoEvento.fecha || undefined,

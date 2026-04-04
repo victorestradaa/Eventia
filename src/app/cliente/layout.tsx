@@ -11,11 +11,13 @@ export default async function ClientLayout({ children }: { children: React.React
   }
 
   const perfil = profileRes.data;
-  const eventosRes = await getEventosCliente(perfil.cliente.id);
+  const eventosRes = perfil.cliente 
+    ? await getEventosCliente(perfil.cliente.id) 
+    : { success: false, data: [] };
 
   return (
     <ClientLayoutContent 
-      initialEventos={eventosRes.success ? eventosRes.data : []} 
+      initialEventos={eventosRes.success ? (eventosRes.data || []) : []} 
       perfil={perfil}
     >
       {children}

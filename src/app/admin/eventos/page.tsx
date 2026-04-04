@@ -9,7 +9,7 @@ import {
   CheckCircle2,
   Clock
 } from 'lucide-react';
-import { formatearMoneda } from '@/lib/utils';
+import { formatearMoneda, cn } from '@/lib/utils';
 import { useState } from 'react';
 
 const EVENTOS_MOCK = [

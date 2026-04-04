@@ -1,9 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
 import { createClient } from '@supabase/supabase-js';
 
-const adapter = new PrismaPg({ connectionString: process.env.DIRECT_URL! });
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 // Usamos el Service Role para crear usuarios saltando restricciones
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
