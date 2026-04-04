@@ -16,7 +16,9 @@ export default async function ProviderDashboardPage() {
     return redirect('/cliente/dashboard');
   }
 
-  const resumenRes = await getResumenProveedor(perfil.proveedor.id);
+  // Aislamiento temporal
+  const resumenRes = { success: true, data: { reservas: [], servicios: [], ingresosTotales: 0, totalReservas: 0 } };
+  
   const resumenSerializado = resumenRes.success 
     ? JSON.parse(JSON.stringify(resumenRes.data)) 
     : { reservas: [], servicios: [], ingresosTotales: 0, totalReservas: 0 };
