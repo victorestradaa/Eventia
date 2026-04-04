@@ -7,6 +7,14 @@ export default async function ProviderDashboardPage() {
   const profileRes = await getCurrentProfile();
 
   if (!profileRes.success || !profileRes.data) {
+    if (profileRes.error === 'Error del servidor') {
+      return (
+        <div className="min-h-screen bg-black text-red-500 p-10 flex flex-col items-center justify-center">
+          <h2 className="text-3xl font-bold mb-4">Error 500: Falla de Base de Datos</h2>
+          <p>La conexión a Supabase Prisma fue rechazada o superó las conexiones PgBouncer en AWS Lambda.</p>
+        </div>
+      );
+    }
     return redirect('/login');
   }
 
@@ -16,9 +24,7 @@ export default async function ProviderDashboardPage() {
     return redirect('/cliente/dashboard');
   }
 
-  // Aislamiento temporal
-  const resumenRes = { success: true, data: { reservas: [], servicios: [], ingresosTotales: 0, totalReservas: 0 } };
-  
+  const resumenRes = await getResumenProveedor(perfil.proveedor.id);
   const resumenSerializado = resumenRes.success 
     ? JSON.parse(JSON.stringify(resumenRes.data)) 
     : { reservas: [], servicios: [], ingresosTotales: 0, totalReservas: 0 };

@@ -11,14 +11,13 @@ export default async function ClientLayout({ children }: { children: React.React
   }
 
   const perfil = profileRes.data;
-  // Aislamiento: Desactivamos la consulta a DB temporalmente
-  // const eventosRes = perfil.cliente 
-  //   ? await getEventosCliente(perfil.cliente.id) 
-  //   : { success: false, data: [] };
+  const eventosRes = perfil.cliente 
+    ? await getEventosCliente(perfil.cliente.id) 
+    : { success: false, data: [] };
 
   return (
     <ClientLayoutContent 
-      initialEventos={[]} 
+      initialEventos={eventosRes.success ? JSON.parse(JSON.stringify(eventosRes.data)) : []} 
       perfil={JSON.parse(JSON.stringify(perfil))}
     >
       {children}
