@@ -80,6 +80,7 @@ export async function registrarUsuario(data: { email: string; nombre: string; ro
     return { success: true, data: usuario };
   } catch (error) {
     console.error('Error en registrarUsuario:', error);
-    return { success: false, error: 'Ocurrió un error al crear la cuenta en la plataforma.' };
+    const mensajeError = error instanceof Error ? error.message : String(error);
+    return { success: false, error: `Error DB: ${mensajeError}` };
   }
 }
