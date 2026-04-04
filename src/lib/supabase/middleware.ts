@@ -76,7 +76,7 @@ export async function updateSession(request: NextRequest) {
       const { data: dbUser } = await supabase
         .from('Usuario')
         .select('rol')
-        .eq('id', user.id)
+        .eq('email', user.email)
         .single()
 
       const userRole = dbUser?.rol || user.app_metadata?.rol || user.user_metadata?.rol || 'CLIENTE'
