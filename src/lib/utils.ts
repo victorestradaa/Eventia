@@ -1,0 +1,92 @@
+import { type ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+export function formatearMoneda(monto: number | string): string {
+  const numero = typeof monto === 'string' ? parseFloat(monto) : monto
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+  }).format(numero)
+}
+
+export function formatearFecha(fecha: Date | string): string {
+  const d = typeof fecha === 'string' ? new Date(fecha) : fecha
+  return new Intl.DateTimeFormat('es-MX', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(d)
+}
+
+export function formatearFechaCorta(fecha: Date | string): string {
+  const d = typeof fecha === 'string' ? new Date(fecha) : fecha
+  return new Intl.DateTimeFormat('es-MX', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(d)
+}
+
+export function obtenerIniciales(nombre: string): string {
+  return nombre
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+export function slugify(texto: string): string {
+  return texto
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+}
+
+export const CATEGORIAS_LABELS: Record<string, string> = {
+  SALON: 'Salón',
+  MUSICA: 'Música',
+  COMIDA: 'Comida',
+  ANIMACION: 'Animación',
+  FOTOGRAFIA: 'Fotografía y Video',
+  DECORACION: 'Decoración',
+  RECUERDOS: 'Recuerdos',
+  MOBILIARIO: 'Mobiliario',
+  PAQUETES_COMPLETOS: 'Paquetes Completos',
+}
+
+export const TIPO_EVENTO_LABELS: Record<string, string> = {
+  BODA: 'Boda',
+  XV_ANOS: 'XV Años',
+  BAUTIZO: 'Bautizo',
+  FIESTA_INFANTIL: 'Fiesta Infantil',
+  FIESTA_GENERAL: 'Fiesta General',
+  TODOS: 'Cualquier Evento',
+}
+
+export const PLANES_PROVEEDOR_LABELS: Record<string, string> = {
+  GRATIS: 'Gratis',
+  INTERMEDIO: 'Intermedio',
+  PREMIUM: 'PRO',
+  ELITE: 'Elite',
+}
+
+export const ESTADOS_RESERVA_LABELS: Record<string, string> = {
+  TEMPORAL: 'Temporal (sin anticipo)',
+  APARTADO: 'Apartado (con anticipo)',
+  LIQUIDADO: 'Liquidado',
+  CANCELADO: 'Cancelado',
+}
+
+export const ESTADOS_RESERVA_COLORES: Record<string, string> = {
+  TEMPORAL: '#F59E0B',   // Amarillo
+  APARTADO: '#F97316',   // Naranja
+  LIQUIDADO: '#10B981',  // Verde
+  CANCELADO: '#6B7280',  // Gris
+}

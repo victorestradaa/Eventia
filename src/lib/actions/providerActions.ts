@@ -1,0 +1,404 @@
+'use server';
+
+import { prisma } from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
+
+/**
+ * Obtiene el resumen de actividad de un proveedor.
+ */
+export async function getResumenProveedor(proveedorId: string) {
+  try {
+    const [reservas, servicios, metricas] = await Promise.all([
+      prisma.reserva.findMany({
+        where: { proveedorId },
+        orderBy: { fechaEvento: 'asc' },
+        take: 5,
+        include: { 
+          cliente: { 
+            include: { usuario: true } 
+          } 
+        }
+      }),
+      prisma.servicio.findMany({
+        where: { proveedorId },
+        include: {
+          _count: { select: { reservas: true } }
+        }
+      }),
+      prisma.reserva.aggregate({
+        where: { proveedorId, estado: 'LIQUIDADO' },
+        _sum: { montoTotal: true },
+        _count: { id: true }
+      })
+    ]);
+
+    return { 
+      success: true, 
+      data: { 
+        reservas: reservas.map((r: any) => ({
+          ...r,
+          montoTotal: r.montoTotal ? Number(r.montoTotal) : 0,
+          presupuestoAcordado: r.presupuestoAcordado ? Number(r.presupuestoAcordado) : 0,
+          montoAnticipo: r.montoAnticipo ? Number(r.montoAnticipo) : 0,
+          montoComision: r.montoComision ? Number(r.montoComision) : 0
+        })), 
+        servicios: servicios.map((s: any) => ({
+          ...s,
+          precio: s.precio ? Number(s.precio) : 0
+        })), 
+        ingresosTotales: metricas._sum.montoTotal ? Number(metricas._sum.montoTotal) : 0,
+        totalReservas: metricas._count.id
+      } 
+    };
+  } catch (error) {
+    console.error('Error al obtener resumen de proveedor:', error);
+    return { success: false, error: 'No se pudo cargar el resumen.' };
+  }
+}
+
+/**
+ * Obtiene TODAS las reservas de un proveedor para mostrarlas en el calendario.
+ */
+export async function getReservasCalendario(proveedorId: string) {
+  try {
+    const reservas = await prisma.reserva.findMany({
+      where: { proveedorId },
+      include: {
+        cliente: { include: { usuario: true } },
+        servicio: { select: { nombre: true, precio: true } }
+      },
+      orderBy: { fechaEvento: 'asc' }
+    });
+    
+    // Serializar Decimales
+    return { 
+      success: true, 
+      data: reservas.map((r: any) => ({
+        ...r,
+        montoTotal: r.montoTotal ? Number(r.montoTotal) : 0,
+        montoAnticipo: r.montoAnticipo ? Number(r.montoAnticipo) : 0,
+        montoComision: r.montoComision ? Number(r.montoComision) : 0,
+        servicio: r.servicio ? {
+          ...r.servicio,
+          precio: r.servicio.precio ? Number(r.servicio.precio) : 0,
+        } : null,
+      })) 
+    };
+  } catch (error) {
+    console.error('Error al obtener reservas del calendario:', error);
+    return { success: false, error: 'No se pudieron cargar las reservas del calendario.' };
+  }
+}
+
+/**
+ * Crea un nuevo servicio para el catálogo del proveedor.
+ */
+export async function createServicio(formData: {
+  proveedorId: string;
+  nombre: string;
+  precio: number;
+  descripcion?: string;
+  capacidadMin?: number;
+  capacidadMax?: number;
+  etiquetasEvento?: string[];
+  imagenes?: string[];
+  diasDisponibles?: number[];
+  capacidadSimultanea?: number;
+  bloquesHorario?: string[];
+}) {
+  try {
+    const nuevoServicio = await prisma.servicio.create({
+      data: {
+        proveedorId: formData.proveedorId,
+        nombre: formData.nombre,
+        descripcion: formData.descripcion,
+        precio: formData.precio,
+        capacidadMin: formData.capacidadMin,
+        capacidadMax: formData.capacidadMax,
+        etiquetasEvento: formData.etiquetasEvento || ['TODOS'],
+        imagenes: formData.imagenes || [],
+        diasDisponibles: formData.diasDisponibles || [],
+        capacidadSimultanea: formData.capacidadSimultanea || 1,
+        bloquesHorario: formData.bloquesHorario || [],
+      }
+    });
+
+    revalidatePath('/proveedor/catalogo');
+    revalidatePath('/proveedor/dashboard');
+    return { success: true, data: { ...nuevoServicio, precio: Number(nuevoServicio.precio) } };
+  } catch (error) {
+    console.error('Error al crear servicio:', error);
+    return { success: false, error: 'No se pudo crear el servicio.' };
+  }
+}
+
+/**
+ * Actualiza un servicio existente.
+ */
+export async function updateServicio(id: string, formData: {
+  nombre: string;
+  precio: number;
+  descripcion?: string;
+  capacidadMin?: number;
+  capacidadMax?: number;
+  etiquetasEvento?: string[];
+  imagenes?: string[];
+  diasDisponibles?: number[];
+  capacidadSimultanea?: number;
+  bloquesHorario?: string[];
+}) {
+  try {
+    const editado = await prisma.servicio.update({
+      where: { id },
+      data: {
+        nombre: formData.nombre,
+        descripcion: formData.descripcion,
+        precio: formData.precio,
+        capacidadMin: formData.capacidadMin,
+        capacidadMax: formData.capacidadMax,
+        etiquetasEvento: formData.etiquetasEvento || ['TODOS'],
+        imagenes: formData.imagenes || [],
+        diasDisponibles: formData.diasDisponibles || [],
+        capacidadSimultanea: formData.capacidadSimultanea || 1,
+        bloquesHorario: formData.bloquesHorario || [],
+      }
+    });
+
+    revalidatePath('/proveedor/catalogo');
+    revalidatePath('/proveedor/dashboard');
+    return { success: true, data: { ...editado, precio: Number(editado.precio) } };
+  } catch (error) {
+    console.error('Error al actualizar servicio:', error);
+    return { success: false, error: 'No se pudo actualizar el servicio.' };
+  }
+}
+
+/**
+ * Elimina un servicio (borrado permanente).
+ */
+export async function deleteServicio(id: string) {
+  try {
+    await prisma.servicio.delete({
+      where: { id }
+    });
+    revalidatePath('/proveedor/catalogo');
+    revalidatePath('/proveedor/dashboard');
+    return { success: true };
+  } catch (error) {
+    console.error('Error al eliminar servicio:', error);
+    return { success: false, error: 'No se pudo eliminar el servicio.' };
+  }
+}
+
+/**
+ * Upsert variaciones de precio por mes (temporada alta).
+ * Borra las variaciones anteriores y crea las nuevas en una sola transacción.
+ */
+export async function upsertVariaciones(servicioId: string, variaciones: { mes: number; precioOverride: number }[]) {
+  try {
+    await prisma.$transaction(async (tx: any) => {
+      // Borrar todas las variaciones existentes del servicio
+      await tx.variacionPrecio.deleteMany({ where: { servicioId } });
+
+      // Crear solo las que tienen un precio asignado
+      const validVariaciones = variaciones.filter(v => v.precioOverride > 0);
+      if (validVariaciones.length > 0) {
+        await tx.variacionPrecio.createMany({
+          data: validVariaciones.map(v => ({
+            servicioId,
+            mes: v.mes,
+            precioOverride: v.precioOverride,
+          }))
+        });
+      }
+    });
+
+    revalidatePath('/proveedor/catalogo');
+    return { success: true };
+  } catch (error) {
+    console.error('Error al guardar variaciones de precio:', error);
+    return { success: false, error: 'No se pudieron guardar las variaciones de precio.' };
+  }
+}
+
+// ─── Complementos (Add-ons) ───────────────────────────────────────────────────
+
+export async function createComplemento(data: {
+  proveedorId: string;
+  nombre: string;
+  descripcion?: string;
+  precio: number;
+  servicioIds: string[]; // Servicios compatibles
+}) {
+  try {
+    const complemento = await prisma.complemento.create({
+      data: {
+        proveedorId: data.proveedorId,
+        nombre: data.nombre,
+        descripcion: data.descripcion || null,
+        precio: data.precio,
+        servicios: {
+          connect: data.servicioIds.map(id => ({ id }))
+        },
+      },
+      include: { servicios: true }
+    });
+
+    revalidatePath('/proveedor/catalogo');
+    return { success: true, data: JSON.parse(JSON.stringify(complemento)) };
+  } catch (error) {
+    console.error('Error al crear complemento:', error);
+    return { success: false, error: 'No se pudo crear el complemento.' };
+  }
+}
+
+export async function updateComplemento(complementoId: string, data: {
+  nombre: string;
+  descripcion?: string;
+  precio: number;
+  servicioIds: string[];
+  activo?: boolean;
+}) {
+  try {
+    const updated = await prisma.complemento.update({
+      where: { id: complementoId },
+      data: {
+        nombre: data.nombre,
+        descripcion: data.descripcion || null,
+        precio: data.precio,
+        activo: data.activo ?? true,
+        servicios: {
+          set: data.servicioIds.map(id => ({ id }))
+        },
+      },
+      include: { servicios: true }
+    });
+
+    revalidatePath('/proveedor/catalogo');
+    return { success: true, data: JSON.parse(JSON.stringify(updated)) };
+  } catch (error) {
+    console.error('Error al actualizar complemento:', error);
+    return { success: false, error: 'No se pudo actualizar el complemento.' };
+  }
+}
+
+export async function deleteComplemento(complementoId: string) {
+  try {
+    await prisma.complemento.delete({ where: { id: complementoId } });
+    revalidatePath('/proveedor/catalogo');
+    return { success: true };
+  } catch (error) {
+    console.error('Error al eliminar complemento:', error);
+    return { success: false, error: 'No se pudo eliminar el complemento.' };
+  }
+}
+
+// ─── Calendario (Bloqueo Rápido) ──────────────────────────────────────────────
+
+export async function createBloqueoRapido(data: {
+  proveedorId: string;
+  servicioId: string;
+  fechaEvento: string | Date;
+  tipoReserva: 'DIA_COMPLETO' | 'POR_HORAS';
+  horaInicio?: string;
+  horaFin?: string;
+  clienteAproximado?: string;
+}) {
+  try {
+    // Verificar disponibilidad antes de bloquear
+    const bloqueOpcional = data.tipoReserva === 'POR_HORAS' && data.horaInicio && data.horaFin 
+      ? `${data.horaInicio}-${data.horaFin}` 
+      : undefined;
+      
+    const disp = await verificarDisponibilidadServicio(data.servicioId, data.fechaEvento, bloqueOpcional);
+    if (!disp.success || !disp.disponible) {
+      return { success: false, error: 'La capacidad para este día o turno ya ha sido alcanzada.' };
+    }
+
+    const bloqueo = await prisma.reserva.create({
+      data: {
+        proveedorId: data.proveedorId,
+        servicioId: data.servicioId,
+        fechaEvento: new Date(data.fechaEvento),
+        tipoReserva: data.tipoReserva,
+        horaInicio: data.horaInicio || null,
+        horaFin: data.horaFin || null,
+        esManual: true,
+        nombreClienteExterno: data.clienteAproximado || 'Bloqueo Interno',
+        estado: 'APARTADO',
+        montoTotal: 0,
+        montoAnticipo: 0,
+        montoComision: 0,
+        notas: 'Bloqueo rápido desde calendario'
+      }
+    });
+
+    revalidatePath('/proveedor/calendario');
+    revalidatePath('/proveedor/ventas');
+    revalidatePath('/proveedor/dashboard');
+    return { success: true, data: JSON.parse(JSON.stringify(bloqueo)) };
+  } catch (error) {
+    console.error('Error al crear bloqueo rápido:', error);
+    return { success: false, error: 'No se pudo bloquear la fecha.' };
+  }
+}
+
+// ─── Lógica de Capacidad y Disponibilidad ─────────────────────────────────────
+
+export async function verificarDisponibilidadServicio(
+  servicioId: string, 
+  fechaEvento: Date | string, 
+  bloqueOpcional?: string // ej. "09:00-14:00"
+) {
+  try {
+    const servicio = await prisma.servicio.findUnique({
+      where: { id: servicioId },
+      select: { capacidadSimultanea: true, bloquesHorario: true }
+    });
+
+    if (!servicio) return { success: false, error: 'Servicio no encontrado' };
+
+    // Buscar reservas existentes para este servicio en este día
+    const fechaInicioDia = new Date(fechaEvento);
+    fechaInicioDia.setHours(0, 0, 0, 0);
+    const fechaFinDia = new Date(fechaEvento);
+    fechaFinDia.setHours(23, 59, 59, 999);
+
+    const reservasOcupadas = await prisma.reserva.findMany({
+      where: {
+        servicioId,
+        estado: { in: ['APARTADO', 'LIQUIDADO'] }, // Solo reservas confirmadas o apartadas cuentan
+        fechaEvento: {
+          gte: fechaInicioDia,
+          lte: fechaFinDia
+        }
+      }
+    });
+
+    let overlapCount = 0;
+
+    if (bloqueOpcional && bloqueOpcional.includes('-')) {
+      const [horaStart, horaEnd] = bloqueOpcional.split('-');
+      overlapCount = reservasOcupadas.filter(r => {
+        if (r.tipoReserva === 'DIA_COMPLETO') return true;
+        if (!r.horaInicio || !r.horaFin) return true;
+
+        return (horaStart < r.horaFin) && (horaEnd > r.horaInicio);
+      }).length;
+    } else {
+      overlapCount = reservasOcupadas.length; 
+    }
+
+    const disponible = overlapCount < servicio.capacidadSimultanea;
+
+    return { 
+      success: true, 
+      disponible,
+      disponiblesRestantes: Math.max(0, servicio.capacidadSimultanea - overlapCount),
+      capacidadTotal: servicio.capacidadSimultanea
+    };
+  } catch (error) {
+    console.error('Error al verificar disponibilidad:', error);
+    return { success: false, error: 'Error interno al verificar.' };
+  }
+}

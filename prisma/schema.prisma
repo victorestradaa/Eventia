@@ -1,0 +1,330 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Rol {
+  PROVEEDOR
+  CLIENTE
+  ADMIN
+}
+
+enum PlanProveedor {
+  GRATIS
+  INTERMEDIO
+  PREMIUM
+  ELITE
+}
+
+enum PlanCliente {
+  FREE
+  ORO
+  PLANNER
+}
+
+enum CategoriaServicio {
+  SALON
+  MUSICA
+  COMIDA
+  ANIMACION
+  FOTOGRAFIA
+  DECORACION
+  RECUERDOS
+  MOBILIARIO
+  PAQUETES_COMPLETOS
+}
+
+enum TipoEvento {
+  BODA
+  XV_ANOS
+  BAUTIZO
+  FIESTA_INFANTIL
+  FIESTA_GENERAL
+  TODOS
+}
+
+enum TipoReserva {
+  DIA_COMPLETO
+  POR_HORAS
+}
+
+enum EstadoReserva {
+  TEMPORAL          // Sin anticipo
+  APARTADO          // Con anticipo
+  LIQUIDADO         // Pago completo
+  CANCELADO
+}
+
+enum EstadoRSVP {
+  PENDIENTE
+  CONFIRMADO
+  RECHAZADO
+}
+
+// ============================================================
+// MODELOS
+// ============================================================
+
+model Usuario {
+  id               String       @id @default(cuid())
+  email            String       @unique
+  nombre           String
+  telefono         String?
+  rol              Rol
+  stripeClienteId  String?      @unique
+  creadoEn         DateTime     @default(now())
+  actualizadoEn    DateTime     @updatedAt
+
+  proveedor        Proveedor?
+  cliente          Cliente?
+}
+
+model Proveedor {
+  id               String            @id @default(cuid())
+  usuarioId        String            @unique
+  usuario          Usuario           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  nombre           String
+  descripcion      String?
+  categoria        CategoriaServicio
+  ciudad           String
+  estado           String
+  direccion        String?
+  logoUrl          String?
+  bannerUrl        String?
+  plan             PlanProveedor     @default(GRATIS)
+  stripeSubId      String?           @unique
+  puntuacionExp    Int               @default(0)  // Para ordenar en búsquedas
+  activo           Boolean           @default(true)
+  
+  // Disponibilidad de Horarios
+  permiteReservasPorHora Boolean     @default(false)
+  horarioApertura  String            @default("09:00")
+  horarioCierre    String            @default("23:00")
+
+  creadoEn         DateTime          @default(now())
+  actualizadoEn    DateTime          @updatedAt
+
+  servicios        Servicio[]
+  reservas         Reserva[]
+  resenas          Resena[]
+  complementos     Complemento[]
+}
+
+model Servicio {
+  id               String            @id @default(cuid())
+  proveedorId      String
+  proveedor        Proveedor         @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+  nombre           String
+  descripcion      String?
+  precio           Decimal           @db.Decimal(10, 2)
+  capacidadMin     Int?
+  capacidadMax     Int?
+  diasDisponibles  Int[]             // 0=Dom,1=Lun,...6=Sab. Vacío = todos los días
+  etiquetasEvento  TipoEvento[]
+  imagenes         String[]
+  videos           String[]
+  
+  // Capacidad Simultánea y Horarios
+  capacidadSimultanea Int            @default(1)
+  bloquesHorario      String[]       // Ej. ["09:00-14:00", "15:00-20:00"]
+  
+  activo           Boolean           @default(true)
+  creadoEn         DateTime          @default(now())
+  actualizadoEn    DateTime          @updatedAt
+
+  variaciones      VariacionPrecio[]
+  reservas         Reserva[]
+  lineasPresupuesto LineaPresupuesto[]
+  complementos     Complemento[]
+}
+
+model VariacionPrecio {
+  id               String    @id @default(cuid())
+  servicioId       String
+  servicio         Servicio  @relation(fields: [servicioId], references: [id], onDelete: Cascade)
+  mes              Int       // 1-12
+  precioOverride   Decimal   @db.Decimal(10, 2)
+
+  @@unique([servicioId, mes])
+}
+
+model Complemento {
+  id               String    @id @default(cuid())
+  proveedorId      String
+  proveedor        Proveedor @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+  nombre           String
+  descripcion      String?
+  precio           Decimal   @db.Decimal(10, 2)
+  activo           Boolean   @default(true)
+  servicios        Servicio[]
+  creadoEn         DateTime  @default(now())
+  actualizadoEn    DateTime  @updatedAt
+}
+
+model Cliente {
+  id               String      @id @default(cuid())
+  usuarioId        String      @unique
+  usuario          Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  plan             PlanCliente @default(FREE)
+  stripeSubId      String?     @unique
+  trialExpira      DateTime?
+  creadoEn         DateTime    @default(now())
+  actualizadoEn    DateTime    @updatedAt
+
+  eventos          Evento[]
+  reservas         Reserva[]
+  resenas          Resena[]
+}
+
+model Evento {
+  id               String    @id @default(cuid())
+  clienteId        String
+  cliente          Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  nombre           String
+  tipo             String    // Boda, XV Años, etc.
+  fecha            DateTime?
+  presupuestoTotal Decimal   @db.Decimal(10, 2) @default(0)
+  numInvitados     Int?
+  descripcion      String?
+  creadoEn         DateTime  @default(now())
+  actualizadoEn    DateTime  @updatedAt
+
+  invitados        Invitado[]
+  lineasPresupuesto LineaPresupuesto[]
+  disposicionMesas  DisposicionMesa?
+  invitacion       InvitacionDigital?
+  reservas         Reserva[]
+}
+
+model Invitado {
+  id               String     @id @default(cuid())
+  eventoId         String
+  evento           Evento     @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  nombre           String
+  email            String?
+  telefono         String?
+  mesaAsignada     Int?
+  rsvpToken        String     @unique @default(cuid())
+  rsvpEstado       EstadoRSVP @default(PENDIENTE)
+  mensajeRsvp      String?
+  creadoEn         DateTime   @default(now())
+}
+
+model LineaPresupuesto {
+  id               String    @id @default(cuid())
+  eventoId         String
+  evento           Evento    @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  servicioId       String?
+  servicio         Servicio? @relation(fields: [servicioId], references: [id])
+  descripcion      String    // Por si es un servicio externo
+  montoTotal       Decimal   @db.Decimal(10, 2)
+  montoPagado      Decimal   @db.Decimal(10, 2) @default(0)
+  creadoEn         DateTime  @default(now())
+  actualizadoEn    DateTime  @updatedAt
+
+  pagos            Pago[]
+}
+
+model Pago {
+  id               String           @id @default(cuid())
+  lineaId          String
+  linea            LineaPresupuesto  @relation(fields: [lineaId], references: [id], onDelete: Cascade)
+  monto            Decimal          @db.Decimal(10, 2)
+  nota             String?
+  fecha            DateTime         @default(now())
+}
+
+model Reserva {
+  id                     String        @id @default(cuid())
+  clienteId              String?
+  cliente                Cliente?      @relation(fields: [clienteId], references: [id])
+  proveedorId            String
+  proveedor              Proveedor     @relation(fields: [proveedorId], references: [id])
+  servicioId             String
+  servicio               Servicio      @relation(fields: [servicioId], references: [id])
+  eventoId               String?
+  evento                 Evento?       @relation(fields: [eventoId], references: [id])
+  fechaEvento            DateTime
+  
+  // Soporte para reservas por hora
+  tipoReserva            TipoReserva   @default(DIA_COMPLETO)
+  horaInicio             String?       // "09:00"
+  horaFin                String?       // "14:00"
+
+  estado                 EstadoReserva @default(TEMPORAL)
+  montoTotal             Decimal       @db.Decimal(10, 2)
+  montoAnticipo          Decimal       @db.Decimal(10, 2) @default(0)
+  montoComision          Decimal       @db.Decimal(10, 2) @default(0)
+  notas                  String?
+  stripePaymentId        String?
+  // Campos para ventas manuales (clientes externos - Plan Elite)
+  esManual               Boolean       @default(false)
+  nombreClienteExterno   String?
+  telefonoClienteExterno String?
+  creadoEn               DateTime      @default(now())
+  actualizadoEn          DateTime      @updatedAt
+
+  transacciones          Transaccion[]
+}
+
+model Transaccion {
+  id               String    @id @default(cuid())
+  reservaId        String
+  reserva          Reserva   @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+  monto            Decimal   @db.Decimal(10, 2)
+  comision         Decimal   @db.Decimal(10, 2) @default(0)
+  tipo             String    @default("ABONO") // ANTICIPO, ABONO, PENALIZACION
+  metodoPago       String    @default("STRIPE") // EFECTIVO, TRANSFERENCIA, STRIPE, OTRO
+  estado           String    @default("PAGADO") // PAGADO, PENDIENTE
+  fechaVencimiento DateTime?
+  fechaPago        DateTime? @default(now())
+  stripePaymentId  String?
+  notas            String?
+  creadoEn         DateTime  @default(now())
+}
+
+model Resena {
+  id               String    @id @default(cuid())
+  proveedorId      String
+  proveedor        Proveedor @relation(fields: [proveedorId], references: [id])
+  clienteId        String
+  cliente          Cliente   @relation(fields: [clienteId], references: [id])
+  calificacion     Int       // 1-5
+  comentario       String?
+  creadoEn         DateTime  @default(now())
+}
+
+model DisposicionMesa {
+  id               String    @id @default(cuid())
+  eventoId         String    @unique
+  evento           Evento    @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  layout           Json      // Almacena el JSON de las mesas y sus posiciones
+  actualizadoEn    DateTime  @updatedAt
+}
+
+model InvitacionDigital {
+  id               String    @id @default(cuid())
+  eventoId         String    @unique
+  evento           Evento    @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  plantilla        String    @default("clasica")
+  titulo           String
+  mensaje          String?
+  lugarTexto       String?
+  vestimenta       String?
+  enviadaEn        DateTime?
+  rsvpFecha        DateTime?
+  creadoEn         DateTime  @default(now())
+  actualizadoEn    DateTime  @updatedAt
+}
