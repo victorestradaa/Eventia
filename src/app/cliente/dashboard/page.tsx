@@ -18,8 +18,8 @@ export default async function ClientDashboardPage() {
 
   return (
     <DashboardClient 
-      initialEventos={eventosRes.success ? (eventosRes.data || []) : []} 
-      perfil={perfil} 
+      initialEventos={eventosRes.success ? JSON.parse(JSON.stringify(eventosRes.data)) : []} 
+      perfil={JSON.parse(JSON.stringify(perfil))} 
     />
   );
 }

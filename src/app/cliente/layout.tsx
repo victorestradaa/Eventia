@@ -17,8 +17,8 @@ export default async function ClientLayout({ children }: { children: React.React
 
   return (
     <ClientLayoutContent 
-      initialEventos={eventosRes.success ? (eventosRes.data || []) : []} 
-      perfil={perfil}
+      initialEventos={eventosRes.success ? JSON.parse(JSON.stringify(eventosRes.data)) : []} 
+      perfil={JSON.parse(JSON.stringify(perfil))}
     >
       {children}
     </ClientLayoutContent>

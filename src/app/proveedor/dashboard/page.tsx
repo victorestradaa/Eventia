@@ -23,8 +23,8 @@ export default async function ProviderDashboardPage() {
 
   return (
     <DashboardProviderClient 
-      resumen={resumenSerializado} 
-      perfil={perfil} 
+      resumen={JSON.parse(JSON.stringify(resumenSerializado))} 
+      perfil={JSON.parse(JSON.stringify(perfil))} 
     />
   );
 }
