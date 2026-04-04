@@ -12,13 +12,14 @@ export default async function ClientDashboardPage() {
   }
 
   const perfil = profileRes.data;
-  const eventosRes = perfil.cliente 
-    ? await getEventosCliente(perfil.cliente.id) 
-    : { success: false, data: [] };
+  // Aislamiento temporal
+  // const eventosRes = perfil.cliente 
+  //   ? await getEventosCliente(perfil.cliente.id) 
+  //   : { success: false, data: [] };
 
   return (
     <DashboardClient 
-      initialEventos={eventosRes.success ? JSON.parse(JSON.stringify(eventosRes.data)) : []} 
+      initialEventos={[]} 
       perfil={JSON.parse(JSON.stringify(perfil))} 
     />
   );
