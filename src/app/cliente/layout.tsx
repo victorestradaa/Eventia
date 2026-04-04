@@ -7,7 +7,29 @@ export default async function ClientLayout({ children }: { children: React.React
   const profileRes = await getCurrentProfile();
 
   if (!profileRes.success || !profileRes.data) {
-    return redirect('/login');
+    if (profileRes.error === 'Error del servidor') {
+      return (
+        <div className="min-h-screen bg-black text-red-500 p-10 flex flex-col items-center justify-center">
+          <h2 className="text-3xl font-bold mb-4">Error 500: Falla de Base de Datos</h2>
+          <p>La conexión a Supabase Prisma fue rechazada. AWS Lambda abortó la conexión (Timeout de PgBouncer).</p>
+        </div>
+      );
+    }
+    
+    // Romper el bucle de middleware interceptando el fallo de autenticación de Lambda sin usar redirect() de servidor
+    return (
+      <div className="min-h-screen bg-black text-white p-10 flex flex-col items-center justify-center space-y-6">
+        <h2 className="text-3xl font-bold text-amber-500">Sesión Inválida</h2>
+        <p className="text-gray-400 text-center max-w-md">Tu sesión de seguridad caducó o hay un conflicto en las credenciales almacenadas en este dispositivo.</p>
+        <form action={async () => {
+          'use server';
+          const { cerrarSesion } = await import('@/lib/actions/authActions');
+          await cerrarSesion();
+        }}>
+          <button type="submit" className="px-6 py-3 bg-red-600 rounded-lg font-bold">Cerrar Sesión Corrupta</button>
+        </form>
+      </div>
+    );
   }
 
   const perfil = profileRes.data;

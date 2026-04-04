@@ -15,13 +15,35 @@ export default async function ProviderDashboardPage() {
         </div>
       );
     }
-    return redirect('/login');
+    // Romper el bucle de middleware interceptando el fallo de autenticación de Lambda sin usar redirect() de servidor
+    return (
+      <div className="min-h-screen bg-black text-white p-10 flex flex-col items-center justify-center space-y-6">
+        <h2 className="text-3xl font-bold text-amber-500">Sesión Inválida</h2>
+        <p className="text-gray-400 text-center max-w-md">Tu sesión de seguridad caducó o hay un conflicto en las credenciales almacenadas en este dispositivo.</p>
+        <form action={async () => {
+          'use server';
+          const { cerrarSesion } = await import('@/lib/actions/authActions');
+          await cerrarSesion();
+        }}>
+          <button type="submit" className="px-6 py-3 bg-red-600 rounded-lg font-bold">Cerrar Sesión Corrupta</button>
+        </form>
+      </div>
+    );
   }
 
   const perfil = profileRes.data;
   
-  if (perfil.rol !== 'PROVEEDOR' || !perfil.proveedor) {
+  if (perfil.rol !== 'PROVEEDOR') {
     return redirect('/cliente/dashboard');
+  }
+
+  if (!perfil.proveedor) {
+    return (
+      <div className="min-h-screen bg-black text-amber-500 p-10 flex flex-col items-center justify-center">
+        <h2 className="text-3xl font-bold mb-4">Perfil Incompleto</h2>
+        <p>Tu cuenta está registrada como Proveedor, pero falta la configuración inicial de tu negocio. Por favor contacta a soporte.</p>
+      </div>
+    );
   }
 
   const resumenRes = await getResumenProveedor(perfil.proveedor.id);
