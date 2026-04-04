@@ -48,7 +48,8 @@ export async function getCurrentProfile() {
     return { success: true, data: perfil };
   } catch (error) {
     console.error('Error al obtener perfil:', error);
-    return { success: false, error: 'Error del servidor' };
+    const msg = error instanceof Error ? error.message : String(error);
+    return { success: false, error: `Error Prisma: ${msg}` };
   }
 }
 

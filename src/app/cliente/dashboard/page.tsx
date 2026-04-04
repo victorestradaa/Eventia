@@ -7,11 +7,12 @@ export default async function ClientDashboardPage() {
   const profileRes = await getCurrentProfile();
 
   if (!profileRes.success || !profileRes.data) {
-    if (profileRes.error === 'Error del servidor') {
+    if (profileRes.error?.startsWith('Error Prisma:')) {
       return (
-        <div className="min-h-screen bg-black text-red-500 p-10 flex flex-col items-center justify-center">
-          <h2 className="text-3xl font-bold mb-4">Error 500: Falla de Base de Datos</h2>
-          <p>La conexión a Supabase Prisma fue rechazada o superó el tiempo límite. AWS Lambda abortó la conexión.</p>
+        <div className="min-h-screen bg-black text-red-500 p-10 flex flex-col items-center justify-center text-center">
+          <h2 className="text-3xl font-bold mb-4">Error Crítico de Base de Datos</h2>
+          <p className="mb-4">Se produjo el siguiente error en AWS Lambda al intentar consultar o recuperar tu perfil:</p>
+          <pre className="text-xs bg-red-950/50 p-4 rounded-xl text-left max-w-4xl overflow-auto border border-red-500/20">{profileRes.error}</pre>
         </div>
       );
     }
