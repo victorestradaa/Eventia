@@ -24,7 +24,8 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
   const [activeEventId, setActiveEventId] = useState(initialEventos.length > 0 ? initialEventos[0].id : null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const activeEvent = initialEventos.find(e => e.id === activeEventId) || initialEventos[0] || null;
+  const eventosArray = Array.isArray(initialEventos) ? initialEventos : [];
+  const activeEvent = eventosArray.find(e => e.id === activeEventId) || eventosArray[0] || null;
 
   const NAV_ITEMS = [
     { href: '/cliente/dashboard', label: 'Mis Eventos', icon: Calendar },
