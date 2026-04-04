@@ -25,7 +25,24 @@ export async function getCurrentProfile() {
     });
 
     if (!perfil) {
-      return { success: false, error: 'Perfil no encontrado' };
+      // Recuperación Zombie: El usuario existe en Supabase pero no en Prisma (ocurre si falla la DB en el registro)
+      console.warn('⚠️ Perfil Zombie recuperado y creado automáticamente para:', user.email);
+      const emailName = user.email ? user.email.split('@')[0] : 'Usuario';
+      
+      const usuarioRecuperado = await prisma.usuario.create({
+        data: {
+          email: user.email!,
+          nombre: emailName,
+          rol: 'CLIENTE',
+          cliente: { create: {} }
+        },
+        include: {
+          cliente: true,
+          proveedor: true
+        }
+      });
+      
+      return { success: true, data: usuarioRecuperado };
     }
 
     return { success: true, data: perfil };
