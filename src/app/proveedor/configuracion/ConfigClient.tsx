@@ -33,6 +33,7 @@ export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) 
     logoUrl: proveedor.logoUrl || '',
     latitud: proveedor.latitud || null,
     longitud: proveedor.longitud || null,
+    categoria: proveedor.categoria || 'SALON',
   });
   const [logoLoading, setLogoLoading] = useState(false);
   const [savingBusiness, setSavingBusiness] = useState(false);
@@ -204,6 +205,22 @@ export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) 
                 placeholder="Ej. Mariachi Los Reales"
               />
             </div>
+          </div>
+
+          {/* Categoría del negocio */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-[var(--color-texto-suave)]">Categoría del Negocio <span className="text-red-500">*</span></label>
+            <select 
+              required
+              value={business.categoria}
+              onChange={e => setBusiness({...business, categoria: e.target.value})}
+              className="input w-full h-12"
+            >
+              {Object.entries(CATEGORIAS_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
+              ))}
+            </select>
+            <p className="text-[10px] text-[var(--color-texto-muted)]">Selecciona la categoría que mejor describe tu negocio. Esto determina cómo te encuentran los clientes.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

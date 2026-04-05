@@ -15,6 +15,7 @@ export async function updateProviderProfile(proveedorId: string, data: {
   logoUrl?: string;
   latitud?: number;
   longitud?: number;
+  categoria?: string;
 }) {
   try {
     const updated = await prisma.proveedor.update({
@@ -28,6 +29,7 @@ export async function updateProviderProfile(proveedorId: string, data: {
         logoUrl: data.logoUrl || null,
         latitud: data.latitud ?? null,
         longitud: data.longitud ?? null,
+        ...(data.categoria ? { categoria: data.categoria as any } : {}),
       }
     });
 
