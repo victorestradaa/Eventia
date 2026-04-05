@@ -402,3 +402,56 @@ export async function verificarDisponibilidadServicio(
     return { success: false, error: 'Error interno al verificar.' };
   }
 }
+
+// ─── Exploración de Catálogo (Para Clientes) ──────────────────────────────────
+
+/**
+ * Obtiene todos los servicios de proveedores activos para la sección de Explorar.
+ * Permite filtrar por categorías si es necesario.
+ */
+export async function getExplorarServicios() {
+  try {
+    const servicios = await prisma.servicio.findMany({
+      where: {
+        activo: true,
+        proveedor: { activo: true }
+      },
+      include: {
+        proveedor: {
+          select: {
+            nombre: true,
+            ciudad: true,
+            plan: true,
+          }
+        },
+        _count: {
+          select: { reservas: true }
+        }
+      },
+      orderBy: [
+        { proveedor: { plan: 'desc' } }, // Premium primero
+        { creadoEn: 'desc' }
+      ]
+    });
+
+    // Serialización de Decimales y mapeo de datos
+    const data = servicios.map((s: any) => ({
+      id: s.id,
+      nombre: s.nombre,
+      categoria: s.proveedor.categoria || 'Servicio',
+      calificacion: 5.0, // Pendiente de calcular con reseñas reales
+      reseñas: s._count.reservas || 0,
+      precio: Number(s.precio),
+      ciudad: s.proveedor.ciudad,
+      capacidad: s.capacidadMax ? `${s.capacidadMin}-${s.capacidadMax}` : 'N/A',
+      premium: s.proveedor.plan === 'PREMIUM' || s.proveedor.plan === 'ELITE',
+      img: s.imagenes[0] || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&q=80',
+      proveedorId: s.proveedorId
+    }));
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error al explorar servicios:', error);
+    return { success: false, error: 'No se pudieron cargar los servicios.' };
+  }
+}
