@@ -40,19 +40,29 @@ export default function RegisterPage() {
 
       if (authError) {
         if (authError.message.toLowerCase().includes('rate limit')) {
-          throw new Error('Haz alcanzado el límite de intentos o registros por hora que permite Supabase. Espera un momento o desactívalo desde el Dashboard local.');
+          throw new Error('Supabase Rate Limit: Has intentado demasiados registros. Espera unos minutos.');
+        }
+        if (authError.message.toLowerCase().includes('already registered')) {
+          throw new Error('Este correo ya tiene una cuenta activa en Supabase Auth. Intenta otro correo o recupera tu contraseña.');
         }
         throw new Error(authError.message);
       }
 
-      // 2. Registramos en Prisma
-      const res = await registrarUsuario({ email: cleanEmail, nombre: nombre.trim(), rol });
+      // 2. Registramos en Prisma (con timeout de seguridad para evitar "stuck")
+      const registrationPromise = registrarUsuario({ email: cleanEmail, nombre: nombre.trim(), rol });
+      
+      // Timeout de 15 segundos para la DB
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('La base de datos (Prisma) no respondió a tiempo. AWS Lambda podría estar saturada o la URL es inválida.')), 15000)
+      );
+
+      const res: any = await Promise.race([registrationPromise, timeoutPromise]);
       
       if (!res.success) {
         throw new Error(res.error);
       }
 
-      // 3. Redireccionar al dashboard correspondiente
+      // 3. Redireccionar
       if (rol === 'CLIENTE') {
         router.push('/cliente/dashboard');
       } else {
@@ -61,9 +71,11 @@ export default function RegisterPage() {
       router.refresh();
       
     } catch (err: any) {
-      setError(err?.message || 'Error al crear la cuenta.');
+      console.error('Registration error:', err);
+      setError(err?.message || 'Error inesperado al crear la cuenta.');
       setLoading(false);
     }
+
   }
 
   return (
