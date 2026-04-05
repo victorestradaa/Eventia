@@ -2,8 +2,9 @@ import { getDetalleProveedor } from '@/lib/actions/providerActions';
 import ProviderDetailClient from './ProviderDetailClient';
 import { notFound } from 'next/navigation';
 
-export default async function ProviderDetailPage({ params }: { params: { id: string } }) {
-  const res = await getDetalleProveedor(params.id);
+export default async function ProviderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const res = await getDetalleProveedor(resolvedParams.id);
 
   if (!res.success || !res.data) {
     notFound(); // Redirige a 404 si el proveedor no existe
