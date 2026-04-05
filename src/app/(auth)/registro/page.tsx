@@ -58,6 +58,10 @@ export default function RegisterPage() {
 
       const res: any = await Promise.race([registrationPromise, timeoutPromise]);
       
+      if (!res.success) {
+        throw new Error(res.error);
+      }
+
       // 3. Redireccionar de forma forzada para evitar bloqueos de sesión en Next.js
       if (rol === 'CLIENTE') {
         window.location.href = '/cliente/dashboard';
