@@ -14,11 +14,15 @@ import {
   ChevronRight,
   ChevronLeft,
   X,
-  Loader2
+  Loader2,
+  Map as MapIcon
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn, formatearMoneda } from '@/lib/utils';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+const PublicMap = dynamic(() => import('@/components/PublicMap'), { ssr: false });
 
 interface ProviderDetailClientProps {
   data: any;
@@ -144,6 +148,25 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
                 {p.descripcion || 'Sin descripción detallada disponible.'}
               </p>
            </div>
+
+           {/* Nueva Sección: Ubicación */}
+           {p.latitud && p.longitud && (
+             <div className="space-y-6 pt-8 border-t border-[var(--color-borde-suave)]">
+                <div className="flex items-center justify-between">
+                   <h2 className="text-2xl font-bold flex items-center gap-2">
+                      <MapIcon size={24} className="text-[var(--color-primario-claro)]" /> Ubicación
+                   </h2>
+                   <span className="text-xs text-[var(--color-texto-muted)] uppercase font-black tracking-widest">{p.ciudad}, {p.estado}</span>
+                </div>
+                
+                <PublicMap lat={p.latitud} lng={p.longitud} businessName={p.nombre} />
+                
+                <div className="flex items-start gap-3 p-4 rounded-2xl bg-[var(--color-fondo-input)]/50 border border-white/5">
+                   <MapPin size={18} className="text-[var(--color-primario-claro)] flex-shrink-0 mt-0.5" />
+                   <p className="text-sm text-[var(--color-texto-suave)]">{p.direccion}</p>
+                </div>
+             </div>
+           )}
 
            {/* Reseñas (Si hubiera) */}
            {p.resenas.length > 0 && (

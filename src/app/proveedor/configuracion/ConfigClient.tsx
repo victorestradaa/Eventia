@@ -6,6 +6,9 @@ import { updateProviderProfile, updateProviderCredentials, updateProviderAvailab
 import { MEXICO_LOCATIONS } from '@/lib/constants/locations';
 import { uploadServiceImage } from '@/lib/actions/uploadActions';
 import { CATEGORIAS_LABELS } from '@/lib/utils';
+import dynamic from 'next/dynamic';
+
+const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false });
 
 const PLAN_INFO: Record<string, { label: string; color: string; icon: any }> = {
   GRATIS: { label: 'Plan Básico', color: 'text-gray-400', icon: Zap },
@@ -28,6 +31,8 @@ export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) 
     estado: proveedor.estado || '',
     direccion: proveedor.direccion || '',
     logoUrl: proveedor.logoUrl || '',
+    latitud: proveedor.latitud || null,
+    longitud: proveedor.longitud || null,
   });
   const [logoLoading, setLogoLoading] = useState(false);
   const [savingBusiness, setSavingBusiness] = useState(false);
@@ -239,15 +244,24 @@ export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) 
               </select>
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-bold text-[var(--color-texto-suave)]">Dirección <span className="text-[10px] font-normal">(Opcional)</span></label>
-              <input 
-                value={business.direccion}
-                onChange={e => setBusiness({...business, direccion: e.target.value})}
-                type="text"
-                className="input w-full h-12"
-                placeholder="Ej. Av. Chapultepec #123, Col. Americana"
+              <label className="text-sm font-bold text-[var(--color-texto-suave)]">Dirección de tu Negocio <span className="text-red-500">*</span></label>
+              <p className="text-[10px] text-[var(--color-texto-muted)] mb-2">Busca tu dirección y ajusta el marcador en el mapa para que tus clientes te encuentren fácilmente.</p>
+              
+              <MapPicker 
+                initialLat={business.latitud}
+                initialLng={business.longitud}
+                initialAddress={business.direccion}
+                onLocationSelect={(lat, lng, address) => {
+                  setBusiness({
+                    ...business,
+                    latitud: lat,
+                    longitud: lng,
+                    direccion: address || business.direccion
+                  });
+                }}
               />
             </div>
+
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-bold text-[var(--color-texto-suave)] flex items-center gap-1"><FileText size={14} /> Descripción del Negocio <span className="text-[10px] font-normal">(Opcional)</span></label>
               <textarea 

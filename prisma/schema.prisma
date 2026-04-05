@@ -102,6 +102,8 @@ model Proveedor {
   ciudad           String
   estado           String
   direccion        String?
+  latitud          Float?
+  longitud         Float?
   logoUrl          String?
   bannerUrl        String?
   plan             PlanProveedor     @default(GRATIS)
