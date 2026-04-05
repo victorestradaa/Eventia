@@ -58,13 +58,27 @@ export async function getCurrentProfile() {
 
 export async function cerrarSesion() {
   const supabase = await createClient();
-  await supabase.auth.signOut();
   
-  // Revalidar todo para asegurar que el estado de la sesión se limpie en todas partes
-  revalidatePath('/', 'layout');
-  
-  // Redirect debe ser lo último y fuera de cualquier bloque try-catch
-  redirect('/login');
+  try {
+    // 1. Sign out strictly from Supabase
+    await supabase.auth.signOut();
+    
+    // 2. Manual cookie cleanup for extra safety (handles persistent sessions on some browsers)
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    
+    // Supabase standard cookies
+    const supabaseCookies = cookieStore.getAll().filter(c => c.name.startsWith('sb-') || c.name.includes('supabase'));
+    supabaseCookies.forEach(c => {
+      cookieStore.delete(c.name);
+    });
+  } catch (error) {
+    console.error('Error in cerrarSesion:', error);
+  } finally {
+    // Revalidar y redireccionar siempre, pase lo que pase
+    revalidatePath('/', 'layout');
+    redirect('/login');
+  }
 }
 
 import { CategoriaServicio } from '@prisma/client';

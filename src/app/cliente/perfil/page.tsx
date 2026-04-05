@@ -17,8 +17,10 @@ import {
 import { useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { cerrarSesion } from '@/lib/actions/authActions';
 
 export default function ProfilePage() {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [user, setUser] = useState({
     nombre: 'Víctor Estrada',
     email: 'victor.estrada@ejemplo.com',
@@ -28,6 +30,27 @@ export default function ProfilePage() {
     favoritos: 12,
     pagoPendiente: 15400
   });
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    
+    try {
+      // 1. Client-side sign out
+      const { createClient } = await import('@/lib/supabase/cliente');
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      
+      // 2. Server-side sign out
+      await cerrarSesion();
+      
+      // 3. Fallback
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Error durante el cierre de sesión:', error);
+      window.location.href = '/login';
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto space-y-12 pb-20">
@@ -112,11 +135,18 @@ export default function ProfilePage() {
                 </Link>
               ))}
               <hr className="border-white/5 my-2" />
-              <button className="w-full flex items-center gap-4 p-4 rounded-xl text-red-400 hover:bg-red-400/10 transition-all text-left">
+              <button 
+                type="button" 
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="w-full flex items-center gap-4 p-4 rounded-xl text-red-400 hover:bg-red-400/10 transition-all text-left disabled:opacity-50"
+              >
                   <div className="w-10 h-10 rounded-lg bg-red-400/10 flex items-center justify-center">
                     <LogOut size={18} />
                   </div>
-                  <span className="font-bold text-sm tracking-tight">Cerrar Sesión</span>
+                  <span className="font-bold text-sm tracking-tight">
+                    {isLoggingOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}
+                  </span>
               </button>
            </div>
         </div>

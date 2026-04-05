@@ -19,6 +19,7 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEventSelectorOpen, setIsEventSelectorOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // En un sistema real usaríamos un context o un cookie para persistir esto
   const [activeEventId, setActiveEventId] = useState(initialEventos.length > 0 ? initialEventos[0].id : null);
@@ -30,7 +31,7 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
   const NAV_ITEMS = [
     { href: '/cliente/dashboard', label: 'Mis Eventos', icon: Calendar },
     { href: '/cliente/explorar', label: 'Explorar', icon: Search },
-    { href: activeEvent ? `/cliente/evento/${activeEvent.id}` : '#', label: 'Presupuesto', icon: Wallet },
+    { href: activeEvent?.id ? `/cliente/evento/${activeEvent.id}` : '/cliente/dashboard', label: 'Presupuesto', icon: Wallet },
     { href: '/cliente/invitaciones', label: 'Invitaciones', icon: Mail },
     { href: '/cliente/planes', label: 'Mi Plan', icon: Star },
   ];
@@ -45,6 +46,27 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+  
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    
+    try {
+      // 1. Client-side sign out (clears local state and some cookies)
+      const { createClient } = await import('@/lib/supabase/cliente');
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      
+      // 2. Server-side sign out (clears server-only cookies and revalidates)
+      await cerrarSesion();
+      
+      // 3. Fallback redirect if server action didn't trigger it
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Error durante el cierre de sesión:', error);
+      window.location.href = '/login';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[var(--color-fondo)]">
@@ -135,15 +157,15 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
               <span className="max-w-[120px] truncate">{perfil.nombre}</span>
             </Link>
             
-            <form action={cerrarSesion} className="hidden md:block">
-              <button 
-                type="submit"
-                title="Cerrar sesión"
-                className="flex items-center justify-center w-9 h-9 rounded-full text-[var(--color-texto-suave)] hover:bg-red-500/10 hover:text-red-500 transition-colors"
-              >
-                <LogOut size={18} />
-              </button>
-            </form>
+            <button 
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              title="Cerrar sesión"
+              className="hidden md:flex items-center justify-center w-9 h-9 rounded-full text-[var(--color-texto-suave)] hover:bg-red-500/10 hover:text-red-500 transition-colors disabled:opacity-50"
+            >
+              <LogOut size={18} />
+            </button>
 
             
             <button 
@@ -156,9 +178,9 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
         </div>
       </header>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Overlay - z-60 para estar sobre el header z-50 */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-[var(--color-fondo)] pt-20 px-6 md:hidden animate-in fade-in slide-in-from-right duration-300">
+        <div className="fixed inset-0 z-[60] bg-[var(--color-fondo)] pt-20 px-6 md:hidden animate-in fade-in slide-in-from-right duration-300 overflow-y-auto">
           <nav className="flex flex-col gap-6">
             {NAV_ITEMS.map((item) => (
               <Link
@@ -176,16 +198,22 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
               <User className="text-[var(--color-primario-claro)]" />
               Mi Perfil
             </Link>
-            <form action={cerrarSesion}>
-              <button 
-                type="submit"
-                onClick={() => setIsMenuOpen(false)}
-                className="w-full flex items-center gap-4 text-xl font-bold text-red-500 hover:text-red-600 transition-colors mt-2"
-              >
-                <LogOut className="text-red-500" />
-                Cerrar sesión
-              </button>
-            </form>
+            <Link 
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                handleLogout();
+              }}
+              className={cn(
+                "flex items-center gap-4 text-xl font-bold transition-colors mt-2 select-none",
+                isLoggingOut ? "text-[var(--color-texto-muted)] opacity-50 pointer-events-none" : "text-red-500 hover:text-red-600 cursor-pointer"
+              )}
+            >
+              <LogOut className={cn(isLoggingOut ? "text-[var(--color-texto-muted)]" : "text-red-500", "pointer-events-none")} />
+              <span className="pointer-events-none">
+                {isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}
+              </span>
+            </Link>
           </nav>
         </div>
       )}
