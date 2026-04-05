@@ -132,10 +132,58 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
         </div>
       </div>
 
-      {/* Tabla de Ventas */}
-      <div className="card p-0 overflow-hidden shadow-xl border border-[var(--color-borde-suave)]">
+      {/* Vista Móvil (Lista de Tarjetas) */}
+      <div className="grid grid-cols-1 gap-4 sm:hidden">
+        {filteredVentas.length === 0 ? (
+          <div className="card p-10 text-center text-[var(--color-texto-muted)]">
+            No se encontraron reservas.
+          </div>
+        ) : (
+          filteredVentas.map((venta) => (
+            <div 
+              key={venta.id} 
+              onClick={() => setSelectedVenta(venta)}
+              className="card bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] p-5 space-y-4 hover:border-[var(--color-acento)]/30 active:scale-95 transition-all shadow-md"
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm ${venta.esManual ? 'bg-gradient-to-tr from-emerald-500 to-emerald-400' : 'bg-gradient-to-tr from-[var(--color-primario)] to-[var(--color-primario-claro)]'}`}>
+                    {getClienteInitial(venta)}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm group-hover:text-[var(--color-acento)] transition-colors">{getClienteName(venta)}</h4>
+                    <span className="text-[10px] font-mono text-[var(--color-texto-muted)]">#{venta.id.split('-')[0].substring(0,8).toUpperCase()}</span>
+                  </div>
+                </div>
+                <span className={`badge badge-${venta.estado.toLowerCase()} text-[9px] font-black tracking-widest`}>
+                  {venta.estado}
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 py-3 border-y border-[var(--color-borde-suave)]">
+                <div>
+                  <p className="text-[9px] uppercase font-black tracking-widest text-[var(--color-texto-muted)] mb-1">Fecha</p>
+                  <p className="text-xs font-bold">{formatearFechaCorta(venta.fechaEvento)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] uppercase font-black tracking-widest text-[var(--color-texto-muted)] mb-1">Monto</p>
+                  <p className="text-sm font-black text-[var(--color-acento)]">{formatearMoneda(venta.montoTotal)}</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[9px] uppercase font-black tracking-widest text-[var(--color-texto-muted)] mb-1">Servicio</p>
+                <p className="text-xs font-medium truncate">{venta.servicio?.nombre || 'Desconocido'}</p>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Tabla de Ventas (Escritorio) */}
+      <div className="card p-0 overflow-hidden shadow-xl border border-[var(--color-borde-suave)] hidden sm:block">
         <div className="overflow-x-auto">
-          <table className="tabla w-full whitespace-nowrap hidden sm:table">
+          <table className="tabla w-full whitespace-nowrap">
             <thead className="bg-[var(--color-fondo-input)] text-[var(--color-texto-suave)] text-xs uppercase tracking-wider">
               <tr>
                 <th className="px-6 py-4 font-bold text-left">Reserva</th>
