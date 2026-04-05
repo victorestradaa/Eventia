@@ -83,7 +83,8 @@ export default function DashboardClient({ initialEventos, perfil }: DashboardCli
     { id: 3, nombre: 'Gourmet Express', categoria: 'Comida', calificacion: 5.0, precio: 250, img: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=800&q=80' },
   ];
 
-  if (!proximoEvento && !isNewEventModalOpen && eventos.length === 0) {
+  // Estado vacío: sin eventos
+  if (eventos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center">
         <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center text-3xl">🎉</div>
@@ -98,7 +99,7 @@ export default function DashboardClient({ initialEventos, perfil }: DashboardCli
           Crear mi primer evento
         </button>
 
-        {/* Modal logic inside the empty state too */}
+        {/* Modal siempre se renderiza aquí cuando está abierto */}
         {isNewEventModalOpen && renderModal()}
       </div>
     );
@@ -191,7 +192,7 @@ export default function DashboardClient({ initialEventos, perfil }: DashboardCli
     );
   }
 
-  // Prevenir errores si no hay evento
+  // Prevenir errores si no hay evento activo (pero hay eventos en la lista)
   if (!proximoEvento) return null;
 
   // Calculamos días restantes reales si hay fecha
