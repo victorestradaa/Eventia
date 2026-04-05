@@ -305,6 +305,13 @@ export async function createBloqueoRapido(data: {
   clienteAproximado?: string;
 }) {
   try {
+    // Obtener datos del servicio para precio y capacidad
+    const servicioInfo = await prisma.servicio.findUnique({
+      where: { id: data.servicioId }
+    });
+
+    if (!servicioInfo) return { success: false, error: 'Servicio no encontrado.' };
+
     // Verificar disponibilidad antes de bloquear
     const bloqueOpcional = data.tipoReserva === 'POR_HORAS' && data.horaInicio && data.horaFin 
       ? `${data.horaInicio}-${data.horaFin}` 
@@ -326,7 +333,7 @@ export async function createBloqueoRapido(data: {
         esManual: true,
         nombreClienteExterno: data.clienteAproximado || 'Bloqueo Interno',
         estado: 'APARTADO',
-        montoTotal: 0,
+        montoTotal: Number(servicioInfo.precio), // Usar precio base del servicio
         montoAnticipo: 0,
         montoComision: 0,
         notas: 'Bloqueo rápido desde calendario'
@@ -378,18 +385,29 @@ export async function verificarDisponibilidadServicio(
     let overlapCount = 0;
 
     if (bloqueOpcional && bloqueOpcional.includes('-')) {
-      const [horaStart, horaEnd] = bloqueOpcional.split('-');
+      const [horaStart, horaEnd] = bloqueOpcional.split(':').join('').split('-').map(h => h.trim());
       overlapCount = reservasOcupadas.filter(r => {
+        // Un bloqueo de día completo afecta a todos los turnos
         if (r.tipoReserva === 'DIA_COMPLETO') return true;
+        
+        // Si no tiene horas (no debería pasar), asumimos que ocupa el turno
         if (!r.horaInicio || !r.horaFin) return true;
 
-        return (horaStart < r.horaFin) && (horaEnd > r.horaInicio);
+        // Limpiar formatos de hora (ej: "20:00" -> "2000") para comparación numérica simple
+        const rStart = r.horaInicio.replace(':', '');
+        const rEnd = r.horaFin.replace(':', '');
+        const bStart = horaStart.replace(':', '');
+        const bEnd = horaEnd.replace(':', '');
+
+        // Traslape de rangos: (StartA < EndB) && (EndA > StartB)
+        return (bStart < rEnd) && (bEnd > rStart);
       }).length;
     } else {
+      // Si no hay bloque específico (es DIA_COMPLETO), contamos cualquier reserva del día
       overlapCount = reservasOcupadas.length; 
     }
 
-    const disponible = overlapCount < servicio.capacidadSimultanea;
+    const disponible = overlapCount < (servicio.capacidadSimultanea || 1);
 
     return { 
       success: true, 

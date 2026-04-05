@@ -48,15 +48,15 @@ export default function ExplorarPage() {
   // Filtrado local (para mejor UX instantánea)
   const serviciosFiltrados = servicios.filter(s => {
     // Normalizar para comparación (Salón vs SALON)
+    // Normalizar para comparación robusta
+    const normalizar = (t: string) => (t || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    
     const labelCategoria = CATEGORIAS_LABELS[s.categoria] || s.categoria || 'Servicio';
-    const cumpleCat = catActiva === 'Todos' || labelCategoria.toLowerCase() === catActiva.toLowerCase();
+    const cumpleCat = catActiva === 'Todos' || normalizar(labelCategoria) === normalizar(catActiva);
     const cumplrePrecio = Number(s.precio) <= filtros.precioMax;
     const cumpleCapacidad = parseInt(s.capacidad?.toString() || '0') >= filtros.capacidadMin;
-    const cumpleSearch = s.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                       s.ciudad.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Filtro de fecha (Simulado por ahora ya que requiere consulta a reservas complejo de filtrar en cliente)
-    // Pero la UI ya captura el valor
+    const cumpleSearch = normalizar(s.nombre).includes(normalizar(searchQuery)) || 
+                       normalizar(s.ciudad).includes(normalizar(searchQuery));
     
     return cumpleCat && cumpleSearch && cumplrePrecio && cumpleCapacidad;
   });
@@ -71,13 +71,13 @@ export default function ExplorarPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-           <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-2 shadow-xl focus-within:border-[var(--color-primario-claro)] transition-all">
+           <div className="flex items-center gap-2 bg-[#0f172a] border-2 border-white/20 rounded-2xl px-4 py-2 shadow-2xl hover:border-white/40 transition-all group">
               <Calendar size={18} className="text-[var(--color-primario-claro)]" />
               <input 
                 type="date" 
                 value={filtros.fecha}
                 onChange={(e) => setFiltros({...filtros, fecha: e.target.value})}
-                className="bg-transparent border-none outline-none text-xs font-black uppercase tracking-widest text-white/90"
+                className="bg-transparent border-none outline-none text-[10px] font-black uppercase tracking-widest text-white cursor-pointer"
                 style={{ colorScheme: 'dark' }}
               />
            </div>
@@ -99,10 +99,10 @@ export default function ExplorarPage() {
         <button 
           onClick={() => setShowAdvanced(!showAdvanced)}
           className={cn(
-            "btn h-14 px-10 border-2 shadow-xl transition-all font-black uppercase tracking-widest text-[10px]",
+            "btn h-14 px-10 border-2 shadow-2xl transition-all font-black uppercase tracking-widest text-[10px]",
             showAdvanced 
               ? "bg-[var(--color-primario)] border-[var(--color-primario)] text-white" 
-              : "bg-white/5 border-white/10 text-white hover:bg-[var(--color-primario)] hover:border-[var(--color-primario)]"
+              : "bg-[#0f172a] border-white/20 text-white hover:border-white/60"
           )}
         >
           <Settings2 size={18} className="mr-2 text-[var(--color-primario-claro)]" />
