@@ -58,23 +58,19 @@ export default function RegisterPage() {
 
       const res: any = await Promise.race([registrationPromise, timeoutPromise]);
       
-      if (!res.success) {
-        throw new Error(res.error);
-      }
-
-      // 3. Redireccionar
+      // 3. Redireccionar de forma forzada para evitar bloqueos de sesión en Next.js
       if (rol === 'CLIENTE') {
-        router.push('/cliente/dashboard');
+        window.location.href = '/cliente/dashboard';
       } else {
-        router.push('/proveedor/dashboard');
+        window.location.href = '/proveedor/dashboard';
       }
-      router.refresh();
       
     } catch (err: any) {
       console.error('Registration error:', err);
       setError(err?.message || 'Error inesperado al crear la cuenta.');
       setLoading(false);
     }
+
 
   }
 
