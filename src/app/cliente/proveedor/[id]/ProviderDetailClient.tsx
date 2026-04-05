@@ -63,41 +63,58 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
       {/* Hero Gallery Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[500px]">
         {/* Main large image */}
-        <div className="lg:col-span-8 relative rounded-3xl overflow-hidden group min-h-[400px]">
-           <img 
-             src={p.imagenes[imgActiva] || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200&q=80'} 
-             alt={p.nombre} 
-             className="w-full h-full object-cover transition-transform duration-700" 
-           />
-           {p.imagenes.length > 1 && (
+        <div className="lg:col-span-8 relative rounded-3xl overflow-hidden group min-h-[400px] bg-[var(--color-fondo-input)]">
+           {p.imagenes.length > 0 ? (
              <>
-               <button 
-                 onClick={() => setImgActiva((imgActiva - 1 + p.imagenes.length) % p.imagenes.length)}
-                 className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                 <ChevronLeft size={24} />
-               </button>
-               <button 
-                 onClick={() => setImgActiva((imgActiva + 1) % p.imagenes.length)}
-                 className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                 <ChevronRight size={24} />
-               </button>
+               <img 
+                 src={p.imagenes[imgActiva]} 
+                 alt={p.nombre} 
+                 className="w-full h-full object-cover transition-transform duration-700" 
+               />
+               {p.imagenes.length > 1 && (
+                 <>
+                   <button 
+                     onClick={() => setImgActiva((imgActiva - 1 + p.imagenes.length) % p.imagenes.length)}
+                     className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                     <ChevronLeft size={24} />
+                   </button>
+                   <button 
+                     onClick={() => setImgActiva((imgActiva + 1) % p.imagenes.length)}
+                     className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                     <ChevronRight size={24} />
+                   </button>
+                 </>
+               )}
              </>
+           ) : (
+             <div className="w-full h-full flex flex-col items-center justify-center text-[var(--color-texto-muted)] gap-4">
+               <CalendarIcon size={64} strokeWidth={1} />
+               <p className="text-sm font-bold uppercase tracking-widest">Sin imágenes disponibles</p>
+             </div>
            )}
         </div>
         
         {/* Sidebar thumbnails */}
         <div className="lg:col-span-4 flex flex-col gap-6">
-           <div className="flex-1 rounded-3xl overflow-hidden relative border border-white/5">
-              <img src={p.imagenes[1] || p.imagenes[0]} className="w-full h-full object-cover" />
+           <div className="flex-1 rounded-3xl overflow-hidden relative border border-white/5 bg-[var(--color-fondo-input)]">
+              {p.imagenes[1] || p.imagenes[0] ? (
+                <img src={p.imagenes[1] || p.imagenes[0]} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-white/5" />
+              )}
               <div className="absolute inset-0 bg-black/10" />
            </div>
-           <div className="flex-1 rounded-3xl overflow-hidden relative border border-white/5 group">
-              <img src={p.imagenes[2] || p.imagenes[0]} className="w-full h-full object-cover" />
+           <div className="flex-1 rounded-3xl overflow-hidden relative border border-white/5 group bg-[var(--color-fondo-input)]">
+              {p.imagenes[2] || p.imagenes[1] || p.imagenes[0] ? (
+                <img src={p.imagenes[2] || p.imagenes[1] || p.imagenes[0]} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-white/5" />
+              )}
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center flex-col gap-2 cursor-pointer group-hover:bg-black/20 transition-all">
                  <span className="text-2xl font-bold">+{p.imagenes.length > 3 ? p.imagenes.length - 3 : 0}</span>
-                 <span className="text-xs uppercase font-black">Fotos & Video</span>
+                 <span className="text-xs uppercase font-black">Ver todas</span>
               </div>
            </div>
         </div>
@@ -117,7 +134,7 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
               <h1 className="text-5xl font-extrabold">{p.nombre}</h1>
               <div className="flex items-center gap-2 text-[var(--color-texto-suave)]">
                  <MapPin size={18} className="text-[var(--color-acento-claro)]" />
-                 {p.ubiacacion}
+                 {p.ubicacion}
               </div>
            </div>
 

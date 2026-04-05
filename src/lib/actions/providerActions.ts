@@ -498,7 +498,7 @@ export async function getDetalleProveedor(id: string) {
     const data = {
       nombre: proveedor.nombre,
       categoria: proveedor.categoria,
-      ubiacacion: `${proveedor.ciudad}, ${proveedor.estado}`,
+      ubicacion: `${proveedor.ciudad}, ${proveedor.estado}`,
       descripcion: proveedor.descripcion,
       calificacion: Number(calificacion.toFixed(1)),
       reseñasCount: proveedor.resenas.length,
