@@ -45,9 +45,10 @@ const GooglePublicMap = dynamic(() => import('@/components/GooglePublicMap'), { 
 
 interface ProviderDetailClientProps {
   data: any;
+  activeEvent?: any;
 }
 
-export default function ProviderDetailClient({ data }: ProviderDetailClientProps) {
+export default function ProviderDetailClient({ data, activeEvent }: ProviderDetailClientProps) {
   const [imgActiva, setImgActiva] = useState(0);
   const [reservado, setReservado] = useState(false);
   const [mostrarCalendario, setMostrarCalendario] = useState(false);
@@ -56,6 +57,7 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
   const [reservas, setReservas] = useState<any[]>([]);
   const [loadingCalendar, setLoadingCalendar] = useState(false);
   const [errorDisponibilidad, setErrorDisponibilidad] = useState<string | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(data?.servicios?.[0]?.id || null);
 
   useEffect(() => {
     if (mostrarCalendario) {
@@ -308,48 +310,88 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
                  </div>
 
                  <div className="space-y-3">
-                    <p className="text-sm font-bold">Servicios Disponibles</p>
-                    {p.servicios.map((s: any) => (
-                       <div key={s.id} className="p-4 rounded-xl border border-[var(--color-borde-suave)] bg-[var(--color-fondo-input)] hover:border-[var(--color-primario)]/50 transition-all cursor-pointer group">
-                          <div className="flex justify-between items-center mb-1">
-                             <span className="font-bold text-sm">{s.nombre}</span>
-                             <span className="text-[var(--color-primario-claro)] text-sm font-bold">{formatearMoneda(s.precio)}</span>
-                          </div>
-                          <p className="text-[10px] text-[var(--color-texto-muted)] leading-tight">{s.desc}</p>
-                       </div>
-                    ))}
-                    {p.servicios.length === 0 && <p className="text-xs text-[var(--color-texto-muted)] italic">No hay servicios específicos listados todavía.</p>}
-                 </div>
+                     <p className="text-sm font-bold uppercase tracking-tight text-[var(--color-texto-muted)]">Paquetes Disponibles</p>
+                     {p.servicios.map((s: any) => (
+                        <div 
+                           key={s.id} 
+                           onClick={() => {
+                              setSelectedServiceId(s.id);
+                              setErrorDisponibilidad(null);
+                           }}
+                           className={cn(
+                              "p-4 rounded-xl border transition-all cursor-pointer group relative",
+                              selectedServiceId === s.id 
+                                ? "border-amber-500 bg-amber-500/5 shadow-[0_0_15px_rgba(245,158,11,0.1)]" 
+                                : "border-[var(--color-borde-suave)] bg-[var(--color-fondo-input)] hover:border-amber-500/30"
+                           )}
+                        >
+                           {selectedServiceId === s.id && (
+                              <div className="absolute top-2 right-2 text-amber-500">
+                                 <CheckCircle2 size={16} />
+                              </div>
+                           )}
+                           <div className="flex justify-between items-center mb-1">
+                              <span className={cn("font-bold text-sm", selectedServiceId === s.id ? "text-amber-500" : "text-white")}>{s.nombre}</span>
+                              <span className="text-[var(--color-primario-claro)] text-sm font-black tracking-tighter">{formatearMoneda(s.precio)}</span>
+                           </div>
+                           <p className="text-[10px] text-[var(--color-texto-muted)] leading-relaxed italic">{s.desc}</p>
+                           
+                           {s.diasDisponibles && s.diasDisponibles.length > 0 && (
+                              <div className="mt-2 text-[9px] uppercase font-black tracking-widest text-amber-500/60">
+                                 Disponibilidad: {s.diasDisponibles.map((d:number) => ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(', ')}
+                              </div>
+                           )}
+                        </div>
+                     ))}
+                     {p.servicios.length === 0 && <p className="text-xs text-[var(--color-texto-muted)] italic">No hay servicios específicos listados todavía.</p>}
+                  </div>
 
                  <hr className="border-[var(--color-borde-suave)]" />
 
                   <div className="space-y-4">
-                     <button 
-                       onClick={() => setMostrarCalendario(true)}
-                       className="btn btn-secundario w-full font-bold text-sm py-4 flex items-center justify-center gap-2"
-                     >
-                        <CalendarIcon size={18} />
-                        Verificar disponibilidad
-                     </button>
+                      {errorDisponibilidad && (
+                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-[11px] font-black uppercase tracking-widest animate-bounce">
+                           {errorDisponibilidad}
+                        </div>
+                      )}
 
-                     <button 
-                       onClick={() => (() => {
-                           const servicio = p.servicios[0];
+                      <button 
+                        onClick={() => setMostrarCalendario(true)}
+                        className="btn btn-secundario w-full font-bold text-sm py-4 flex items-center justify-center gap-2"
+                      >
+                         <CalendarIcon size={18} />
+                         Verificar disponibilidad
+                      </button>
+
+                      <button 
+                        onClick={() => {
+                           const servicio = p.servicios.find((s: any) => s.id === selectedServiceId);
                            const diasPermitidos = servicio?.diasDisponibles || [];
-                           const diaEvento = 3; 
-                           if (diasPermitidos.length > 0 && !diasPermitidos.includes(diaEvento)) {
-                              setErrorDisponibilidad(`Este servicio solo está disponible para: ${diasPermitidos.map((d:number) => ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(', ')}`);
+                           
+                           if (!activeEvent || !activeEvent.fecha) {
+                              setErrorDisponibilidad("Debes tener un evento con fecha asignada para reservar.");
                               return;
                            }
+
+                           // Obtener el día de la semana del evento (0-6)
+                           const fechaEvento = new Date(activeEvent.fecha);
+                           // Usamos getUTCDay para evitar problemas de zona horaria con fechas ISO de Prisma
+                           const diaEvento = fechaEvento.getUTCDay(); 
+                           
+                           if (diasPermitidos.length > 0 && !diasPermitidos.includes(diaEvento)) {
+                              const diasNombres = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+                              setErrorDisponibilidad(`Este paquete no está disponible para el día de tu evento (${diasNombres[diaEvento]}). Solo disponible para: ${diasPermitidos.map((d:number) => diasNombres[d]).join(', ')}`);
+                              return;
+                           }
+                           
                            setErrorDisponibilidad(null);
                            setConfirmarReserva(true);
-                        })()
-}
-                       className="btn btn-primario w-full font-bold text-sm py-4 shadow-lg shadow-violet-500/20"
-                     >
-                        Reservar Fecha Ahora
-                     </button>
-                  </div>
+                        }}
+                        className="btn btn-primario w-full font-bold text-sm py-4 shadow-lg shadow-violet-500/20"
+                      >
+                         Reservar Fecha Ahora
+                      </button>
+                   </div>
 
                  <div className="pt-4 space-y-3">
                     <div className="flex items-center gap-2 text-[10px] text-emerald-400 font-bold bg-emerald-500/5 p-2 rounded-lg border border-emerald-500/20">
@@ -484,7 +526,7 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
                           endAccessor="end"
                           culture="es"
                           selectable={true}
-                          onSelectSlot={(slot) => console.log('Seleccionado:', slot)}
+                          onSelectSlot={(slot: any) => console.log('Seleccionado:', slot)}
                           messages={{
                             next: "Siguiente",
                             previous: "Anterior",
@@ -492,7 +534,7 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
                             month: "Mes",
                             week: "Semana",
                             day: "Día",
-                            showMore: total => `+ Ver ${total} más`
+                            showMore: (total: number) => `+ Ver ${total} más`
                           }}
                        />
                     </div>
