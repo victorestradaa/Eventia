@@ -27,7 +27,7 @@ import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { getReservasCalendario } from '@/lib/actions/providerActions';
+import { getReservasCalendario, solicitarReserva } from '@/lib/actions/providerActions';
 
 const locales = {
   'es': es,
@@ -58,6 +58,8 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
   const [loadingCalendar, setLoadingCalendar] = useState(false);
   const [errorDisponibilidad, setErrorDisponibilidad] = useState<string | null>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(data?.servicios?.[0]?.id || null);
+  const [solicitando, setSolicitando] = useState(false);
+  const [errorSolicitud, setErrorSolicitud] = useState<string | null>(null);
 
   useEffect(() => {
     if (mostrarCalendario) {
@@ -90,6 +92,33 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
     end: new Date(r.fechaEvento),
     allDay: r.tipoReserva === 'DIA_COMPLETO',
   }));
+
+  const handleConfirmarBooking = async () => {
+    if (!activeEvent || !activeEvent.fecha) {
+      setErrorSolicitud("Debes configurar un evento y fecha primero en tu panel de cliente.");
+      return;
+    }
+
+    setSolicitando(true);
+    setErrorSolicitud(null);
+
+    const res = await solicitarReserva({
+      clienteId: activeEvent.clienteId,
+      proveedorId: data.id,
+      servicioId: selectedService.id,
+      eventoId: activeEvent.id,
+      fechaEvento: activeEvent.fecha,
+      montoTotal: selectedService.precio
+    });
+
+    if (res.success) {
+      setConfirmarReserva(false);
+      setReservado(true);
+    } else {
+      setErrorSolicitud(res.error || "Ocurrió un error al procesar la reserva.");
+    }
+    setSolicitando(false);
+  };
 
   return (
     <div className="space-y-8 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -368,10 +397,22 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
                 <p className="text-xs text-[var(--color-texto-suave)] px-6 leading-relaxed italic">
                   Notificaremos a **{p.nombre}** sobre tu intención de reserva para **{selectedService?.nombre}**.
                 </p>
+
+                {errorSolicitud && (
+                  <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-black uppercase italic">
+                    {errorSolicitud}
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4 pt-10">
-                 <button onClick={() => setConfirmarReserva(false)} className="btn bg-white/5 py-5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-white/10">Cancelar</button>
-                 <button onClick={() => { setConfirmarReserva(false); setReservado(true); }} className="btn bg-amber-500 hover:bg-amber-600 py-5 rounded-2xl text-xs font-black uppercase tracking-widest text-white shadow-lg border-t border-white/20">Confirmar</button>
+                 <button onClick={() => setConfirmarReserva(false)} className="btn bg-white/5 py-5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-white/10" disabled={solicitando}>Cancelar</button>
+                 <button 
+                   onClick={handleConfirmarBooking} 
+                   className="btn bg-amber-500 hover:bg-amber-600 py-5 rounded-2xl text-xs font-black uppercase tracking-widest text-white shadow-lg border-t border-white/20 flex items-center justify-center gap-2"
+                   disabled={solicitando}
+                 >
+                   {solicitando ? <Loader2 className="animate-spin" size={18} /> : 'Confirmar'}
+                 </button>
               </div>
            </div>
         </div>

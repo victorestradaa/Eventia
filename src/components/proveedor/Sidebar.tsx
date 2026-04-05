@@ -11,8 +11,12 @@ import {
   Settings, 
   LogOut,
   DollarSign,
-  X
+  X,
+  Bell
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { getPendingTasksCount } from '@/lib/actions/providerActions';
+import { getCurrentProfile } from '@/lib/actions/authActions';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 
@@ -33,6 +37,22 @@ interface ProviderSidebarProps {
 
 export default function ProviderSidebar({ isOpen, onClose }: ProviderSidebarProps) {
   const pathname = usePathname();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    const loadCount = async () => {
+      const profile = await getCurrentProfile();
+      if (profile.success && profile.data?.proveedor) {
+        const res = await getPendingTasksCount(profile.data.proveedor.id);
+        if (res.success) setPendingCount(res.data);
+      }
+    };
+    loadCount();
+    
+    // Opcional: Podrías poner un intervalo aquí si quieres "pseudo-push"
+    const interval = setInterval(loadCount, 60000); // Cada minuto
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -65,18 +85,26 @@ export default function ProviderSidebar({ isOpen, onClose }: ProviderSidebarProp
             {MENU_ITEMS.map((item) => {
               const Icon = item.icon;
               const activo = pathname === item.href;
+              const hasBadge = item.label === 'Ventas' && pendingCount > 0;
+              
               return (
                 <li key={item.href}>
                   <Link 
                     href={item.href}
                     onClick={onClose}
                     className={cn(
-                      "sidebar-item",
+                      "sidebar-item relative",
                       activo && "activo"
                     )}
                   >
                     <Icon size={18} />
                     {item.label}
+                    
+                    {hasBadge && (
+                      <span className="absolute right-4 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse border-2 border-[#121212]">
+                        {pendingCount}
+                      </span>
+                    )}
                   </Link>
                 </li>
               )

@@ -8,7 +8,7 @@ import { revalidatePath } from 'next/cache';
  */
 export async function getResumenProveedor(proveedorId: string) {
   try {
-    const [reservas, servicios, metricas] = await Promise.all([
+    const [reservas, servicios, metricas, tareasPendientes] = await Promise.all([
       prisma.reserva.findMany({
         where: { proveedorId },
         orderBy: { fechaEvento: 'asc' },
@@ -29,6 +29,9 @@ export async function getResumenProveedor(proveedorId: string) {
         where: { proveedorId, estado: 'LIQUIDADO' },
         _sum: { montoTotal: true },
         _count: { id: true }
+      }),
+      prisma.reserva.count({
+        where: { proveedorId, estado: 'TEMPORAL' }
       })
     ]);
 
@@ -47,7 +50,8 @@ export async function getResumenProveedor(proveedorId: string) {
           precio: s.precio ? Number(s.precio) : 0
         })), 
         ingresosTotales: metricas._sum.montoTotal ? Number(metricas._sum.montoTotal) : 0,
-        totalReservas: metricas._count.id
+        totalReservas: metricas._count.id,
+        tareasPendientes: tareasPendientes
       } 
     };
   } catch (error) {
@@ -599,3 +603,67 @@ export async function getDetalleProveedor(id: string) {
   }
 }
 
+
+/**
+ * Permite que un cliente solicite un apartado de fecha (Estado TEMPORAL).
+ */
+export async function solicitarReserva(data: {
+  clienteId: string;
+  proveedorId: string;
+  servicioId: string;
+  eventoId: string;
+  fechaEvento: Date | string;
+  montoTotal: number;
+}) {
+  try {
+    // 1. Verificar disponibilidad real (Capacidad Simultánea)
+    const disp = await verificarDisponibilidadServicio(data.servicioId, data.fechaEvento);
+    if (!disp.success || !disp.disponible) {
+      return { success: false, error: 'Lo sentimos, esta fecha ya no está disponible.' };
+    }
+
+    // 2. Calcular fecha de expiración (48 horas por defecto)
+    const fechaExpiracion = new Date();
+    fechaExpiracion.setHours(fechaExpiracion.getHours() + 48);
+
+    // 3. Crear la reserva
+    const nuevaReserva = await prisma.reserva.create({
+      data: {
+        clienteId: data.clienteId,
+        proveedorId: data.proveedorId,
+        servicioId: data.servicioId,
+        eventoId: data.eventoId,
+        fechaEvento: new Date(data.fechaEvento),
+        estado: 'TEMPORAL', // Estado inicial según requerimiento
+        montoTotal: data.montoTotal,
+        fechaExpiracion,
+        notas: 'Solicitud realizada desde el perfil de usuario.'
+      }
+    });
+
+    revalidatePath('/proveedor/dashboard');
+    revalidatePath('/proveedor/calendario');
+    revalidatePath('/proveedor/ventas');
+    revalidatePath(`/cliente/proveedor/${data.proveedorId}`);
+
+    return { success: true, data: JSON.parse(JSON.stringify(nuevaReserva)) };
+  } catch (error) {
+    console.error('Error al solicitar reserva:', error);
+    return { success: false, error: 'Hubo un error al procesar tu solicitud.' };
+  }
+}
+
+/**
+ * Obtiene solo el conteo de reservas pendientes (Estado TEMPORAL).
+ * Útil para badges de notificación en el Sidebar.
+ */
+export async function getPendingTasksCount(proveedorId: string) {
+  try {
+    const count = await prisma.reserva.count({
+      where: { proveedorId, estado: 'TEMPORAL' }
+    });
+    return { success: true, data: count };
+  } catch (error) {
+    return { success: false, data: 0 };
+  }
+}

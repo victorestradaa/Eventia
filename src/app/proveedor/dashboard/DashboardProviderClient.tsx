@@ -53,10 +53,11 @@ export default function DashboardProviderClient({ resumen, perfil }: DashboardPr
       trend: 'En tu catálogo' 
     },
     { 
-      label: 'Calificación', 
-      valor: '0.0', 
-      icon: TrendingUp, 
-      trend: 'Sin reseñas aún' 
+      label: 'Tareas Pendientes', 
+      valor: resumen.tareasPendientes?.toString() || '0', 
+      icon: Clock, 
+      trend: resumen.tareasPendientes > 0 ? '¡Tienes solicitudes por revisar!' : 'Al día con tus tareas',
+      alert: resumen.tareasPendientes > 0
     },
   ];
 
@@ -76,16 +77,28 @@ export default function DashboardProviderClient({ resumen, perfil }: DashboardPr
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
-          <div key={stat.label} className="stat-card hover:bg-white/[0.02] transition-colors cursor-default group">
+          <div key={stat.label} className={cn(
+            "stat-card hover:bg-white/[0.02] transition-all cursor-default group border-l-4",
+            stat.alert ? "border-amber-500 bg-amber-500/5 shadow-[0_0_20px_rgba(245,158,11,0.05)]" : "border-transparent"
+          )}>
             <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-black text-[var(--color-texto-muted)] uppercase tracking-wider">
+              <span className={cn(
+                "text-[10px] font-black uppercase tracking-wider",
+                stat.alert ? "text-amber-400" : "text-[var(--color-texto-muted)]"
+              )}>
                 {stat.label}
               </span>
-              <div className="p-2 rounded-xl bg-[var(--color-primario)]/10 text-[var(--color-primario-claro)] group-hover:scale-110 transition-transform">
+              <div className={cn(
+                "p-2 rounded-xl group-hover:scale-110 transition-transform",
+                stat.alert ? "bg-amber-500/20 text-amber-500" : "bg-[var(--color-primario)]/10 text-[var(--color-primario-claro)]"
+              )}>
                 <stat.icon size={18} />
               </div>
             </div>
-            <div className="stat-valor text-2xl">{stat.valor}</div>
+            <div className={cn(
+              "stat-valor text-2xl",
+              stat.alert && "text-amber-200"
+            )}>{stat.valor}</div>
             <p className="text-[10px] font-bold text-[var(--color-texto-suave)] mt-2 italic">
               {stat.trend}
             </p>
