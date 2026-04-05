@@ -67,14 +67,6 @@ export async function cerrarSesion() {
  */
 export async function registrarUsuario(data: { email: string; nombre: string; rol: 'CLIENTE' | 'PROVEEDOR' }) {
   try {
-    const existe = await prisma.usuario.findUnique({
-      where: { email: data.email }
-    });
-
-    if (existe) {
-      return { success: false, error: 'El correo electrónico ya está registrado.' };
-    }
-
     const usuario = await prisma.usuario.create({
       data: {
         email: data.email,
@@ -96,8 +88,14 @@ export async function registrarUsuario(data: { email: string; nombre: string; ro
     });
 
     return { success: true, data: usuario };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error en registrarUsuario:', error);
+    
+    // P2002 es el error de Prisma para violaciones de campos UNIQUE
+    if (error?.code === 'P2002') {
+      return { success: false, error: 'El correo electrónico ya está registrado en la base de datos.' };
+    }
+    
     const mensajeError = error instanceof Error ? error.message : String(error);
     return { success: false, error: `Error DB: ${mensajeError}` };
   }
