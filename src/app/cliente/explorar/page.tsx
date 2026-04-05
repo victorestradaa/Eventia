@@ -68,34 +68,37 @@ export default function ExplorarPage() {
 
   return (
     <div className="space-y-8 pb-10">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Explorar Proveedores</h1>
-          <p className="text-[var(--color-texto-suave)] flex items-center gap-2">
-            Catálogo real de servicios disponibles en <span className="font-bold text-white bg-[var(--color-primario)]/20 px-2 py-0.5 rounded border border-[var(--color-primario)]/30">Eventia</span>
+          <h1 className="text-4xl font-black tracking-tight mb-2 italic">Explorar Proveedores</h1>
+          <p className="text-[var(--color-texto-suave)] flex items-center gap-2 text-sm font-medium uppercase tracking-widest">
+            Catálogo real de servicios disponibles en <span className="font-black text-[var(--color-acento)] px-2 bg-[var(--color-acento)]/10 rounded">Eventia</span>
           </p>
         </div>
         <div className="flex items-center gap-3">
-           <div className="flex items-center gap-2 bg-[#0f172a] border-2 border-white/20 rounded-2xl px-4 py-2 shadow-2xl hover:border-white/40 transition-all group">
-              <Calendar size={18} className="text-[var(--color-primario-claro)]" />
-              <input 
-                type="date" 
-                value={filtros.fecha}
-                onChange={(e) => setFiltros({...filtros, fecha: e.target.value})}
-                className="bg-transparent border-none outline-none text-[10px] font-black uppercase tracking-widest text-white cursor-pointer"
-                style={{ colorScheme: 'dark' }}
-              />
+           <div className="flex items-center gap-3 bg-[var(--color-fondo-card)] border border-white/10 rounded-2xl px-5 py-3 shadow-2xl hover:border-[var(--color-acento)]/50 transition-all group">
+              <Calendar size={18} className="text-[var(--color-acento)]" />
+              <div className="flex flex-col">
+                <span className="text-[8px] uppercase font-black tracking-widest text-[var(--color-texto-muted)] -mb-1">Fecha del Evento</span>
+                <input 
+                  type="date" 
+                  value={filtros.fecha}
+                  onChange={(e) => setFiltros({...filtros, fecha: e.target.value})}
+                  className="bg-transparent border-none outline-none text-[11px] font-black uppercase text-white cursor-pointer"
+                  style={{ colorScheme: 'dark' }}
+                />
+              </div>
            </div>
         </div>
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="flex flex-wrap gap-4 sticky top-24 z-40">
-        <div className="relative flex-1 min-w-[300px]">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)]" size={20} />
+      <div className="flex flex-wrap gap-4 sticky top-24 z-40 bg-[var(--color-fondo)]/80 backdrop-blur-xl py-4 -mx-4 px-4">
+        <div className="relative flex-1 min-w-[300px] group">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)] group-focus-within:text-[var(--color-acento)] transition-colors" size={20} />
           <input 
             type="text" 
-            className="input pl-12 h-14 bg-[var(--color-fondo-card)] border-[var(--color-borde-suave)] shadow-xl" 
+            className="input pl-14 h-16 bg-[var(--color-fondo-card)]/50 border-white/5 shadow-2xl focus:border-[var(--color-acento)]/30 focus:shadow-[var(--color-acento)]/5 rounded-2xl transition-all font-medium" 
             placeholder="Buscar por nombre, ciudad o servicio..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -104,13 +107,13 @@ export default function ExplorarPage() {
         <button 
           onClick={() => setShowAdvanced(!showAdvanced)}
           className={cn(
-            "btn h-14 px-10 border-2 shadow-2xl transition-all font-black uppercase tracking-widest text-[10px]",
+            "btn h-16 px-12 transition-all font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-2xl",
             showAdvanced 
-              ? "bg-[var(--color-primario)] border-[var(--color-primario)] text-white" 
-              : "bg-[#0f172a] border-white/20 text-white hover:border-white/60"
+              ? "btn-oro shadow-oro scale-[1.02]" 
+              : "bg-[var(--color-fondo-card)] border border-white/10 text-white hover:border-[var(--color-acento)]/50"
           )}
         >
-          <Settings2 size={18} className="mr-2 text-[var(--color-primario-claro)]" />
+          <Settings2 size={18} className={cn("mr-2", showAdvanced ? "text-[#1a1b35]" : "text-[var(--color-acento)]")} />
           Filtros Avanzados
         </button>
 
@@ -178,16 +181,16 @@ export default function ExplorarPage() {
       </div>
 
       {/* Categorías (Pills) */}
-      <div className="flex items-center gap-3 overflow-x-auto pb-4 no-scrollbar">
+      <div className="flex items-center gap-3 overflow-x-auto pb-4 no-scrollbar pt-2">
         {CATEGORIAS.map((cat) => (
           <button
             key={cat}
             onClick={() => setCatActiva(cat)}
             className={cn(
-              "px-6 py-2 rounded-full whitespace-nowrap text-sm font-bold border transition-all",
+              "px-8 py-2.5 rounded-xl whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all border duration-300",
               catActiva === cat 
-                ? "bg-[var(--color-primario)] border-[var(--color-primario)] text-white shadow-lg shadow-violet-500/30" 
-                : "bg-[var(--color-fondo-card)] border-[var(--color-borde-suave)] text-[var(--color-texto-suave)] hover:border-[var(--color-primario-claro)]"
+                ? "bg-[var(--color-acento)] border-[var(--color-acento)] text-white shadow-[0_8px_20px_-5px_rgba(189,155,101,0.5)] scale-105" 
+                : "bg-white/5 border-white/5 text-[var(--color-texto-muted)] hover:border-[var(--color-acento)]/30 hover:text-white"
             )}
           >
             {cat}
