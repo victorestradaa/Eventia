@@ -194,13 +194,13 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
                  <div className="relative shrink-0">
                     <div 
                       onClick={() => setZoomLogo(true)}
-                      className="w-24 h-24 rounded-full border-4 border-[var(--color-fondo-card)] bg-[var(--color-fondo-input)] shadow-xl overflow-hidden cursor-pointer hover:scale-110 transition-transform active:scale-95"
+                      className="w-20 h-20 rounded-full border-4 border-[var(--color-fondo-card)] bg-[var(--color-fondo-input)] shadow-xl overflow-hidden cursor-pointer hover:scale-110 transition-transform active:scale-95 group"
                     >
                        {p.logoUrl ? (
-                         <img src={p.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                         <img src={p.logoUrl} alt="Logo" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
                        ) : (
                          <div className="w-full h-full flex items-center justify-center text-[var(--color-primario-claro)]">
-                            <Star size={32} />
+                            <Star size={24} />
                          </div>
                        )}
                     </div>
@@ -324,7 +324,7 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
                      </button>
 
                      <button 
-                       onClick={() => setReservado(true)}
+                       onClick={() => setConfirmarReserva(true)}
                        className="btn btn-primario w-full font-bold text-sm py-4 shadow-lg shadow-violet-500/20"
                      >
                         Reservar Fecha Ahora
@@ -374,9 +374,9 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
                      setConfirmarReserva(false);
                      setReservado(true);
                    }}
-                   className="btn btn-primario py-4 text-xs font-black uppercase tracking-widest bg-amber-500 hover:bg-amber-600 border-amber-600 shadow-amber-500/20"
+                   className="btn btn-primario py-4 text-[10px] font-black uppercase tracking-widest bg-amber-500 hover:bg-amber-600 border-amber-600 shadow-amber-500/20"
                  >
-                   Entendido y Reservar
+                   Confirmar Intención
                  </button>
               </div>
            </div>

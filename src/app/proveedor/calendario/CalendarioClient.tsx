@@ -55,6 +55,46 @@ export default function CalendarioClient({ reservas: initialReservas, proveedor,
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
 
+  // ── Helper: convierte "HH:MM" a minutos ──
+  const toMin = (t: string) => {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  };
+
+  // ── Verifica si un turno (ej. "20:00-01:00") está disponible para una fecha dada ──
+  // Replica la lógica del servidor, pero usando las reservas ya cargadas en cliente
+  const checkTurnoDisponible = (bloque: string, fecha: Date, servicioId: string): boolean => {
+    const servicio = servicios.find(s => s.id === servicioId);
+    const capacidad = servicio?.capacidadSimultanea || 1;
+
+    const reservasDelDia = reservas.filter(r => 
+      isSameDay(new Date(r.fechaEvento), fecha) &&
+      r.servicioId === servicioId &&
+      r.estado !== 'CANCELADO'
+    );
+
+    if (!bloque.includes('-')) {
+      // DIA_COMPLETO: ocupado si ya hay cualquier reserva activa
+      return reservasDelDia.length < capacidad;
+    }
+
+    const dashIndex = bloque.lastIndexOf('-');
+    let bStart = toMin(bloque.substring(0, dashIndex).trim());
+    let bEnd = toMin(bloque.substring(dashIndex + 1).trim());
+    if (bEnd <= bStart) bEnd += 24 * 60; // cruza medianoche
+
+    const overlapCount = reservasDelDia.filter(r => {
+      if (r.tipoReserva === 'DIA_COMPLETO') return true;
+      if (!r.horaInicio || !r.horaFin) return true;
+      let rStart = toMin(r.horaInicio);
+      let rEnd = toMin(r.horaFin);
+      if (rEnd <= rStart) rEnd += 24 * 60;
+      return (bStart < rEnd) && (bEnd > rStart);
+    }).length;
+
+    return overlapCount < capacidad;
+  };
+
   // ── Lógica de clic en día ──
   const handleDayClick = (day: Date) => {
     const reservasHoy = reservas.filter(r => {
@@ -564,17 +604,39 @@ export default function CalendarioClient({ reservas: initialReservas, proveedor,
                             <label className="text-xs font-bold text-[var(--color-texto-suave)]">Selecciona el Turno Predefinido</label>
                             <div className="grid grid-cols-2 gap-2">
                               {servicioElegido.bloquesHorario.map((bloque: string) => {
-                                const [hI, hF] = bloque.split('-');
+                                const dashIdx = bloque.lastIndexOf('-');
+                                const hI = bloque.substring(0, dashIdx).trim();
+                                const hF = bloque.substring(dashIdx + 1).trim();
                                 const isActive = form.horaInicio === hI && form.horaFin === hF;
+                                const disponible = checkTurnoDisponible(bloque, selectedDate!, form.servicioId);
+
                                 return (
                                   <button
                                     key={bloque}
                                     type="button"
-                                    onClick={() => setForm({...form, horaInicio: hI, horaFin: hF})}
-                                    className={`p-3 rounded-xl border text-sm font-bold transition-all flex flex-col items-center gap-1 ${isActive ? 'bg-[var(--color-primario)]/10 border-[var(--color-primario)] text-[var(--color-primario)] ring-2 ring-[var(--color-primario)]/20' : 'border-[var(--color-borde-fuerte)] text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-input)]'}`}
+                                    disabled={!disponible}
+                                    onClick={() => disponible && setForm({...form, horaInicio: hI, horaFin: hF})}
+                                    className={cn(
+                                      "p-3 rounded-xl border text-sm font-bold transition-all flex flex-col items-center gap-1 relative",
+                                      !disponible 
+                                        ? "bg-red-500/10 border-red-500/50 text-red-400 cursor-not-allowed opacity-80"
+                                        : isActive 
+                                          ? "bg-emerald-500/15 border-emerald-500 text-emerald-400 ring-2 ring-emerald-500/30"
+                                          : "bg-emerald-500/5 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/15 hover:border-emerald-500"
+                                    )}
                                   >
-                                    <Clock size={16} className={isActive ? "text-[var(--color-primario)]" : "text-[var(--color-texto-muted)]"} />
-                                    <span>{bloque}</span>
+                                    {disponible ? (
+                                      <Clock size={16} className={isActive ? "text-emerald-400" : "text-emerald-500/70"} />
+                                    ) : (
+                                      <span className="text-lg leading-none">🚫</span>
+                                    )}
+                                    <span className="font-black">{bloque}</span>
+                                    <span className={cn(
+                                      "text-[9px] font-black uppercase tracking-widest",
+                                      disponible ? "text-emerald-500/80" : "text-red-400/80"
+                                    )}>
+                                      {disponible ? '✓ Disponible' : 'Ocupado'}
+                                    </span>
                                   </button>
                                 );
                               })}

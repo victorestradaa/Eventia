@@ -365,23 +365,31 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                       <tr key={i.id}>
                         <td className="font-bold text-sm uppercase tracking-tight">{i.nombre}</td>
                         <td>
-                           <div className="text-[10px] text-[var(--color-texto-suave)] font-bold">{i.email || 'Sin email'}</div>
+                           <div className="text-[10px] text-[var(--color-texto-suave)] font-bold italic">{i.email || 'Sin email'}</div>
                            <div className="text-[10px] text-[var(--color-texto-muted)]">{i.telefono || ''}</div>
                         </td>
                         {evento.tipo === 'Boda' && (
                           <td>
                             {i.lado ? (
                               <span className={cn(
-                                "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest",
-                                i.lado === 'NOVIO' ? "bg-blue-500/20 text-blue-400" : "bg-pink-500/20 text-pink-400"
+                                "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                                i.lado === 'NOVIO' ? "bg-blue-500/20 border-blue-500/30 text-blue-300" : "bg-pink-500/20 border-pink-500/30 text-pink-300"
                               )}>
                                 {i.lado === 'NOVIO' ? 'Novio' : 'Novia'}
                               </span>
-                            ) : '—'}
+                            ) : (
+                              <span className="text-[10px] text-[var(--color-texto-muted)] italic font-bold">Sin asignar</span>
+                            )}
                           </td>
                         )}
                         <td>
-                           <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest text-[var(--color-texto-muted)]">
+                           <span className={cn(
+                             "px-2 py-0.5 rounded-full border text-[9px] font-black uppercase tracking-widest",
+                             i.categoria === 'FAMILIA' ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" :
+                             i.categoria === 'AMIGOS' ? "bg-purple-500/10 border-purple-500/30 text-purple-400" :
+                             i.categoria === 'TRABAJO' ? "bg-amber-500/10 border-amber-500/30 text-amber-400" :
+                             "bg-white/5 border-white/10 text-[var(--color-texto-muted)]"
+                           )}>
                               {i.categoria || 'General'}
                            </span>
                         </td>
