@@ -230,3 +230,21 @@ export async function createManualReserva(data: {
     return { success: false, error: 'No se pudo crear la venta manual.' };
   }
 }
+
+/**
+ * Actualizar el nombre del cliente en una reserva manual.
+ */
+export async function updateManualClientName(reservaId: string, nuevoNombre: string) {
+  try {
+    await prisma.reserva.update({
+      where: { id: reservaId },
+      data: { nombreClienteExterno: nuevoNombre }
+    });
+
+    revalidatePath('/proveedor/ventas');
+    return { success: true };
+  } catch (error) {
+    console.error('Error al actualizar nombre del cliente:', error);
+    return { success: false, error: 'No se pudo actualizar el nombre del cliente.' };
+  }
+}

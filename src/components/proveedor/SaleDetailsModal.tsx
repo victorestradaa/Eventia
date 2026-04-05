@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { X, Calendar as CalendarIcon, DollarSign, AlertCircle, CheckCircle, RotateCcw, Plus, CalendarDays } from 'lucide-react';
 import { formatearMoneda, formatearFechaCorta } from '@/lib/utils';
-import { updateReservaStatus, addTransaction, payTransaction, rescheduleReserva } from '@/lib/actions/salesActions';
+import { updateReservaStatus, addTransaction, payTransaction, rescheduleReserva, updateManualClientName } from '@/lib/actions/salesActions';
+import { Edit2, Check } from 'lucide-react';
 
 interface Props {
   venta: any;
@@ -18,6 +19,10 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
   // Forms State
   const [showAbonoForm, setShowAbonoForm] = useState(false);
   const [showRescheduleForm, setShowRescheduleForm] = useState(false);
+  
+  // Edit Name State
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(venta.nombreClienteExterno || '');
   
   // Abono Payload
   const [abono, setAbono] = useState({
@@ -125,6 +130,19 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
     setIsSubmitting(false);
   };
 
+  const handleUpdateName = async () => {
+    if (!editedName.trim()) return;
+    setIsSubmitting(true);
+    const res = await updateManualClientName(venta.id, editedName);
+    if (res.success) {
+      setIsEditingName(false);
+      onUpdate({ ...venta, nombreClienteExterno: editedName });
+    } else {
+      alert(res.error);
+    }
+    setIsSubmitting(false);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-[var(--color-fondo-card)] w-full max-w-4xl max-h-[95vh] overflow-y-auto rounded-3xl shadow-2xl border border-[var(--color-borde-suave)] animate-in zoom-in-95 duration-200 relative">
@@ -148,9 +166,37 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
             <div className="flex-1 min-w-[200px]">
               <h3 className="text-sm font-bold text-[var(--color-texto-muted)] uppercase tracking-wider mb-1">Cliente</h3>
               <div className="flex items-center gap-2">
-                <p className="font-bold text-lg">{venta.esManual ? (venta.nombreClienteExterno || 'Cliente Externo') : (venta.cliente?.usuario?.nombre || 'N/A')}</p>
-                {venta.esManual && (
-                  <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500">Manual</span>
+                {venta.esManual ? (
+                  isEditingName ? (
+                    <div className="flex items-center gap-2">
+                      <input 
+                        value={editedName} 
+                        onChange={e => setEditedName(e.target.value)}
+                        className="input h-10 py-1 px-3 text-lg font-bold bg-white dark:bg-black border-[var(--color-acento)] focus:ring-1 focus:ring-[var(--color-acento)]" 
+                        autoFocus
+                      />
+                      <button onClick={handleUpdateName} className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                        <Check size={18} />
+                      </button>
+                      <button onClick={() => setIsEditingName(false)} className="p-2 bg-red-400/20 text-red-500 rounded-lg hover:bg-red-400/30">
+                        <X size={18} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 group/name">
+                      <p className="font-bold text-lg">{venta.nombreClienteExterno || 'Cliente Externo'}</p>
+                      <button 
+                         onClick={() => setIsEditingName(true)} 
+                         className="p-1.5 opacity-0 group-hover/name:opacity-100 text-[var(--color-acento)] hover:bg-[var(--color-acento)]/10 rounded-md transition-all"
+                         title="Editar nombre"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500">Manual</span>
+                    </div>
+                  )
+                ) : (
+                  <p className="font-bold text-lg">{venta.cliente?.usuario?.nombre || 'N/A'}</p>
                 )}
               </div>
               <p className="text-sm text-[var(--color-texto-suave)]">

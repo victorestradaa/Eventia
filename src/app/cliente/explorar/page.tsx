@@ -30,7 +30,8 @@ export default function ExplorarPage() {
   const [filtros, setFiltros] = useState({
     precioMax: 500000,
     capacidadMin: 0,
-    fecha: ''
+    fecha: '',
+    ubicacion: ''
   });
 
 
@@ -61,8 +62,11 @@ export default function ExplorarPage() {
     const cumpleSearch = searchQuery.trim() === '' || 
                        normalizar(s.nombre).includes(normalizar(searchQuery)) || 
                        normalizar(s.ciudad || '').includes(normalizar(searchQuery));
+                       
+    const cumpleUbicacion = filtros.ubicacion.trim() === '' || 
+                          normalizar(s.ciudad || '').includes(normalizar(filtros.ubicacion));
     
-    return cumpleCat && cumpleSearch && cumplrePrecio && cumpleCapacidad;
+    return cumpleCat && cumpleSearch && cumplrePrecio && cumpleCapacidad && cumpleUbicacion;
   });
 
 
@@ -79,13 +83,13 @@ export default function ExplorarPage() {
            <div className="flex items-center gap-3 bg-[var(--color-fondo-card)] border border-white/10 rounded-2xl px-5 py-3 shadow-2xl hover:border-[var(--color-acento)]/50 transition-all group">
               <Calendar size={18} className="text-[var(--color-acento)]" />
               <div className="flex flex-col">
-                <span className="text-[8px] uppercase font-black tracking-widest text-[var(--color-texto-muted)] -mb-1">Fecha del Evento</span>
+                <span className="text-[8px] uppercase font-black tracking-widest text-[var(--color-acento)] -mb-1">Fecha del Evento</span>
                 <input 
                   type="date" 
                   value={filtros.fecha}
                   onChange={(e) => setFiltros({...filtros, fecha: e.target.value})}
-                  className="bg-transparent border-none outline-none text-[11px] font-black uppercase text-white cursor-pointer"
-                  style={{ colorScheme: 'dark' }}
+                  className="bg-transparent border-none outline-none text-[11px] font-black uppercase text-[#1a1b35] cursor-pointer"
+                  style={{ colorScheme: 'light' }}
                 />
               </div>
            </div>
@@ -110,7 +114,7 @@ export default function ExplorarPage() {
             "btn h-16 px-12 transition-all font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-2xl",
             showAdvanced 
               ? "btn-oro shadow-oro scale-[1.02]" 
-              : "bg-[var(--color-fondo-card)] border border-white/10 text-white hover:border-[var(--color-acento)]/50"
+              : "bg-[var(--color-fondo-card)] border border-white/10 text-[#1a1b35] hover:border-[var(--color-acento)]/50"
           )}
         >
           <Settings2 size={18} className={cn("mr-2", showAdvanced ? "text-[#1a1b35]" : "text-[var(--color-acento)]")} />
@@ -163,14 +167,28 @@ export default function ExplorarPage() {
                    </div>
                 </div>
 
+                <div className="space-y-4">
+                   <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1b35]">Ubicación (Ciudad)</label>
+                   <div className="relative">
+                      <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-acento)]" />
+                      <input 
+                        type="text" 
+                        placeholder="Ej. Guadalajara..." 
+                        value={filtros.ubicacion}
+                        onChange={(e) => setFiltros({...filtros, ubicacion: e.target.value})}
+                        className="input pl-10 h-11 bg-white dark:bg-black border-white/20 text-sm font-bold w-full" 
+                      />
+                   </div>
+                </div>
+
                 <div className="flex items-end pb-1">
                    <button 
                      onClick={() => {
-                        setFiltros({ precioMax: 500000, capacidadMin: 0, fecha: '' });
+                        setFiltros({ precioMax: 500000, capacidadMin: 0, fecha: '', ubicacion: '' });
                         setCatActiva('Todos');
                         setSearchQuery('');
                      }}
-                     className="btn btn-fantasma w-full text-[10px] font-black uppercase tracking-widest h-12"
+                     className="btn btn-fantasma w-full text-[10px] font-black uppercase tracking-widest h-11 border-[#1a1b35]/20 text-[#1a1b35]"
                    >
                      Restablecer todo
                    </button>
