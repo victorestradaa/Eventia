@@ -23,7 +23,7 @@ import {
 import { useState } from 'react';
 import { formatearMoneda, formatearFechaCorta, cn } from '@/lib/utils';
 import Link from 'next/link';
-import { updateEvento } from '@/lib/actions/eventActions';
+import { updateEvento, addInvitado } from '@/lib/actions/eventActions';
 import { useRouter } from 'next/navigation';
 
 interface EventoDetailClientProps {
@@ -42,6 +42,14 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
     tipo: evento.tipo,
     numInvitados: evento.numInvitados || 0,
     presupuestoTotal: Number(evento.presupuestoTotal) || 0,
+  });
+  const [isAddGuestModalOpen, setIsAddGuestModalOpen] = useState(false);
+  const [newGuest, setNewGuest] = useState({
+    nombre: '',
+    email: '',
+    telefono: '',
+    lado: '',
+    categoria: 'AMIGOS'
   });
 
   const eventTypes = ['Boda', 'XV Años', 'Fiesta Infantil', 'Graduación', 'Fiesta', 'Bautizo'];
@@ -73,6 +81,26 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
     });
     if (res.success) {
       setIsEditModalOpen(false);
+      router.refresh();
+    } else {
+      alert(res.error);
+    }
+    setSaving(false);
+  };
+
+  const handleAddGuest = async () => {
+    if (!newGuest.nombre) return alert('El nombre es obligatorio');
+    setSaving(true);
+    const res = await addInvitado({
+      eventoId: evento.id,
+      ...newGuest,
+      // Si no es boda, el lado es null
+      lado: evento.tipo === 'Boda' ? newGuest.lado : undefined
+    });
+
+    if (res.success) {
+      setIsAddGuestModalOpen(false);
+      setNewGuest({ nombre: '', email: '', telefono: '', lado: '', categoria: 'AMIGOS' });
       router.refresh();
     } else {
       alert(res.error);
@@ -312,17 +340,51 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
       {tabActiva === 'invitados' && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-             <h2 className="text-2xl font-bold">Gestión de Invitados ({invitados.length})</h2>
+             <h2 className="text-2xl font-bold italic tracking-tighter uppercase">Gestión de Invitados ({invitados.length})</h2>
+             <button 
+               onClick={() => setIsAddGuestModalOpen(true)}
+               className="btn btn-primario gap-2"
+             >
+                <Plus size={18} /> Agregar Invitado
+             </button>
           </div>
           {invitados.length > 0 ? (
             <div className="card p-0 overflow-hidden">
                <table className="tabla">
-                  <thead><tr><th>Nombre</th><th>Email</th><th>Estado RSVP</th></tr></thead>
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Información</th>
+                      {evento.tipo === 'Boda' && <th>Lado</th>}
+                      <th>Categoría</th>
+                      <th>Estado RSVP</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {invitados.map((i: any) => (
                       <tr key={i.id}>
-                        <td className="font-medium">{i.nombre}</td>
-                        <td className="text-[var(--color-texto-suave)] text-xs">{i.email || '—'}</td>
+                        <td className="font-bold text-sm uppercase tracking-tight">{i.nombre}</td>
+                        <td>
+                           <div className="text-[10px] text-[var(--color-texto-suave)] font-bold">{i.email || 'Sin email'}</div>
+                           <div className="text-[10px] text-[var(--color-texto-muted)]">{i.telefono || ''}</div>
+                        </td>
+                        {evento.tipo === 'Boda' && (
+                          <td>
+                            {i.lado ? (
+                              <span className={cn(
+                                "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest",
+                                i.lado === 'NOVIO' ? "bg-blue-500/20 text-blue-400" : "bg-pink-500/20 text-pink-400"
+                              )}>
+                                {i.lado === 'NOVIO' ? 'Novio' : 'Novia'}
+                              </span>
+                            ) : '—'}
+                          </td>
+                        )}
+                        <td>
+                           <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest text-[var(--color-texto-muted)]">
+                              {i.categoria || 'General'}
+                           </span>
+                        </td>
                         <td>
                           <span className={cn(
                             "badge text-[9px] uppercase tracking-tighter", 
@@ -392,6 +454,73 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                 <button onClick={() => setIsEditModalOpen(false)} className="btn btn-secundario flex-1 py-4" disabled={saving}>Cancelar</button>
                 <button onClick={handleSaveEvento} className="btn btn-primario flex-1 py-4 font-bold shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2" disabled={saving}>
                   {saving ? <Loader2 size={18} className="animate-spin" /> : 'Guardar Cambios'}
+                </button>
+             </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL AGREGAR INVITADO */}
+      {isAddGuestModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="card max-w-xl w-full p-8 space-y-8 animate-in zoom-in-95 duration-300">
+             <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                   <div className="p-2 rounded-xl bg-[var(--color-primario)]/10 text-[var(--color-primario-claro)]">
+                      <Users size={24} />
+                   </div>
+                   <h2 className="text-2xl font-bold italic tracking-tighter uppercase">Nuevo Invitado</h2>
+                </div>
+                <button onClick={() => setIsAddGuestModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full"><X size={20} /></button>
+             </div>
+             
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1 md:col-span-2">
+                  <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Nombre Completo</label>
+                  <input type="text" value={newGuest.nombre} onChange={(e) => setNewGuest({...newGuest, nombre: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" placeholder="Ej. Juan Pérez" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Correo Electrónico</label>
+                  <input type="email" value={newGuest.email} onChange={(e) => setNewGuest({...newGuest, email: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" placeholder="juan@email.com" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Teléfono (WhatsApp)</label>
+                  <input type="text" value={newGuest.telefono} onChange={(e) => setNewGuest({...newGuest, telefono: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" placeholder="+52 ..." />
+                </div>
+
+                <div className="space-y-1">
+                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Categoría</label>
+                   <select 
+                     value={newGuest.categoria} 
+                     onChange={(e) => setNewGuest({...newGuest, categoria: e.target.value})} 
+                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all uppercase text-xs font-bold"
+                   >
+                     <option value="FAMILIA" className="bg-[#1a1a1a]">Familia</option>
+                     <option value="AMIGOS" className="bg-[#1a1a1a]">Amigos</option>
+                     <option value="TRABAJO" className="bg-[#1a1a1a]">Trabajo</option>
+                     <option value="OTRO" className="bg-[#1a1a1a]">Otro</option>
+                   </select>
+                </div>
+
+                {evento.tipo === 'Boda' && (
+                  <div className="space-y-1">
+                     <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Lado del Evento</label>
+                     <select 
+                       value={newGuest.lado} 
+                       onChange={(e) => setNewGuest({...newGuest, lado: e.target.value})} 
+                       className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all uppercase text-xs font-bold"
+                     >
+                       <option value="" className="bg-[#1a1a1a]">Seleccionar...</option>
+                       <option value="NOVIO" className="bg-[#1a1a1a]">Novio</option>
+                       <option value="NOVIA" className="bg-[#1a1a1a]">Novia</option>
+                     </select>
+                  </div>
+                )}
+             </div>
+
+             <div className="flex gap-4 pt-4">
+                <button onClick={() => setIsAddGuestModalOpen(false)} className="btn btn-secundario flex-1 py-4 uppercase font-black tracking-widest text-xs" disabled={saving}>Cancelar</button>
+                <button onClick={handleAddGuest} className="btn btn-primario flex-1 py-4 font-black uppercase tracking-widest text-xs shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2" disabled={saving}>
+                  {saving ? <Loader2 size={18} className="animate-spin" /> : 'Confirmar Registro'}
                 </button>
              </div>
           </div>

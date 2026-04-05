@@ -221,7 +221,8 @@ model Invitado {
   mesaAsignada     Int?
   rsvpToken        String     @unique @default(cuid())
   rsvpEstado       EstadoRSVP @default(PENDIENTE)
-  mensajeRsvp      String?
+  lado             String?    // NOVIO, NOVIA, o null para otros eventos
+  categoria        String?    // FAMILIA, AMIGOS, TRABAJO
   creadoEn         DateTime   @default(now())
 }
 

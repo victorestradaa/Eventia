@@ -78,3 +78,33 @@ export async function updateEvento(id: string, data: any) {
     return { success: false, error: 'No se pudo actualizar el evento.' };
   }
 }
+/**
+ * Agrega un nuevo invitado a un evento.
+ */
+export async function addInvitado(data: {
+  eventoId: string;
+  nombre: string;
+  email?: string;
+  telefono?: string;
+  lado?: string;
+  categoria?: string;
+}) {
+  try {
+    const nuevoInvitado = await prisma.invitado.create({
+      data: {
+        eventoId: data.eventoId,
+        nombre: data.nombre,
+        email: data.email || null,
+        telefono: data.telefono || null,
+        lado: data.lado || null,
+        categoria: data.categoria || null,
+      }
+    });
+
+    revalidatePath(`/cliente/evento/${data.eventoId}`);
+    return { success: true, data: nuevoInvitado };
+  } catch (error) {
+    console.error('Error al agregar invitado:', error);
+    return { success: false, error: 'No se pudo agregar al invitado.' };
+  }
+}

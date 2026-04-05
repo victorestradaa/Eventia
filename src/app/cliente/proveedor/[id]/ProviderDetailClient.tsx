@@ -22,6 +22,25 @@ import { cn, formatearMoneda } from '@/lib/utils';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
+import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { es } from 'date-fns/locale';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { getReservasCalendario } from '@/lib/actions/providerActions';
+import { useEffect } from 'react';
+
+const locales = {
+  'es': es,
+};
+
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek,
+  getDay,
+  locales,
+});
+
 const GooglePublicMap = dynamic(() => import('@/components/GooglePublicMap'), { ssr: false });
 
 interface ProviderDetailClientProps {
@@ -32,9 +51,32 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
   const [imgActiva, setImgActiva] = useState(0);
   const [reservado, setReservado] = useState(false);
   const [mostrarCalendario, setMostrarCalendario] = useState(false);
-  
-  const [selectedDia, setSelectedDia] = useState<number | null>(null);
-  const [selectedTurno, setSelectedTurno] = useState<string | null>(null);
+  const [confirmarReserva, setConfirmarReserva] = useState(false);
+  const [zoomLogo, setZoomLogo] = useState(false);
+  const [reservas, setReservas] = useState<any[]>([]);
+  const [loadingCalendar, setLoadingCalendar] = useState(false);
+
+  useEffect(() => {
+    if (mostrarCalendario) {
+      const loadReservas = async () => {
+        setLoadingCalendar(true);
+        const res = await getReservasCalendario(data.id);
+        if (res.success) {
+          setReservas(res.data || []);
+        }
+        setLoadingCalendar(false);
+      };
+      loadReservas();
+    }
+  }, [mostrarCalendario, data.id]);
+
+  // Convertir reservas a eventos de calendario
+  const calendarEvents = reservas.map(r => ({
+    title: r.esManual ? 'No disponible' : 'Reservado',
+    start: new Date(r.fechaEvento),
+    end: new Date(r.fechaEvento),
+    allDay: r.tipoReserva === 'DIA_COMPLETO',
+  }));
   
   if (!data) {
     return (
@@ -128,17 +170,37 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
         {/* Left Content (Details) */}
         <div className="lg:col-span-2 space-y-10">
            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                 <span className="badge badge-premium">{p.categoria}</span>
-                 <div className="flex items-center gap-1 text-amber-400 font-bold ml-2">
-                    <Star size={16} fill="currentColor" /> {p.calificacion} 
-                    <span className="text-[var(--color-texto-muted)] font-normal ml-1">({p.reseñasCount} reseñas)</span>
+              <div className="flex flex-col md:flex-row md:items-center gap-6">
+                 {/* Logo con zoom */}
+                 <div className="relative shrink-0">
+                    <div 
+                      onClick={() => setZoomLogo(true)}
+                      className="w-24 h-24 rounded-full border-4 border-[var(--color-fondo-card)] bg-[var(--color-fondo-input)] shadow-xl overflow-hidden cursor-pointer hover:scale-110 transition-transform active:scale-95"
+                    >
+                       {p.logoUrl ? (
+                         <img src={p.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                       ) : (
+                         <div className="w-full h-full flex items-center justify-center text-[var(--color-primario-claro)]">
+                            <Star size={32} />
+                         </div>
+                       )}
+                    </div>
                  </div>
-              </div>
-              <h1 className="text-5xl font-extrabold">{p.nombre}</h1>
-              <div className="flex items-center gap-2 text-[var(--color-texto-suave)]">
-                 <MapPin size={18} className="text-[var(--color-acento-claro)]" />
-                 {p.ubicacion}
+
+                 <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                       <span className="badge badge-premium">{p.categoria}</span>
+                       <div className="flex items-center gap-1 text-amber-400 font-bold ml-2">
+                          <Star size={16} fill="currentColor" /> {p.calificacion} 
+                          <span className="text-[var(--color-texto-muted)] font-normal ml-1">({p.reseñasCount} reseñas)</span>
+                       </div>
+                    </div>
+                    <h1 className="text-5xl font-extrabold tracking-tighter uppercase italic">{p.nombre}</h1>
+                    <div className="flex items-center gap-2 text-[var(--color-texto-suave)]">
+                       <MapPin size={18} className="text-[var(--color-acento-claro)]" />
+                       {p.ubicacion}
+                    </div>
+                 </div>
               </div>
            </div>
 
@@ -256,6 +318,45 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
         </div>
       </div>
 
+      {/* Modal de Confirmación de Reserva */}
+      {confirmarReserva && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+           <div className="card max-w-md w-full p-8 text-center space-y-6 border-amber-500/30 shadow-[0_0_50px_rgba(245,158,11,0.15)] scale-in-center">
+              <div className="mx-auto w-20 h-20 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 mb-2">
+                 <ShieldCheck size={48} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black italic uppercase tracking-tighter">Confirmar Intención de Reserva</h3>
+                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200">
+                   <p className="text-sm font-bold leading-relaxed">
+                     ¡Atención! Tienes un máximo de <span className="text-white font-black underline decoration-amber-500 underline-offset-4">48 horas</span> para completar el proceso con el anticipo para asegurar tu fecha.
+                   </p>
+                </div>
+                <p className="text-xs text-[var(--color-texto-suave)] pt-2">
+                  Al confirmar, le enviaremos una notificación a **{p.nombre}** para que esté pendiente de tu contratación. No se realizarán cargos en este momento.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4 pt-4">
+                 <button 
+                   onClick={() => setConfirmarReserva(false)}
+                   className="btn btn-secundario py-4 text-xs font-black uppercase tracking-widest"
+                 >
+                   Cancelar
+                 </button>
+                 <button 
+                   onClick={() => {
+                     setConfirmarReserva(false);
+                     setReservado(true);
+                   }}
+                   className="btn btn-primario py-4 text-xs font-black uppercase tracking-widest bg-amber-500 hover:bg-amber-600 border-amber-600 shadow-amber-500/20"
+                 >
+                   Entendido y Reservar
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+
       {/* Modal de Éxito Mock */}
       {reservado && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
@@ -281,36 +382,99 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
         </div>
       )}
 
-      {/* Modal de Calendario Simplificado */}
+      {/* Modal de Calendario Pantalla Completa */}
       {mostrarCalendario && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-           <div className="card max-w-lg w-full p-8 space-y-6 relative border-[var(--color-borde-suave)] shadow-2xl scale-in-center">
-              <button 
-                onClick={() => setMostrarCalendario(false)}
-                className="absolute top-4 right-4 p-2 hover:bg-white/5 rounded-full"
-              >
-                <X size={20} />
-              </button>
-
-              <div className="flex items-center gap-3 mb-2">
-                 <div className="p-2 rounded-lg bg-[var(--color-primario)]/20 text-[var(--color-primario-claro)]">
-                    <CalendarIcon size={24} />
+        <div className="fixed inset-0 z-[120] bg-[var(--color-fondo)] animate-in slide-in-from-bottom duration-500 flex flex-col">
+           <header className="p-6 border-b border-[var(--color-borde-suave)] flex items-center justify-between bg-[var(--color-fondo-card)]">
+              <div className="flex items-center gap-4">
+                 <div className="p-2 rounded-xl bg-[var(--color-primario)]/10 text-[var(--color-primario-claro)]">
+                    <CalendarIcon size={32} />
                  </div>
                  <div>
-                    <h3 className="text-xl font-bold">Agenda de {p.nombre}</h3>
-                    <p className="text-xs text-[var(--color-texto-suave)]">Consulta las fechas libres en tiempo real</p>
+                    <h2 className="text-2xl font-black italic uppercase tracking-tighter">Agenda de {p.nombre}</h2>
+                    <p className="text-xs text-[var(--color-texto-suave)] font-bold tracking-widest uppercase">Disponibilidad real sincronizada</p>
                  </div>
               </div>
+              <button 
+                onClick={() => setMostrarCalendario(false)}
+                className="p-3 rounded-full hover:bg-white/5 transition-colors border border-white/5"
+              >
+                <X size={24} />
+              </button>
+           </header>
 
-              <div className="bg-[var(--color-fondo-input)] rounded-2xl p-6 border border-white/5 text-center">
-                 <p className="text-sm text-[var(--color-texto-suave)]">El calendario interactivo de disponibilidad real se está sincronizando para este proveedor.</p>
-                 <button 
-                  onClick={() => setMostrarCalendario(false)}
-                  className="btn btn-fantasma mt-6"
-                 >
-                   Regresar
-                 </button>
+           <div className="flex-1 p-6 overflow-auto">
+              <div className="max-w-7xl mx-auto h-full bg-[var(--color-fondo-card)] p-8 rounded-[2.5rem] border border-[var(--color-borde-suave)] shadow-2xl overflow-hidden relative">
+                 {loadingCalendar ? (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[var(--color-fondo-card)]/80 backdrop-blur-md gap-4">
+                       <Loader2 className="animate-spin text-[var(--color-primario)]" size={48} />
+                       <p className="font-bold uppercase text-xs tracking-widest">Cargando disponibilidad...</p>
+                    </div>
+                 ) : (
+                    <div className="h-full min-h-[600px] text-white">
+                       <style>{`
+                         .rbc-calendar { background: transparent; border: none; font-family: inherit; }
+                         .rbc-header { border-bottom: 2px solid var(--color-borde-suave) !important; padding: 15px !important; font-weight: 800 !important; text-transform: uppercase; font-size: 11px; letter-spacing: 0.1em; color: var(--color-texto-muted); }
+                         .rbc-month-view { border: none !important; border-radius: 20px; overflow: hidden; }
+                         .rbc-day-bg { border-left: 1px solid var(--color-borde-suave) !important; transition: background 0.3s; }
+                         .rbc-day-bg:hover { background: rgba(255,255,255,0.02); }
+                         .rbc-off-range-bg { background: rgba(0,0,0,0.2) !important; }
+                         .rbc-month-row { border-top: 1px solid var(--color-borde-suave) !important; }
+                         .rbc-today { background: rgba(124, 58, 237, 0.05) !important; }
+                         .rbc-event { background: var(--color-primario) !important; border: none !important; border-radius: 8px !important; font-size: 10px !important; font-weight: 800 !important; padding: 4px 8px !important; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); }
+                         .rbc-show-more { background: transparent !important; color: var(--color-primario-claro) !important; font-weight: 900 !important; font-size: 10px; }
+                         .rbc-toolbar { margin-bottom: 30px !important; }
+                         .rbc-toolbar button { background: var(--color-fondo-input) !important; border: 1px solid var(--color-borde-suave) !important; color: white !important; font-weight: 700; border-radius: 10px; padding: 8px 16px; margin: 0 2px; }
+                         .rbc-toolbar button:hover { background: var(--color-primario) !important; border-color: var(--color-primario) !important; }
+                         .rbc-toolbar button.rbc-active { background: var(--color-primario) !important; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4); }
+                         .rbc-toolbar-label { font-size: 24px !important; font-weight: 900 !important; text-transform: capitalize; }
+                       `}</style>
+                       <Calendar
+                          localizer={localizer}
+                          events={calendarEvents}
+                          startAccessor="start"
+                          endAccessor="end"
+                          culture="es"
+                          messages={{
+                            next: "Siguiente",
+                            previous: "Anterior",
+                            today: "Hoy",
+                            month: "Mes",
+                            week: "Semana",
+                            day: "Día",
+                            showMore: total => `+ Ver ${total} más`
+                          }}
+                       />
+                    </div>
+                 )}
               </div>
+           </div>
+           
+           <footer className="p-8 border-t border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] flex justify-center">
+              <button 
+                onClick={() => setMostrarCalendario(false)}
+                className="btn btn-primario px-12 py-4 rounded-2xl shadow-xl shadow-violet-500/20 font-black uppercase tracking-widest"
+              >
+                Regresar al perfil
+              </button>
+           </footer>
+        </div>
+      )}
+      {/* Modal de Zoom del Logo */}
+      {zoomLogo && (
+        <div 
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 backdrop-blur-xl animate-in fade-in duration-300 cursor-zoom-out"
+          onClick={() => setZoomLogo(false)}
+        >
+           <div className="relative max-w-2xl w-full p-4 flex items-center justify-center">
+              <button className="absolute top-0 right-0 p-4 text-white hover:text-red-400 transition-colors">
+                <X size={32} />
+              </button>
+              <img 
+                src={p.logoUrl || '/logo.png'} 
+                alt="Logo Enlarged" 
+                className="max-w-full max-h-[80vh] rounded-3xl shadow-2xl scale-in-center object-contain"
+              />
            </div>
         </div>
       )}
