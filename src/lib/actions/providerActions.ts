@@ -483,6 +483,17 @@ export async function getDetalleProveedor(id: string) {
       ? proveedor.resenas.reduce((acc, r) => acc + r.calificacion, 0) / proveedor.resenas.length
       : 5.0;
 
+    // Recolectar todas las imágenes de los servicios para la galería
+    const imagenesServicios = proveedor.servicios.flatMap((s: any) => s.imagenes || []);
+    const galeriaLocal = [
+      ...(proveedor.bannerUrl ? [proveedor.bannerUrl] : []),
+      ...(proveedor.logoUrl ? [proveedor.logoUrl] : []),
+      ...imagenesServicios
+    ];
+
+    // Si no hay ninguna imagen real, dejar un placeholder o array vacío en lugar de mock
+    const galeriaFinal = galeriaLocal.length > 0 ? galeriaLocal : [];
+
     // Serialización
     const data = {
       nombre: proveedor.nombre,
@@ -491,10 +502,7 @@ export async function getDetalleProveedor(id: string) {
       descripcion: proveedor.descripcion,
       calificacion: Number(calificacion.toFixed(1)),
       reseñasCount: proveedor.resenas.length,
-      imagenes: [
-        proveedor.bannerUrl || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200&q=80',
-        proveedor.logoUrl || 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1200&q=80',
-      ],
+      imagenes: galeriaFinal,
       servicios: proveedor.servicios.map((s: any) => ({
         id: s.id,
         nombre: s.nombre,
