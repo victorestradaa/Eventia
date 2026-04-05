@@ -22,7 +22,7 @@ import { cn, formatearMoneda } from '@/lib/utils';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
-const PublicMap = dynamic(() => import('@/components/PublicMap'), { ssr: false });
+const GooglePublicMap = dynamic(() => import('@/components/GooglePublicMap'), { ssr: false });
 
 interface ProviderDetailClientProps {
   data: any;
@@ -159,7 +159,7 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
                    <span className="text-xs text-[var(--color-texto-muted)] uppercase font-black tracking-widest">{p.ciudad}, {p.estado}</span>
                 </div>
                 
-                <PublicMap lat={p.latitud} lng={p.longitud} businessName={p.nombre} />
+                <GooglePublicMap lat={p.latitud} lng={p.longitud} businessName={p.nombre} />
                 
                 <div className="flex items-start gap-3 p-4 rounded-2xl bg-[var(--color-fondo-input)]/50 border border-white/5">
                    <MapPin size={18} className="text-[var(--color-primario-claro)] flex-shrink-0 mt-0.5" />

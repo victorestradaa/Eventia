@@ -8,7 +8,7 @@ import { uploadServiceImage } from '@/lib/actions/uploadActions';
 import { CATEGORIAS_LABELS } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
-const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false });
+const GoogleMapPicker = dynamic(() => import('@/components/GoogleMapPicker'), { ssr: false });
 
 const PLAN_INFO: Record<string, { label: string; color: string; icon: any }> = {
   GRATIS: { label: 'Plan Básico', color: 'text-gray-400', icon: Zap },
@@ -247,7 +247,7 @@ export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) 
               <label className="text-sm font-bold text-[var(--color-texto-suave)]">Dirección de tu Negocio <span className="text-red-500">*</span></label>
               <p className="text-[10px] text-[var(--color-texto-muted)] mb-2">Busca tu dirección y ajusta el marcador en el mapa para que tus clientes te encuentren fácilmente.</p>
               
-              <MapPicker 
+              <GoogleMapPicker 
                 initialLat={business.latitud}
                 initialLng={business.longitud}
                 initialAddress={business.direccion}

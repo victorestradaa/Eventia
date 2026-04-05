@@ -26,8 +26,8 @@ export async function updateProviderProfile(proveedorId: string, data: {
         estado: data.estado,
         direccion: data.direccion || null,
         logoUrl: data.logoUrl || null,
-        latitud: data.latitud || null,
-        longitud: data.longitud || null,
+        latitud: data.latitud ?? null,
+        longitud: data.longitud ?? null,
       }
     });
 
