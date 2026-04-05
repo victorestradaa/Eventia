@@ -406,7 +406,8 @@ export async function verificarDisponibilidadServicio(
     const reservasOcupadas = await prisma.reserva.findMany({
       where: {
         servicioId,
-        estado: { in: ['APARTADO', 'LIQUIDADO'] }, // Solo reservas confirmadas o apartadas cuentan
+        // Incluir TEMPORAL también para prevenir dobles reservas durante la ventana de confirmación
+        estado: { in: ['TEMPORAL', 'APARTADO', 'LIQUIDADO'] },
         fechaEvento: {
           gte: fechaInicioDia,
           lte: fechaFinDia
@@ -414,29 +415,43 @@ export async function verificarDisponibilidadServicio(
       }
     });
 
+    // Convierte "HH:MM" a minutos desde medianoche
+    const toMin = (t: string): number => {
+      const parts = t.split(':');
+      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    };
+
     let overlapCount = 0;
 
     if (bloqueOpcional && bloqueOpcional.includes('-')) {
-      const [horaStart, horaEnd] = bloqueOpcional.split(':').join('').split('-').map(h => h.trim());
+      // Parsear el bloque solicitado: puede ser "09:00-14:00" o "20:00-01:00" (cruza medianoche)
+      const dashIndex = bloqueOpcional.lastIndexOf('-');
+      const bStartStr = bloqueOpcional.substring(0, dashIndex).trim();
+      const bEndStr = bloqueOpcional.substring(dashIndex + 1).trim();
+
+      let bStart = toMin(bStartStr);
+      let bEnd = toMin(bEndStr);
+      // Si cruza medianoche (ej. 20:00-01:00), sumamos 24h al final
+      if (bEnd <= bStart) bEnd += 24 * 60;
+
       overlapCount = reservasOcupadas.filter(r => {
-        // Un bloqueo de día completo afecta a todos los turnos
+        // Un bloqueo de día completo bloquea todos los turnos
         if (r.tipoReserva === 'DIA_COMPLETO') return true;
         
-        // Si no tiene horas (no debería pasar), asumimos que ocupa el turno
+        // Si no tiene horas definidas, asumimos que ocupa el turno
         if (!r.horaInicio || !r.horaFin) return true;
 
-        // Limpiar formatos de hora (ej: "20:00" -> "2000") para comparación numérica simple
-        const rStart = r.horaInicio.replace(':', '');
-        const rEnd = r.horaFin.replace(':', '');
-        const bStart = horaStart.replace(':', '');
-        const bEnd = horaEnd.replace(':', '');
+        let rStart = toMin(r.horaInicio);
+        let rEnd = toMin(r.horaFin);
+        // Manejar turno que cruza medianoche
+        if (rEnd <= rStart) rEnd += 24 * 60;
 
-        // Traslape de rangos: (StartA < EndB) && (EndA > StartB)
+        // Traslape de rangos: A y B se traslapan cuando (A.start < B.end) && (A.end > B.start)
         return (bStart < rEnd) && (bEnd > rStart);
       }).length;
     } else {
-      // Si no hay bloque específico (es DIA_COMPLETO), contamos cualquier reserva del día
-      overlapCount = reservasOcupadas.length; 
+      // Si es DIA_COMPLETO, cualquier reserva del día cuenta como conflicto
+      overlapCount = reservasOcupadas.length;
     }
 
     const disponible = overlapCount < (servicio.capacidadSimultanea || 1);
