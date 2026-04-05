@@ -22,8 +22,37 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // En un sistema real usaríamos un context o un cookie para persistir esto
-  const [activeEventId, setActiveEventId] = useState(initialEventos.length > 0 ? initialEventos[0].id : null);
+  const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // PERSISTENCIA DE EVENTO SELECCIONADO
+  useEffect(() => {
+    const savedEventId = document.cookie.split('; ').find(row => row.startsWith('activeEventId='))?.split('=')[1];
+    
+    if (savedEventId && initialEventos.some(e => e.id === savedEventId)) {
+      setActiveEventId(savedEventId);
+    } else if (initialEventos.length > 0) {
+      const firstId = initialEventos[0].id;
+      setActiveEventId(firstId);
+      document.cookie = `activeEventId=${firstId}; path=/; max-age=31536000`; // 1 año
+    }
+  }, [initialEventos]);
+
+  const changeActiveEvent = (id: string) => {
+    setActiveEventId(id);
+    document.cookie = `activeEventId=${id}; path=/; max-age=31536000`;
+  };
+
+  // SINCRO SEGÚN RUTA (Si entramos a un evento específico, lo marcamos como activo)
+  useEffect(() => {
+    const parts = pathname.split('/');
+    const isEventPage = parts[1] === 'cliente' && parts[2] === 'evento' && parts[3];
+    if (isEventPage && parts[3] && parts[3] !== activeEventId) {
+      changeActiveEvent(parts[3]);
+    }
+  }, [pathname, activeEventId]);
+
+
 
   const eventosArray = Array.isArray(initialEventos) ? initialEventos : [];
   const activeEvent = eventosArray.find(e => e.id === activeEventId) || eventosArray[0] || null;
@@ -100,7 +129,7 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
                         <button
                           key={evt.id}
                           onClick={() => {
-                            setActiveEventId(evt.id);
+                            changeActiveEvent(evt.id);
                             setIsEventSelectorOpen(false);
                           }}
                           className={cn(

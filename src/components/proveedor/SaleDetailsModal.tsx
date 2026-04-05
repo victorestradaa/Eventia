@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { X, Calendar as CalendarIcon, DollarSign, AlertCircle, CheckCircle, RotateCcw, Plus, CalendarDays } from 'lucide-react';
 import { formatearMoneda, formatearFechaCorta } from '@/lib/utils';
-import { updateReservaStatus, addTransaction, payTransaction, rescheduleReserva, updateManualClientName } from '@/lib/actions/salesActions';
+import { updateReservaStatus, payTransaction, rescheduleReserva, updateManualClientName } from '@/lib/actions/salesActions';
+import { registrarAbono } from '@/lib/actions/paymentActions';
 import { Edit2, Check } from 'lucide-react';
 
 interface Props {
@@ -80,26 +81,22 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
     }
     setIsSubmitting(false);
   };
-
   const handleAddAbono = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    const payload = {
+    const res = await registrarAbono({
       reservaId: venta.id,
       monto: Number(abono.monto),
-      tipo: abono.tipo,
-      metodoPago: abono.estado === 'PENDIENTE' ? 'N/A' : abono.metodoPago,
-      estado: abono.estado,
+      tipo: abono.tipo as any,
+      metodoPago: abono.metodoPago,
       notas: abono.notas,
-      fechaVencimiento: abono.fechaVencimiento ? new Date(abono.fechaVencimiento) : null
-    };
+      esCliente: false
+    });
 
-    const res = await addTransaction(payload);
     if (res.success) {
-      alert('Transacción Registrada Exitosamente. Actualiza la página si no ves los cambios (WIP local state update).');
+      alert('Abono registrado y sincronizado con el presupuesto del cliente.');
       setShowAbonoForm(false);
-      // Idealmente, haríamos un re-fetch de la venta aquí, por ahora cerramos para forzar refresh
       onClose();
     } else {
       alert(res.error);

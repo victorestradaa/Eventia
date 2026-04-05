@@ -626,27 +626,44 @@ export async function solicitarReserva(data: {
     const fechaExpiracion = new Date();
     fechaExpiracion.setHours(fechaExpiracion.getHours() + 48);
 
-    // 3. Crear la reserva
-    const nuevaReserva = await prisma.reserva.create({
-      data: {
-        clienteId: data.clienteId,
-        proveedorId: data.proveedorId,
-        servicioId: data.servicioId,
-        eventoId: data.eventoId,
-        fechaEvento: new Date(data.fechaEvento),
-        estado: 'TEMPORAL', // Estado inicial según requerimiento
-        montoTotal: data.montoTotal,
-        fechaExpiracion,
-        notas: 'Solicitud realizada desde el perfil de usuario.'
-      }
+    // 3. Crear la reserva y la línea de presupuesto en una transacción
+    const result = await prisma.$transaction(async (tx: any) => {
+      const reserva = await tx.reserva.create({
+        data: {
+          clienteId: data.clienteId,
+          proveedorId: data.proveedorId,
+          servicioId: data.servicioId,
+          eventoId: data.eventoId,
+          fechaEvento: new Date(data.fechaEvento),
+          estado: 'TEMPORAL',
+          montoTotal: data.montoTotal,
+          fechaExpiracion,
+          notas: 'Solicitud realizada desde el perfil de usuario.'
+        },
+        include: { servicio: true }
+      });
+
+      // Creamos la línea de presupuesto para que aparezca en el panel del cliente
+      await tx.lineaPresupuesto.create({
+        data: {
+          eventoId: data.eventoId,
+          servicioId: data.servicioId,
+          descripcion: reserva.servicio.nombre,
+          montoTotal: data.montoTotal,
+          montoPagado: 0
+        }
+      });
+
+      return reserva;
     });
 
     revalidatePath('/proveedor/dashboard');
     revalidatePath('/proveedor/calendario');
     revalidatePath('/proveedor/ventas');
+    revalidatePath(`/cliente/evento/${data.eventoId}`);
     revalidatePath(`/cliente/proveedor/${data.proveedorId}`);
 
-    return { success: true, data: JSON.parse(JSON.stringify(nuevaReserva)) };
+    return { success: true, data: JSON.parse(JSON.stringify(result)) };
   } catch (error) {
     console.error('Error al solicitar reserva:', error);
     return { success: false, error: 'Hubo un error al procesar tu solicitud.' };

@@ -3,27 +3,26 @@
 import { 
   Users, 
   Wallet, 
-  MapPin, 
   Calendar as CalendarIcon, 
   Plus, 
-  Download, 
   Mail, 
   CheckCircle2, 
-  Clock, 
-  AlertCircle,
-  MoreVertical,
-  ChevronRight,
+  CreditCard,
+  DollarSign,
+  Clock as ClockIcon,
   ArrowLeft,
-  LayoutGrid,
+  ChevronRight,
   Edit,
   X,
   Loader2,
-  Trash2
+  AlertCircle,
+  LayoutGrid
 } from 'lucide-react';
 import { useState } from 'react';
 import { formatearMoneda, formatearFechaCorta, cn } from '@/lib/utils';
 import Link from 'next/link';
 import { updateEvento, addInvitado } from '@/lib/actions/eventActions';
+import { registrarAbono } from '@/lib/actions/paymentActions';
 import { useRouter } from 'next/navigation';
 
 interface EventoDetailClientProps {
@@ -51,6 +50,11 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
     lado: '',
     categoria: 'AMIGOS'
   });
+
+  // UI Pagos
+  const [showPagoModal, setShowPagoModal] = useState<any | null>(null);
+  const [montoAbono, setMontoAbono] = useState('');
+  const [procesandoPago, setProcesandoPago] = useState(false);
 
   const eventTypes = ['Boda', 'XV Años', 'Fiesta Infantil', 'Graduación', 'Fiesta', 'Bautizo'];
 
@@ -162,6 +166,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
         {[
           { key: 'resumen', label: 'Resumen' },
           { key: 'proveedores', label: 'Proveedores' },
+          { key: 'pagos', label: 'Pagos' },
           { key: 'invitados', label: 'Invitados' },
           { key: 'mesas', label: 'Mesas' },
         ].map((tab) => (
@@ -295,6 +300,120 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                 </div>
              </Link>
           </div>
+        </div>
+      )}
+
+      {/* TAB: Pagos */}
+      {tabActiva === 'pagos' && (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="card bg-white/5 border-white/10 shadow-xl">
+                 <p className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] mb-1">Total Comprometido</p>
+                 <p className="text-2xl font-black">{formatearMoneda(subtotalContratado)}</p>
+              </div>
+              <div className="card border-emerald-500/30 bg-emerald-500/5 shadow-xl">
+                 <p className="text-[10px] font-black uppercase text-emerald-400 mb-1 font-black">Pagado / Cobrado</p>
+                 <p className="text-2xl font-black text-emerald-400">{formatearMoneda(totalPagado)}</p>
+              </div>
+              <div className="card border-amber-500/40 bg-amber-500/10 shadow-[0_0_40px_rgba(245,158,11,0.1)]">
+                 <p className="text-[10px] font-black uppercase text-amber-500 mb-1">Saldo por Liquidar</p>
+                 <p className="text-2xl font-black text-amber-500">{formatearMoneda(subtotalContratado - totalPagado)}</p>
+              </div>
+           </div>
+
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-6">
+                <h3 className="text-xl font-bold flex items-center gap-2 italic uppercase tracking-tighter">
+                   <CreditCard className="text-[var(--color-primario-claro)]" /> Pendientes de Pago
+                </h3>
+                
+                <div className="grid grid-cols-1 gap-4">
+                   {lineasPresupuesto.filter((l:any) => Number(l.montoTotal) - Number(l.montoPagado) > 0).map((l:any) => (
+                     <div key={l.id} className="card hover:bg-white/[0.02] transition-all border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6 group overflow-hidden">
+                        <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--color-primario)]/20 to-transparent flex items-center justify-center text-[var(--color-primario-claro)] shadow-lg">
+                              <Wallet size={24} />
+                           </div>
+                           <div>
+                              <h4 className="font-bold text-lg">{l.descripcion}</h4>
+                              <p className="text-xs text-[var(--color-texto-muted)]">Contratado con {l.servicio?.proveedor?.nombre || 'Proveedor'}</p>
+                           </div>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row items-end md:items-center gap-6">
+                           <div className="text-right">
+                              <p className="text-[9px] font-black uppercase text-[var(--color-texto-muted)] mb-0.5 pr-1">Saldo Pendiente</p>
+                              <p className="text-xl font-black text-amber-500">{formatearMoneda(Number(l.montoTotal) - Number(l.montoPagado))}</p>
+                           </div>
+                           <button 
+                             onClick={() => setShowPagoModal(l)}
+                             className="btn btn-primario py-3 px-8 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-violet-500/20 active:scale-95 transition-all w-full md:w-auto"
+                           >
+                              Abonar ahora
+                           </button>
+                        </div>
+                     </div>
+                   ))}
+                   {lineasPresupuesto.filter((l:any) => Number(l.montoTotal) - Number(l.montoPagado) > 0).length === 0 && (
+                     <div className="card p-16 text-center border-dashed border-2 border-emerald-500/20 bg-emerald-500/5">
+                        <CheckCircle2 size={48} className="mx-auto text-emerald-500 mb-4" />
+                        <p className="font-black text-xl uppercase italic tracking-tighter">¡Felicidades!</p>
+                        <p className="text-[var(--color-texto-suave)] text-sm">Has liquidado todos tus servicios contratados.</p>
+                     </div>
+                   )}
+                </div>
+
+                <h3 className="text-xl font-bold pt-8 flex items-center gap-2 italic uppercase tracking-tighter text-[var(--color-texto-muted)]">
+                   <ClockIcon size={22} className="text-emerald-500/60" /> Historial de Pagos
+                </h3>
+                <div className="card p-0 overflow-hidden border border-white/5 shadow-2xl">
+                   <div className="overflow-x-auto">
+                     <table className="tabla w-full min-w-[600px]">
+                        <thead className="bg-white/5">
+                          <tr className="text-left text-[var(--color-texto-muted)] text-[10px] font-black uppercase tracking-widest">
+                            <th className="px-6 py-5">Concepto</th>
+                            <th className="px-6 py-5">Monto</th>
+                            <th className="px-6 py-5">Fecha</th>
+                            <th className="px-6 py-5 text-center">Estatus</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 font-medium">
+                          {lineasPresupuesto.flatMap((l:any) => (l.pagos || []).map((p:any) => ({...p, targetDesc: l.descripcion}))).sort((a:any, b:any) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map((p:any, idx:number) => (
+                            <tr key={p.id || idx} className="hover:bg-white/[0.01] transition-colors group">
+                              <td className="px-6 py-5">
+                                 <span className="font-bold group-hover:text-[var(--color-primario-claro)] transition-colors">{p.targetDesc}</span>
+                                 {p.nota && <p className="text-[10px] text-[var(--color-texto-muted)] italic font-normal">{p.nota}</p>}
+                              </td>
+                              <td className="px-6 py-5 text-emerald-400 font-black text-lg">{formatearMoneda(p.monto)}</td>
+                              <td className="px-6 py-5 text-sm text-[var(--color-texto-suave)] font-bold">{new Date(p.fecha).toLocaleDateString()}</td>
+                              <td className="px-6 py-5 text-center">
+                                 <span className="badge badge-liquidado text-[9px] font-black shadow-sm tracking-widest">PAGADO</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                     </table>
+                   </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                 <div className="card bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 shadow-xl p-8">
+                    <h4 className="font-black uppercase tracking-tighter text-emerald-500 mb-4 flex items-center gap-2">
+                       <DollarSign size={20} /> Progreso Financiero
+                    </h4>
+                    <p className="text-sm text-[var(--color-texto-suave)] leading-relaxed font-medium">
+                       Llevas liquidado el <span className="text-emerald-400 font-black">{(subtotalContratado > 0 ? Math.round((totalPagado/subtotalContratado)*100) : 0)}%</span> de tus gastos. 
+                    </p>
+                    <div className="mt-4 w-full h-2 bg-emerald-500/10 rounded-full overflow-hidden">
+                       <div 
+                         className="h-full bg-gradient-to-r from-emerald-500 to-emerald-300" 
+                         style={{ width: `${(subtotalContratado > 0 ? (totalPagado/subtotalContratado)*100 : 0)}%` }} 
+                       />
+                    </div>
+                 </div>
+              </div>
+           </div>
         </div>
       )}
 
@@ -532,6 +651,86 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                 </button>
              </div>
           </div>
+        </div>
+      )}
+
+      {/* Modal de Pago (Simulado) */}
+      {showPagoModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-3xl animate-in fade-in duration-500">
+           <div className="card max-w-md w-full p-10 border-[var(--color-primario)]/30 shadow-[0_0_80px_rgba(139,92,246,0.15)] animate-in zoom-in-95 duration-300 overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-[var(--color-primario)] to-transparent" />
+              
+              <div className="flex items-center justify-between mb-8">
+                 <h2 className="text-2xl font-black italic uppercase tracking-tighter">Realizar Abono</h2>
+                 <button onClick={() => setShowPagoModal(null)} className="p-2 rounded-full hover:bg-white/5 transition-colors"><X size={20} /></button>
+              </div>
+
+              <div className="p-6 rounded-3xl bg-[var(--color-fondo-input)] border border-white/5 space-y-4 mb-8 shadow-inner">
+                 <p className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest leading-none">Servicio a Abonar</p>
+                 <p className="text-xl font-black text-[var(--color-texto-fuerte)]">{showPagoModal.descripcion}</p>
+                 <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                    <span className="text-xs font-bold text-[var(--color-texto-muted)]">Pendiente:</span>
+                    <span className="text-2xl font-black text-amber-500 tracking-tight">{formatearMoneda(Number(showPagoModal.montoTotal) - Number(showPagoModal.montoPagado))}</span>
+                 </div>
+              </div>
+
+              <div className="space-y-6">
+                 <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-2">Monto del Abono (MXN)</label>
+                    <div className="relative group">
+                       <span className="absolute left-5 top-1/2 -translate-y-1/2 text-2xl font-black text-[var(--color-primario-claro)] opacity-40">$</span>
+                       <input 
+                         type="number" 
+                         value={montoAbono}
+                         onChange={(e) => setMontoAbono(e.target.value)}
+                         placeholder="0.00"
+                         className="input w-full h-20 pl-12 text-3xl font-black text-[var(--color-primario-claro)] bg-white/5 border-2 border-white/5 focus:border-[var(--color-primario)]/50 transition-all placeholder:opacity-20"
+                         autoFocus
+                       />
+                    </div>
+                 </div>
+
+                 <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex gap-4">
+                    <AlertCircle size={20} className="text-amber-500 shrink-0" />
+                    <p className="text-[10px] text-amber-200/70 font-medium italic">
+                       PRUEBA: Este abono se autorizará automáticamente para sincronizar el presupuesto.
+                    </p>
+                 </div>
+
+                 <button 
+                   onClick={async () => {
+                     if (!montoAbono || isNaN(Number(montoAbono))) return;
+                     setProcesandoPago(true);
+                     
+                     const resLinked = reservas.find((r:any) => r.servicioId === showPagoModal.servicioId);
+                     
+                     const res = await registrarAbono({
+                       reservaId: resLinked?.id || '',
+                       monto: Number(montoAbono),
+                       metodoPago: 'TARJETA (TEST)',
+                       tipo: 'ABONO',
+                       esCliente: true
+                     });
+
+                     if (res.success) {
+                       setShowPagoModal(null);
+                       setMontoAbono('');
+                       router.refresh();
+                     } else {
+                       alert("Error al procesar el abono. Verifica el monto.");
+                     }
+                     setProcesandoPago(false);
+                   }}
+                   disabled={procesandoPago || !montoAbono}
+                   className={cn(
+                     "btn btn-primario w-full py-6 rounded-2xl text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl transition-all shadow-violet-500/30",
+                     (procesandoPago || !montoAbono) ? "opacity-50 grayscale" : "hover:scale-[1.03] active:scale-95"
+                   )}
+                 >
+                   {procesandoPago ? <Loader2 className="animate-spin" size={20} /> : <><CreditCard size={20} /> Aplicar Abono</>}
+                 </button>
+              </div>
+           </div>
         </div>
       )}
     </div>
