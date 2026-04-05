@@ -48,10 +48,10 @@ export default function ExplorarPage() {
   // Filtrado local (para mejor UX instantánea)
   const serviciosFiltrados = servicios.filter(s => {
     // Normalizar para comparación (Salón vs SALON)
-    const labelCategoria = CATEGORIAS_LABELS[s.categoria] || s.categoria;
+    const labelCategoria = CATEGORIAS_LABELS[s.categoria] || s.categoria || 'Servicio';
     const cumpleCat = catActiva === 'Todos' || labelCategoria.toLowerCase() === catActiva.toLowerCase();
-    const cumplrePrecio = s.precio <= filtros.precioMax;
-    const cumpleCapacidad = s.capacidad >= filtros.capacidadMin;
+    const cumplrePrecio = Number(s.precio) <= filtros.precioMax;
+    const cumpleCapacidad = parseInt(s.capacidad?.toString() || '0') >= filtros.capacidadMin;
     const cumpleSearch = s.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || 
                        s.ciudad.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -71,13 +71,14 @@ export default function ExplorarPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-           <div className="flex items-center gap-2 bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-2xl px-4 py-2 shadow-xl">
+           <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-2 shadow-xl focus-within:border-[var(--color-primario-claro)] transition-all">
               <Calendar size={18} className="text-[var(--color-primario-claro)]" />
               <input 
                 type="date" 
                 value={filtros.fecha}
                 onChange={(e) => setFiltros({...filtros, fecha: e.target.value})}
-                className="bg-transparent border-none outline-none text-xs font-bold uppercase tracking-widest text-white"
+                className="bg-transparent border-none outline-none text-xs font-black uppercase tracking-widest text-white/90"
+                style={{ colorScheme: 'dark' }}
               />
            </div>
         </div>
@@ -98,13 +99,13 @@ export default function ExplorarPage() {
         <button 
           onClick={() => setShowAdvanced(!showAdvanced)}
           className={cn(
-            "btn h-14 px-6 border shadow-xl transition-all",
+            "btn h-14 px-10 border-2 shadow-xl transition-all font-black uppercase tracking-widest text-[10px]",
             showAdvanced 
               ? "bg-[var(--color-primario)] border-[var(--color-primario)] text-white" 
-              : "bg-[var(--color-fondo-card)] border-[var(--color-borde-suave)] text-white hover:border-[var(--color-primario-claro)]"
+              : "bg-white/5 border-white/10 text-white hover:bg-[var(--color-primario)] hover:border-[var(--color-primario)]"
           )}
         >
-          <Settings2 size={20} className="mr-2" />
+          <Settings2 size={18} className="mr-2 text-[var(--color-primario-claro)]" />
           Filtros Avanzados
         </button>
 
@@ -193,9 +194,9 @@ export default function ExplorarPage() {
           <Loader2 className="animate-spin text-[var(--color-primario)]" size={48} />
           <p className="text-[var(--color-texto-suave)] font-medium">Sincronizando catálogo real...</p>
         </div>
-      ) : serviciosFiltrados.length > 0 ? (
+      ) : serviciosFiltrados.length > 0 || servicios.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {serviciosFiltrados.map((p) => (
+          {(serviciosFiltrados.length > 0 ? serviciosFiltrados : []).map((p) => (
             <div key={p.id} className="card group p-0 overflow-hidden relative border-none bg-gradient-to-b from-[var(--color-fondo-card)] to-[var(--color-fondo-input)]">
               {/* Header Image */}
               <div className="relative aspect-[4/3] overflow-hidden">
@@ -255,6 +256,27 @@ export default function ExplorarPage() {
               </div>
             </div>
           ))}
+        </div>
+      ) : servicios.length > 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 text-center space-y-6 bg-[var(--color-fondo-card)] rounded-[2rem] border-2 border-[var(--color-borde-suave)]">
+          <div className="p-6 rounded-full bg-amber-500/10 text-amber-500">
+            <Search size={64} strokeWidth={1.5} />
+          </div>
+          <div className="max-w-md space-y-2">
+            <h2 className="text-2xl font-bold">Sin resultados</h2>
+            <p className="text-[var(--color-texto-suave)]">
+              No encontramos servicios que coincidan con tus filtros actuales. Intenta ajustar el presupuesto o la categoría.
+            </p>
+          </div>
+          <button 
+            onClick={() => {
+              setFiltros({ precioMax: 200000, capacidadMin: 0, fecha: '' });
+              setCatActiva('Todos');
+            }}
+            className="btn btn-primario px-8"
+          >
+            Limpiar Filtros
+          </button>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-24 text-center space-y-6 bg-[var(--color-fondo-card)] rounded-[2rem] border-2 border-dashed border-[var(--color-borde-suave)]">
