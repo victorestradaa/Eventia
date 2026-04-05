@@ -26,6 +26,12 @@ export default function ExplorarPage() {
   const [servicios, setServicios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [filtros, setFiltros] = useState({
+    precioMax: 100000,
+    capacidadMin: 0,
+    fecha: ''
+  });
 
   useEffect(() => {
     async function loadData() {
@@ -44,9 +50,15 @@ export default function ExplorarPage() {
     // Normalizar para comparación (Salón vs SALON)
     const labelCategoria = CATEGORIAS_LABELS[s.categoria] || s.categoria;
     const cumpleCat = catActiva === 'Todos' || labelCategoria.toLowerCase() === catActiva.toLowerCase();
+    const cumplrePrecio = s.precio <= filtros.precioMax;
+    const cumpleCapacidad = s.capacidad >= filtros.capacidadMin;
     const cumpleSearch = s.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || 
                        s.ciudad.toLowerCase().includes(searchQuery.toLowerCase());
-    return cumpleCat && cumpleSearch;
+    
+    // Filtro de fecha (Simulado por ahora ya que requiere consulta a reservas complejo de filtrar en cliente)
+    // Pero la UI ya captura el valor
+    
+    return cumpleCat && cumpleSearch && cumplrePrecio && cumpleCapacidad;
   });
 
   return (
@@ -59,10 +71,15 @@ export default function ExplorarPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-           <button className="btn btn-secundario gap-2">
-             <Calendar size={18} />
-             Ver Disponibles
-           </button>
+           <div className="flex items-center gap-2 bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-2xl px-4 py-2 shadow-xl">
+              <Calendar size={18} className="text-[var(--color-primario-claro)]" />
+              <input 
+                type="date" 
+                value={filtros.fecha}
+                onChange={(e) => setFiltros({...filtros, fecha: e.target.value})}
+                className="bg-transparent border-none outline-none text-xs font-bold uppercase tracking-widest text-white"
+              />
+           </div>
         </div>
       </div>
 
@@ -78,10 +95,78 @@ export default function ExplorarPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <button className="btn btn-secundario h-14 px-6 border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] shadow-xl">
+        <button 
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className={cn(
+            "btn h-14 px-6 border shadow-xl transition-all",
+            showAdvanced 
+              ? "bg-[var(--color-primario)] border-[var(--color-primario)] text-white" 
+              : "bg-[var(--color-fondo-card)] border-[var(--color-borde-suave)] text-white hover:border-[var(--color-primario-claro)]"
+          )}
+        >
           <Settings2 size={20} className="mr-2" />
           Filtros Avanzados
         </button>
+
+        {/* Panel de Filtros Avanzados */}
+        {showAdvanced && (
+          <div className="w-full animate-in slide-in-from-top duration-300">
+             <div className="card border-[var(--color-primario)]/30 bg-gradient-to-br from-[var(--color-fondo-card)] to-[var(--color-fondo-input)] p-8 grid grid-cols-1 md:grid-cols-3 gap-8 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-[var(--color-primario)]" />
+                
+                <div className="space-y-4">
+                   <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)]">Presupuesto Máximo</label>
+                   <div className="space-y-2">
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="200000" 
+                        step="1000" 
+                        value={filtros.precioMax}
+                        onChange={(e) => setFiltros({...filtros, precioMax: parseInt(e.target.value)})}
+                        className="w-full accent-[var(--color-primario-claro)]"
+                      />
+                      <div className="flex justify-between font-black text-sm italic">
+                         <span>$0</span>
+                         <span className="text-[var(--color-primario-claro)]">{formatearMoneda(filtros.precioMax)}</span>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="space-y-4">
+                   <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)]">Capacidad Mínima</label>
+                   <div className="space-y-2">
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="2000" 
+                        step="50" 
+                        value={filtros.capacidadMin}
+                        onChange={(e) => setFiltros({...filtros, capacidadMin: parseInt(e.target.value)})}
+                        className="w-full accent-[var(--color-primario-claro)]"
+                      />
+                      <div className="flex justify-between font-black text-sm italic">
+                         <span>0 pers.</span>
+                         <span className="text-[var(--color-primario-claro)]">{filtros.capacidadMin} pers.</span>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="flex items-end pb-1">
+                   <button 
+                     onClick={() => {
+                        setFiltros({ precioMax: 200000, capacidadMin: 0, fecha: '' });
+                        setCatActiva('Todos');
+                        setSearchQuery('');
+                     }}
+                     className="btn btn-fantasma w-full text-[10px] font-black uppercase tracking-widest h-12"
+                   >
+                     Restablecer todo
+                   </button>
+                </div>
+             </div>
+          </div>
+        )}
       </div>
 
       {/* Categorías (Pills) */}

@@ -110,29 +110,37 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[500px]">
         {/* Main large image */}
         <div className="lg:col-span-8 relative rounded-3xl overflow-hidden group min-h-[400px] bg-[var(--color-fondo-input)]">
-           {p.imagenes.length > 0 ? (
+           {/* Filtrar imágenes para NO mostrar el logo como parte de la galería principal */}
+           {p.imagenes.filter((img: string) => img !== p.logoUrl).length > 0 ? (
              <>
-               <img 
-                 src={p.imagenes[imgActiva]} 
-                 alt={p.nombre} 
-                 className="w-full h-full object-cover transition-transform duration-700" 
-               />
-               {p.imagenes.length > 1 && (
-                 <>
-                   <button 
-                     onClick={() => setImgActiva((imgActiva - 1 + p.imagenes.length) % p.imagenes.length)}
-                     className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                     <ChevronLeft size={24} />
-                   </button>
-                   <button 
-                     onClick={() => setImgActiva((imgActiva + 1) % p.imagenes.length)}
-                     className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                     <ChevronRight size={24} />
-                   </button>
-                 </>
-               )}
+               {(() => {
+                 const galeriaSinLogo = p.imagenes.filter((img: string) => img !== p.logoUrl);
+                 return (
+                   <>
+                     <img 
+                       src={galeriaSinLogo[imgActiva % galeriaSinLogo.length]} 
+                       alt={p.nombre} 
+                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                     />
+                     {galeriaSinLogo.length > 1 && (
+                       <>
+                         <button 
+                           onClick={() => setImgActiva((imgActiva - 1 + galeriaSinLogo.length) % galeriaSinLogo.length)}
+                           className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                          >
+                           <ChevronLeft size={24} />
+                         </button>
+                         <button 
+                           onClick={() => setImgActiva((imgActiva + 1) % galeriaSinLogo.length)}
+                           className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                          >
+                           <ChevronRight size={24} />
+                         </button>
+                       </>
+                     )}
+                   </>
+                 );
+               })()}
              </>
            ) : (
              <div className="w-full h-full flex flex-col items-center justify-center text-[var(--color-texto-muted)] gap-4">
@@ -144,25 +152,36 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
         
         {/* Sidebar thumbnails */}
         <div className="lg:col-span-4 flex flex-col gap-6">
-           <div className="flex-1 rounded-3xl overflow-hidden relative border border-white/5 bg-[var(--color-fondo-input)]">
-              {p.imagenes[1] || p.imagenes[0] ? (
-                <img src={p.imagenes[1] || p.imagenes[0]} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-white/5" />
-              )}
-              <div className="absolute inset-0 bg-black/10" />
-           </div>
-           <div className="flex-1 rounded-3xl overflow-hidden relative border border-white/5 group bg-[var(--color-fondo-input)]">
-              {p.imagenes[2] || p.imagenes[1] || p.imagenes[0] ? (
-                <img src={p.imagenes[2] || p.imagenes[1] || p.imagenes[0]} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-white/5" />
-              )}
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center flex-col gap-2 cursor-pointer group-hover:bg-black/20 transition-all">
-                 <span className="text-2xl font-bold">+{p.imagenes.length > 3 ? p.imagenes.length - 3 : 0}</span>
-                 <span className="text-xs uppercase font-black">Ver todas</span>
-              </div>
-           </div>
+           {(() => {
+              const galeriaSinLogo = p.imagenes.filter((img: string) => img !== p.logoUrl);
+              return (
+                <>
+                  <div className="flex-1 rounded-3xl overflow-hidden relative border border-white/5 bg-[var(--color-fondo-input)] hover:border-[var(--color-primario)]/30 transition-all cursor-pointer" onClick={() => setImgActiva(1)}>
+                     {galeriaSinLogo[1] ? (
+                       <img src={galeriaSinLogo[1]} className="w-full h-full object-cover" />
+                     ) : (
+                       <div className="w-full h-full bg-white/5 flex items-center justify-center">
+                          <Star className="text-white/10" />
+                       </div>
+                     )}
+                     <div className="absolute inset-0 bg-black/10" />
+                  </div>
+                  <div className="flex-1 rounded-3xl overflow-hidden relative border border-white/5 group bg-[var(--color-fondo-input)] hover:border-[var(--color-primario)]/30 transition-all cursor-pointer" onClick={() => setImgActiva(2)}>
+                     {galeriaSinLogo[2] ? (
+                       <img src={galeriaSinLogo[2]} className="w-full h-full object-cover" />
+                     ) : (
+                       <div className="w-full h-full bg-white/5 flex items-center justify-center">
+                          <Star className="text-white/10" />
+                       </div>
+                     )}
+                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center flex-col gap-2 cursor-pointer group-hover:bg-black/20 transition-all">
+                        <span className="text-2xl font-bold">+{galeriaSinLogo.length > 3 ? galeriaSinLogo.length - 3 : 0}</span>
+                        <span className="text-[10px] uppercase font-black tracking-widest text-[var(--color-texto-muted)]">Ver todas</span>
+                     </div>
+                  </div>
+                </>
+              );
+           })()}
         </div>
       </div>
 
@@ -205,51 +224,32 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
            </div>
 
            <div className="space-y-4 border-t border-[var(--color-borde-suave)] pt-8">
-              <h2 className="text-2xl font-bold">Acerca del servicio</h2>
-              <p className="text-[var(--color-texto-suave)] leading-relaxed">
+              <h2 className="text-2xl font-bold italic tracking-tighter uppercase">Acerca del servicio</h2>
+              <p className="text-lg text-[var(--color-texto-suave)] leading-relaxed italic border-l-4 border-[var(--color-primario)] pl-6 py-2">
                 {p.descripcion || 'Sin descripción detallada disponible.'}
               </p>
            </div>
 
-           {/* Nueva Sección: Ubicación */}
-           {p.latitud && p.longitud && (
-             <div className="space-y-6 pt-8 border-t border-[var(--color-borde-suave)]">
-                <div className="flex items-center justify-between">
-                   <h2 className="text-2xl font-bold flex items-center gap-2">
-                      <MapIcon size={24} className="text-[var(--color-primario-claro)]" /> Ubicación
-                   </h2>
-                   <span className="text-xs text-[var(--color-texto-muted)] uppercase font-black tracking-widest">{p.ciudad}, {p.estado}</span>
-                </div>
-                
-                <GooglePublicMap lat={p.latitud} lng={p.longitud} businessName={p.nombre} />
-                
-                <div className="flex items-start gap-3 p-4 rounded-2xl bg-[var(--color-fondo-input)]/50 border border-white/5">
-                   <MapPin size={18} className="text-[var(--color-primario-claro)] flex-shrink-0 mt-0.5" />
-                   <p className="text-sm text-[var(--color-texto-suave)]">{p.direccion}</p>
-                </div>
-             </div>
-           )}
-
            {/* Reseñas (Si hubiera) */}
            {p.resenas.length > 0 && (
-             <div className="space-y-6 pt-6 border-t border-[var(--color-borde-suave)]">
-                <h2 className="text-2xl font-bold">Reseñas de Clientes</h2>
-                <div className="space-y-4">
+             <div className="space-y-6 pt-10 border-t border-[var(--color-borde-suave)]">
+                <h2 className="text-2xl font-bold italic tracking-tighter uppercase">Lo que dicen los clientes</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    {p.resenas.map((r: any) => (
-                     <div key={r.id} className="card bg-[var(--color-fondo-input)]/50 p-6">
+                     <div key={r.id} className="card bg-[var(--color-fondo-input)]/50 p-6 border-none shadow-xl">
                         <div className="flex justify-between items-start mb-4">
                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-[var(--color-primario)]/20 flex items-center justify-center font-bold text-[var(--color-primario)]">
+                              <div className="w-10 h-10 rounded-full bg-[var(--color-primario)]/20 flex items-center justify-center font-black text-[var(--color-primario-claro)] text-sm">
                                 {r.nombre.charAt(0)}
                               </div>
                               <div>
-                                 <p className="font-bold">{r.nombre}</p>
-                                 <p className="text-[10px] text-[var(--color-texto-muted)]">{new Date(r.creadoEn).toLocaleDateString()}</p>
+                                 <p className="font-bold text-sm uppercase tracking-tight">{r.nombre}</p>
+                                 <p className="text-[10px] text-[var(--color-texto-muted)] font-bold">{new Date(r.creadoEn).toLocaleDateString()}</p>
                               </div>
                            </div>
                            <div className="flex items-center text-amber-400">
                               {Array.from({length: 5}).map((_, i) => (
-                                <Star key={i} size={12} fill={i < r.calificacion ? "currentColor" : "none"} />
+                                <Star key={i} size={10} fill={i < r.calificacion ? "currentColor" : "none"} />
                               ))}
                            </div>
                         </div>
@@ -258,6 +258,32 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
                         </p>
                      </div>
                    ))}
+                </div>
+             </div>
+           )}
+
+           {/* Nueva Sección: Ubicación Movida al Final de la columna de contenido */}
+           {p.latitud && p.longitud && (
+             <div className="space-y-6 pt-10 border-t border-[var(--color-borde-suave)] pb-10">
+                <div className="flex items-center justify-between">
+                   <h2 className="text-2xl font-bold italic tracking-tighter uppercase flex items-center gap-2">
+                      <MapIcon size={24} className="text-[var(--color-primario-claro)]" /> Dónde encontrarnos
+                   </h2>
+                   <span className="text-[10px] text-[var(--color-texto-muted)] uppercase font-black tracking-widest bg-white/5 px-3 py-1 rounded-full">{p.ciudad}, {p.estado}</span>
+                </div>
+                
+                <div className="rounded-[2.5rem] overflow-hidden border-4 border-[var(--color-fondo-card)] shadow-2xl">
+                   <GooglePublicMap lat={p.latitud} lng={p.longitud} businessName={p.nombre} />
+                </div>
+                
+                <div className="flex items-start gap-4 p-6 rounded-3xl bg-gradient-to-r from-[var(--color-primario)]/10 to-transparent border border-white/5">
+                   <div className="p-3 rounded-full bg-[var(--color-primario)]/20 text-[var(--color-primario-claro)]">
+                      <MapPin size={24} />
+                   </div>
+                   <div>
+                      <p className="text-sm font-bold text-white mb-1 uppercase tracking-tighter">Dirección Física</p>
+                      <p className="text-xs text-[var(--color-texto-suave)] uppercase font-black tracking-widest">{p.direccion}</p>
+                   </div>
                 </div>
              </div>
            )}
@@ -423,11 +449,13 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
                          .rbc-today { background: rgba(124, 58, 237, 0.05) !important; }
                          .rbc-event { background: var(--color-primario) !important; border: none !important; border-radius: 8px !important; font-size: 10px !important; font-weight: 800 !important; padding: 4px 8px !important; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); }
                          .rbc-show-more { background: transparent !important; color: var(--color-primario-claro) !important; font-weight: 900 !important; font-size: 10px; }
-                         .rbc-toolbar { margin-bottom: 30px !important; }
-                         .rbc-toolbar button { background: var(--color-fondo-input) !important; border: 1px solid var(--color-borde-suave) !important; color: white !important; font-weight: 700; border-radius: 10px; padding: 8px 16px; margin: 0 2px; }
-                         .rbc-toolbar button:hover { background: var(--color-primario) !important; border-color: var(--color-primario) !important; }
+                         .rbc-toolbar { margin-bottom: 30px !important; display: flex !important; flex-direction: row-reverse !important; justify-content: space-between !important; align-items: center !important; }
+                         .rbc-toolbar button { background: var(--color-fondo-input) !important; border: 1px solid var(--color-borde-suave) !important; color: white !important; font-weight: 900; border-radius: 12px; padding: 10px 20px; transition: all 0.3s; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; }
+                         .rbc-toolbar button:hover { background: var(--color-primario) !important; border-color: var(--color-primario) !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4); }
+                         .rbc-toolbar button:active { transform: translateY(0); }
                          .rbc-toolbar button.rbc-active { background: var(--color-primario) !important; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4); }
-                         .rbc-toolbar-label { font-size: 24px !important; font-weight: 900 !important; text-transform: capitalize; }
+                         .rbc-btn-group { display: flex; gap: 8px; }
+                         .rbc-toolbar-label { font-size: 32px !important; font-weight: 900 !important; text-transform: capitalize; color: white !important; font-style: italic; letter-spacing: -0.02em; }
                        `}</style>
                        <Calendar
                           localizer={localizer}
@@ -435,6 +463,8 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
                           startAccessor="start"
                           endAccessor="end"
                           culture="es"
+                          selectable={true}
+                          onSelectSlot={(slot) => console.log('Seleccionado:', slot)}
                           messages={{
                             next: "Siguiente",
                             previous: "Anterior",
