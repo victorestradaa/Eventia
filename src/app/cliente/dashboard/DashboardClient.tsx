@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, Users, Wallet, ChevronRight, Star, Clock, Heart, X, Loader2 } from 'lucide-react';
+import { Calendar, Users, Wallet, ChevronRight, Star, Clock, X, Loader2 } from 'lucide-react';
 import { formatearMoneda } from '@/lib/utils';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -10,9 +10,10 @@ import { useRouter } from 'next/navigation';
 interface DashboardClientProps {
   initialEventos: any[];
   perfil: any;
+  proveedoresRecomendados: any[];
 }
 
-export default function DashboardClient({ initialEventos, perfil }: DashboardClientProps) {
+export default function DashboardClient({ initialEventos, perfil, proveedoresRecomendados }: DashboardClientProps) {
   const router = useRouter();
   const [eventos, setEventos] = useState(initialEventos);
   const [loading, setLoading] = useState(false);
@@ -76,12 +77,6 @@ export default function DashboardClient({ initialEventos, perfil }: DashboardCli
     }
     setLoading(false);
   };
-
-  const proveedoresRecomendados = [
-    { id: 1, nombre: 'Jardín Las Rosas', categoria: 'Salón', calificacion: 4.9, precio: 35000, img: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&q=80' },
-    { id: 2, nombre: 'DJ SoundWave', categoria: 'Música', calificacion: 4.8, precio: 8500, img: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&q=80' },
-    { id: 3, nombre: 'Gourmet Express', categoria: 'Comida', calificacion: 5.0, precio: 250, img: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=800&q=80' },
-  ];
 
   // Estado vacío: sin eventos
   if (eventos.length === 0) {
@@ -319,42 +314,66 @@ export default function DashboardClient({ initialEventos, perfil }: DashboardCli
       </div>
 
       {/* Recommended Providers */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Proveedores Recomendados</h2>
-          <Link href="/cliente/explorar" className="text-[var(--color-primario-claro)] text-sm font-bold flex items-center gap-1 hover:underline">
-            Explorar todo <ChevronRight size={16} />
-          </Link>
-        </div>
+      {proveedoresRecomendados.length > 0 && (
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Proveedores Disponibles</h2>
+            <Link href="/cliente/explorar" className="text-[var(--color-primario-claro)] text-sm font-bold flex items-center gap-1 hover:underline">
+              Explorar todo <ChevronRight size={16} />
+            </Link>
+          </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {proveedoresRecomendados.map((prov) => (
-            <div key={prov.id} className="card group p-0 overflow-hidden">
-              <div className="relative aspect-video">
-                <img src={prov.img} alt={prov.nombre} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                <button className="absolute top-4 right-4 p-2 rounded-full bg-black/20 backdrop-blur-md text-white hover:text-red-500 hover:bg-white transition-all">
-                  <Heart size={18} />
-                </button>
-                <div className="absolute bottom-4 left-4">
-                   <span className="badge badge-premium text-[10px]">{prov.categoria}</span>
-                </div>
-              </div>
-              <div className="p-5 space-y-3">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-bold text-lg">{prov.nombre}</h3>
-                  <div className="flex items-center gap-1 text-sm font-bold text-amber-400">
-                    <Star size={14} fill="currentColor" /> {prov.calificacion}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {proveedoresRecomendados.map((prov) => (
+              <div key={prov.id} className="card group p-0 overflow-hidden">
+                <div className="relative aspect-video bg-[var(--color-fondo-input)]">
+                  {prov.imagenServicio ? (
+                    <img src={prov.imagenServicio} alt={prov.nombre} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                  ) : prov.logoUrl ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <img src={prov.logoUrl} alt={prov.nombre} className="w-20 h-20 rounded-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[var(--color-texto-muted)]">
+                      <Star size={32} />
+                    </div>
+                  )}
+                  <div className="absolute bottom-4 left-4">
+                     <span className="badge badge-premium text-[10px]">{prov.categoria}</span>
                   </div>
                 </div>
-                <p className="text-sm text-[var(--color-texto-suave)]">Desde {formatearMoneda(prov.precio)}</p>
-                <Link href={`/cliente/proveedor/${prov.id}`}>
-                  <button className="btn btn-fantasma w-full text-xs py-2 mt-2">Ver Detalles</button>
-                </Link>
+                <div className="p-5 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-bold text-lg">{prov.nombre}</h3>
+                    {prov.calificacion > 0 && (
+                      <div className="flex items-center gap-1 text-sm font-bold text-amber-400">
+                        <Star size={14} fill="currentColor" /> {prov.calificacion}
+                      </div>
+                    )}
+                  </div>
+                  {prov.precioDesde > 0 && (
+                    <p className="text-sm text-[var(--color-texto-suave)]">Desde {formatearMoneda(prov.precioDesde)}</p>
+                  )}
+                  <Link href={`/cliente/explorar`}>
+                    <button className="btn btn-fantasma w-full text-xs py-2 mt-2">Ver Detalles</button>
+                  </Link>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {proveedoresRecomendados.length === 0 && (
+        <section className="card p-8 text-center border-dashed border-2">
+          <Star size={32} className="mx-auto text-[var(--color-texto-muted)] mb-3" />
+          <p className="font-bold text-lg">Aún no hay proveedores registrados</p>
+          <p className="text-sm text-[var(--color-texto-muted)] mb-4">Próximamente encontrarás los mejores proveedores para tu evento.</p>
+          <Link href="/cliente/explorar">
+            <button className="btn btn-primario text-sm">Explorar</button>
+          </Link>
+        </section>
+      )}
 
       {/* MODAL NUEVO EVENTO (Reutilizado) */}
       {isNewEventModalOpen && renderModal()}

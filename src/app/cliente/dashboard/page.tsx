@@ -1,5 +1,6 @@
 import { getCurrentProfile } from '@/lib/actions/authActions';
 import { getEventosCliente } from '@/lib/actions/eventActions';
+import { prisma } from '@/lib/prisma';
 import DashboardClient from './DashboardClient';
 import { redirect } from 'next/navigation';
 
@@ -24,10 +25,44 @@ export default async function ClientDashboardPage() {
     ? await getEventosCliente(perfil.cliente.id) 
     : { success: false, data: [] };
 
+  // Obtener proveedores reales activos con al menos un servicio
+  const proveedoresReales = await prisma.proveedor.findMany({
+    where: { 
+      activo: true,
+      servicios: { some: {} },
+    },
+    include: {
+      servicios: {
+        where: { activo: true },
+        take: 1,
+        orderBy: { precio: 'asc' },
+      },
+      resenas: {
+        select: { calificacion: true },
+      },
+    },
+    take: 6,
+    orderBy: { puntuacionExp: 'desc' },
+  });
+
+  // Formatear para el cliente
+  const proveedoresFormateados = proveedoresReales.map(p => ({
+    id: p.id,
+    nombre: p.nombre,
+    categoria: p.categoria,
+    logoUrl: p.logoUrl,
+    precioDesde: p.servicios[0] ? Number(p.servicios[0].precio) : 0,
+    calificacion: p.resenas.length > 0 
+      ? Math.round((p.resenas.reduce((acc, r) => acc + r.calificacion, 0) / p.resenas.length) * 10) / 10
+      : 0,
+    imagenServicio: p.servicios[0]?.imagenes?.[0] || null,
+  }));
+
   return (
     <DashboardClient 
       initialEventos={eventosRes.success ? JSON.parse(JSON.stringify(eventosRes.data)) : []} 
       perfil={JSON.parse(JSON.stringify(perfil))} 
+      proveedoresRecomendados={JSON.parse(JSON.stringify(proveedoresFormateados))}
     />
   );
 }

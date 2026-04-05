@@ -115,7 +115,7 @@ export async function createServicio(formData: {
         precio: formData.precio,
         capacidadMin: formData.capacidadMin,
         capacidadMax: formData.capacidadMax,
-        etiquetasEvento: formData.etiquetasEvento || ['TODOS'],
+        etiquetasEvento: (formData.etiquetasEvento as any) || ['TODOS'],
         imagenes: formData.imagenes || [],
         diasDisponibles: formData.diasDisponibles || [],
         capacidadSimultanea: formData.capacidadSimultanea || 1,
@@ -156,7 +156,7 @@ export async function updateServicio(id: string, formData: {
         precio: formData.precio,
         capacidadMin: formData.capacidadMin,
         capacidadMax: formData.capacidadMax,
-        etiquetasEvento: formData.etiquetasEvento || ['TODOS'],
+        etiquetasEvento: (formData.etiquetasEvento as any) || ['TODOS'],
         imagenes: formData.imagenes || [],
         diasDisponibles: formData.diasDisponibles || [],
         capacidadSimultanea: formData.capacidadSimultanea || 1,
@@ -418,10 +418,10 @@ export async function getExplorarServicios() {
       },
       include: {
         proveedor: {
-          select: {
-            nombre: true,
-            ciudad: true,
-            plan: true,
+          include: {
+            resenas: {
+              select: { calificacion: true }
+            }
           }
         },
         _count: {
@@ -435,19 +435,27 @@ export async function getExplorarServicios() {
     });
 
     // Serialización de Decimales y mapeo de datos
-    const data = servicios.map((s: any) => ({
-      id: s.id,
-      nombre: s.nombre,
-      categoria: s.proveedor.categoria || 'Servicio',
-      calificacion: 5.0, // Pendiente de calcular con reseñas reales
-      reseñas: s._count.reservas || 0,
-      precio: Number(s.precio),
-      ciudad: s.proveedor.ciudad,
-      capacidad: s.capacidadMax ? `${s.capacidadMin}-${s.capacidadMax}` : 'N/A',
-      premium: s.proveedor.plan === 'PREMIUM' || s.proveedor.plan === 'ELITE',
-      img: s.imagenes[0] || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&q=80',
-      proveedorId: s.proveedorId
-    }));
+    const data = servicios.map((s: any) => {
+      // Calcular promedio de calificación real del proveedor
+      const resenas = s.proveedor.resenas || [];
+      const promedio = resenas.length > 0 
+        ? Math.round((resenas.reduce((acc: number, r: any) => acc + r.calificacion, 0) / resenas.length) * 10) / 10
+        : 0;
+
+      return {
+        id: s.id,
+        nombre: s.nombre,
+        categoria: s.proveedor.categoria || 'Servicio',
+        calificacion: promedio,
+        reseñas: resenas.length,
+        precio: Number(s.precio),
+        ciudad: s.proveedor.ciudad,
+        capacidad: s.capacidadMax ? `${s.capacidadMin}-${s.capacidadMax}` : 'N/A',
+        premium: s.proveedor.plan === 'PREMIUM' || s.proveedor.plan === 'ELITE',
+        img: s.imagenes[0] || s.proveedor.logoUrl || null,
+        proveedorId: s.proveedorId
+      };
+    });
 
     return { success: true, data };
   } catch (error) {
