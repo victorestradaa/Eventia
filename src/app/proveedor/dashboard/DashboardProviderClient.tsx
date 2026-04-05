@@ -7,9 +7,13 @@ import {
   DollarSign,
   Package,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  Zap,
+  Star,
+  Crown,
+  Gem
 } from 'lucide-react';
-import { formatearMoneda } from '@/lib/utils';
+import { formatearMoneda, cn } from '@/lib/utils';
 import Link from 'next/link';
 
 interface DashboardProviderClientProps {
@@ -153,27 +157,74 @@ export default function DashboardProviderClient({ resumen, perfil }: DashboardPr
 
         {/* Nivel de Exposición Dynamic */}
         <div className="flex flex-col gap-6">
-          <div className="card text-center p-8 space-y-6">
-            <h3 className="text-xl font-bold">Tu Visibilidad</h3>
-            <div className="flex flex-col items-center">
-              <div className="relative w-36 h-36 flex items-center justify-center rounded-3xl border-2 border-[var(--color-primario)]/30 bg-gradient-to-br from-white/5 to-transparent shadow-2xl">
-                <div className="text-center">
-                  <p className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Plan Actual</p>
-                  <p className="text-2xl font-black text-white">{proveedor.plan}</p>
+          <div className="card text-center p-8 space-y-6 relative overflow-hidden group">
+            {/* Fondo decorativo sutil basado en el plan */}
+            <div className={cn(
+              "absolute inset-0 opacity-5 transition-opacity group-hover:opacity-10",
+              proveedor.plan === 'ELITE' ? "bg-emerald-500" :
+              proveedor.plan === 'PREMIUM' ? "bg-amber-500" :
+              proveedor.plan === 'INTERMEDIO' ? "bg-blue-500" : "bg-white"
+            )} />
+
+            <h3 className="text-xl font-bold relative z-10">Tu Visibilidad</h3>
+            <div className="flex flex-col items-center relative z-10">
+              <div className={cn(
+                "relative w-36 h-36 flex items-center justify-center rounded-3xl border-2 transition-all p-1",
+                proveedor.plan === 'ELITE' ? "border-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.2)]" :
+                proveedor.plan === 'PREMIUM' ? "border-amber-500/50 shadow-[0_0_30px_rgba(245,158,11,0.2)]" :
+                proveedor.plan === 'INTERMEDIO' ? "border-blue-500/50 shadow-[0_0_30px_rgba(59,130,246,0.2)]" : "border-white/20"
+              )}>
+                <div className="w-full h-full rounded-[20px] overflow-hidden bg-[var(--color-fondo-input)] flex items-center justify-center border border-white/5">
+                  {proveedor.logoUrl ? (
+                    <img src={proveedor.logoUrl} alt={nombre} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-center p-4">
+                       <p className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] mb-1">Tu Logo</p>
+                       <Package size={24} className="mx-auto text-white/20" />
+                    </div>
+                  )}
                 </div>
-                {/* Decorative icons */}
-                <div className="absolute -top-3 -right-3 p-2 bg-[var(--color-primario)] rounded-xl shadow-lg shadow-violet-500/50">
-                   {proveedor.plan === 'PREMIUM' ? <TrendingUp size={16} /> : <Clock size={16} />}
+
+                {/* Badge de Plan Dinámico */}
+                <div className={cn(
+                  "absolute -top-3 -right-3 w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transform rotate-12 group-hover:rotate-0 transition-transform",
+                  proveedor.plan === 'ELITE' ? "bg-emerald-500 text-white shadow-emerald-500/40" :
+                  proveedor.plan === 'PREMIUM' ? "bg-amber-500 text-white shadow-amber-500/40" :
+                  proveedor.plan === 'INTERMEDIO' ? "bg-blue-500 text-white shadow-blue-500/40" : "bg-gray-600 text-white"
+                )}>
+                   {proveedor.plan === 'ELITE' ? <Gem size={20} /> :
+                    proveedor.plan === 'PREMIUM' ? <Crown size={20} /> :
+                    proveedor.plan === 'INTERMEDIO' ? <Star size={20} /> : <Zap size={20} />}
                 </div>
               </div>
-              <p className="mt-6 text-sm text-[var(--color-texto-suave)] leading-relaxed">
-                {proveedor.plan === 'PREMIUM' 
-                  ? 'Tienes la máxima exposición. Tu negocio aparece en los primeros resultados de búsqueda.'
-                  : 'Mejora tu plan para aparecer en las primeras posiciones y recibir más cotizaciones.'}
+              
+              <div className="mt-6 space-y-1">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)]">Nivel de Exposición</p>
+                <p className={cn(
+                  "text-xl font-black uppercase",
+                  proveedor.plan === 'ELITE' ? "text-emerald-400" :
+                  proveedor.plan === 'PREMIUM' ? "text-amber-400" :
+                  proveedor.plan === 'INTERMEDIO' ? "text-blue-400" : "text-white"
+                )}>
+                  {proveedor.plan === 'GRATIS' ? 'Básico' : proveedor.plan}
+                </p>
+              </div>
+
+              <p className="mt-4 text-xs text-[var(--color-texto-suave)] leading-relaxed min-h-[40px]">
+                {proveedor.plan === 'ELITE' ? 'Socio prioritario. Tienes la máxima relevancia y 0% de comisiones.' :
+                 proveedor.plan === 'PREMIUM' ? 'Dominio total. Tu negocio aparece en los primeros resultados de búsqueda.' :
+                 proveedor.plan === 'INTERMEDIO' ? 'Visibilidad aumentada. Tu perfil destaca entre la competencia.' : 
+                 'Mejora tu plan para aparecer en las primeras posiciones y recibir más cotizaciones.'}
               </p>
-              <Link href="/proveedor/planes" className="w-full">
-                <button className="btn btn-primario w-full font-bold shadow-lg shadow-violet-500/20">
-                  {proveedor.plan === 'PREMIUM' ? 'Ver Beneficios' : 'Subir de Nivel'}
+
+              <Link href="/proveedor/planes" className="w-full mt-6">
+                <button className={cn(
+                  "btn w-full font-bold shadow-lg transition-all",
+                  proveedor.plan === 'ELITE' ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20" :
+                  proveedor.plan === 'PREMIUM' ? "bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20" :
+                  "btn-primario shadow-violet-500/20"
+                )}>
+                  {proveedor.plan === 'ELITE' ? 'Ver Beneficios' : 'Siguiente Nivel'}
                 </button>
               </Link>
             </div>

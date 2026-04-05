@@ -92,3 +92,25 @@ export async function updateProviderAvailability(proveedorId: string, data: {
     return { success: false, error: 'No se pudo actualizar la configuración de disponibilidad.' };
   }
 }
+
+/**
+ * Actualizar el plan de suscripción del proveedor (Modo Prueba).
+ */
+export async function updateProviderPlan(proveedorId: string, plan: 'GRATIS' | 'INTERMEDIO' | 'PREMIUM' | 'ELITE') {
+  try {
+    const updated = await prisma.proveedor.update({
+      where: { id: proveedorId },
+      data: { plan }
+    });
+
+    revalidatePath('/proveedor/planes');
+    revalidatePath('/proveedor/dashboard');
+    revalidatePath('/proveedor/configuracion');
+    
+    return { success: true, data: JSON.parse(JSON.stringify(updated)) };
+  } catch (error) {
+    console.error('Error al actualizar plan:', error);
+    return { success: false, error: 'No se pudo actualizar el plan.' };
+  }
+}
+

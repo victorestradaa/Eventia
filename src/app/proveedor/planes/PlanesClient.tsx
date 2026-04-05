@@ -3,11 +3,12 @@
 import { Check, Star, Zap, Crown, DollarSign, Loader2, Gem } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import { createCheckoutSession } from '@/lib/actions/stripeActions';
+import { updateProviderPlan } from '@/lib/actions/settingsActions';
+import { useRouter } from 'next/navigation';
 
 const PLANES = [
   {
-    id: 'FREE',
+    id: 'GRATIS',
     nombre: 'Plan Básico',
     precio: 0,
     comision: '10%',
@@ -78,26 +79,31 @@ const PLANES = [
 
 interface PlanesClientProps {
   planActual: string;
+  proveedorId: string;
 }
 
-export default function PlanesClient({ planActual }: PlanesClientProps) {
+export default function PlanesClient({ planActual, proveedorId }: PlanesClientProps) {
   const [loading, setLoading] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleUpgrade = async (planId: string) => {
-    if (planId === 'FREE') return;
+    if (planId === planActual) return;
     
     setLoading(planId);
-    // Mapeo al ID esperado por Stripe Actions
-    const stripePlanId = `PROVEEDOR_${planId}` as any;
     
-    const res = await createCheckoutSession(stripePlanId);
+    const res = await updateProviderPlan(proveedorId, planId as any);
     
-    if (res.success && res.url) {
-      window.location.href = res.url;
+    if (res.success) {
+      setSuccess(planId);
+      setTimeout(() => {
+        setSuccess(null);
+        router.refresh();
+      }, 3000);
     } else {
-      alert(res.error || 'No se pudo iniciar el proceso de pago.');
-      setLoading(null);
+      alert(res.error || 'No se pudo actualizar el plan.');
     }
+    setLoading(null);
   };
 
   return (
@@ -133,7 +139,7 @@ export default function PlanesClient({ planActual }: PlanesClientProps) {
               <div className="mb-8">
                 <div className={cn(
                   "w-12 h-12 rounded-2xl flex items-center justify-center mb-6",
-                  plan.id === 'FREE' ? "bg-white/5 text-white" : 
+                  plan.id === 'GRATIS' ? "bg-white/5 text-white" : 
                   plan.id === 'INTERMEDIO' ? "bg-blue-500/10 text-blue-400" : 
                   plan.id === 'ELITE' ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
                 )}>
@@ -184,24 +190,23 @@ export default function PlanesClient({ planActual }: PlanesClientProps) {
         })}
       </div>
 
-      {/* Preguntas Frecuentes Rapidas */}
-      <section className="card bg-white/5 border-none p-8">
-        <h3 className="text-xl font-bold mb-6">Preguntas sobre comisiones</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-2">
-            <p className="font-bold text-[var(--color-primario-claro)] text-sm italic underline underline-offset-4">¿Cuándo se paga la comisión?</p>
-            <p className="text-sm text-[var(--color-texto-suave)] leading-relaxed">
-              La comisión se descuenta automáticamente al momento de recibir el pago final del cliente a través de nuestra plataforma.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <p className="font-bold text-[var(--color-primario-claro)] text-sm italic underline underline-offset-4">¿Puedo cambiar de plan en cualquier momento?</p>
-            <p className="text-sm text-[var(--color-texto-suave)] leading-relaxed">
-              Sí, puedes hacer el upgrade o downgrade cuando quieras. Los cambios de tarifa de comisión se aplicarán a los nuevos eventos contratados después del cambio.
-            </p>
-          </div>
+      {/* Overlay de Éxito Animado */}
+      {success && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-500">
+           <div className="card max-w-sm w-full text-center space-y-6 py-12 border-[var(--color-primario)]/50 shadow-[0_0_50px_rgba(124,58,237,0.3)] scale-in-center">
+              <div className="mx-auto w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2 scale-up-center">
+                 <Check size={48} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold">¡Plan Actualizado!</h3>
+                <p className="text-sm text-[var(--color-texto-suave)] px-6">
+                  Tu negocio ahora forma parte del **{PLANES.find(p => p.id === success)?.nombre}**.
+                </p>
+                <div className="text-[10px] font-black tracking-widest text-[var(--color-primario-claro)] uppercase mt-2">Prueba habilitada con éxito</div>
+              </div>
+           </div>
         </div>
-      </section>
+      )}
     </div>
   );
 }
