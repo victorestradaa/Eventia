@@ -368,7 +368,9 @@ export async function createBloqueoRapido(data: {
         montoTotal: Number(servicioInfo.precio), // Usar precio base del servicio
         montoAnticipo: 0,
         montoComision: 0,
-        notas: 'Bloqueo rápido desde calendario'
+        notas: data.clienteAproximado === 'Mantenimiento' || data.clienteAproximado === 'Día Inhábil' 
+               ? `BLOQUEO_SISTEMA: ${data.clienteAproximado}` 
+               : 'Venta manual desde calendario'
       }
     });
 

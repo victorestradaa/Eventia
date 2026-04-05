@@ -114,44 +114,46 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
         {/* Main large image */}
         <div className="lg:col-span-8 relative rounded-3xl overflow-hidden group min-h-[400px] bg-[var(--color-fondo-input)]">
            {/* Filtrar imágenes para NO mostrar el logo como parte de la galería principal */}
-           {p.imagenes.filter((img: string) => img !== p.logoUrl).length > 0 ? (
-             <>
-               {(() => {
-                 const galeriaSinLogo = p.imagenes.filter((img: string) => img !== p.logoUrl);
-                 return (
-                   <>
-                     <img 
-                       src={galeriaSinLogo[imgActiva % galeriaSinLogo.length]} 
-                       alt={p.nombre} 
-                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                     />
-                     {galeriaSinLogo.length > 1 && (
-                       <>
-                         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all pointer-events-none" />
-                         <button 
-                           onClick={() => setImgActiva((imgActiva - 1 + galeriaSinLogo.length) % galeriaSinLogo.length)}
-                           className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                          >
-                           <ChevronLeft size={24} />
-                         </button>
-                         <button 
-                           onClick={() => setImgActiva((imgActiva + 1) % galeriaSinLogo.length)}
-                           className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                          >
-                           <ChevronRight size={24} />
-                         </button>
-                       </>
-                     )}
-                   </>
-                 );
-               })()}
-             </>
-           ) : (
-             <div className="w-full h-full flex flex-col items-center justify-center text-[var(--color-texto-muted)] gap-4">
-               <CalendarIcon size={64} strokeWidth={1} />
-               <p className="text-sm font-bold uppercase tracking-widest">Sin imágenes disponibles</p>
-             </div>
-           )}
+           {(() => {
+              // Filtrar estrictamente: Solo mostrar imágenes que NO sean el logo
+              const galeriaReal = p.imagenes.filter((img: string) => img && img !== p.logoUrl);
+              
+              if (galeriaReal.length > 0) {
+                return (
+                  <>
+                    <img 
+                      src={galeriaReal[imgActiva % galeriaReal.length]} 
+                      alt={p.nombre} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                    />
+                    {galeriaReal.length > 1 && (
+                      <>
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all pointer-events-none" />
+                        <button 
+                          onClick={() => setImgActiva((imgActiva - 1 + galeriaReal.length) % galeriaReal.length)}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                         >
+                          <ChevronLeft size={24} />
+                        </button>
+                        <button 
+                          onClick={() => setImgActiva((imgActiva + 1) % galeriaReal.length)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                         >
+                          <ChevronRight size={24} />
+                        </button>
+                      </>
+                    )}
+                  </>
+                );
+              }
+
+              return (
+                <div className="w-full h-full flex flex-col items-center justify-center text-[var(--color-texto-muted)] gap-4 bg-white/5">
+                   <CalendarIcon size={64} strokeWidth={1} />
+                   <p className="text-sm font-bold uppercase tracking-widest">Sin imágenes del servicio</p>
+                </div>
+              );
+           })()}
         </div>
         
         {/* Sidebar thumbnails */}
@@ -202,18 +204,18 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
                   <div className="relative shrink-0">
                      <div 
                        onClick={() => setZoomLogo(true)}
-                       className="w-28 h-28 rounded-full border-4 border-white/5 bg-[var(--color-fondo-input)] shadow-2xl overflow-hidden cursor-zoom-in hover:scale-105 transition-all p-1"
+                       className="w-20 h-20 rounded-full border-4 border-white/5 bg-[var(--color-fondo-input)] shadow-2xl overflow-hidden cursor-zoom-in hover:scale-105 transition-all p-1"
                      >
                         {p.logoUrl ? (
                           <img src={p.logoUrl} alt="Logo" className="w-full h-full object-cover rounded-full" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[var(--color-primario-claro)]">
-                             <Star size={32} />
+                             <Star size={24} />
                           </div>
                         )}
                      </div>
-                     <span className="absolute bottom-0 right-0 p-2 bg-[var(--color-primario)] text-white rounded-full shadow-lg">
-                        <ShieldCheck size={14} />
+                     <span className="absolute bottom-0 right-0 p-1.5 bg-[var(--color-primario)] text-white rounded-full shadow-lg">
+                        <ShieldCheck size={12} />
                      </span>
                   </div>
 

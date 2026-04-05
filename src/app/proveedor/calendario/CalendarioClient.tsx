@@ -107,7 +107,8 @@ export default function CalendarioClient({ reservas: initialReservas, proveedor,
       ...prev,
       servicioId: servicios.length > 0 ? servicios[0].id : '',
       tipoReserva: 'DIA_COMPLETO',
-      clienteAproximado: ''
+      clienteAproximado: '',
+      motivo: 'VENTA_MANUAL' as 'VENTA_MANUAL' | 'MANTENIMIENTO' | 'DIA_INHABIL' | 'OTRO'
     }));
 
     if (reservasHoy.length > 0) {
@@ -131,7 +132,9 @@ export default function CalendarioClient({ reservas: initialReservas, proveedor,
       tipoReserva: form.tipoReserva,
       horaInicio: form.tipoReserva === 'POR_HORAS' ? form.horaInicio : undefined,
       horaFin: form.tipoReserva === 'POR_HORAS' ? form.horaFin : undefined,
-      clienteAproximado: form.clienteAproximado || 'Bloqueo Interno'
+      clienteAproximado: form.motivo === 'MANTENIMIENTO' ? 'Mantenimiento' : 
+                         form.motivo === 'DIA_INHABIL' ? 'Día Inhábil' : 
+                         form.clienteAproximado || 'Bloqueo Interno'
     });
 
     if (res.success && res.data) {
@@ -260,30 +263,39 @@ export default function CalendarioClient({ reservas: initialReservas, proveedor,
                   </div>
 
                   <div className="flex-1 space-y-1 overflow-y-auto hidden-scrollbar">
-                    {reservasHoy.map(r => (
-                      <div 
-                        key={r.id}
-                        className="p-1.5 rounded text-[9px] font-bold border-l-4 shadow-sm"
-                        style={{ 
-                          backgroundColor: `${ESTADOS_RESERVA_COLORES[r.estado as keyof typeof ESTADOS_RESERVA_COLORES]}15`,
-                          borderColor: ESTADOS_RESERVA_COLORES[r.estado as keyof typeof ESTADOS_RESERVA_COLORES],
-                          color: ESTADOS_RESERVA_COLORES[r.estado as keyof typeof ESTADOS_RESERVA_COLORES]
-                        }}
-                      >
-                        <div className="truncate mb-0.5">
-                          {r.esManual ? (r.nombreClienteExterno || 'Manual') : (r.cliente?.usuario?.nombre || 'Desde App')}
-                        </div>
-                        {r.tipoReserva === 'POR_HORAS' ? (
-                          <div className="flex items-center gap-1 opacity-80 text-[8px] tracking-wider">
-                            <Clock size={8} /> {r.horaInicio} - {r.horaFin}
+                      {(() => {
+                        const esBloqueoSistema = r.notas?.startsWith('BLOQUEO_SISTEMA:');
+                        const statusColor = esBloqueoSistema ? '#4b5563' : ESTADOS_RESERVA_COLORES[r.estado as keyof typeof ESTADOS_RESERVA_COLORES];
+                        
+                        return (
+                          <div 
+                            key={r.id}
+                            className={cn(
+                              "p-1.5 rounded text-[9px] font-bold border-l-4 shadow-sm",
+                              esBloqueoSistema && "bg-slate-800/80 border-slate-600 text-slate-300 italic"
+                            )}
+                            style={!esBloqueoSistema ? { 
+                              backgroundColor: `${statusColor}15`,
+                              borderColor: statusColor,
+                              color: statusColor
+                            } : {}}
+                          >
+                            <div className="truncate mb-0.5 flex items-center gap-1">
+                              {esBloqueoSistema && <AlertCircle size={8} />}
+                              {r.esManual ? (r.nombreClienteExterno || 'Manual') : (r.cliente?.usuario?.nombre || 'Desde App')}
+                            </div>
+                            {r.tipoReserva === 'POR_HORAS' ? (
+                              <div className="flex items-center gap-1 opacity-80 text-[8px] tracking-wider">
+                                <Clock size={8} /> {r.horaInicio} - {r.horaFin}
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 opacity-80 text-[8px] tracking-wider uppercase">
+                                {r.estado === 'TEMPORAL' && !r.turnoConfirmadoEn ? '⏳ Pendiente turno' : 'Día Completo'}
+                              </div>
+                            )}
                           </div>
-                        ) : (
-                          <div className="flex items-center gap-1 opacity-80 text-[8px] tracking-wider uppercase">
-                            {r.estado === 'TEMPORAL' && !r.turnoConfirmadoEn ? '⏳ Pendiente turno' : 'Día Completo'}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                        );
+                      })()}
                   </div>
 
                   <button 
@@ -667,16 +679,34 @@ export default function CalendarioClient({ reservas: initialReservas, proveedor,
                 </div>
               )}
 
-              <div className="space-y-2 pt-2">
-                <label className="text-sm font-bold text-[var(--color-texto-suave)]">Identificador <span className="text-[10px] font-normal">(Opcional)</span></label>
-                <input 
-                  type="text"
-                  value={form.clienteAproximado}
-                  onChange={e => setForm({...form, clienteAproximado: e.target.value})}
-                  className="input w-full h-12"
-                  placeholder="Ej. Boda Martínez Sánchez"
-                />
-              </div>
+              <div className="space-y-4 pt-2">
+                 <div className="space-y-2">
+                   <label className="text-sm font-bold text-[var(--color-texto-suave)]">Motivo del Bloqueo</label>
+                   <select 
+                     value={(form as any).motivo || 'VENTA_MANUAL'}
+                     onChange={e => setForm({...form, motivo: e.target.value as any})}
+                     className="input w-full h-12"
+                   >
+                     <option value="VENTA_MANUAL">Venta Manual / Apartado Interno</option>
+                     <option value="MANTENIMIENTO">Mantenimiento / Reparación</option>
+                     <option value="DIA_INHABIL">Día Inhábil / Descanso</option>
+                     <option value="OTRO">Otro Motivo</option>
+                   </select>
+                 </div>
+
+                 {((form as any).motivo === 'VENTA_MANUAL' || (form as any).motivo === 'OTRO') && (
+                   <div className="space-y-2 pt-2 animate-in fade-in zoom-in-95 duration-200">
+                     <label className="text-sm font-bold text-[var(--color-texto-suave)]">Identificador <span className="text-[10px] font-normal">(Opcional)</span></label>
+                     <input 
+                       type="text"
+                       value={form.clienteAproximado}
+                       onChange={e => setForm({...form, clienteAproximado: e.target.value})}
+                       className="input w-full h-12"
+                       placeholder="Ej. Boda Martínez Sánchez"
+                     />
+                   </div>
+                 )}
+               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-[var(--color-borde-suave)]">
                 <button type="button" onClick={() => setModalMode(null)} disabled={isSubmitting} className="btn bg-[var(--color-fondo-input)] hover:bg-[var(--color-borde-fuerte)] px-6">
