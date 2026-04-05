@@ -455,3 +455,65 @@ export async function getExplorarServicios() {
     return { success: false, error: 'No se pudieron cargar los servicios.' };
   }
 }
+
+/**
+ * Obtiene el detalle público de un proveedor y sus servicios para el cliente.
+ */
+export async function getDetalleProveedor(id: string) {
+  try {
+    const proveedor = await prisma.proveedor.findUnique({
+      where: { id },
+      include: {
+        servicios: {
+          where: { activo: true },
+          orderBy: { creadoEn: 'desc' },
+        },
+        resenas: {
+          include: { cliente: { include: { usuario: true } } },
+          orderBy: { creadoEn: 'desc' },
+          take: 5
+        }
+      }
+    });
+
+    if (!proveedor) return { success: false, error: 'Proveedor no encontrado.' };
+
+    // Calcular promedio de calificación
+    const calificacion = proveedor.resenas.length > 0 
+      ? proveedor.resenas.reduce((acc, r) => acc + r.calificacion, 0) / proveedor.resenas.length
+      : 5.0;
+
+    // Serialización
+    const data = {
+      nombre: proveedor.nombre,
+      categoria: proveedor.categoria,
+      ubiacacion: `${proveedor.ciudad}, ${proveedor.estado}`,
+      descripcion: proveedor.descripcion,
+      calificacion: Number(calificacion.toFixed(1)),
+      reseñasCount: proveedor.resenas.length,
+      imagenes: [
+        proveedor.bannerUrl || 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200&q=80',
+        proveedor.logoUrl || 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1200&q=80',
+      ],
+      servicios: proveedor.servicios.map((s: any) => ({
+        id: s.id,
+        nombre: s.nombre,
+        precio: Number(s.precio),
+        desc: s.descripcion || 'Sin descripción disponible.'
+      })),
+      resenas: proveedor.resenas.map((r: any) => ({
+        id: r.id,
+        nombre: r.cliente.usuario.nombre,
+        calificacion: r.calificacion,
+        comentario: r.comentario,
+        creadoEn: r.creadoEn
+      }))
+    };
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error al obtener detalle del proveedor:', error);
+    return { success: false, error: 'Error al cargar el perfil.' };
+  }
+}
+
