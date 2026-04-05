@@ -263,39 +263,39 @@ export default function CalendarioClient({ reservas: initialReservas, proveedor,
                   </div>
 
                   <div className="flex-1 space-y-1 overflow-y-auto hidden-scrollbar">
-                      {(() => {
-                        const esBloqueoSistema = r.notas?.startsWith('BLOQUEO_SISTEMA:');
-                        const statusColor = esBloqueoSistema ? '#4b5563' : ESTADOS_RESERVA_COLORES[r.estado as keyof typeof ESTADOS_RESERVA_COLORES];
-                        
-                        return (
-                          <div 
-                            key={r.id}
-                            className={cn(
-                              "p-1.5 rounded text-[9px] font-bold border-l-4 shadow-sm",
-                              esBloqueoSistema && "bg-slate-800/80 border-slate-600 text-slate-300 italic"
-                            )}
-                            style={!esBloqueoSistema ? { 
-                              backgroundColor: `${statusColor}15`,
-                              borderColor: statusColor,
-                              color: statusColor
-                            } : {}}
-                          >
-                            <div className="truncate mb-0.5 flex items-center gap-1">
-                              {esBloqueoSistema && <AlertCircle size={8} />}
-                              {r.esManual ? (r.nombreClienteExterno || 'Manual') : (r.cliente?.usuario?.nombre || 'Desde App')}
-                            </div>
-                            {r.tipoReserva === 'POR_HORAS' ? (
-                              <div className="flex items-center gap-1 opacity-80 text-[8px] tracking-wider">
-                                <Clock size={8} /> {r.horaInicio} - {r.horaFin}
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-1 opacity-80 text-[8px] tracking-wider uppercase">
-                                {r.estado === 'TEMPORAL' && !r.turnoConfirmadoEn ? '⏳ Pendiente turno' : 'Día Completo'}
-                              </div>
-                            )}
+                    {reservasHoy.map(r => {
+                      const esBloqueoSistema = r.notas?.startsWith('BLOQUEO_SISTEMA:');
+                      const statusColor = esBloqueoSistema ? '#4b5563' : ESTADOS_RESERVA_COLORES[r.estado as keyof typeof ESTADOS_RESERVA_COLORES];
+                      
+                      return (
+                        <div 
+                          key={r.id}
+                          className={cn(
+                            "p-1.5 rounded text-[9px] font-bold border-l-4 shadow-sm",
+                            esBloqueoSistema && "bg-slate-800/80 border-slate-600 text-slate-300 italic"
+                          )}
+                          style={!esBloqueoSistema ? { 
+                            backgroundColor: `${statusColor}15`,
+                            borderColor: statusColor,
+                            color: statusColor
+                          } : {}}
+                        >
+                          <div className="truncate mb-0.5 flex items-center gap-1">
+                            {esBloqueoSistema && <AlertCircle size={8} />}
+                            {r.esManual ? (r.nombreClienteExterno || 'Manual') : (r.cliente?.usuario?.nombre || 'Desde App')}
                           </div>
-                        );
-                      })()}
+                          {r.tipoReserva === 'POR_HORAS' ? (
+                            <div className="flex items-center gap-1 opacity-80 text-[8px] tracking-wider">
+                              <Clock size={8} /> {r.horaInicio} - {r.horaFin}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 opacity-80 text-[8px] tracking-wider uppercase">
+                              {r.estado === 'TEMPORAL' && !r.turnoConfirmadoEn ? '⏳ Pendiente turno' : 'Día Completo'}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
 
                   <button 

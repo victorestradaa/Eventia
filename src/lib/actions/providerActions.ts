@@ -531,9 +531,6 @@ export async function getExplorarServicios() {
   }
 }
 
-/**
- * Obtiene el detalle público de un proveedor y sus servicios para el cliente.
- */
 export async function getDetalleProveedor(id: string) {
   try {
     const proveedor = await prisma.proveedor.findUnique({
@@ -547,6 +544,9 @@ export async function getDetalleProveedor(id: string) {
           include: { cliente: { include: { usuario: true } } },
           orderBy: { creadoEn: 'desc' },
           take: 5
+        },
+        _count: {
+          select: { reservas: true }
         }
       }
     });
@@ -558,31 +558,30 @@ export async function getDetalleProveedor(id: string) {
       ? proveedor.resenas.reduce((acc, r) => acc + r.calificacion, 0) / proveedor.resenas.length
       : 5.0;
 
-    // Recolectar todas las imágenes de los servicios para la galería
-    const imagenesServicios = proveedor.servicios.flatMap((s: any) => s.imagenes || []);
-    const galeriaLocal = [
-      ...(proveedor.bannerUrl ? [proveedor.bannerUrl] : []),
-      ...(proveedor.logoUrl ? [proveedor.logoUrl] : []),
-      ...imagenesServicios
-    ];
-
-    // Si no hay ninguna imagen real, dejar un placeholder o array vacío en lugar de mock
-    const galeriaFinal = galeriaLocal.length > 0 ? galeriaLocal : [];
-
-    // Serialización
+    // Serialización completa para el nuevo diseño centrado en el producto
     const data = {
+      id: proveedor.id,
       nombre: proveedor.nombre,
       categoria: proveedor.categoria,
       ubicacion: `${proveedor.ciudad}, ${proveedor.estado}`,
+      ciudad: proveedor.ciudad,
+      estado: proveedor.estado,
+      direccion: proveedor.direccion,
+      latitud: proveedor.latitud,
+      longitud: proveedor.longitud,
       descripcion: proveedor.descripcion,
+      logoUrl: proveedor.logoUrl,
+      bannerUrl: proveedor.bannerUrl,
       calificacion: Number(calificacion.toFixed(1)),
       reseñasCount: proveedor.resenas.length,
-      imagenes: galeriaFinal,
+      pedidosCount: proveedor._count.reservas,
       servicios: proveedor.servicios.map((s: any) => ({
         id: s.id,
         nombre: s.nombre,
         precio: Number(s.precio),
-        desc: s.descripcion || 'Sin descripción disponible.'
+        desc: s.descripcion || 'Sin descripción disponible.',
+        imagenes: s.imagenes || [],
+        diasDisponibles: s.diasDisponibles || []
       })),
       resenas: proveedor.resenas.map((r: any) => ({
         id: r.id,

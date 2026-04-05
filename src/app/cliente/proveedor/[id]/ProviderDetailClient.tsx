@@ -15,9 +15,10 @@ import {
   ChevronLeft,
   X,
   Loader2,
-  Map as MapIcon
+  Map as MapIcon,
+  ShoppingBag
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn, formatearMoneda } from '@/lib/utils';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -27,7 +28,6 @@ import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { getReservasCalendario } from '@/lib/actions/providerActions';
-import { useEffect } from 'react';
 
 const locales = {
   'es': es,
@@ -73,6 +73,16 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
     }
   }, [mostrarCalendario, data.id]);
 
+  if (!data) return null;
+
+  const p = data;
+  const selectedService = p.servicios.find((s: any) => s.id === selectedServiceId) || p.servicios[0];
+  
+  // Fotos dinámicas del paquete. Fallback al banner si no hay fotos.
+  const galeriaReal = (selectedService?.imagenes && selectedService.imagenes.length > 0) 
+    ? selectedService.imagenes 
+    : (p.bannerUrl ? [p.bannerUrl] : []);
+
   // Convertir reservas a eventos de calendario
   const calendarEvents = reservas.map(r => ({
     title: r.esManual ? 'No disponible' : 'Reservado',
@@ -80,390 +90,309 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
     end: new Date(r.fechaEvento),
     allDay: r.tipoReserva === 'DIA_COMPLETO',
   }));
-  
-  if (!data) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <Loader2 className="animate-spin text-[var(--color-primario)]" size={48} />
-        <p>Cargando información real...</p>
-      </div>
-    );
-  }
-
-  const p = data;
 
   return (
-    <div className="space-y-8 pb-20">
-      {/* Header & Navigation */}
-      <div className="flex items-center justify-between">
-         <Link href="/cliente/explorar" className="flex items-center gap-2 text-sm text-[var(--color-texto-muted)] hover:text-white transition-colors">
-            <ArrowLeft size={18} /> Volver a buscar
+    <div className="space-y-8 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Redes y Volver */}
+      <div className="flex items-center justify-between pt-4">
+         <Link href="/cliente/explorar" className="flex items-center gap-2 text-sm text-[var(--color-texto-muted)] hover:text-white transition-colors bg-white/5 px-4 py-2 rounded-full">
+            <ArrowLeft size={18} /> Volver a explorar
          </Link>
-         <div className="flex gap-4">
-            <button className="p-3 rounded-full bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] hover:text-red-500 transition-colors">
+         <div className="flex gap-3">
+            <button className="p-3 rounded-full bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] hover:text-red-500 transition-colors shadow-lg">
               <Heart size={20} />
             </button>
-            <button className="p-3 rounded-full bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] hover:text-[var(--color-primario-claro)] transition-colors">
+            <button className="p-3 rounded-full bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] hover:text-[var(--color-primario-claro)] transition-colors shadow-lg">
               <Share2 size={20} />
             </button>
          </div>
       </div>
 
-      {/* Hero Gallery Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[500px]">
-        {/* Main large image */}
-        <div className="lg:col-span-8 relative rounded-3xl overflow-hidden group min-h-[400px] bg-[var(--color-fondo-input)]">
-           {/* Filtrar imágenes para NO mostrar el logo como parte de la galería principal */}
-           {(() => {
-              // Filtrar estrictamente: Solo mostrar imágenes que NO sean el logo
-              const galeriaReal = p.imagenes.filter((img: string) => img && img !== p.logoUrl);
+      {/* --- SECCIÓN GALERÍA (IMAGEN 3: ZONA VERDE) --- */}
+      <section className="relative rounded-[3rem] overflow-hidden group h-[550px] bg-[var(--color-fondo-input)] border-4 border-[var(--color-fondo-card)] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)]">
+         {galeriaReal.length > 0 ? (
+           <>
+              <img 
+                src={galeriaReal[imgActiva % galeriaReal.length]} 
+                alt={selectedService?.nombre} 
+                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
               
-              if (galeriaReal.length > 0) {
-                return (
-                  <>
-                    <img 
-                      src={galeriaReal[imgActiva % galeriaReal.length]} 
-                      alt={p.nombre} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                    />
-                    {galeriaReal.length > 1 && (
-                      <>
-                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all pointer-events-none" />
-                        <button 
-                          onClick={() => setImgActiva((imgActiva - 1 + galeriaReal.length) % galeriaReal.length)}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                         >
-                          <ChevronLeft size={24} />
-                        </button>
-                        <button 
-                          onClick={() => setImgActiva((imgActiva + 1) % galeriaReal.length)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                         >
-                          <ChevronRight size={24} />
-                        </button>
-                      </>
-                    )}
-                  </>
-                );
-              }
-
-              return (
-                <div className="w-full h-full flex flex-col items-center justify-center text-[var(--color-texto-muted)] gap-4 bg-white/5">
-                   <CalendarIcon size={64} strokeWidth={1} />
-                   <p className="text-sm font-bold uppercase tracking-widest">Sin imágenes del servicio</p>
-                </div>
-              );
-           })()}
-        </div>
-        
-        {/* Sidebar thumbnails */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
-           {(() => {
-              const galeriaSinLogo = p.imagenes.filter((img: string) => img !== p.logoUrl);
-              return (
+              {galeriaReal.length > 1 && (
                 <>
-                  <div className="flex-1 rounded-3xl overflow-hidden relative border border-white/5 bg-[var(--color-fondo-input)] hover:border-[var(--color-primario)]/30 transition-all cursor-pointer" onClick={() => setImgActiva(1)}>
-                     {galeriaSinLogo[1] ? (
-                       <img src={galeriaSinLogo[1]} className="w-full h-full object-cover" />
-                     ) : (
-                       <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                          <Star className="text-white/10" />
-                       </div>
-                     )}
-                     <div className="absolute inset-0 bg-black/10" />
-                  </div>
-                  <div className="flex-1 rounded-3xl overflow-hidden relative border border-white/5 group bg-[var(--color-fondo-input)] hover:border-[var(--color-primario)]/30 transition-all cursor-pointer" onClick={() => setImgActiva(2)}>
-                     {galeriaSinLogo[2] ? (
-                       <img src={galeriaSinLogo[2]} className="w-full h-full object-cover" />
-                     ) : (
-                       <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                          <Star className="text-white/10" />
-                       </div>
-                     )}
-                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center flex-col gap-2 cursor-pointer group-hover:bg-black/20 transition-all">
-                        <span className="text-2xl font-bold">+{galeriaSinLogo.length > 3 ? galeriaSinLogo.length - 3 : 0}</span>
-                        <span className="text-[10px] uppercase font-black tracking-widest text-[var(--color-texto-muted)]">Ver todas</span>
-                     </div>
+                  <button 
+                    onClick={() => setImgActiva((imgActiva - 1 + galeriaReal.length) % galeriaReal.length)}
+                    className="absolute left-8 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-black/20 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white hover:bg-[var(--color-primario)] hover:border-[var(--color-primario)] transition-all z-20 shadow-2xl"
+                  >
+                    <ChevronLeft size={32} />
+                  </button>
+                  <button 
+                    onClick={() => setImgActiva((imgActiva + 1) % galeriaReal.length)}
+                    className="absolute right-8 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-black/20 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white hover:bg-[var(--color-primario)] hover:border-[var(--color-primario)] transition-all z-20 shadow-2xl"
+                  >
+                    <ChevronRight size={32} />
+                  </button>
+                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+                     {galeriaReal.map((_, i) => (
+                       <button 
+                        key={i} 
+                        onClick={() => setImgActiva(i)}
+                        className={cn("h-1.5 rounded-full transition-all duration-500", (imgActiva % galeriaReal.length) === i ? "bg-[var(--color-primario)] w-12" : "bg-white/40 w-4 hover:bg-white/60")} 
+                       />
+                     ))}
                   </div>
                 </>
-              );
-           })()}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* Left Content (Details) */}
-        <div className="lg:col-span-2 space-y-10">
-            {/* Card de Información General (Logo Separado) */}
-            <div className="card bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] p-8 shadow-2xl relative overflow-hidden group">
-               {/* Fondo decorativo discreto */}
-               <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primario)]/5 rounded-bl-full -mr-10 -mt-10" />
-
-               <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
-                  {/* Logo en contenedor discreto pero elegante */}
-                  <div className="relative shrink-0">
-                     <div 
-                       onClick={() => setZoomLogo(true)}
-                       className="w-20 h-20 rounded-full border-4 border-white/5 bg-[var(--color-fondo-input)] shadow-2xl overflow-hidden cursor-zoom-in hover:scale-105 transition-all p-1"
-                     >
-                        {p.logoUrl ? (
-                          <img src={p.logoUrl} alt="Logo" className="w-full h-full object-cover rounded-full" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[var(--color-primario-claro)]">
-                             <Star size={24} />
-                          </div>
-                        )}
-                     </div>
-                     <span className="absolute bottom-0 right-0 p-1.5 bg-[var(--color-primario)] text-white rounded-full shadow-lg">
-                        <ShieldCheck size={12} />
-                     </span>
-                  </div>
-
-                  <div className="flex-1 text-center md:text-left space-y-3">
-                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                        <span className="badge badge-premium text-[11px] px-4 py-1.5">{p.categoria}</span>
-                        <div className="flex items-center gap-1.5 text-amber-500 font-black text-lg">
-                           <Star size={20} fill="currentColor" /> {p.calificacion} 
-                           <span className="text-[var(--color-texto-muted)] font-bold text-sm ml-1 uppercase tracking-widest">({p.reseñasCount} reseñas)</span>
-                        </div>
-                     </div>
-                     <h1 className="text-5xl md:text-6xl font-black tracking-tighter uppercase italic text-white">{p.nombre}</h1>
-                     <div className="flex items-center justify-center md:justify-start gap-2 text-[var(--color-texto-suave)] font-bold uppercase tracking-widest text-[10px]">
-                        <MapPin size={18} className="text-[var(--color-acento)]" />
-                        {p.ubicacion}
-                     </div>
-                  </div>
-               </div>
-            </div>
-
-           <div className="space-y-4 border-t border-[var(--color-borde-suave)] pt-8">
-              <h2 className="text-2xl font-bold italic tracking-tighter uppercase">Acerca del servicio</h2>
-              <p className="text-lg text-[var(--color-texto-suave)] leading-relaxed italic border-l-4 border-[var(--color-primario)] pl-6 py-2">
-                {p.descripcion || 'Sin descripción detallada disponible.'}
-              </p>
+              )}
+           </>
+         ) : (
+           <div className="w-full h-full flex flex-col items-center justify-center bg-white/5 gap-6">
+              <div className="p-8 rounded-full bg-white/5 border border-white/10">
+                <Star size={80} strokeWidth={1} className="text-white/20 animate-pulse" />
+              </div>
+              <p className="text-sm font-black uppercase tracking-[0.3em] text-white/30">Sin imagen de este producto</p>
            </div>
+         )}
+         
+         <div className="absolute top-8 left-8 z-20">
+            <span className="bg-[var(--color-primario)] text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl italic">Paquete Premium</span>
+         </div>
+      </section>
 
-           {/* Reseñas (Si hubiera) */}
-           {p.resenas.length > 0 && (
-             <div className="space-y-6 pt-10 border-t border-[var(--color-borde-suave)]">
-                <h2 className="text-2xl font-bold italic tracking-tighter uppercase">Lo que dicen los clientes</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   {p.resenas.map((r: any) => (
-                     <div key={r.id} className="card bg-[var(--color-fondo-input)]/50 p-6 border-none shadow-xl">
-                        <div className="flex justify-between items-start mb-4">
-                           <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-[var(--color-primario)]/20 flex items-center justify-center font-black text-[var(--color-primario-claro)] text-sm">
-                                {r.nombre.charAt(0)}
-                              </div>
-                              <div>
-                                 <p className="font-bold text-sm uppercase tracking-tight">{r.nombre}</p>
-                                 <p className="text-[10px] text-[var(--color-texto-muted)] font-bold">{new Date(r.creadoEn).toLocaleDateString()}</p>
-                              </div>
-                           </div>
-                           <div className="flex items-center text-amber-400">
-                              {Array.from({length: 5}).map((_, i) => (
-                                <Star key={i} size={10} fill={i < r.calificacion ? "currentColor" : "none"} />
-                              ))}
-                           </div>
-                        </div>
-                        <p className="text-sm text-[var(--color-texto-suave)] leading-relaxed italic">
-                          "{r.comentario || 'Sin comentario.'}"
-                        </p>
-                     </div>
-                   ))}
-                </div>
-             </div>
-           )}
+      {/* --- GRID PRINCIPAL (IMAGEN 3: ZONA ROJA Y AZUL) --- */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+        
+        {/* --- COLUMNA IZQUIERDA: INFO PRODUCTO (ZONA ROJA) --- */}
+        <div className="lg:col-span-8 space-y-8">
+           <div className="card bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] p-12 shadow-2xl relative overflow-hidden">
+              {/* Decoración de fondo */}
+              <div className="absolute -top-24 -left-24 w-96 h-96 bg-[var(--color-primario)]/5 rounded-full blur-[100px] pointer-events-none" />
+              <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-amber-500/5 rounded-full blur-[80px] pointer-events-none" />
 
-           {/* Nueva Sección: Ubicación Movida al Final de la columna de contenido */}
-           {p.latitud && p.longitud && (
-             <div className="space-y-6 pt-10 border-t border-[var(--color-borde-suave)] pb-10">
-                <div className="flex items-center justify-between">
-                   <h2 className="text-2xl font-bold italic tracking-tighter uppercase flex items-center gap-2">
-                      <MapIcon size={24} className="text-[var(--color-primario-claro)]" /> Dónde encontrarnos
-                   </h2>
-                   <span className="text-[10px] text-[var(--color-texto-muted)] uppercase font-black tracking-widest bg-white/5 px-3 py-1 rounded-full">{p.ciudad}, {p.estado}</span>
-                </div>
-                
-                <div className="rounded-[2.5rem] overflow-hidden border-4 border-[var(--color-fondo-card)] shadow-2xl">
-                   <GooglePublicMap lat={p.latitud} lng={p.longitud} businessName={p.nombre} />
-                </div>
-                
-                <div className="flex items-start gap-4 p-6 rounded-3xl bg-gradient-to-r from-[var(--color-primario)]/10 to-transparent border border-white/5">
-                   <div className="p-3 rounded-full bg-[var(--color-primario)]/20 text-[var(--color-primario-claro)]">
-                      <MapPin size={24} />
-                   </div>
-                   <div>
-                      <p className="text-sm font-bold text-white mb-1 uppercase tracking-tighter">Dirección Física</p>
-                      <p className="text-xs text-[var(--color-texto-suave)] uppercase font-black tracking-widest">{p.direccion}</p>
-                   </div>
-                </div>
-             </div>
-           )}
-        </div>
-
-        {/* Right Sidebar (Booking / Action) */}
-        <div className="space-y-6">
-           <div className="card sticky top-32 p-8 border-t-4 border-t-[var(--color-primario)] shadow-2xl">
-              <div className="space-y-6">
-                 <div>
-                    <p className="text-xs font-bold text-[var(--color-texto-muted)] uppercase tracking-widest mb-1">Precios desde</p>
-                    <h3 className="text-4xl font-black gradient-texto">{formatearMoneda(p.servicios[0]?.precio || 0)}</h3>
+              <div className="space-y-10 relative z-10">
+                 {/* Rating y Categoría */}
+                 <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2 bg-amber-500/10 text-amber-500 px-5 py-2 rounded-full border border-amber-500/10 active:scale-95 transition-transform">
+                       <Star size={20} fill="currentColor" />
+                       <span className="font-black text-xl italic">{p.calificacion}</span>
+                    </div>
+                    <span className="h-1.5 w-1.5 rounded-full bg-white/10" />
+                    <span className="text-xs font-black uppercase tracking-widest text-[var(--color-texto-muted)]">{p.categoria}</span>
                  </div>
 
-                 <div className="space-y-3">
-                     <p className="text-sm font-bold uppercase tracking-tight text-[var(--color-texto-muted)]">Paquetes Disponibles</p>
-                     {p.servicios.map((s: any) => (
-                        <div 
-                           key={s.id} 
-                           onClick={() => {
+                 {/* Títulos */}
+                 <div className="space-y-4">
+                    <h1 className="text-7xl font-black tracking-tighter uppercase italic leading-none">{selectedService?.nombre}</h1>
+                    <div className="p-8 rounded-[2rem] bg-white/5 border border-white/5 mt-6 backdrop-blur-sm">
+                       <p className="text-lg text-[var(--color-texto-suave)] leading-relaxed italic">
+                         "{selectedService?.desc || 'Sin descripción detallada para este paquete.'}"
+                       </p>
+                    </div>
+                 </div>
+
+                 {/* Precio Gigante */}
+                 <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pt-4">
+                    <div className="space-y-1">
+                       <p className="text-[10px] font-black text-[var(--color-texto-muted)] uppercase tracking-[0.3em] ml-1">Inversión del servicio</p>
+                       <h3 className="text-8xl font-black gradient-texto tracking-tighter italic leading-none">{formatearMoneda(selectedService?.precio || 0)}</h3>
+                    </div>
+                 </div>
+
+                 {/* Selector de otros paquetes */}
+                 <div className="pt-8 border-t border-white/5 space-y-6">
+                    <div className="flex items-center justify-between">
+                       <h4 className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-texto-muted)]">Explorar otros paquetes</h4>
+                       <span className="text-[10px] text-white/20 uppercase font-bold">{p.servicios.length} opciones disponibles</span>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                       {p.servicios.map((s: any) => (
+                          <button 
+                            key={s.id}
+                            onClick={() => {
                               setSelectedServiceId(s.id);
                               setErrorDisponibilidad(null);
-                           }}
-                           className={cn(
-                              "p-4 rounded-xl border transition-all cursor-pointer group relative",
+                              setImgActiva(0);
+                            }}
+                            className={cn(
+                              "px-8 py-5 rounded-[1.5rem] border-2 transition-all duration-300 font-black text-xs uppercase tracking-tighter",
                               selectedServiceId === s.id 
-                                ? "border-amber-500 bg-amber-500/5 shadow-[0_0_15px_rgba(245,158,11,0.1)]" 
-                                : "border-[var(--color-borde-suave)] bg-[var(--color-fondo-input)] hover:border-amber-500/30"
-                           )}
-                        >
-                           {selectedServiceId === s.id && (
-                              <div className="absolute top-2 right-2 text-amber-500">
-                                 <CheckCircle2 size={16} />
-                              </div>
-                           )}
-                           <div className="flex justify-between items-center mb-1">
-                              <span className={cn("font-bold text-sm", selectedServiceId === s.id ? "text-amber-500" : "text-white")}>{s.nombre}</span>
-                              <span className="text-[var(--color-primario-claro)] text-sm font-black tracking-tighter">{formatearMoneda(s.precio)}</span>
-                           </div>
-                           <p className="text-[10px] text-[var(--color-texto-muted)] leading-relaxed italic">{s.desc}</p>
-                           
-                           {s.diasDisponibles && s.diasDisponibles.length > 0 && (
-                              <div className="mt-2 text-[9px] uppercase font-black tracking-widest text-amber-500/60">
-                                 Disponibilidad: {s.diasDisponibles.map((d:number) => ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(', ')}
-                              </div>
-                           )}
-                        </div>
-                     ))}
-                     {p.servicios.length === 0 && <p className="text-xs text-[var(--color-texto-muted)] italic">No hay servicios específicos listados todavía.</p>}
-                  </div>
+                                ? "border-amber-500 bg-amber-500/10 text-amber-500 shadow-[0_15px_30px_-10px_rgba(245,158,11,0.3)] scale-105" 
+                                : "border-[var(--color-borde-suave)] bg-[var(--color-fondo-input)] hover:border-white/20 hover:scale-105"
+                            )}
+                          >
+                             {s.nombre}
+                          </button>
+                       ))}
+                    </div>
+                 </div>
 
-                 <hr className="border-[var(--color-borde-suave)]" />
-
-                  <div className="space-y-4">
-                      {errorDisponibilidad && (
-                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-[11px] font-black uppercase tracking-widest animate-bounce">
+                 {/* Botones de Acción */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-10">
+                    {errorDisponibilidad && (
+                        <div className="md:col-span-2 p-6 rounded-3xl bg-red-500/10 border-2 border-red-500/20 text-red-500 text-xs font-black uppercase tracking-widest animate-bounce flex items-center gap-4 text-center">
+                           <X className="shrink-0" />
                            {errorDisponibilidad}
                         </div>
-                      )}
+                    )}
 
-                      <button 
-                        onClick={() => setMostrarCalendario(true)}
-                        className="btn btn-secundario w-full font-bold text-sm py-4 flex items-center justify-center gap-2"
-                      >
-                         <CalendarIcon size={18} />
-                         Verificar disponibilidad
-                      </button>
+                    <button 
+                      onClick={() => setMostrarCalendario(true)}
+                      className="btn bg-white/5 border border-white/10 py-6 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-white/10 transition-all flex items-center justify-center gap-3 italic"
+                    >
+                       <CalendarIcon size={20} />
+                       Consultar Agenda
+                    </button>
+                    
+                    <button 
+                      onClick={() => {
+                         const diasPermitidos = selectedService?.diasDisponibles || [];
+                         if (!activeEvent || !activeEvent.fecha) {
+                            setErrorDisponibilidad("⚠️ NO TIENES UN EVENTO ACTIVO. Crea un evento en tu panel para reservar.");
+                            return;
+                         }
 
-                      <button 
-                        onClick={() => {
-                           const servicio = p.servicios.find((s: any) => s.id === selectedServiceId);
-                           const diasPermitidos = servicio?.diasDisponibles || [];
-                           
-                           if (!activeEvent || !activeEvent.fecha) {
-                              setErrorDisponibilidad("Debes tener un evento con fecha asignada para reservar.");
-                              return;
-                           }
-
-                           // Obtener el día de la semana del evento (0-6)
-                           const fechaEvento = new Date(activeEvent.fecha);
-                           // Usamos getUTCDay para evitar problemas de zona horaria con fechas ISO de Prisma
-                           const diaEvento = fechaEvento.getUTCDay(); 
-                           
-                           if (diasPermitidos.length > 0 && !diasPermitidos.includes(diaEvento)) {
-                              const diasNombres = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-                              setErrorDisponibilidad(`Este paquete no está disponible para el día de tu evento (${diasNombres[diaEvento]}). Solo disponible para: ${diasPermitidos.map((d:number) => diasNombres[d]).join(', ')}`);
-                              return;
-                           }
-                           
-                           setErrorDisponibilidad(null);
-                           setConfirmarReserva(true);
-                        }}
-                        className="btn btn-primario w-full font-bold text-sm py-4 shadow-lg shadow-violet-500/20"
-                      >
-                         Reservar Fecha Ahora
-                      </button>
-                   </div>
-
-                 <div className="pt-4 space-y-3">
-                    <div className="flex items-center gap-2 text-[10px] text-emerald-400 font-bold bg-emerald-500/5 p-2 rounded-lg border border-emerald-500/20">
-                       <ShieldCheck size={14} /> Tu pago está protegido por Gestor Eventos
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] text-[var(--color-texto-muted)]">
-                       <Info size={14} /> No se requieren pagos adicionales fuera de la app
-                    </div>
+                         const fechaEvento = new Date(activeEvent.fecha);
+                         const diaEvento = fechaEvento.getUTCDay(); 
+                         
+                         if (diasPermitidos.length > 0 && !diasPermitidos.includes(diaEvento)) {
+                            const diasNombres = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+                            const diasPermNombres = diasPermitidos.map((d:number) => diasNombres[d]).join(', ');
+                            setErrorDisponibilidad(`🚫 DÍA NO PERMITIDO. Este paquete solo se habilita para: ${diasPermNombres}. Tu evento es un ${diasNombres[diaEvento]}.`);
+                            return;
+                         }
+                         
+                         setErrorDisponibilidad(null);
+                         setConfirmarReserva(true);
+                      }}
+                      className="btn btn-primario py-6 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] shadow-[0_20px_40px_-10px_rgba(124,58,237,0.4)] active:scale-95 transition-all italic border-t-2 border-white/20"
+                    >
+                       Apartar Paquete Ahora
+                    </button>
                  </div>
               </div>
            </div>
         </div>
+
+        {/* --- COLUMNA DERECHA: PERFIL PROVEEDOR (ZONA AZUL) --- */}
+        <aside className="lg:col-span-4 space-y-6">
+           {/* Perfil del Vendedor */}
+           <div className="card bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] p-10 shadow-2xl relative overflow-hidden sticky top-32">
+              <div className="flex flex-col items-center text-center space-y-6">
+                 {/* Logo mini discreto con Zoom */}
+                 <div className="relative group/logo">
+                   <div 
+                    onClick={() => setZoomLogo(true)}
+                    className="w-24 h-24 rounded-full border-4 border-white/5 bg-[var(--color-fondo-input)] shadow-2xl overflow-hidden p-1.5 cursor-zoom-in transition-all group-hover/logo:scale-110"
+                   >
+                      {p.logoUrl ? (
+                        <img src={p.logoUrl} alt={p.nombre} className="w-full h-full object-cover rounded-full" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[var(--color-primario-claro)] bg-white/5 rounded-full">
+                           <Users size={32} />
+                        </div>
+                      )}
+                   </div>
+                   <div className="absolute -bottom-2 right-0 bg-[var(--color-primario)] text-white p-2 rounded-full shadow-lg border-2 border-[var(--color-fondo-card)]">
+                      <ShieldCheck size={14} />
+                   </div>
+                 </div>
+
+                 <div className="space-y-1">
+                    <p className="text-[10px] font-black text-[var(--color-texto-muted)] uppercase tracking-[0.4em]">Propiedad de</p>
+                    <h2 className="text-3xl font-black tracking-tighter uppercase italic leading-none">{p.nombre}</h2>
+                    <div className="pt-2 flex items-center justify-center gap-1.5 text-amber-500 font-black text-sm">
+                       <Star size={16} fill="currentColor" /> {p.calificacion}
+                    </div>
+                 </div>
+
+                 {/* Stats Rápidos */}
+                 <div className="grid grid-cols-2 gap-4 w-full">
+                    <div className="p-5 rounded-3xl bg-white/5 border border-white/5 transition-all hover:bg-white/10">
+                       <ShoppingBag size={20} className="mx-auto mb-2 text-[var(--color-primario-claro)]" />
+                       <p className="text-[10px] font-bold text-[var(--color-texto-muted)] uppercase tracking-widest leading-none mb-1">Pedidos</p>
+                       <p className="text-xl font-black">{p.pedidosCount || '0'}</p>
+                    </div>
+                    <div className="p-5 rounded-3xl bg-white/5 border border-white/5 transition-all hover:bg-white/10">
+                       <Star size={20} className="mx-auto mb-2 text-amber-500" />
+                       <p className="text-[10px] font-bold text-[var(--color-texto-muted)] uppercase tracking-widest leading-none mb-1">Puntos</p>
+                       <p className="text-xl font-black">4.9</p>
+                    </div>
+                 </div>
+
+                 {/* Ubicación y Mapa */}
+                 <div className="w-full space-y-4 pt-4">
+                    <div className="rounded-[2rem] overflow-hidden border-2 border-white/10 h-44 shadow-inner grayscale group-hover:grayscale-0 transition-all cursor-pointer">
+                        {p.latitud && p.longitud ? (
+                           <GooglePublicMap lat={p.latitud} lng={p.longitud} businessName={p.nombre} />
+                        ) : (
+                           <div className="h-full w-full bg-white/5 flex items-center justify-center italic text-xs text-white/20">Mapa no disponible</div>
+                        )}
+                    </div>
+                    <div className="flex items-start gap-4 p-5 rounded-3xl bg-[var(--color-fondo-input)] border border-white/5 text-left">
+                       <MapPin size={20} className="text-[var(--color-primario-claro)] shrink-0 mt-1" />
+                       <div>
+                          <p className="text-[10px] font-black text-[var(--color-texto-muted)] uppercase tracking-widest mb-1">Zona de servicio</p>
+                          <p className="text-[11px] text-[var(--color-texto-suave)] font-black uppercase tracking-widest leading-relaxed">
+                            {p.direccion || p.ubicacion}
+                          </p>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="pt-6 w-full opacity-40 hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest text-emerald-400">
+                       <ShieldCheck size={16} /> Contratación Protegida
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </aside>
       </div>
 
-      {/* Modal de Confirmación de Reserva */}
+      {/* --- MODALES --- */}
+
       {confirmarReserva && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-           <div className="card max-w-md w-full p-8 text-center space-y-6 border-amber-500/30 shadow-[0_0_50px_rgba(245,158,11,0.15)] scale-in-center">
-              <div className="mx-auto w-20 h-20 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 mb-2">
-                 <ShieldCheck size={48} />
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-3xl animate-in fade-in duration-500">
+           <div className="card max-w-md w-full p-12 text-center border-amber-500/30 shadow-[0_0_80px_rgba(245,158,11,0.2)] scale-in-center overflow-hidden">
+              <div className="absolute -top-10 -right-10 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl" />
+              <div className="mx-auto w-24 h-24 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 mb-8 border-4 border-amber-500/20 shadow-2xl relative">
+                 <ShieldCheck size={56} />
               </div>
-              <div className="space-y-2">
-                <h3 className="text-2xl font-black italic uppercase tracking-tighter">Confirmar Intención de Reserva</h3>
-                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-900">
-                   <p className="text-sm font-bold leading-relaxed">
-                     ¡Atención! Tienes un máximo de <span className="text-amber-800 font-extrabold underline decoration-amber-500 underline-offset-4 uppercase">48 horas</span> para completar el proceso con el anticipo para asegurar tu fecha.
+              <div className="space-y-6">
+                <h3 className="text-4xl font-black italic uppercase tracking-tighter">¿Asegurar este paquete?</h3>
+                <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-2xl border-b-4 border-amber-700/50">
+                   <p className="text-sm font-black leading-tight uppercase tracking-tighter">
+                     IMPORTANTE: Tienes <span className="underline underline-offset-8 decoration-amber-900/50 text-black">48 HORAS</span> para liquidar el anticipo.
                    </p>
                 </div>
-                <p className="text-xs text-[var(--color-texto-suave)] pt-2">
-                  Al confirmar, le enviaremos una notificación a **{p.nombre}** para que esté pendiente de tu contratación. No se realizarán cargos en este momento.
+                <p className="text-xs text-[var(--color-texto-suave)] px-6 leading-relaxed italic">
+                  Notificaremos a **{p.nombre}** sobre tu intención de reserva para **{selectedService?.nombre}**.
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-4 pt-4">
-                 <button 
-                   onClick={() => setConfirmarReserva(false)}
-                   className="btn btn-secundario py-4 text-xs font-black uppercase tracking-widest"
-                 >
-                   Cancelar
-                 </button>
-                 <button 
-                   onClick={() => {
-                     setConfirmarReserva(false);
-                     setReservado(true);
-                   }}
-                   className="btn btn-primario py-4 text-[10px] font-black uppercase tracking-widest bg-amber-500 hover:bg-amber-600 border-amber-600 shadow-amber-500/20"
-                 >
-                   Confirmar Intención
-                 </button>
+              <div className="grid grid-cols-2 gap-4 pt-10">
+                 <button onClick={() => setConfirmarReserva(false)} className="btn bg-white/5 py-5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-white/10">Cancelar</button>
+                 <button onClick={() => { setConfirmarReserva(false); setReservado(true); }} className="btn bg-amber-500 hover:bg-amber-600 py-5 rounded-2xl text-xs font-black uppercase tracking-widest text-white shadow-lg border-t border-white/20">Confirmar</button>
               </div>
            </div>
         </div>
       )}
 
-      {/* Modal de Éxito Mock */}
       {reservado && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-           <div className="card max-w-sm w-full text-center space-y-6 py-12 border-[var(--color-primario)]/50 shadow-[0_0_50px_rgba(124,58,237,0.3)] scale-in-center">
-              <div className="mx-auto w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
-                 <CheckCircle2 size={48} />
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-3xl animate-in fade-in duration-500">
+           <div className="card max-w-sm w-full text-center space-y-8 py-14 border-emerald-500/40 shadow-[0_0_80px_rgba(16,185,129,0.2)] scale-in-center">
+              <div className="mx-auto w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2 border-4 border-emerald-500/20">
+                 <CheckCircle2 size={56} />
               </div>
-              <div>
-                <h3 className="text-2xl font-bold mb-2">¡Solicitud Enviada!</h3>
-                <p className="text-sm text-[var(--color-texto-suave)] px-4">
-                  Hemos enviado tu solicitud a **{p.nombre}**. El proveedor tiene 24 horas para confirmar.
+              <div className="space-y-3">
+                <h3 className="text-3xl font-black italic uppercase tracking-tighter">¡Solicitud Exitosa!</h3>
+                <p className="text-sm text-[var(--color-texto-suave)] px-10 leading-relaxed italic">
+                  Estamos procesando tu reservación. El proveedor responderá en breve.
                 </p>
               </div>
-              <div className="space-y-3 pt-4 px-6">
+              <div className="px-12 pt-4">
                 <button 
                   onClick={() => setReservado(false)}
-                  className="btn btn-fantasma w-full text-xs"
+                  className="btn btn-primario w-full font-black text-xs uppercase tracking-widest py-5 rounded-2xl shadow-xl italic"
                 >
                   Seguir Explorando
                 </button>
@@ -472,54 +401,45 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
         </div>
       )}
 
-      {/* Modal de Calendario Pantalla Completa */}
       {mostrarCalendario && (
-        <div className="fixed inset-0 z-[120] bg-[var(--color-fondo)] animate-in slide-in-from-bottom duration-500 flex flex-col">
-           <header className="p-6 border-b border-[var(--color-borde-suave)] flex items-center justify-between bg-[var(--color-fondo-card)]">
-              <div className="flex items-center gap-4">
-                 <div className="p-2 rounded-xl bg-[var(--color-primario)]/10 text-[var(--color-primario-claro)]">
-                    <CalendarIcon size={32} />
+        <div className="fixed inset-0 z-[250] bg-[var(--color-fondo)] animate-in slide-in-from-bottom-10 duration-500 flex flex-col">
+           <header className="px-12 py-8 border-b border-[var(--color-borde-suave)] flex items-center justify-between bg-[var(--color-fondo-card)] shadow-2xl">
+              <div className="flex items-center gap-8">
+                 <div className="p-4 rounded-3xl bg-[var(--color-primario)]/10 text-[var(--color-primario-claro)] shadow-inner">
+                    <CalendarIcon size={48} />
                  </div>
                  <div>
-                    <h2 className="text-2xl font-black italic uppercase tracking-tighter">Agenda de {p.nombre}</h2>
-                    <p className="text-xs text-[var(--color-texto-suave)] font-bold tracking-widest uppercase">Disponibilidad real sincronizada</p>
+                    <h2 className="text-4xl font-black italic uppercase tracking-tighter">Agenda de Disponibilidad</h2>
+                    <p className="text-xs text-[var(--color-texto-suave)] font-extrabold tracking-[0.3em] uppercase mt-1">Paquete activo: {selectedService?.nombre}</p>
                  </div>
               </div>
-              <button 
-                onClick={() => setMostrarCalendario(false)}
-                className="p-3 rounded-full hover:bg-white/5 transition-colors border border-white/5"
-              >
-                <X size={24} />
+              <button onClick={() => setMostrarCalendario(false)} className="p-4 rounded-full hover:bg-white/5 transition-all border border-white/5 shadow-xl active:scale-90">
+                <X size={32} />
               </button>
            </header>
 
-           <div className="flex-1 p-6 overflow-auto">
-              <div className="max-w-7xl mx-auto h-full bg-[var(--color-fondo-card)] p-8 rounded-[2.5rem] border border-[var(--color-borde-suave)] shadow-2xl overflow-hidden relative">
+           <div className="flex-1 p-10 overflow-auto bg-black/40">
+              <div className="max-w-7xl mx-auto h-full bg-[var(--color-fondo-card)] p-12 rounded-[4rem] border-2 border-[var(--color-borde-suave)] shadow-3xl overflow-hidden relative">
                  {loadingCalendar ? (
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[var(--color-fondo-card)]/80 backdrop-blur-md gap-4">
-                       <Loader2 className="animate-spin text-[var(--color-primario)]" size={48} />
-                       <p className="font-bold uppercase text-xs tracking-widest">Cargando disponibilidad...</p>
+                    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[var(--color-fondo-card)]/90 backdrop-blur-2xl gap-6">
+                       <Loader2 className="animate-spin text-[var(--color-primario)]" size={80} />
+                       <p className="font-black uppercase text-sm tracking-[0.5em] italic text-white/50">Cargando Disponibilidad Real</p>
                     </div>
                  ) : (
                     <div className="h-full min-h-[600px] text-white">
                        <style>{`
                          .rbc-calendar { background: transparent; border: none; font-family: inherit; }
-                         .rbc-header { border-bottom: 2px solid var(--color-borde-suave) !important; padding: 15px !important; font-weight: 800 !important; text-transform: uppercase; font-size: 11px; letter-spacing: 0.1em; color: var(--color-texto-muted); }
-                         .rbc-month-view { border: none !important; border-radius: 20px; overflow: hidden; }
-                         .rbc-day-bg { border-left: 1px solid var(--color-borde-suave) !important; transition: background 0.3s; }
-                         .rbc-day-bg:hover { background: rgba(255,255,255,0.02); }
-                         .rbc-off-range-bg { background: rgba(0,0,0,0.2) !important; }
-                         .rbc-month-row { border-top: 1px solid var(--color-borde-suave) !important; }
-                         .rbc-today { background: rgba(124, 58, 237, 0.05) !important; }
-                         .rbc-event { background: var(--color-primario) !important; border: none !important; border-radius: 8px !important; font-size: 10px !important; font-weight: 800 !important; padding: 4px 8px !important; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); }
-                         .rbc-show-more { background: transparent !important; color: var(--color-primario-claro) !important; font-weight: 900 !important; font-size: 10px; }
-                         .rbc-toolbar { margin-bottom: 30px !important; display: flex !important; flex-direction: row-reverse !important; justify-content: space-between !important; align-items: center !important; }
-                         .rbc-toolbar button { background: var(--color-fondo-input) !important; border: 1px solid var(--color-borde-suave) !important; color: white !important; font-weight: 900; border-radius: 12px; padding: 10px 20px; transition: all 0.3s; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; }
-                         .rbc-toolbar button:hover { background: var(--color-primario) !important; border-color: var(--color-primario) !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4); }
-                         .rbc-toolbar button:active { transform: translateY(0); }
-                         .rbc-toolbar button.rbc-active { background: var(--color-primario) !important; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4); }
-                         .rbc-btn-group { display: flex; gap: 8px; }
-                         .rbc-toolbar-label { font-size: 32px !important; font-weight: 900 !important; text-transform: capitalize; color: white !important; font-style: italic; letter-spacing: -0.02em; }
+                         .rbc-header { border-bottom: 2px solid var(--color-borde-suave) !important; padding: 25px !important; font-weight: 950 !important; text-transform: uppercase; font-size: 11px; letter-spacing: 0.3em; color: var(--color-texto-muted); }
+                         .rbc-month-view { border: none !important; border-radius: 40px; overflow: hidden; }
+                         .rbc-day-bg { border-left: 2px solid var(--color-borde-suave) !important; transition: background 0.4s ease; }
+                         .rbc-day-bg:hover { background: rgba(124, 58, 237, 0.05) !important; }
+                         .rbc-off-range-bg { background: rgba(0,0,0,0.4) !important; }
+                         .rbc-month-row { border-top: 2px solid var(--color-borde-suave) !important; }
+                         .rbc-today { background: rgba(124, 58, 237, 0.1) !important; }
+                         .rbc-event { background: var(--color-primario) !important; border: 2px solid rgba(255,255,255,0.2) !important; border-radius: 12px !important; font-size: 10px !important; font-weight: 900 !important; padding: 6px 14px !important; box-shadow: 0 8px 15px rgba(0,0,0,0.3); }
+                         .rbc-toolbar-label { font-size: 48px !important; font-weight: 950 !important; text-transform: uppercase; color: white !important; font-style: italic; letter-spacing: -0.05em; }
+                         .rbc-toolbar button { background: var(--color-fondo-input) !important; border: 2px solid var(--color-borde-suave) !important; color: white !important; font-weight: 900; border-radius: 20px; padding: 14px 32px; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-transform: uppercase; font-size: 11px; letter-spacing: 0.2em; }
+                         .rbc-toolbar button:hover { border-color: var(--color-primario) !important; transform: translateY(-5px); box-shadow: 0 15px 30px rgba(124, 58, 237, 0.3); }
                        `}</style>
                        <Calendar
                           localizer={localizer}
@@ -527,8 +447,6 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
                           startAccessor="start"
                           endAccessor="end"
                           culture="es"
-                          selectable={true}
-                          onSelectSlot={(slot: any) => console.log('Seleccionado:', slot)}
                           messages={{
                             next: "Siguiente",
                             previous: "Anterior",
@@ -544,31 +462,26 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
               </div>
            </div>
            
-           <footer className="p-8 border-t border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] flex justify-center">
+           <footer className="p-12 border-t border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] flex justify-center">
               <button 
                 onClick={() => setMostrarCalendario(false)}
-                className="btn btn-primario px-12 py-4 rounded-2xl shadow-xl shadow-violet-500/20 font-black uppercase tracking-widest"
+                className="btn btn-primario px-20 py-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(124,58,237,0.3)] font-black uppercase tracking-widest text-xs italic"
               >
-                Regresar al perfil
+                Regresar al Paquete
               </button>
            </footer>
         </div>
       )}
-      {/* Modal de Zoom del Logo */}
+
       {zoomLogo && (
-        <div 
-          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 backdrop-blur-xl animate-in fade-in duration-300 cursor-zoom-out"
-          onClick={() => setZoomLogo(false)}
-        >
-           <div className="relative max-w-2xl w-full p-4 flex items-center justify-center">
-              <button className="absolute top-0 right-0 p-4 text-white hover:text-red-400 transition-colors">
-                <X size={32} />
-              </button>
-              <img 
-                src={p.logoUrl || '/logo.png'} 
-                alt="Logo Enlarged" 
-                className="max-w-full max-h-[80vh] rounded-3xl shadow-2xl scale-in-center object-contain"
-              />
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/98 backdrop-blur-3xl animate-in fade-in duration-700 cursor-zoom-out" onClick={() => setZoomLogo(false)}>
+           <div className="relative max-w-3xl w-full p-4 flex flex-col items-center gap-10">
+              <button className="absolute -top-24 right-0 p-4 text-white/40 hover:text-white transition-all hover:scale-110"><X size={64} /></button>
+              <img src={p.logoUrl || '/logo.png'} alt={p.nombre} className="max-w-full max-h-[70vh] rounded-[4rem] shadow-[0_0_120px_rgba(255,255,255,0.15)] scale-in-center object-contain border-8 border-white/5" />
+              <div className="text-center space-y-2">
+                 <h2 className="text-4xl font-black italic uppercase tracking-tighter text-white">{p.nombre}</h2>
+                 <p className="text-xs font-black uppercase tracking-[1em] text-white/30">{p.categoria}</p>
+              </div>
            </div>
         </div>
       )}
