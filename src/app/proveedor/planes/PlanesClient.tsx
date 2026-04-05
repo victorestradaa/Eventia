@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { updateProviderPlan } from '@/lib/actions/settingsActions';
 import { useRouter } from 'next/navigation';
+import confetti from 'canvas-confetti';
 
 const PLANES = [
   {
@@ -95,6 +96,14 @@ export default function PlanesClient({ planActual, proveedorId }: PlanesClientPr
     const res = await updateProviderPlan(proveedorId, planId as any);
     
     if (res.success) {
+      // Disparar Confeti de Celebración
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#7C3AED', '#A855F7', '#10B981', '#F59E0B']
+      });
+
       setSuccess(planId);
       setTimeout(() => {
         setSuccess(null);
