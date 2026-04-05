@@ -91,6 +91,38 @@ export async function getReservasCalendario(proveedorId: string) {
 }
 
 /**
+ * Permite al proveedor confirmar el turno de una reserva TEMPORAL de un cliente.
+ * Si confirma un turno específico (POR_HORAS), el día queda parcialmente disponible.
+ */
+export async function confirmarTurnoReserva(data: {
+  reservaId: string;
+  tipoReserva: 'DIA_COMPLETO' | 'POR_HORAS';
+  horaInicio?: string;
+  horaFin?: string;
+}) {
+  try {
+    const updated = await prisma.reserva.update({
+      where: { id: data.reservaId },
+      data: {
+        tipoReserva: data.tipoReserva,
+        horaInicio: data.tipoReserva === 'POR_HORAS' ? data.horaInicio : null,
+        horaFin: data.tipoReserva === 'POR_HORAS' ? data.horaFin : null,
+        turnoConfirmadoEn: new Date(), // eslint-disable-line @typescript-eslint/no-explicit-any
+        estado: 'APARTADO',
+      } as any // Prisma client regeneration needed for new schema fields
+    });
+
+    revalidatePath('/proveedor/calendario');
+    revalidatePath('/proveedor/ventas');
+    revalidatePath('/proveedor/dashboard');
+    return { success: true, data: JSON.parse(JSON.stringify(updated)) };
+  } catch (error) {
+    console.error('Error al confirmar turno:', error);
+    return { success: false, error: 'No se pudo confirmar el turno.' };
+  }
+}
+
+/**
  * Crea un nuevo servicio para el catálogo del proveedor.
  */
 export async function createServicio(formData: {

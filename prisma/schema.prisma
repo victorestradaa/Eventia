@@ -115,6 +115,7 @@ model Proveedor {
   permiteReservasPorHora Boolean     @default(false)
   horarioApertura  String            @default("09:00")
   horarioCierre    String            @default("23:00")
+  horasExpiracionTemporal Int        @default(24) // 24-36 horas, configurable
 
   creadoEn         DateTime          @default(now())
   actualizadoEn    DateTime          @updatedAt
@@ -277,6 +278,9 @@ model Reserva {
   esManual               Boolean       @default(false)
   nombreClienteExterno   String?
   telefonoClienteExterno String?
+  // Flujo de Confirmacion de Turno
+  fechaExpiracion        DateTime?     // Cuando vence el bloqueo TEMPORAL
+  turnoConfirmadoEn      DateTime?     // Cuando el proveedor confirmo el turno
   creadoEn               DateTime      @default(now())
   actualizadoEn          DateTime      @updatedAt
 
