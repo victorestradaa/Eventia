@@ -50,14 +50,14 @@ export function slugify(texto: string): string {
 }
 
 export const CATEGORIAS_LABELS: Record<string, string> = {
-  SALON: 'Salón',
+  SALON: 'Salones',
   MUSICA: 'Música',
-  COMIDA: 'Comida',
+  COMIDA: 'Banquetes',
   ANIMACION: 'Animación',
-  FOTOGRAFIA: 'Fotografía y Video',
+  FOTOGRAFIA: 'Foto & Video',
   DECORACION: 'Decoración',
   RECUERDOS: 'Recuerdos',
-  MOBILIARIO: 'Mobiliario',
+  MOBILIARIO: 'Inmobiliario',
   PAQUETES_COMPLETOS: 'Paquetes Completos',
 }
 

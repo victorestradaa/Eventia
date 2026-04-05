@@ -10,17 +10,20 @@ import {
   Camera,
   Palette,
   Gift,
+  Armchair,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { CATEGORIAS_LABELS } from '@/lib/utils';
 
 const CATEGORIAS = [
-  { id: 'SALON',      label: 'Salones',     icon: Building2   },
-  { id: 'MUSICA',     label: 'Música',      icon: Music       },
-  { id: 'COMIDA',     label: 'Banquetes',   icon: Utensils    },
-  { id: 'ANIMACION',  label: 'Animación',   icon: PartyPopper },
-  { id: 'FOTOGRAFIA', label: 'Foto & Video',icon: Camera      },
-  { id: 'DECORACION', label: 'Decoración',  icon: Palette     },
-  { id: 'RECUERDOS',  label: 'Recuerdos',   icon: Gift        },
+  { id: 'SALON',      label: 'Salones',      icon: Building2   },
+  { id: 'MUSICA',     label: 'Música',       icon: Music       },
+  { id: 'COMIDA',     label: 'Banquetes',    icon: Utensils    },
+  { id: 'ANIMACION',  label: 'Animación',    icon: PartyPopper },
+  { id: 'FOTOGRAFIA', label: 'Foto & Video', icon: Camera      },
+  { id: 'DECORACION', label: 'Decoración',   icon: Palette     },
+  { id: 'RECUERDOS',  label: 'Recuerdos',    icon: Gift        },
+  { id: 'MOBILIARIO', label: 'Inmobiliario', icon: Armchair    },
 ];
 
 export default function Home() {

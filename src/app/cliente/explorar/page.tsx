@@ -15,9 +15,10 @@ import { useState, useEffect } from 'react';
 import { formatearMoneda, cn } from '@/lib/utils';
 import Link from 'next/link';
 import { getExplorarServicios } from '@/lib/actions/providerActions';
+import { CATEGORIAS_LABELS } from '@/lib/utils';
 
 const CATEGORIAS = [
-  'Todos', 'Salón', 'Música', 'Comida', 'Animación', 'Fotografía', 'Decoración', 'Recuerdos'
+  'Todos', 'Salones', 'Música', 'Banquetes', 'Animación', 'Foto & Video', 'Decoración', 'Recuerdos', 'Inmobiliario'
 ];
 
 export default function ExplorarPage() {
@@ -31,7 +32,7 @@ export default function ExplorarPage() {
       setLoading(true);
       const res = await getExplorarServicios();
       if (res.success) {
-        setServicios(res.data);
+        setServicios(res.data || []);
       }
       setLoading(false);
     }
@@ -40,7 +41,9 @@ export default function ExplorarPage() {
 
   // Filtrado local (para mejor UX instantánea)
   const serviciosFiltrados = servicios.filter(s => {
-    const cumpleCat = catActiva === 'Todos' || s.categoria.toLowerCase() === catActiva.toLowerCase();
+    // Normalizar para comparación (Salón vs SALON)
+    const labelCategoria = CATEGORIAS_LABELS[s.categoria] || s.categoria;
+    const cumpleCat = catActiva === 'Todos' || labelCategoria.toLowerCase() === catActiva.toLowerCase();
     const cumpleSearch = s.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || 
                        s.ciudad.toLowerCase().includes(searchQuery.toLowerCase());
     return cumpleCat && cumpleSearch;

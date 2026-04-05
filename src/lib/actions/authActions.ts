@@ -3,6 +3,9 @@
 import { createClient } from '@/lib/supabase/servidor';
 import { prisma } from '@/lib/prisma';
 
+import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
+
 /**
  * Obtiene el perfil completo del usuario actual desde la base de datos (Prisma).
  * Útil para obtener el clienteId o proveedorId necesario en otras acciones.
@@ -57,15 +60,24 @@ export async function cerrarSesion() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   
-  // Usamos dynamic import para no romper la ejecución de la función
-  const { redirect } = await import('next/navigation');
+  // Revalidar todo para asegurar que el estado de la sesión se limpie en todas partes
+  revalidatePath('/', 'layout');
+  
+  // Redirect debe ser lo último y fuera de cualquier bloque try-catch
   redirect('/login');
 }
+
+import { CategoriaServicio } from '@prisma/client';
 
 /**
  * Registra un nuevo usuario en la base de datos de Prisma
  */
-export async function registrarUsuario(data: { email: string; nombre: string; rol: 'CLIENTE' | 'PROVEEDOR' }) {
+export async function registrarUsuario(data: { 
+  email: string; 
+  nombre: string; 
+  rol: 'CLIENTE' | 'PROVEEDOR';
+  categoria?: CategoriaServicio;
+}) {
   try {
     const usuario = await prisma.usuario.create({
       data: {
@@ -78,7 +90,7 @@ export async function registrarUsuario(data: { email: string; nombre: string; ro
           proveedor: {
             create: {
               nombre: data.nombre,
-              categoria: 'SALON',
+              categoria: data.categoria || 'SALON',
               ciudad: 'Sin asignar',
               estado: 'Sin asignar'
             }

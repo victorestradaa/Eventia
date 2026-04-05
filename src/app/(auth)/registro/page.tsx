@@ -4,14 +4,26 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { 
+  Building2, 
+  Music, 
+  Utensils, 
+  PartyPopper, 
+  Camera, 
+  Palette, 
+  Gift, 
+  Armchair 
+} from 'lucide-react';
 import { createClient } from '@/lib/supabase/cliente';
 import { registrarUsuario } from '@/lib/actions/authActions';
+import { cn } from '@/lib/utils';
 
 export default function RegisterPage() {
   const [rol, setRol] = useState<'CLIENTE' | 'PROVEEDOR'>('CLIENTE');
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [categoria, setCategoria] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -20,6 +32,11 @@ export default function RegisterPage() {
     e.preventDefault();
     const cleanEmail = email.trim();
     if (!nombre.trim() || !cleanEmail || !password) return;
+    
+    if (rol === 'PROVEEDOR' && !categoria) {
+      setError('Por favor selecciona una categoría para tu servicio.');
+      return;
+    }
     
     if (password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres.');
@@ -49,7 +66,12 @@ export default function RegisterPage() {
       }
 
       // 2. Registramos en Prisma (con timeout de seguridad para evitar "stuck")
-      const registrationPromise = registrarUsuario({ email: cleanEmail, nombre: nombre.trim(), rol });
+      const registrationPromise = registrarUsuario({ 
+        email: cleanEmail, 
+        nombre: nombre.trim(), 
+        rol,
+        categoria: categoria as any
+      });
       
       // Timeout de 15 segundos para la DB
       const timeoutPromise = new Promise((_, reject) => 
@@ -149,6 +171,49 @@ export default function RegisterPage() {
               disabled={loading}
             />
           </div>
+          
+          {rol === 'PROVEEDOR' && (
+            <div className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
+              <label className="label block">Categoría de Servicio *</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { id: 'SALON',      label: 'Salones',      icon: Building2   },
+                  { id: 'MUSICA',     label: 'Música',       icon: Music       },
+                  { id: 'COMIDA',     label: 'Banquetes',    icon: Utensils    },
+                  { id: 'ANIMACION',  label: 'Animación',    icon: PartyPopper },
+                  { id: 'FOTOGRAFIA', label: 'Foto & Video', icon: Camera      },
+                  { id: 'DECORACION', label: 'Decoración',   icon: Palette     },
+                  { id: 'RECUERDOS',  label: 'Recuerdos',    icon: Gift        },
+                  { id: 'MOBILIARIO', label: 'Inmobiliario', icon: Armchair    },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setCategoria(item.id)}
+                    className={cn(
+                      "flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all group",
+                      categoria === item.id 
+                        ? "bg-[var(--color-primario)]/10 border-[var(--color-primario)] shadow-lg shadow-violet-500/10" 
+                        : "bg-[var(--color-fondo-input)] border-[var(--color-borde-suave)] hover:border-[var(--color-primario-claro)]"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-colors",
+                      categoria === item.id ? "bg-[var(--color-primario)] text-white" : "bg-[var(--color-fondo-card)] text-[var(--color-texto-muted)] group-hover:text-[var(--color-primario-claro)]"
+                    )}>
+                      <item.icon size={20} strokeWidth={1.5} />
+                    </div>
+                    <span className={cn(
+                      "text-[9px] font-bold uppercase tracking-widest text-center leading-tight",
+                      categoria === item.id ? "text-[var(--color-primario)]" : "text-[var(--color-texto-suave)]"
+                    )}>
+                      {item.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button 
             type="submit"
