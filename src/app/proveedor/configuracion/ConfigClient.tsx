@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { Settings, Building2, User, Shield, Gem, Crown, Star, Zap, Save, Loader2, CheckCircle, MapPin, FileText, Clock } from 'lucide-react';
-import { CATEGORIAS_LABELS } from '@/lib/utils';
 import { updateProviderProfile, updateProviderCredentials, updateProviderAvailability } from '@/lib/actions/settingsActions';
+import { MEXICO_LOCATIONS } from '@/lib/constants/locations';
+import { uploadServiceImage } from '@/lib/actions/uploadActions';
+import { CATEGORIAS_LABELS } from '@/lib/utils';
 
 const PLAN_INFO: Record<string, { label: string; color: string; icon: any }> = {
   GRATIS: { label: 'Plan Básico', color: 'text-gray-400', icon: Zap },
@@ -25,7 +27,9 @@ export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) 
     ciudad: proveedor.ciudad || '',
     estado: proveedor.estado || '',
     direccion: proveedor.direccion || '',
+    logoUrl: proveedor.logoUrl || '',
   });
+  const [logoLoading, setLogoLoading] = useState(false);
   const [savingBusiness, setSavingBusiness] = useState(false);
   const [businessSaved, setBusinessSaved] = useState(false);
 
@@ -62,6 +66,24 @@ export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) 
       alert(res.error);
     }
     setSavingBusiness(false);
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLogoLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('proveedorId', proveedor.id);
+
+    const res = await uploadServiceImage(formData);
+    if (res.success && res.url) {
+      setBusiness({ ...business, logoUrl: res.url });
+    } else {
+      alert(res.error || 'Error al subir el logo');
+    }
+    setLogoLoading(false);
   };
 
   const handleSaveCreds = async (e: React.FormEvent) => {
@@ -146,8 +168,27 @@ export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) 
           </div>
         </div>
         <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="space-y-2 md:col-span-2">
+          {/* Logo y Nombre */}
+          <div className="flex flex-col md:flex-row items-center gap-8 pb-4 border-b border-white/5">
+            <div className="relative group">
+              <div className="w-24 h-24 rounded-full bg-[var(--color-fondo-input)] border-2 border-dashed border-[var(--color-borde-suave)] overflow-hidden flex items-center justify-center relative">
+                {business.logoUrl ? (
+                  <img src={business.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <User size={32} className="text-[var(--color-texto-muted)]" />
+                )}
+                {logoLoading && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <Loader2 size={24} className="animate-spin text-white" />
+                  </div>
+                )}
+              </div>
+              <label className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[var(--color-primario)] text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 transition-transform">
+                <Zap size={14} />
+                <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+              </label>
+            </div>
+            <div className="flex-1 space-y-2 w-full text-center md:text-left">
               <label className="text-sm font-bold text-[var(--color-texto-suave)]">Nombre del Negocio <span className="text-red-500">*</span></label>
               <input 
                 required
@@ -158,27 +199,44 @@ export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) 
                 placeholder="Ej. Mariachi Los Reales"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-[var(--color-texto-suave)]">Estado <span className="text-red-500">*</span></label>
+              <select 
+                required
+                value={business.estado}
+                onChange={e => {
+                  const nuevoEstado = e.target.value;
+                  setBusiness({
+                    ...business, 
+                    estado: nuevoEstado,
+                    ciudad: MEXICO_LOCATIONS[nuevoEstado]?.[0] || ''
+                  });
+                }}
+                className="input w-full h-12"
+              >
+                <option value="">Selecciona un estado...</option>
+                {Object.keys(MEXICO_LOCATIONS).sort().map(e => (
+                  <option key={e} value={e}>{e}</option>
+                ))}
+              </select>
+            </div>
             <div className="space-y-2">
               <label className="text-sm font-bold text-[var(--color-texto-suave)] flex items-center gap-1"><MapPin size={14} /> Ciudad <span className="text-red-500">*</span></label>
-              <input 
+              <select 
                 required
                 value={business.ciudad}
                 onChange={e => setBusiness({...business, ciudad: e.target.value})}
-                type="text"
                 className="input w-full h-12"
-                placeholder="Ej. Guadalajara"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-[var(--color-texto-suave)]">Estado <span className="text-red-500">*</span></label>
-              <input 
-                required
-                value={business.estado}
-                onChange={e => setBusiness({...business, estado: e.target.value})}
-                type="text"
-                className="input w-full h-12"
-                placeholder="Ej. Jalisco"
-              />
+                disabled={!business.estado}
+              >
+                <option value="">Selecciona una ciudad...</option>
+                {business.estado && MEXICO_LOCATIONS[business.estado]?.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-bold text-[var(--color-texto-suave)]">Dirección <span className="text-[10px] font-normal">(Opcional)</span></label>
