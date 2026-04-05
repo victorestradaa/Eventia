@@ -1,0 +1,5 @@
+SERVICIO: {"servicioActivo":true,"proveedorNombre":"Diventare","proveedorActivo":true,"categoria":"SALON","ciudad":"Mazatlán","precio":48000}
+RESERVA: {"id":"rmb4xbxi","cliente":"Boda de noche","clienteId":"NO","fecha":"2026-04-11","servicio":"Paquete Todo incluido","monto":0,"estado":"APARTADO","turno":"20:00-01:00"}
+RESERVA: {"id":"rkra0jel","cliente":"boda 2","clienteId":"NO","fecha":"2026-04-11","servicio":"Paquete Todo incluido","monto":0,"estado":"CANCELADO","turno":"20:00-01:00"}
+RESERVA: {"id":"isxtf67k","cliente":"nocturno","clienteId":"NO","fecha":"2026-04-12","servicio":"Paquete Todo incluido","monto":48000,"estado":"APARTADO","turno":"20:00-01:00"}
+RESERVA: {"id":"cfiprz1i","cliente":"nocturno","clienteId":"NO","fecha":"2026-04-12","servicio":"Paquete Todo incluido","monto":48000,"estado":"APARTADO","turno":"20:00-01:00"}

@@ -28,10 +28,11 @@ export default function ExplorarPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [filtros, setFiltros] = useState({
-    precioMax: 100000,
+    precioMax: 500000,
     capacidadMin: 0,
     fecha: ''
   });
+
 
   useEffect(() => {
     async function loadData() {
@@ -47,19 +48,23 @@ export default function ExplorarPage() {
 
   // Filtrado local (para mejor UX instantánea)
   const serviciosFiltrados = servicios.filter(s => {
-    // Normalizar para comparación (Salón vs SALON)
-    // Normalizar para comparación robusta
     const normalizar = (t: string) => (t || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
     
     const labelCategoria = CATEGORIAS_LABELS[s.categoria] || s.categoria || 'Servicio';
     const cumpleCat = catActiva === 'Todos' || normalizar(labelCategoria) === normalizar(catActiva);
     const cumplrePrecio = Number(s.precio) <= filtros.precioMax;
-    const cumpleCapacidad = parseInt(s.capacidad?.toString() || '0') >= filtros.capacidadMin;
-    const cumpleSearch = normalizar(s.nombre).includes(normalizar(searchQuery)) || 
-                       normalizar(s.ciudad).includes(normalizar(searchQuery));
+    
+    // Capacidad puede ser "N/A", undefined, o un número — tratar NaN como que SÍ cumple
+    const capNum = parseInt(s.capacidad?.toString() || '0');
+    const cumpleCapacidad = isNaN(capNum) || capNum >= filtros.capacidadMin;
+    
+    const cumpleSearch = searchQuery.trim() === '' || 
+                       normalizar(s.nombre).includes(normalizar(searchQuery)) || 
+                       normalizar(s.ciudad || '').includes(normalizar(searchQuery));
     
     return cumpleCat && cumpleSearch && cumplrePrecio && cumpleCapacidad;
   });
+
 
   return (
     <div className="space-y-8 pb-10">
@@ -121,15 +126,17 @@ export default function ExplorarPage() {
                       <input 
                         type="range" 
                         min="0" 
-                        max="200000" 
-                        step="1000" 
+                        max="500000" 
+                        step="5000" 
                         value={filtros.precioMax}
                         onChange={(e) => setFiltros({...filtros, precioMax: parseInt(e.target.value)})}
                         className="w-full accent-[var(--color-primario-claro)]"
                       />
                       <div className="flex justify-between font-black text-sm italic">
                          <span>$0</span>
-                         <span className="text-[var(--color-primario-claro)]">{formatearMoneda(filtros.precioMax)}</span>
+                         <span className="text-[var(--color-primario-claro)]">
+                           {filtros.precioMax >= 500000 ? 'Sin límite' : formatearMoneda(filtros.precioMax)}
+                         </span>
                       </div>
                    </div>
                 </div>
@@ -156,7 +163,7 @@ export default function ExplorarPage() {
                 <div className="flex items-end pb-1">
                    <button 
                      onClick={() => {
-                        setFiltros({ precioMax: 200000, capacidadMin: 0, fecha: '' });
+                        setFiltros({ precioMax: 500000, capacidadMin: 0, fecha: '' });
                         setCatActiva('Todos');
                         setSearchQuery('');
                      }}
