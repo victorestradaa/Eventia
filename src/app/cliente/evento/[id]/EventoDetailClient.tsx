@@ -170,7 +170,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
             onClick={() => setTabActiva(tab.key)}
             className={cn(
               "pb-4 text-sm font-bold transition-all relative whitespace-nowrap",
-              tabActiva === tab.key ? "text-white" : "text-[var(--color-texto-muted)] hover:text-white"
+              tabActiva === tab.key ? "text-[var(--color-primario)]" : "text-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
             )}
           >
             {tab.label}
@@ -437,25 +437,25 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1 md:col-span-2">
                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Nombre del Evento</label>
-                  <input type="text" value={tempEvento.nombre} onChange={(e) => setTempEvento({...tempEvento, nombre: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" />
+                  <input type="text" value={tempEvento.nombre} onChange={(e) => setTempEvento({...tempEvento, nombre: e.target.value})} className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Tipo de Evento</label>
-                  <select value={tempEvento.tipo} onChange={(e) => setTempEvento({...tempEvento, tipo: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all">
-                    {eventTypes.map(t => <option key={t} value={t} className="bg-[#1a1a1a]">{t}</option>)}
+                  <select value={tempEvento.tipo} onChange={(e) => setTempEvento({...tempEvento, tipo: e.target.value})} className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all">
+                    {eventTypes.map(t => <option key={t} value={t} className="bg-[var(--color-fondo-card)] text-[var(--color-texto)]">{t}</option>)}
                   </select>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Fecha del Evento</label>
-                  <input type="date" value={tempEvento.fecha} onChange={(e) => setTempEvento({...tempEvento, fecha: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" />
+                  <input type="date" value={tempEvento.fecha} onChange={(e) => setTempEvento({...tempEvento, fecha: e.target.value})} className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Nº Invitados</label>
-                  <input type="number" value={tempEvento.numInvitados} onChange={(e) => setTempEvento({...tempEvento, numInvitados: parseInt(e.target.value) || 0})} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" />
+                  <input type="number" value={tempEvento.numInvitados} onChange={(e) => setTempEvento({...tempEvento, numInvitados: parseInt(e.target.value) || 0})} className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Presupuesto Total</label>
-                  <input type="number" value={tempEvento.presupuestoTotal} onChange={(e) => setTempEvento({...tempEvento, presupuestoTotal: parseFloat(e.target.value) || 0})} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" />
+                  <input type="number" value={tempEvento.presupuestoTotal} onChange={(e) => setTempEvento({...tempEvento, presupuestoTotal: parseFloat(e.target.value) || 0})} className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" />
                 </div>
              </div>
              <div className="flex gap-4 pt-4">
@@ -484,15 +484,15 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1 md:col-span-2">
                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Nombre Completo</label>
-                  <input type="text" value={newGuest.nombre} onChange={(e) => setNewGuest({...newGuest, nombre: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" placeholder="Ej. Juan Pérez" />
+                  <input type="text" value={newGuest.nombre} onChange={(e) => setNewGuest({...newGuest, nombre: e.target.value})} className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" placeholder="Ej. Juan Pérez" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Correo Electrónico</label>
-                  <input type="email" value={newGuest.email} onChange={(e) => setNewGuest({...newGuest, email: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" placeholder="juan@email.com" />
+                  <input type="email" value={newGuest.email} onChange={(e) => setNewGuest({...newGuest, email: e.target.value})} className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" placeholder="juan@email.com" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Teléfono (WhatsApp)</label>
-                  <input type="text" value={newGuest.telefono} onChange={(e) => setNewGuest({...newGuest, telefono: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" placeholder="+52 ..." />
+                  <input type="text" value={newGuest.telefono} onChange={(e) => setNewGuest({...newGuest, telefono: e.target.value})} className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" placeholder="+52 ..." />
                 </div>
 
                 <div className="space-y-1">
@@ -500,12 +500,12 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                    <select 
                      value={newGuest.categoria} 
                      onChange={(e) => setNewGuest({...newGuest, categoria: e.target.value})} 
-                     className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all uppercase text-xs font-bold"
+                     className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all uppercase text-xs font-bold"
                    >
-                     <option value="FAMILIA" className="bg-[#1a1a1a]">Familia</option>
-                     <option value="AMIGOS" className="bg-[#1a1a1a]">Amigos</option>
-                     <option value="TRABAJO" className="bg-[#1a1a1a]">Trabajo</option>
-                     <option value="OTRO" className="bg-[#1a1a1a]">Otro</option>
+                     <option value="FAMILIA" className="bg-[var(--color-fondo-card)] text-[var(--color-texto)]">Familia</option>
+                     <option value="AMIGOS" className="bg-[var(--color-fondo-card)] text-[var(--color-texto)]">Amigos</option>
+                     <option value="TRABAJO" className="bg-[var(--color-fondo-card)] text-[var(--color-texto)]">Trabajo</option>
+                     <option value="OTRO" className="bg-[var(--color-fondo-card)] text-[var(--color-texto)]">Otro</option>
                    </select>
                 </div>
 
@@ -515,11 +515,11 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                      <select 
                        value={newGuest.lado} 
                        onChange={(e) => setNewGuest({...newGuest, lado: e.target.value})} 
-                       className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all uppercase text-xs font-bold"
+                       className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all uppercase text-xs font-bold"
                      >
-                       <option value="" className="bg-[#1a1a1a]">Seleccionar...</option>
-                       <option value="NOVIO" className="bg-[#1a1a1a]">Novio</option>
-                       <option value="NOVIA" className="bg-[#1a1a1a]">Novia</option>
+                       <option value="" className="bg-[var(--color-fondo-card)] text-[var(--color-texto)]">Seleccionar...</option>
+                       <option value="NOVIO" className="bg-[var(--color-fondo-card)] text-[var(--color-texto)]">Novio</option>
+                       <option value="NOVIA" className="bg-[var(--color-fondo-card)] text-[var(--color-texto)]">Novia</option>
                      </select>
                   </div>
                 )}
