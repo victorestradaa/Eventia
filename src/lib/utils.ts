@@ -58,7 +58,6 @@ export const CATEGORIAS_LABELS: Record<string, string> = {
   DECORACION: 'Decoración',
   RECUERDOS: 'Recuerdos',
   MOBILIARIO: 'Inmobiliario',
-  PAQUETES_COMPLETOS: 'Paquetes Completos',
 }
 
 export const TIPO_EVENTO_LABELS: Record<string, string> = {
