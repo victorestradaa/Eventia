@@ -240,17 +240,26 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
               </span>
             </div>
             <h1 className="text-4xl md:text-5xl font-extrabold mb-4">{proximoEvento.nombre}</h1>
-            <div className="flex items-center gap-6">
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-black">{diasRestantes}</span>
-                <span className="text-sm font-medium opacity-80">días restantes</span>
-              </div>
-              <div className="w-px h-10 bg-white/20" />
+            <div className="flex flex-col md:flex-row md:items-center gap-6">
               <div className="flex flex-col">
-                <span className="text-sm opacity-80">Expira gestion</span>
-                <span className="font-bold">
-                  {mesesVigencia === Infinity ? 'Ilimitado' : fechaExpiracion.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                <span className="text-[10px] uppercase font-black tracking-widest opacity-70 mb-1">Tu Gran Evento:</span>
+                <span className="text-3xl font-black italic tracking-tighter">
+                  {fechaEvt ? fechaEvt.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Fecha por definir'}
                 </span>
+              </div>
+              <div className="hidden md:block w-px h-12 bg-white/20" />
+              <div className="flex items-center gap-4">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black">{diasRestantes}</span>
+                  <span className="text-[10px] uppercase font-black tracking-widest opacity-70">días para el evento</span>
+                </div>
+                <div className="w-px h-6 bg-white/20" />
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-black tracking-widest opacity-60">Vigencia gestión</span>
+                  <span className="text-xs font-bold opacity-60">
+                    {mesesVigencia === Infinity ? 'Ilimitado' : fechaExpiracion.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

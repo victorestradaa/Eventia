@@ -55,6 +55,7 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
   const [zoomLogo, setZoomLogo] = useState(false);
   const [reservas, setReservas] = useState<any[]>([]);
   const [loadingCalendar, setLoadingCalendar] = useState(false);
+  const [errorDisponibilidad, setErrorDisponibilidad] = useState<string | null>(null);
 
   useEffect(() => {
     if (mostrarCalendario) {
@@ -124,6 +125,7 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
                      />
                      {galeriaSinLogo.length > 1 && (
                        <>
+                         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all pointer-events-none" />
                          <button 
                            onClick={() => setImgActiva((imgActiva - 1 + galeriaSinLogo.length) % galeriaSinLogo.length)}
                            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
@@ -188,40 +190,47 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Left Content (Details) */}
         <div className="lg:col-span-2 space-y-10">
-           <div className="space-y-4">
-              <div className="flex flex-col md:flex-row md:items-center gap-6">
-                 {/* Logo con zoom */}
-                 <div className="relative shrink-0">
-                    <div 
-                      onClick={() => setZoomLogo(true)}
-                      className="w-20 h-20 rounded-full border-4 border-[var(--color-fondo-card)] bg-[var(--color-fondo-input)] shadow-xl overflow-hidden cursor-pointer hover:scale-110 transition-transform active:scale-95 group"
-                    >
-                       {p.logoUrl ? (
-                         <img src={p.logoUrl} alt="Logo" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
-                       ) : (
-                         <div className="w-full h-full flex items-center justify-center text-[var(--color-primario-claro)]">
-                            <Star size={24} />
-                         </div>
-                       )}
-                    </div>
-                 </div>
+            {/* Card de Información General (Logo Separado) */}
+            <div className="card bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] p-8 shadow-2xl relative overflow-hidden group">
+               {/* Fondo decorativo discreto */}
+               <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primario)]/5 rounded-bl-full -mr-10 -mt-10" />
 
-                 <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                       <span className="badge badge-premium">{p.categoria}</span>
-                       <div className="flex items-center gap-1 text-amber-400 font-bold ml-2">
-                          <Star size={16} fill="currentColor" /> {p.calificacion} 
-                          <span className="text-[var(--color-texto-muted)] font-normal ml-1">({p.reseñasCount} reseñas)</span>
-                       </div>
-                    </div>
-                    <h1 className="text-5xl font-extrabold tracking-tighter uppercase italic">{p.nombre}</h1>
-                    <div className="flex items-center gap-2 text-[var(--color-texto-suave)]">
-                       <MapPin size={18} className="text-[var(--color-acento-claro)]" />
-                       {p.ubicacion}
-                    </div>
-                 </div>
-              </div>
-           </div>
+               <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                  {/* Logo en contenedor discreto pero elegante */}
+                  <div className="relative shrink-0">
+                     <div 
+                       onClick={() => setZoomLogo(true)}
+                       className="w-28 h-28 rounded-full border-4 border-white/5 bg-[var(--color-fondo-input)] shadow-2xl overflow-hidden cursor-zoom-in hover:scale-105 transition-all p-1"
+                     >
+                        {p.logoUrl ? (
+                          <img src={p.logoUrl} alt="Logo" className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[var(--color-primario-claro)]">
+                             <Star size={32} />
+                          </div>
+                        )}
+                     </div>
+                     <span className="absolute bottom-0 right-0 p-2 bg-[var(--color-primario)] text-white rounded-full shadow-lg">
+                        <ShieldCheck size={14} />
+                     </span>
+                  </div>
+
+                  <div className="flex-1 text-center md:text-left space-y-3">
+                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                        <span className="badge badge-premium text-[11px] px-4 py-1.5">{p.categoria}</span>
+                        <div className="flex items-center gap-1.5 text-amber-500 font-black text-lg">
+                           <Star size={20} fill="currentColor" /> {p.calificacion} 
+                           <span className="text-[var(--color-texto-muted)] font-bold text-sm ml-1 uppercase tracking-widest">({p.reseñasCount} reseñas)</span>
+                        </div>
+                     </div>
+                     <h1 className="text-5xl md:text-6xl font-black tracking-tighter uppercase italic text-white">{p.nombre}</h1>
+                     <div className="flex items-center justify-center md:justify-start gap-2 text-[var(--color-texto-suave)] font-bold uppercase tracking-widest text-[10px]">
+                        <MapPin size={18} className="text-[var(--color-acento)]" />
+                        {p.ubicacion}
+                     </div>
+                  </div>
+               </div>
+            </div>
 
            <div className="space-y-4 border-t border-[var(--color-borde-suave)] pt-8">
               <h2 className="text-2xl font-bold italic tracking-tighter uppercase">Acerca del servicio</h2>
@@ -324,7 +333,18 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
                      </button>
 
                      <button 
-                       onClick={() => setConfirmarReserva(true)}
+                       onClick={() => (() => {
+                           const servicio = p.servicios[0];
+                           const diasPermitidos = servicio?.diasDisponibles || [];
+                           const diaEvento = 3; 
+                           if (diasPermitidos.length > 0 && !diasPermitidos.includes(diaEvento)) {
+                              setErrorDisponibilidad(`Este servicio solo está disponible para: ${diasPermitidos.map((d:number) => ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'][d]).join(', ')}`);
+                              return;
+                           }
+                           setErrorDisponibilidad(null);
+                           setConfirmarReserva(true);
+                        })()
+}
                        className="btn btn-primario w-full font-bold text-sm py-4 shadow-lg shadow-violet-500/20"
                      >
                         Reservar Fecha Ahora
@@ -353,9 +373,9 @@ export default function ProviderDetailClient({ data }: ProviderDetailClientProps
               </div>
               <div className="space-y-2">
                 <h3 className="text-2xl font-black italic uppercase tracking-tighter">Confirmar Intención de Reserva</h3>
-                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200">
+                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-900">
                    <p className="text-sm font-bold leading-relaxed">
-                     ¡Atención! Tienes un máximo de <span className="text-white font-black underline decoration-amber-500 underline-offset-4">48 horas</span> para completar el proceso con el anticipo para asegurar tu fecha.
+                     ¡Atención! Tienes un máximo de <span className="text-amber-800 font-extrabold underline decoration-amber-500 underline-offset-4 uppercase">48 horas</span> para completar el proceso con el anticipo para asegurar tu fecha.
                    </p>
                 </div>
                 <p className="text-xs text-[var(--color-texto-suave)] pt-2">
