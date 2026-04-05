@@ -182,19 +182,19 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
 
                  {/* Títulos */}
                  <div className="space-y-4">
-                    <h1 className="text-7xl font-black tracking-tighter uppercase italic leading-none">{selectedService?.nombre}</h1>
-                    <div className="p-8 rounded-[2rem] bg-white/5 border border-white/5 mt-6 backdrop-blur-sm">
-                       <p className="text-lg text-[var(--color-texto-suave)] leading-relaxed italic">
+                    <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">{selectedService?.nombre}</h1>
+                    <div className="p-6 rounded-[2rem] bg-white/5 border border-white/5 mt-4 backdrop-blur-sm">
+                       <p className="text-base text-[var(--color-texto-suave)] leading-relaxed italic">
                          "{selectedService?.desc || 'Sin descripción detallada para este paquete.'}"
                        </p>
                     </div>
                  </div>
 
-                 {/* Precio Gigante */}
+                 {/* Precio */}
                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pt-4">
                     <div className="space-y-1">
                        <p className="text-[10px] font-black text-[var(--color-texto-muted)] uppercase tracking-[0.3em] ml-1">Inversión del servicio</p>
-                       <h3 className="text-8xl font-black gradient-texto tracking-tighter italic leading-none">{formatearMoneda(selectedService?.precio || 0)}</h3>
+                       <h3 className="text-6xl font-black gradient-texto tracking-tighter italic leading-none">{formatearMoneda(selectedService?.precio || 0)}</h3>
                     </div>
                  </div>
 
@@ -237,9 +237,9 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
 
                     <button 
                       onClick={() => setMostrarCalendario(true)}
-                      className="btn bg-white/5 border border-white/10 py-6 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-white/10 transition-all flex items-center justify-center gap-3 italic"
+                      className="btn bg-white/5 border border-white/10 py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] hover:bg-white/10 transition-all flex items-center justify-center gap-3 italic"
                     >
-                       <CalendarIcon size={20} />
+                       <CalendarIcon size={18} />
                        Consultar Agenda
                     </button>
                     
