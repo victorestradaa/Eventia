@@ -16,15 +16,16 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { CATEGORIAS_LABELS } from '@/lib/utils';
 
 const CATEGORIAS = [
-  { id: 'SALON',      label: 'Salones',      icon: Building2   },
-  { id: 'MUSICA',     label: 'Música',       icon: Music       },
-  { id: 'COMIDA',     label: 'Banquetes',    icon: Utensils    },
-  { id: 'ANIMACION',  label: 'Animación',    icon: PartyPopper },
-  { id: 'FOTOGRAFIA', label: 'Foto & Video', icon: Camera      },
-  { id: 'DECORACION', label: 'Decoración',   icon: Palette     },
-  { id: 'RECUERDOS',  label: 'Recuerdos',    icon: Gift        },
-  { id: 'MOBILIARIO', label: 'Inmobiliario', icon: Armchair    },
+  { id: 'SALON',      label: 'Salones',      icon: Building2,   color: '#8B5CF6' },
+  { id: 'MUSICA',     label: 'Música',       icon: Music,       color: '#3B82F6' },
+  { id: 'COMIDA',     label: 'Banquetes',    icon: Utensils,    color: '#10B981' },
+  { id: 'ANIMACION',  label: 'Animación',    icon: PartyPopper, color: '#F59E0B' },
+  { id: 'FOTOGRAFIA', label: 'Foto & Video', icon: Camera,      color: '#F43F5E' },
+  { id: 'DECORACION', label: 'Decoración',   icon: Palette,     color: '#06B6D4' },
+  { id: 'RECUERDOS',  label: 'Recuerdos',    icon: Gift,        color: '#EC4899' },
+  { id: 'MOBILIARIO', label: 'Inmobiliario', icon: Armchair,    color: '#64748B' },
 ];
+
 
 export default function Home() {
   return (
@@ -98,34 +99,39 @@ export default function Home() {
 
         {/* Full-width centered flex row */}
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem', width: '100%', padding: '0 1.5rem' }}>
-          {CATEGORIAS.map(({ id, label, icon: Icon }) => (
-            <Link
-              key={id}
-              href={`/explorar?categoria=${id}`}
-              className="group flex flex-col items-center justify-center gap-3 rounded-3xl transition-all duration-300 active:scale-95"
-              style={{
-                width: '110px',
-                flexShrink: 0,
-                padding: '1.25rem 0.75rem',
-                backgroundColor: 'var(--color-fondo-input)',
-                border: '1.5px solid var(--color-borde-suave)',
-                textDecoration: 'none',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-primario-claro)';
-                (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-fondo-card)';
-                (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(109,40,217,0.12)';
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-borde-suave)';
-                (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-fondo-input)';
-                (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-              }}
-            >
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                style={{ backgroundColor: 'var(--color-fondo-card)', border: '1.5px solid var(--color-borde-suave)', color: 'var(--color-texto-muted)' }}>
-                <Icon size={22} strokeWidth={1.5} />
-              </div>
+            {CATEGORIAS.map(({ id, label, icon: Icon, color }) => (
+              <Link
+                key={id}
+                href={`/explorar?categoria=${id}`}
+                className="group flex flex-col items-center justify-center gap-3 rounded-3xl transition-all duration-300 active:scale-95"
+                style={{
+                  width: '110px',
+                  flexShrink: 0,
+                  padding: '1.25rem 0.75rem',
+                  backgroundColor: 'var(--color-fondo-input)',
+                  border: '1.5px solid var(--color-borde-suave)',
+                  textDecoration: 'none',
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = color;
+                  (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-fondo-card)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 24px ${color}20`;
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-borde-suave)';
+                  (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-fondo-input)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                }}
+              >
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300"
+                  style={{ 
+                    backgroundColor: `${color}10`, 
+                    border: `1.5px solid ${color}30`, 
+                    color: color 
+                  }}>
+                  <Icon size={22} strokeWidth={2} />
+                </div>
+
               <span className="text-[10px] font-black uppercase tracking-widest text-center leading-tight"
                 style={{ color: 'var(--color-texto-suave)' }}>
                 {label}

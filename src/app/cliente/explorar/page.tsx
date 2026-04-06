@@ -21,6 +21,19 @@ const CATEGORIAS = [
   'Todos', 'Salones', 'Música', 'Banquetes', 'Animación', 'Foto & Video', 'Decoración', 'Recuerdos', 'Inmobiliario'
 ];
 
+const CATEGORIA_COLORS: Record<string, string> = {
+  'Salones': '#8B5CF6',
+  'Música': '#3B82F6',
+  'Banquetes': '#10B981',
+  'Animación': '#F59E0B',
+  'Foto & Video': '#F43F5E',
+  'Decoración': '#06B6D4',
+  'Recuerdos': '#EC4899',
+  'Inmobiliario': '#64748B',
+  'Todos': '#6366f1' // Indigo base for "Todos"
+};
+
+
 export default function ExplorarPage() {
   const [catActiva, setCatActiva] = useState('Todos');
   const [servicios, setServicios] = useState<any[]>([]);
@@ -200,21 +213,32 @@ export default function ExplorarPage() {
 
       {/* Categorías (Pills) */}
       <div className="flex items-center gap-3 overflow-x-auto pb-4 no-scrollbar pt-2">
-        {CATEGORIAS.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setCatActiva(cat)}
-            className={cn(
-              "px-8 py-2.5 rounded-xl whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all border duration-300",
-              catActiva === cat 
-                ? "bg-[var(--color-acento)] border-[var(--color-acento)] text-white shadow-[0_8px_20px_-5px_rgba(189,155,101,0.5)] scale-105" 
-                : "bg-white/5 border-white/5 text-[var(--color-texto-muted)] hover:border-[var(--color-acento)]/30 hover:text-white"
-            )}
-          >
-            {cat}
-          </button>
-        ))}
+        {CATEGORIAS.map((cat) => {
+          const isActive = catActiva === cat;
+          const catColor = CATEGORIA_COLORS[cat] || '#6366f1';
+          
+          return (
+            <button
+              key={cat}
+              onClick={() => setCatActiva(cat)}
+              className={cn(
+                "px-8 py-2.5 rounded-xl whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all border duration-300",
+                isActive 
+                  ? "text-white shadow-lg scale-105" 
+                  : "bg-white/5 border-white/5 text-[var(--color-texto-muted)] hover:border-white/20 hover:text-white"
+              )}
+              style={isActive ? {
+                backgroundColor: catColor,
+                borderColor: catColor,
+                boxShadow: `0 8px 20px ${catColor}40`
+              } : {}}
+            >
+              {cat}
+            </button>
+          );
+        })}
       </div>
+
 
       {/* Grid de Resultados */}
       {loading ? (
@@ -298,9 +322,10 @@ export default function ExplorarPage() {
           </div>
           <button 
             onClick={() => {
-              setFiltros({ precioMax: 200000, capacidadMin: 0, fecha: '' });
+              setFiltros({ precioMax: 200000, capacidadMin: 0, fecha: '', ubicacion: '' });
               setCatActiva('Todos');
             }}
+
             className="btn btn-primario px-8"
           >
             Limpiar Filtros

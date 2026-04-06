@@ -63,14 +63,33 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   const lineasPresupuesto = evento.lineasPresupuesto || [];
   const reservas = evento.reservas || [];
 
-  // Cálculos reales
-  const subtotalContratado = lineasPresupuesto.reduce((acc: number, l: any) => acc + Number(l.montoTotal), 0);
-  const totalPagado = lineasPresupuesto.reduce((acc: number, l: any) => acc + Number(l.montoPagado), 0);
-  const presupuestoTotal = Number(evento.presupuestoTotal) || 0;
-
   const invitadosConfirmados = invitados.filter((i: any) => i.rsvpEstado === 'CONFIRMADO').length;
   const invitadosPendientes = invitados.filter((i: any) => i.rsvpEstado === 'PENDIENTE').length;
   const invitadosRechazados = invitados.filter((i: any) => i.rsvpEstado === 'RECHAZADO').length;
+
+  // Combinar líneas de presupuesto con reservas que no tienen línea aún (Fix sincronización)
+  const lineasConReservas = [...lineasPresupuesto];
+  reservas.forEach((res: any) => {
+    const existeLinea = lineasPresupuesto.some((l: any) => l.servicioId === res.servicioId);
+    if (!existeLinea && res.estatus !== 'CANCELADO') {
+      lineasConReservas.push({
+        id: `res-${res.id}`,
+        descripcion: res.servicio?.nombre || 'Servicio Apartado',
+        montoTotal: res.montoTotal || 0,
+        montoPagado: res.montoPagado || 0,
+        montoSaldado: res.montoPagado || 0,
+        servicio: res.servicio,
+        isReserva: true,
+        pagos: []
+      });
+    }
+  });
+
+  // Cálculos reales basados en la unión
+  const subtotalContratado = lineasConReservas.reduce((acc: number, l: any) => acc + Number(l.montoTotal), 0);
+  const totalPagado = lineasConReservas.reduce((acc: number, l: any) => acc + Number(l.montoPagado), 0);
+  const presupuestoTotal = Number(evento.presupuestoTotal) || 0;
+
 
   const fechaFormateada = evento.fecha ? formatearFechaCorta(evento.fecha) : 'Sin fecha';
 
@@ -229,7 +248,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
             </div>
 
             {/* Proveedores contratados */}
-            {lineasPresupuesto.length > 0 && (
+            {lineasConReservas.length > 0 && (
               <div className="card overflow-hidden p-0">
                  <div className="p-6 border-b border-[var(--color-borde-suave)] flex justify-between items-center">
                     <h3 className="font-bold">Proveedores del Evento</h3>
@@ -240,7 +259,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                       <tr><th>Servicio</th><th>Total</th><th>Pagado</th><th>Saldo</th></tr>
                     </thead>
                     <tbody>
-                      {lineasPresupuesto.map((l: any) => (
+                      {lineasConReservas.map((l: any) => (
                         <tr key={l.id}>
                           <td className="font-bold">
                             {l.descripcion}
@@ -258,7 +277,8 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
               </div>
             )}
 
-            {lineasPresupuesto.length === 0 && (
+            {lineasConReservas.length === 0 && (
+
               <div className="card p-8 text-center border-dashed border-2">
                 <Wallet size={32} className="mx-auto text-[var(--color-texto-muted)] mb-3" />
                 <p className="font-bold text-lg">Sin proveedores aún</p>
@@ -328,7 +348,8 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                 </h3>
                 
                 <div className="grid grid-cols-1 gap-4">
-                   {lineasPresupuesto.filter((l:any) => Number(l.montoTotal) - Number(l.montoPagado) > 0).map((l:any) => (
+                   {lineasConReservas.filter((l:any) => Number(l.montoTotal) - Number(l.montoPagado) > 0).map((l:any) => (
+
                      <div key={l.id} className="card hover:bg-white/[0.02] transition-all border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6 group overflow-hidden">
                         <div className="flex items-center gap-4">
                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--color-primario)]/20 to-transparent flex items-center justify-center text-[var(--color-primario-claro)] shadow-lg">
@@ -354,7 +375,8 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                         </div>
                      </div>
                    ))}
-                   {lineasPresupuesto.filter((l:any) => Number(l.montoTotal) - Number(l.montoPagado) > 0).length === 0 && (
+                   {lineasConReservas.filter((l:any) => Number(l.montoTotal) - Number(l.montoPagado) > 0).length === 0 && (
+
                      <div className="card p-16 text-center border-dashed border-2 border-emerald-500/20 bg-emerald-500/5">
                         <CheckCircle2 size={48} className="mx-auto text-emerald-500 mb-4" />
                         <p className="font-black text-xl uppercase italic tracking-tighter">¡Felicidades!</p>
@@ -378,7 +400,8 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 font-medium">
-                          {lineasPresupuesto.flatMap((l:any) => (l.pagos || []).map((p:any) => ({...p, targetDesc: l.descripcion}))).sort((a:any, b:any) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map((p:any, idx:number) => (
+                          {lineasConReservas.flatMap((l:any) => (l.pagos || []).map((p:any) => ({...p, targetDesc: l.descripcion}))).sort((a:any, b:any) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map((p:any, idx:number) => (
+
                             <tr key={p.id || idx} className="hover:bg-white/[0.01] transition-colors group">
                               <td className="px-6 py-5">
                                  <span className="font-bold group-hover:text-[var(--color-primario-claro)] transition-colors">{p.targetDesc}</span>
