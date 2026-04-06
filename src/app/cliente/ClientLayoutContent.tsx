@@ -22,21 +22,21 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // En un sistema real usaríamos un context o un cookie para persistir esto
-  const [activeEventId, setActiveEventId] = useState<string | null>(null);
+  const [activeEventId, setActiveEventId] = useState<string | null>(initialEventos.length > 0 ? initialEventos[0].id : null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // PERSISTENCIA DE EVENTO SELECCIONADO
+  // PERSISTENCIA DE EVENTO SELECCIONADO (Solo cliente)
   useEffect(() => {
     const savedEventId = document.cookie.split('; ').find(row => row.startsWith('activeEventId='))?.split('=')[1];
     
     if (savedEventId && initialEventos.some(e => e.id === savedEventId)) {
       setActiveEventId(savedEventId);
-    } else if (initialEventos.length > 0) {
-      const firstId = initialEventos[0].id;
-      setActiveEventId(firstId);
-      document.cookie = `activeEventId=${firstId}; path=/; max-age=31536000`; // 1 año
+    } else if (initialEventos.length > 0 && !savedEventId) {
+      // Si no hay cookie guardamos el actual por defecto
+      document.cookie = `activeEventId=${initialEventos[0].id}; path=/; max-age=31536000`; // 1 año
     }
   }, [initialEventos]);
+
 
   const changeActiveEvent = (id: string) => {
     setActiveEventId(id);
@@ -45,9 +45,10 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
 
   // SINCRO SEGÚN RUTA (Si entramos a un evento específico, lo marcamos como activo)
   useEffect(() => {
+    if (!pathname) return;
     const parts = pathname.split('/');
-    const isEventPage = parts[1] === 'cliente' && parts[2] === 'evento' && parts[3];
-    if (isEventPage && parts[3] && parts[3] !== activeEventId) {
+    const isEventPage = parts.length >= 4 && parts[1] === 'cliente' && parts[2] === 'evento' && parts[3];
+    if (isEventPage && parts[3] !== activeEventId) {
       changeActiveEvent(parts[3]);
     }
   }, [pathname, activeEventId]);

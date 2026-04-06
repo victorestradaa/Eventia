@@ -2,7 +2,9 @@ import { getDetalleProveedor } from '@/lib/actions/providerActions';
 import { getCurrentProfile } from '@/lib/actions/authActions';
 import { getEventosCliente } from '@/lib/actions/eventActions';
 import ProviderDetailClient from './ProviderDetailClient';
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
+
 
 export default async function ProviderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -17,9 +19,8 @@ export default async function ProviderDetailPage({ params }: { params: Promise<{
 
   if (perfilRes.success && perfilRes.data?.cliente) {
     const eventosRes = await getEventosCliente(perfilRes.data.cliente.id);
-    if (eventosRes.success && eventosRes.data.length > 0) {
+    if (eventosRes.success && eventosRes.data && eventosRes.data.length > 0) {
       // Intentar obtener el evento activo desde la cookie de gestión
-      const { cookies } = await import('next/headers');
       const cookieStore = await cookies();
       const activeEventId = cookieStore.get('activeEventId')?.value;
 
@@ -30,6 +31,8 @@ export default async function ProviderDetailPage({ params }: { params: Promise<{
       }
     }
   }
+
+
 
 
   return (
