@@ -92,6 +92,8 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
         monto: Number(abono.monto),
         tipo: abono.tipo as any,
         metodoPago: abono.metodoPago,
+        estado: abono.estado as any,
+        fechaVencimiento: abono.fechaVencimiento,
         notas: abono.notas,
         esCliente: false
       });

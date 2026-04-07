@@ -11,6 +11,8 @@ export async function registrarAbono(data: {
   monto: number;
   metodoPago: string;
   tipo: 'ANTICIPO' | 'ABONO' | 'PENALIZACION';
+  estado?: 'PAGADO' | 'PENDIENTE'; // Nuevo: Soporte para compromisos de pago
+  fechaVencimiento?: string;      // Nuevo: Fecha programada para el pagaré
   notas?: string;
   esCliente?: boolean;
 }) {
@@ -27,6 +29,9 @@ export async function registrarAbono(data: {
 
       if (!reserva) throw new Error('Reserva no encontrada');
 
+      const nuevoEstadoTx = data.estado || 'PAGADO';
+      const esPagado = nuevoEstadoTx === 'PAGADO';
+
       // 2. Crear la transacción
       const transaccion = await tx.transaccion.create({
         data: {
@@ -34,29 +39,35 @@ export async function registrarAbono(data: {
           monto: data.monto,
           tipo: data.tipo,
           metodoPago: data.metodoPago,
-          estado: 'PAGADO',
-          fechaPago: new Date(),
+          estado: nuevoEstadoTx,
+          fechaPago: esPagado ? new Date() : null, // Solo tiene fecha de pago si ya se cobró
+          fechaVencimiento: data.fechaVencimiento ? new Date(data.fechaVencimiento) : null,
           notas: data.notas || (data.esCliente ? 'Abono realizado por el cliente' : 'Abono registrado por el proveedor')
         }
       });
 
-      // 3. Calcular nuevo total pagado de la reserva
+      // Si es PENDIENTE (un pagaré), no actualizamos los totales del presupuesto aún
+      if (!esPagado) {
+         return { reserva, transaccion };
+      }
+
+      // 3. Calcular nuevo total pagado de la reserva (solo sumando transacciones PAGADAS)
       const totalPagado = reserva.transacciones
         .filter((t: any) => t.estado === 'PAGADO')
         .reduce((sum: number, t: any) => sum + Number(t.monto), 0) + Number(data.monto);
 
       // 4. Actualizar estado de la reserva si es necesario
-      let nuevoEstado = reserva.estado;
+      let nuevoEstadoReserva = reserva.estado;
       if (totalPagado >= Number(reserva.montoTotal)) {
-        nuevoEstado = 'LIQUIDADO';
+        nuevoEstadoReserva = 'LIQUIDADO';
       } else if (reserva.estado === 'TEMPORAL' && totalPagado > 0) {
-        nuevoEstado = 'APARTADO';
+        nuevoEstadoReserva = 'APARTADO';
       }
 
       await tx.reserva.update({
         where: { id: data.reservaId },
         data: { 
-          estado: nuevoEstado,
+          estado: nuevoEstadoReserva,
           montoAnticipo: data.tipo === 'ANTICIPO' ? (Number(reserva.montoAnticipo) + Number(data.monto)) : reserva.montoAnticipo
         }
       });
