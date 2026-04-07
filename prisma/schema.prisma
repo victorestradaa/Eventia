@@ -224,6 +224,7 @@ model Invitado {
   rsvpEstado       EstadoRSVP @default(PENDIENTE)
   lado             String?    // NOVIO, NOVIA, o null para otros eventos
   categoria        String?    // FAMILIA, AMIGOS, TRABAJO
+  tipoPersona      String?    // HOMBRE, MUJER, NINO, NINA
   creadoEn         DateTime   @default(now())
 }
 

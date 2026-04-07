@@ -15,7 +15,13 @@ import {
   Heart,
   UserPlus,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  Baby,
+  User as UserIcon,
+  ToggleLeft,
+  ToggleRight,
+  Music,
+  Mic2
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -26,11 +32,45 @@ import { getInvitadosByEvento, savePlanoMesas, getPlanoMesas } from '@/lib/actio
 interface Invitado {
   id: string;
   nombre: string;
+  tipoPersona?: string | null;
   lado?: string | null;
   categoria?: string | null;
   x?: number; // Posición libre en el suelo
   y?: number;
 }
+
+// Componente para los iconos de persona (Sincronizado con EventoDetailClient)
+const PersonIcon = ({ tipo, className = "w-8 h-8" }: { tipo: string | null | undefined, className?: string }) => {
+  if (tipo === 'HOMBRE') {
+    return (
+      <div className={cn("relative flex items-center justify-center", className)}>
+        <UserIcon className="w-full h-full" />
+        <div className="absolute top-[60%] left-1/2 -translate-x-1/2 w-[20%] h-[30%] bg-[#D4AF37] rounded-full" />
+      </div>
+    );
+  }
+  if (tipo === 'MUJER') {
+    return (
+      <div className={cn("relative flex items-center justify-center", className)}>
+        <UserIcon className="w-full h-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90%] h-[40%] border-t-2 border-pink-400 rounded-full" />
+      </div>
+    );
+  }
+  if (tipo === 'NINO') {
+    return <Baby className={cn("text-blue-400", className)} />;
+  }
+  if (tipo === 'NINA') {
+    return (
+      <div className={cn("relative flex items-center justify-center", className)}>
+        <Baby className="w-full h-full text-pink-400" />
+        <div className="absolute -top-1 -right-1 w-2 h-2 bg-pink-500 rounded-full border border-white" />
+      </div>
+    );
+  }
+  return <UserIcon className={className} />;
+};
+
 
 interface Mesa {
   id: string;
@@ -52,6 +92,9 @@ export default function SeatingPage() {
   const [invitadosSinMesa, setInvitadosSinMesa] = useState<Invitado[]>([]);
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [pistaPos, setPistaPos] = useState({ x: 450, y: 350 });
+  const [escenarioPos, setEscenarioPos] = useState({ x: 450, y: 50 });
+  const [showPista, setShowPista] = useState(true);
+  const [showEscenario, setShowEscenario] = useState(true);
 
   const [draggedMesa, setDraggedMesa] = useState<string | null>(null);
   const [selectedMesaId, setSelectedMesaId] = useState<string | null>(null);
@@ -70,6 +113,9 @@ export default function SeatingPage() {
         const layout = resPlano.data.layout as any;
         if (layout.mesas) setMesas(layout.mesas);
         if (layout.pista) setPistaPos(layout.pista);
+        if (layout.escenario) setEscenarioPos(layout.escenario);
+        if (layout.showPista !== undefined) setShowPista(layout.showPista);
+        if (layout.showEscenario !== undefined) setShowEscenario(layout.showEscenario);
         
         // Filtrar invitados que ya están en mesas
         if (resInv.success) {
@@ -110,6 +156,9 @@ export default function SeatingPage() {
     const layout = {
       mesas,
       pista: pistaPos,
+      escenario: escenarioPos,
+      showPista,
+      showEscenario,
       invitadosSuelo: invitadosSinMesa.filter(i => i.x !== undefined).map(i => ({ id: i.id, x: i.x, y: i.y }))
     };
     
@@ -135,6 +184,14 @@ export default function SeatingPage() {
     
     if (draggedMesa === 'pista') {
       setPistaPos({
+        x: e.clientX - dragOffset.x,
+        y: e.clientY - dragOffset.y
+      });
+      return;
+    }
+
+    if (draggedMesa === 'escenario') {
+      setEscenarioPos({
         x: e.clientX - dragOffset.x,
         y: e.clientY - dragOffset.y
       });
@@ -322,7 +379,39 @@ export default function SeatingPage() {
             {!mesaSeleccionada ? (
               <>
                 <section className="space-y-4">
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Agregar Elementos</h3>
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Toggles del Plano</h3>
+                  <div className="grid grid-cols-1 gap-2">
+                     <button 
+                       onClick={() => setShowEscenario(!showEscenario)}
+                       className={cn(
+                         "flex items-center justify-between p-3 rounded-xl border transition-all",
+                         showEscenario ? "border-[#D4AF37] bg-[#F5E6BE]/10 text-slate-800" : "border-slate-100 bg-slate-50 text-slate-400"
+                       )}
+                     >
+                        <div className="flex items-center gap-3">
+                           <Mic2 size={16} className={showEscenario ? "text-[#D4AF37]" : "text-slate-300"} />
+                           <span className="text-[10px] font-black uppercase">Escenario</span>
+                        </div>
+                        {showEscenario ? <ToggleRight size={24} className="text-[#D4AF37]" /> : <ToggleLeft size={24} />}
+                     </button>
+                     <button 
+                       onClick={() => setShowPista(!showPista)}
+                       className={cn(
+                         "flex items-center justify-between p-3 rounded-xl border transition-all",
+                         showPista ? "border-purple-500/50 bg-purple-50/50 text-slate-800" : "border-slate-100 bg-slate-50 text-slate-400"
+                       )}
+                     >
+                        <div className="flex items-center gap-3">
+                           <Music size={16} className={showPista ? "text-purple-500" : "text-slate-300"} />
+                           <span className="text-[10px] font-black uppercase">Pista de Baile</span>
+                        </div>
+                        {showPista ? <ToggleRight size={24} className="text-purple-500" /> : <ToggleLeft size={24} />}
+                     </button>
+                  </div>
+                </section>
+
+                <section className="space-y-4">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Agregar Mesas</h3>
                   <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => agregarMesa('circular')} className="flex flex-col items-center gap-3 p-5 rounded-2xl bg-[#F5E6BE]/10 border-2 border-dashed border-[#D4AF37]/20 hover:border-[#D4AF37] hover:bg-[#F5E6BE]/20 transition-all group">
                       <div className="w-12 h-12 rounded-full border-2 border-[#F5E6BE] group-hover:border-[#D4AF37] group-hover:scale-110 flex items-center justify-center transition-all bg-white shadow-sm text-[#D4AF37]">
@@ -355,10 +444,12 @@ export default function SeatingPage() {
                         className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm flex items-center gap-3 group hover:border-[#D4AF37] transition-all cursor-grab active:cursor-grabbing hover:shadow-md"
                       >
                         <div className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ring-2 ring-offset-1",
-                          i.lado === 'NOVIA' ? "bg-pink-100 text-pink-600 ring-pink-50" : i.lado === 'NOVIO' ? "bg-blue-100 text-blue-600 ring-blue-50" : "bg-[#F5E6BE] text-[#D4AF37] ring-[#F5E6BE]/30"
+                          "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ring-2 ring-offset-1 bg-white border border-slate-100",
+                          i.tipoPersona === 'MUJER' && "border-pink-500/30 text-pink-400",
+                          i.tipoPersona === 'NINO' && "border-blue-500/30 text-blue-400",
+                          i.tipoPersona === 'NINA' && "border-pink-500/30 text-pink-400"
                         )}>
-                          {i.nombre[0]}
+                          <PersonIcon tipo={i.tipoPersona} className="w-5 h-5" />
                         </div>
                         <div className="flex-1 truncate">
                           <p className="text-xs font-bold text-slate-800 line-clamp-1">{i.nombre}</p>
@@ -467,17 +558,40 @@ export default function SeatingPage() {
            {/* Grid de ayuda visual suave */}
            <div className="absolute inset-0 opacity-[0.4]" style={{ backgroundImage: 'radial-gradient(#94a3b8 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }} />
            
-           {/* Dance Floor Placeholder (Estilo Dorado Sketch) */}
-           <div 
-             onMouseDown={(e) => handleMouseDown(e, 'pista', pistaPos.x, pistaPos.y)}
-             style={{ left: pistaPos.x, top: pistaPos.y }}
-             className={cn(
-               "absolute w-[400px] h-[150px] border-4 border-dashed border-[#D4AF37]/40 flex flex-col items-center justify-center text-[#D4AF37]/30 font-black uppercase tracking-[0.5em] rounded-xl bg-[#F5E6BE]/10 backdrop-blur-[1px] transition-all",
-               draggedMesa === 'pista' ? "cursor-grabbing z-50 duration-0" : "cursor-grab z-10"
-             )}
-           >
-              <span className="text-3xl italic">Pista de Baile</span>
-           </div>
+           {/* Dance Floor (Estilo Dorado Sketch) */}
+           {showPista && (
+             <div 
+               onMouseDown={(e) => handleMouseDown(e, 'pista', pistaPos.x, pistaPos.y)}
+               style={{ left: pistaPos.x, top: pistaPos.y }}
+               className={cn(
+                 "absolute w-[400px] h-[150px] border-4 border-dashed border-[#D4AF37]/40 flex flex-col items-center justify-center text-[#D4AF37]/30 font-black uppercase tracking-[0.5em] rounded-xl bg-[#F5E6BE]/10 backdrop-blur-[1px] transition-all",
+                 draggedMesa === 'pista' ? "cursor-grabbing z-50 duration-0" : "cursor-grab z-10"
+               )}
+             >
+                <div className="flex items-center gap-4">
+                  <Music className="opacity-40" />
+                  <span className="text-3xl italic">Pista de Baile</span>
+                </div>
+             </div>
+           )}
+
+           {/* Escenario */}
+           {showEscenario && (
+             <div 
+               onMouseDown={(e) => handleMouseDown(e, 'escenario', escenarioPos.x, escenarioPos.y)}
+               style={{ left: escenarioPos.x, top: escenarioPos.y }}
+               className={cn(
+                 "absolute w-[300px] h-[80px] bg-slate-800 border-b-[6px] border-slate-900 rounded-lg flex flex-col items-center justify-center shadow-xl transition-all",
+                 draggedMesa === 'escenario' ? "cursor-grabbing z-50 duration-0" : "cursor-grab z-10"
+               )}
+             >
+                <div className="flex items-center gap-3 text-white/40">
+                  <Mic2 size={24} />
+                  <span className="text-xl font-black uppercase tracking-[0.3em]">Escenario</span>
+                </div>
+                <div className="absolute -bottom-1 w-[80%] h-1 bg-white/10 rounded-full" />
+             </div>
+           )}
 
            <div 
              className="w-full h-full relative"
@@ -505,14 +619,14 @@ export default function SeatingPage() {
                   style={{ left: i.x, top: i.y }}
                   className="absolute z-20 transition-all flex flex-col items-center gap-1 group"
                 >
-                   <div className={cn(
-                      "w-10 h-10 rounded-full border-2 shadow-xl flex items-center justify-center font-bold text-xs ring-4 ring-white animate-in zoom-in-50",
-                      i.lado === 'NOVIA' ? "bg-pink-100 border-pink-200 text-pink-600" : 
-                      i.lado === 'NOVIO' ? "bg-blue-100 border-blue-200 text-blue-600" : 
-                      "bg-[#F5E6BE] border-[#D4AF37] text-[#D4AF37]"
-                    )}>
-                      {i.nombre[0]}
-                    </div>
+                    <div className={cn(
+                       "w-10 h-10 rounded-full border-2 shadow-xl flex items-center justify-center font-bold text-xs ring-4 ring-white animate-in zoom-in-50 bg-white",
+                       i.tipoPersona === 'MUJER' && "border-pink-500/30 text-pink-400",
+                       i.tipoPersona === 'NINO' && "border-blue-500/30 text-blue-400",
+                       i.tipoPersona === 'NINA' && "border-pink-500/30 text-pink-400"
+                     )}>
+                       <PersonIcon tipo={i.tipoPersona} className="w-6 h-6" />
+                     </div>
                     <span className="text-[8px] font-black text-slate-600 uppercase tracking-tighter bg-white/80 px-1 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
                       {i.nombre}
                     </span>
@@ -590,15 +704,15 @@ export default function SeatingPage() {
                                   const invId = e.dataTransfer.getData('invitadoId');
                                   if (invId) asignarInvitadoAMesa(invId, m.id, index);
                                 }}
-                                className={cn(
-                                 "w-9 h-9 rounded-full border-2 transition-all flex items-center justify-center font-bold text-[10px] shadow-sm",
-                                 inv 
-                                  ? (inv.lado === 'NOVIA' ? "bg-fuchsia-50 border-fuchsia-200 text-fuchsia-600" : inv.lado === 'NOVIO' ? "bg-blue-50 border-blue-200 text-blue-600" : "bg-[#F5E6BE] border-[#D4AF37] text-[#D4AF37]")
-                                  : "bg-white border-[#F5E6BE] border-dashed text-slate-300 hover:border-[#D4AF37] hover:bg-[#F5E6BE]/10"
-                               )}
-                              >
-                                 {inv ? inv.nombre[0] : ''}
-                              </div>
+                                 className={cn(
+                                  "w-9 h-9 rounded-full border-2 transition-all flex items-center justify-center font-bold text-[10px] shadow-sm bg-white",
+                                  inv 
+                                    ? (inv.tipoPersona === 'MUJER' ? "border-pink-500/30 text-pink-400" : inv.tipoPersona === 'NINO' ? "border-blue-500/30 text-blue-400" : inv.tipoPersona === 'NINA' ? "border-pink-500/30 text-pink-400" : "border-[#D4AF37] text-[#D4AF37]")
+                                    : "border-[#F5E6BE] border-dashed text-slate-300 hover:border-[#D4AF37] hover:bg-[#F5E6BE]/10"
+                                )}
+                               >
+                                  {inv ? <PersonIcon tipo={inv.tipoPersona} className="w-6 h-6" /> : ''}
+                               </div>
                              
                              {/* Guest Name (Lighter Style) */}
                              {inv && (

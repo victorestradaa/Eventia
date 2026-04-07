@@ -99,6 +99,7 @@ export async function addInvitado(data: {
   telefono?: string;
   lado?: string;
   categoria?: string;
+  tipoPersona?: string;
 }) {
   try {
     const nuevoInvitado = await prisma.invitado.create({
@@ -109,6 +110,7 @@ export async function addInvitado(data: {
         telefono: data.telefono || null,
         lado: data.lado || null,
         categoria: data.categoria || null,
+        tipoPersona: data.tipoPersona || null,
       }
     });
 
@@ -117,6 +119,42 @@ export async function addInvitado(data: {
   } catch (error) {
     console.error('Error al agregar invitado:', error);
     return { success: false, error: 'No se pudo agregar al invitado.' };
+  }
+}
+
+/**
+ * Actualiza el estado RSVP de un invitado.
+ */
+export async function updateInvitadoRSVP(id: string, rsvpEstado: 'CONFIRMADO' | 'PENDIENTE' | 'RECHAZADO') {
+  try {
+    const invitado = await prisma.invitado.update({
+      where: { id },
+      data: { rsvpEstado }
+    });
+
+    revalidatePath(`/cliente/evento/${invitado.eventoId}`);
+    return { success: true, data: invitado };
+  } catch (error) {
+    console.error('Error al actualizar RSVP:', error);
+    return { success: false, error: 'No se pudo actualizar el RSVP.' };
+  }
+}
+
+/**
+ * Actualiza el tipo de persona/género de un invitado.
+ */
+export async function updateInvitadoTipo(id: string, tipoPersona: string) {
+  try {
+    const invitado = await prisma.invitado.update({
+      where: { id },
+      data: { tipoPersona }
+    });
+
+    revalidatePath(`/cliente/evento/${invitado.eventoId}`);
+    return { success: true, data: invitado };
+  } catch (error) {
+    console.error('Error al actualizar tipo de persona:', error);
+    return { success: false, error: 'No se pudo actualizar el tipo de persona.' };
   }
 }
 /**

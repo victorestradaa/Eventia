@@ -1,29 +1,55 @@
 'use client';
 
 import { 
-  Users, 
-  Wallet, 
-  Calendar as CalendarIcon, 
-  Plus, 
-  Mail, 
-  CheckCircle2, 
-  CreditCard,
-  DollarSign,
-  Clock as ClockIcon,
   ArrowLeft,
   ChevronRight,
   Edit,
   X,
   Loader2,
   AlertCircle,
-  LayoutGrid
+  LayoutGrid,
+  Check,
+  MessageCircle,
+  Baby,
+  User as UserIcon
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { formatearMoneda, formatearFechaCorta, cn } from '@/lib/utils';
 import Link from 'next/link';
-import { updateEvento, addInvitado } from '@/lib/actions/eventActions';
-import { registrarAbono } from '@/lib/actions/paymentActions';
 import { useRouter } from 'next/navigation';
+import { updateEvento, addInvitado, updateInvitadoRSVP } from '@/lib/actions/eventActions';
+
+// Componente para los iconos de persona con diseño premium
+const PersonIcon = ({ tipo, className = "w-8 h-8" }: { tipo: string, className?: string }) => {
+  if (tipo === 'HOMBRE') {
+    return (
+      <div className={cn("relative flex items-center justify-center", className)}>
+        <UserIcon className="w-full h-full" />
+        <div className="absolute top-[60%] left-1/2 -translate-x-1/2 w-[20%] h-[30%] bg-[#D4AF37] rounded-full" /> {/* Corbata simbólica */}
+      </div>
+    );
+  }
+  if (tipo === 'MUJER') {
+    return (
+      <div className={cn("relative flex items-center justify-center", className)}>
+        <UserIcon className="w-full h-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90%] h-[40%] border-t-4 border-pink-400 rounded-full" /> {/* Pelo simbólico */}
+      </div>
+    );
+  }
+  if (tipo === 'NINO') {
+    return <Baby className={cn("text-blue-400", className)} />;
+  }
+  if (tipo === 'NINA') {
+    return (
+      <div className={cn("relative flex items-center justify-center", className)}>
+        <Baby className="w-full h-full text-pink-400" />
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-pink-500 rounded-full border border-white" /> {/* Moño simbólico */}
+      </div>
+    );
+  }
+  return <UserIcon className={className} />;
+};
 
 interface EventoDetailClientProps {
   evento: any;
@@ -58,7 +84,8 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
     email: '',
     telefono: '',
     lado: '',
-    categoria: 'AMIGOS'
+    categoria: 'AMIGOS',
+    tipoPersona: 'HOMBRE'
   });
 
   // UI Pagos
@@ -155,12 +182,26 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
 
     if (res.success) {
       setIsAddGuestModalOpen(false);
-      setNewGuest({ nombre: '', email: '', telefono: '', lado: '', categoria: 'AMIGOS' });
+      setNewGuest({ nombre: '', email: '', telefono: '', lado: '', categoria: 'AMIGOS', tipoPersona: 'HOMBRE' });
       router.refresh();
     } else {
       alert(res.error);
     }
     setSaving(false);
+  };
+
+  const handleUpdateRSVP = async (invitadoId: string, estado: any) => {
+    setSaving(true);
+    const res = await updateInvitadoRSVP(invitadoId, estado);
+    if (!res.success) alert(res.error);
+    else router.refresh();
+    setSaving(false);
+  };
+
+  const handleSendWhatsApp = (invitado: any) => {
+    if (!invitado.telefono) return alert('El invitado no tiene teléfono registrado');
+    const msg = encodeURIComponent(`¡Hola ${invitado.nombre}! Te invitamos a nuestro evento: ${evento.nombre}. Por favor confirma tu asistencia aquí: ${window.location.origin}/rsvp?id=${invitado.id}`);
+    window.open(`https://wa.me/${invitado.telefono}?text=${msg}`, '_blank');
   };
 
   return (
@@ -583,17 +624,32 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                <table className="tabla">
                   <thead>
                     <tr>
-                      <th>Nombre</th>
+                      <th>Invitado</th>
                       <th>Información</th>
                       {evento.tipo === 'Boda' && <th>Lado</th>}
                       <th>Categoría</th>
-                      <th>Estado RSVP</th>
+                      <th>Confirmación</th>
+                      <th className="text-right">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {invitados.map((i: any) => (
-                      <tr key={i.id}>
-                        <td className="font-bold text-sm uppercase tracking-tight">{i.nombre}</td>
+                      <tr key={i.id} className="group/row">
+                        <td className="py-4">
+                           <div className="flex items-center gap-3">
+                              <div className={cn(
+                                "w-10 h-10 rounded-full flex items-center justify-center bg-white/5 border border-white/10 text-[var(--color-primario-claro)]",
+                                i.tipoPersona === 'MUJER' && "border-pink-500/30 text-pink-400",
+                                i.tipoPersona === 'NINO' && "border-blue-500/30 text-blue-400",
+                                i.tipoPersona === 'NINA' && "border-pink-500/30 text-pink-400"
+                              )}>
+                                <PersonIcon tipo={i.tipoPersona} className="w-6 h-6" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-sm uppercase tracking-tight">{i.nombre}</p>
+                                <span className="text-[9px] font-black text-[var(--color-texto-muted)] uppercase tracking-widest">{i.tipoPersona || 'Asistente'}</span>
+                              </div>
+                           </div>
+                        </td>
                         <td>
                            <div className="text-[10px] text-[var(--color-texto-suave)] font-bold italic">{i.email || 'Sin email'}</div>
                            <div className="text-[10px] text-[var(--color-texto-muted)]">{i.telefono || ''}</div>
@@ -624,16 +680,39 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                            </span>
                         </td>
                         <td>
-                          <span className={cn(
-                            "badge text-[9px] uppercase tracking-tighter", 
-                            i.rsvpEstado === 'CONFIRMADO' ? "badge-liquidado" : 
-                            i.rsvpEstado === 'PENDIENTE' ? "badge-apartado" : "badge-cancelado"
-                          )}>
-                            {i.rsvpEstado}
-                          </span>
+                          <div className="flex items-center gap-2">
+                             <button 
+                               onClick={() => handleUpdateRSVP(i.id, 'CONFIRMADO')}
+                               className={cn(
+                                 "p-2 rounded-lg transition-all",
+                                 i.rsvpEstado === 'CONFIRMADO' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-white/5 text-[var(--color-texto-muted)] hover:bg-emerald-500/20 hover:text-emerald-400"
+                               )}
+                               title="Confirmar"
+                             >
+                                <Check size={16} />
+                             </button>
+                             <button 
+                               onClick={() => handleUpdateRSVP(i.id, 'RECHAZADO')}
+                               className={cn(
+                                 "p-2 rounded-lg transition-all",
+                                 i.rsvpEstado === 'RECHAZADO' ? "bg-red-500 text-white shadow-lg shadow-red-500/20" : "bg-white/5 text-[var(--color-texto-muted)] hover:bg-red-500/20 hover:text-red-400"
+                               )}
+                               title="Rechazar"
+                             >
+                                <X size={16} />
+                             </button>
+                          </div>
+                        </td>
+                        <td className="text-right">
+                           <button 
+                             onClick={() => handleSendWhatsApp(i)}
+                             className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all opacity-0 group-hover/row:opacity-100"
+                             title="Enviar invitación por WhatsApp"
+                           >
+                             <MessageCircle size={18} />
+                           </button>
                         </td>
                       </tr>
-                    ))}
                   </tbody>
                </table>
             </div>
@@ -723,6 +802,32 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Teléfono (WhatsApp)</label>
                   <input type="text" value={newGuest.telefono} onChange={(e) => setNewGuest({...newGuest, telefono: e.target.value})} className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" placeholder="+52 ..." />
+                </div>
+
+                <div className="space-y-1 md:col-span-2">
+                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Icono del Invitado</label>
+                   <div className="grid grid-cols-4 gap-4 pt-2">
+                      {[
+                        { id: 'HOMBRE', label: 'Hombre' },
+                        { id: 'MUJER', label: 'Mujer' },
+                        { id: 'NINO', label: 'Niño' },
+                        { id: 'NINA', label: 'Niña' }
+                      ].map(tipo => (
+                        <button
+                          key={tipo.id}
+                          onClick={() => setNewGuest({ ...newGuest, tipoPersona: tipo.id })}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all",
+                            newGuest.tipoPersona === tipo.id 
+                              ? "border-[var(--color-primario)] bg-[var(--color-primario)]/10 text-white" 
+                              : "border-white/5 bg-white/5 text-[var(--color-texto-muted)] hover:border-white/10 hover:bg-white/10"
+                          )}
+                        >
+                          <PersonIcon tipo={tipo.id} className="w-8 h-8" />
+                          <span className="text-[9px] font-black uppercase tracking-widest">{tipo.label}</span>
+                        </button>
+                      ))}
+                   </div>
                 </div>
 
                 <div className="space-y-1">
