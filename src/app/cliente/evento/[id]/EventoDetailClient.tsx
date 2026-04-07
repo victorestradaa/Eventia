@@ -68,12 +68,17 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   const invitadosRechazados = invitados.filter((i: any) => i.rsvpEstado === 'RECHAZADO').length;
 
   // Combinar líneas de presupuesto con reservas que no tienen línea aún (Fix sincronización)
-  const lineasConReservas = [...lineasPresupuesto];
+  const lineasConReservas = [...lineasPresupuesto].map((l:any) => {
+    const res = reservas.find((r:any) => r.servicioId === l.servicioId);
+    return { ...l, reservaId: res?.id };
+  });
+  
   reservas.forEach((res: any) => {
     const existeLinea = lineasPresupuesto.some((l: any) => l.servicioId === res.servicioId);
-    if (!existeLinea && res.estatus !== 'CANCELADO') {
+    if (!existeLinea && res.estado !== 'CANCELADO') {
       lineasConReservas.push({
         id: `res-${res.id}`,
+        reservaId: res.id,
         descripcion: res.servicio?.nombre || 'Servicio Apartado',
         montoTotal: res.montoTotal || 0,
         montoPagado: res.montoPagado || 0,
@@ -81,7 +86,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
         servicio: res.servicio,
         proveedor: res.proveedor,
         isReserva: true,
-        pagos: []
+        pagos: res.transacciones || []
       });
     }
   });
@@ -264,8 +269,10 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                         <tr key={l.id}>
                           <td className="font-bold">
                             {l.descripcion}
-                            {l.servicio?.proveedor && (
-                              <span className="block text-[10px] font-normal text-[var(--color-texto-muted)]">{l.servicio.proveedor.nombre}</span>
+                            {(l.servicio?.proveedor || l.proveedor) && (
+                              <span className="block text-[10px] font-normal text-[var(--color-texto-muted)]">
+                                {(l.servicio?.proveedor?.nombre || l.proveedor?.nombre)}
+                              </span>
                             )}
                           </td>
                           <td>{formatearMoneda(l.montoTotal)}</td>
@@ -353,27 +360,34 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
 
                      <div key={l.id} className="card hover:bg-white/[0.02] transition-all border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6 group overflow-hidden">
                         <div className="flex items-center gap-4">
-                           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--color-primario)]/20 to-transparent flex items-center justify-center text-[var(--color-primario-claro)] shadow-lg">
+                           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--color-primario)]/20 to-transparent flex items-center justify-center text-[var(--color-primario-claro)] shadow-lg transition-transform group-hover:scale-110">
                               <Wallet size={24} />
                            </div>
                            <div>
-                              <h4 className="font-bold text-lg">{l.descripcion}</h4>
-                              <p className="text-xs text-[var(--color-texto-muted)]">Contratado con {l.servicio?.proveedor?.nombre || 'Proveedor'}</p>
-                           </div>
+                               <h4 className="font-bold text-lg leading-tight uppercase italic tracking-tighter text-[var(--color-texto-fuerte)]">
+                                 {l.servicio?.proveedor?.nombre || l.proveedor?.nombre} 
+                                 {(l.servicio?.proveedor?.categoria || l.proveedor?.categoria) && (
+                                   <span className="ml-2 text-[9px] font-normal text-[var(--color-texto-muted)] uppercase tracking-[0.2em] not-italic">
+                                     ({l.servicio?.proveedor?.categoria || l.proveedor?.categoria})
+                                   </span>
+                                 )}
+                               </h4>
+                               <p className="text-xs text-[var(--color-texto-muted)] font-bold tracking-tight">{l.descripcion}</p>
+                            </div>
                         </div>
 
                         <div className="flex flex-col md:flex-row items-end md:items-center gap-6">
-                           <div className="text-right">
-                              <p className="text-[9px] font-black uppercase text-[var(--color-texto-muted)] mb-0.5 pr-1">Saldo Pendiente</p>
-                              <p className="text-xl font-black text-amber-500">{formatearMoneda(Number(l.montoTotal) - Number(l.montoPagado))}</p>
-                           </div>
-                           <button 
-                             onClick={() => setShowPagoModal(l)}
-                             className="btn btn-primario py-3 px-8 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-violet-500/20 active:scale-95 transition-all w-full md:w-auto"
-                           >
-                              Abonar ahora
-                           </button>
-                        </div>
+                            <div className="text-right">
+                               <p className="text-[9px] font-black uppercase text-[var(--color-texto-muted)] mb-0.5 pr-1 tracking-widest leading-none">Saldo Pendiente</p>
+                               <p className="text-xl font-black text-amber-500 tracking-tighter">{formatearMoneda(Number(l.montoTotal) - Number(l.montoPagado))}</p>
+                            </div>
+                            <button 
+                              onClick={() => setShowPagoModal(l)}
+                              className="btn btn-primario py-3 px-8 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-500/20 active:scale-95 transition-all w-full md:w-auto italic"
+                            >
+                               Abonar ahora
+                            </button>
+                         </div>
                      </div>
                    ))}
                    {lineasConReservas.filter((l:any) => Number(l.montoTotal) - Number(l.montoPagado) > 0).length === 0 && (
@@ -401,18 +415,29 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 font-medium">
-                          {lineasConReservas.flatMap((l:any) => (l.pagos || []).map((p:any) => ({...p, targetDesc: l.descripcion}))).sort((a:any, b:any) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map((p:any, idx:number) => (
-
-                            <tr key={p.id || idx} className="hover:bg-white/[0.01] transition-colors group">
-                              <td className="px-6 py-5">
-                                 <span className="font-bold group-hover:text-[var(--color-primario-claro)] transition-colors">{p.targetDesc}</span>
-                                 {p.nota && <p className="text-[10px] text-[var(--color-texto-muted)] italic font-normal">{p.nota}</p>}
-                              </td>
-                              <td className="px-6 py-5 text-emerald-400 font-black text-lg">{formatearMoneda(p.monto)}</td>
-                              <td className="px-6 py-5 text-sm text-[var(--color-texto-suave)] font-bold">{new Date(p.fecha).toLocaleDateString()}</td>
-                              <td className="px-6 py-5 text-center">
-                                 <span className="badge badge-liquidado text-[9px] font-black shadow-sm tracking-widest">PAGADO</span>
-                              </td>
+                          {lineasConReservas.flatMap((l:any) => (l.pagos || []).map((p:any) => ({...p, targetDesc: l.descripcion}))).sort((a:any, b:any) => new Date(b.fechaPago || b.fechaVencimiento || b.fecha).getTime() - new Date(a.fechaPago || a.fechaVencimiento || a.fecha).getTime()).map((p:any, idx:number) => (
+                            <tr key={p.id || idx} className={cn("hover:bg-white/[0.01] transition-colors group", p.estado === 'PENDIENTE' && "bg-amber-500/[0.02]")}>
+                               <td className="px-6 py-5">
+                                  <span className="font-bold group-hover:text-[var(--color-primario-claro)] transition-colors">
+                                    {(p.tipo || 'ABONO').toUpperCase()} - {p.targetDesc}
+                                  </span>
+                                  {p.nota && <p className="text-[10px] text-[var(--color-texto-muted)] italic font-normal tracking-tight">{p.nota}</p>}
+                               </td>
+                               <td className="px-6 py-5 text-emerald-400 font-black text-lg">
+                                 {formatearMoneda(p.monto)}
+                               </td>
+                               <td className="px-6 py-5 text-sm text-[var(--color-texto-suave)] font-bold">
+                                 {new Date(p.fechaPago || p.fechaVencimiento || p.fecha).toLocaleDateString()}
+                                 {p.estado === 'PENDIENTE' && <span className="block text-[9px] text-amber-500 italic mt-0.5 font-black uppercase">¡Vence Pronto!</span>}
+                               </td>
+                               <td className="px-6 py-5 text-center">
+                                  <span className={cn(
+                                    "badge text-[9px] font-black shadow-sm tracking-widest",
+                                    p.estado === 'PENDIENTE' ? "badge-apartado" : "badge-liquidado"
+                                  )}>
+                                    {(p.estado || 'PAGADO').toUpperCase()}
+                                  </span>
+                               </td>
                             </tr>
                           ))}
                         </tbody>
@@ -728,10 +753,8 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                      if (!montoAbono || isNaN(Number(montoAbono))) return;
                      setProcesandoPago(true);
                      
-                     const resLinked = reservas.find((r:any) => r.servicioId === showPagoModal.servicioId);
-                     
                      const res = await registrarAbono({
-                       reservaId: resLinked?.id || '',
+                       reservaId: showPagoModal.reservaId || '',
                        monto: Number(montoAbono),
                        metodoPago: 'TARJETA (TEST)',
                        tipo: 'ABONO',
