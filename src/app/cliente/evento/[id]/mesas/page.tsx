@@ -27,6 +27,8 @@ interface Invitado {
   nombre: string;
   lado?: string | null;
   categoria?: string | null;
+  x?: number; // Posición libre en el suelo
+  y?: number;
 }
 
 interface Mesa {
@@ -37,7 +39,7 @@ interface Mesa {
   x: number;
   y: number;
   escala: number;
-  invitados: Invitado[];
+  invitados: (Invitado | null)[];
 }
 
 export default function SeatingPage() {
@@ -93,60 +95,86 @@ export default function SeatingPage() {
     setDraggedMesa(null);
   };
 
-  const asignarInvitadoAMesa = (invitado: Invitado, mesaId: string, seatIndex?: number) => {
-    setMesas(mesas.map(m => {
-      if (m.id === mesaId) {
-        if (m.invitados.length >= m.capacidad && seatIndex === undefined) return m;
+  const findAndRemoveInvitado = (id: string) => {
+    let guest: Invitado | null = null;
+    
+    // 1. Buscar en la lista de invitados sin mesa o en el suelo
+    const foundInPool = invitadosSinMesa.find(i => i.id === id);
+    if (foundInPool) {
+      guest = { ...foundInPool };
+      setInvitadosSinMesa(prev => prev.filter(i => i.id !== id));
+      return guest;
+    }
 
+    // 2. Buscar en las mesas
+    // 2. Buscar en las mesas
+    for (const m of mesas) {
+      const seatIdx = m.invitados.findIndex(i => i?.id === id);
+      if (seatIdx !== -1) {
+        const found = m.invitados[seatIdx];
+        if (found) {
+          guest = { ...found };
+          setMesas(prev => prev.map(mm => mm.id === m.id 
+            ? { ...mm, invitados: mm.invitados.map((inv, idx) => idx === seatIdx ? null : inv) } 
+            : mm
+          ));
+          return guest;
+        }
+      }
+    }
+    return null;
+  };
+
+  const asignarInvitadoAMesa = (invitadoId: string, mesaId: string, seatIndex?: number) => {
+    const invitado = findAndRemoveInvitado(invitadoId);
+    if (!invitado) return;
+
+    // Limpiar posición si viene del suelo
+    const { x, y, ...resto } = invitado;
+    const invitadoLimpio = resto as Invitado;
+
+    setMesas(prevMesas => prevMesas.map(m => {
+      if (m.id === mesaId) {
         let nuevosInvitados = [...m.invitados];
+        
         if (seatIndex !== undefined) {
           // Si el asiento ya está ocupado, devolvemos el ocupante a la lista
-          if (nuevosInvitados[seatIndex]) {
-            setInvitadosSinMesa(prev => [...prev, nuevosInvitados[seatIndex]]);
+          const ocupanteActual = nuevosInvitados[seatIndex];
+          if (ocupanteActual) {
+            setInvitadosSinMesa(prev => [...prev, ocupanteActual]);
           }
-          nuevosInvitados[seatIndex] = invitado;
+          nuevosInvitados[seatIndex] = invitadoLimpio as Invitado;
         } else {
-          // Buscar primer hueco libre o añadir al final si no hay huecos
+          // Buscar primer hueco libre o añadir
           let assigned = false;
           for (let i = 0; i < m.capacidad; i++) {
             if (!nuevosInvitados[i]) {
-              nuevosInvitados[i] = invitado;
+              nuevosInvitados[i] = invitadoLimpio as Invitado;
               assigned = true;
               break;
             }
           }
-          if (!assigned) nuevosInvitados.push(invitado);
+          if (!assigned) nuevosInvitados.push(invitadoLimpio as Invitado);
         }
 
-        return {
-          ...m,
-          invitados: nuevosInvitados
-        };
+        return { ...m, invitados: nuevosInvitados };
       }
       return m;
     }));
-
-    setInvitadosSinMesa(prev => prev.filter(i => i.id !== invitado.id));
   };
 
   const removerInvitadoDeMesa = (mesaId: string, invitadoId: string) => {
-    const mesa = mesas.find(m => m.id === mesaId);
-    if (!mesa) return;
+    const invitado = findAndRemoveInvitado(invitadoId);
+    if (invitado) {
+      setInvitadosSinMesa(prev => [...prev, invitado]);
+    }
+  };
 
-    const invitado = mesa.invitados.find(i => i.id === invitadoId);
+  const asignarInvitadoAlSuelo = (invitadoId: string, x: number, y: number) => {
+    const invitado = findAndRemoveInvitado(invitadoId);
     if (!invitado) return;
 
-    setMesas(mesas.map(m => {
-      if (m.id === mesaId) {
-        return {
-          ...m,
-          invitados: m.invitados.filter(i => i.id !== invitadoId)
-        };
-      }
-      return m;
-    }));
-
-    setInvitadosSinMesa([...invitadosSinMesa, invitado]);
+    setInvitadosSinMesa(prev => [...prev, { ...invitado, x, y }]);
   };
 
   const agregarMesa = (tipo: 'circular' | 'cuadrada') => {
@@ -166,7 +194,7 @@ export default function SeatingPage() {
   const eliminarMesa = (id: string) => {
     const mesa = mesas.find(m => m.id === id);
     if (mesa && mesa.invitados.length > 0) {
-      setInvitadosSinMesa([...invitadosSinMesa, ...mesa.invitados]);
+      setInvitadosSinMesa([...invitadosSinMesa, ...(mesa.invitados.filter(Boolean) as Invitado[])]);
     }
     setMesas(mesas.filter(m => m.id !== id));
     if (selectedMesaId === id) setSelectedMesaId(null);
@@ -339,7 +367,7 @@ export default function SeatingPage() {
                   <div className="space-y-3 pt-4 border-t border-slate-100">
                     <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sentados en esta mesa</h3>
                     <div className="flex flex-wrap gap-2">
-                      {mesaSeleccionada.invitados.map(i => (
+                      {(mesaSeleccionada.invitados.filter(Boolean) as Invitado[]).map(i => (
                         <div key={i.id} className="group relative">
                           <div title={i.nombre} className="w-8 h-8 rounded-full bg-white border border-[#D4AF37] shadow-sm flex items-center justify-center font-bold text-[10px] text-[#D4AF37] ring-2 ring-offset-1 ring-[#F5E6BE]">
                             {i.nombre[0]}
@@ -352,7 +380,7 @@ export default function SeatingPage() {
                           </button>
                         </div>
                       ))}
-                      {mesaSeleccionada.invitados.length === 0 && <p className="text-[10px] italic text-slate-400">Ningún invitado sentando aún.</p>}
+                      {mesaSeleccionada.invitados.filter(Boolean).length === 0 && <p className="text-[10px] italic text-slate-400">Ningún invitado sentando aún.</p>}
                     </div>
                   </div>
 
@@ -383,8 +411,50 @@ export default function SeatingPage() {
              onMouseMove={handleMouseMove}
              onMouseUp={handleMouseUp}
              onMouseLeave={handleMouseUp}
+             onDragOver={(e) => e.preventDefault()}
+             onDrop={(e) => {
+               const invId = e.dataTransfer.getData('invitadoId');
+               if (invId) {
+                 const rect = e.currentTarget.getBoundingClientRect();
+                 const x = e.clientX - rect.left;
+                 const y = e.clientY - rect.top;
+                 asignarInvitadoAlSuelo(invId, x, y);
+               }
+             }}
              onClick={() => setSelectedMesaId(null)}
            >
+              {/* Invitados en el suelo */}
+              {invitadosSinMesa.filter(i => i.x !== undefined).map(i => (
+                <div 
+                  key={i.id}
+                  draggable="true"
+                  onDragStart={(e) => e.dataTransfer.setData('invitadoId', i.id)}
+                  style={{ left: i.x, top: i.y }}
+                  className="absolute z-20 transition-all flex flex-col items-center gap-1 group"
+                >
+                   <div className={cn(
+                      "w-10 h-10 rounded-full border-2 shadow-xl flex items-center justify-center font-bold text-xs ring-4 ring-white animate-in zoom-in-50",
+                      i.lado === 'NOVIA' ? "bg-pink-100 border-pink-200 text-pink-600" : 
+                      i.lado === 'NOVIO' ? "bg-blue-100 border-blue-200 text-blue-600" : 
+                      "bg-[#F5E6BE] border-[#D4AF37] text-[#D4AF37]"
+                    )}>
+                      {i.nombre[0]}
+                    </div>
+                    <span className="text-[8px] font-black text-slate-600 uppercase tracking-tighter bg-white/80 px-1 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                      {i.nombre}
+                    </span>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInvitadosSinMesa(prev => prev.map(inv => inv.id === i.id ? { ...inv, x: undefined, y: undefined } : inv));
+                      }}
+                      className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-all shadow-md"
+                    >
+                      <X size={8} />
+                    </button>
+                </div>
+              ))}
+
               {mesas.map((m) => (
                 <div
                   key={m.id}
@@ -405,8 +475,7 @@ export default function SeatingPage() {
                         onDrop={(e) => {
                           e.stopPropagation();
                           const invId = e.dataTransfer.getData('invitadoId');
-                          const invitado = invitadosSinMesa.find(i => i.id === invId);
-                          if (invitado) asignarInvitadoAMesa(invitado, m.id);
+                          if (invId) asignarInvitadoAMesa(invId, m.id);
                         }}
                         className={cn(
                         "w-32 h-32 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.05)] border-2 flex flex-col items-center justify-center transition-all",
@@ -414,7 +483,7 @@ export default function SeatingPage() {
                         selectedMesaId === m.id ? "border-[#D4AF37] ring-4 ring-[#F5E6BE]/50" : "border-[#F5E6BE] group-hover:border-[#D4AF37]/50"
                       )}>
                          <span className="text-[10px] font-black text-[#D4AF37]/80 uppercase tracking-widest">{m.nombre}</span>
-                         <span className="text-[8px] font-bold text-slate-300 mt-1">{m.invitados.length} / {m.capacidad}</span>
+                         <span className="text-[8px] font-bold text-slate-300 mt-1">{m.invitados.filter(Boolean).length} / {m.capacidad}</span>
                       </div>
 
                       {/* Chairs (Representadas como Invitados Reales) */}
@@ -437,12 +506,15 @@ export default function SeatingPage() {
                           >
                              {/* Chair / Avatar */}
                               <div 
+                                draggable={!!inv}
+                                onDragStart={(e) => {
+                                  if (inv) e.dataTransfer.setData('invitadoId', inv.id);
+                                }}
                                 onDragOver={(e) => e.preventDefault()}
                                 onDrop={(e) => {
                                   e.stopPropagation();
                                   const invId = e.dataTransfer.getData('invitadoId');
-                                  const invitado = invitadosSinMesa.find(i => i.id === invId);
-                                  if (invitado) asignarInvitadoAMesa(invitado, m.id, index);
+                                  if (invId) asignarInvitadoAMesa(invId, m.id, index);
                                 }}
                                 className={cn(
                                  "w-9 h-9 rounded-full border-2 transition-all flex items-center justify-center font-bold text-[10px] shadow-sm",
