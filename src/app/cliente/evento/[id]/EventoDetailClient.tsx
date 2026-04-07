@@ -70,19 +70,34 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   // Combinar líneas de presupuesto con reservas que no tienen línea aún (Fix sincronización)
   const lineasConReservas = [...lineasPresupuesto].map((l:any) => {
     const res = reservas.find((r:any) => r.servicioId === l.servicioId);
-    return { ...l, reservaId: res?.id };
+    // Calculamos el monto pagado sumando las transacciones reales de esta reserva
+    const totalPagadoReal = res?.transacciones
+      ?.filter((t:any) => t.estado === 'PAGADO')
+      .reduce((acc:number, t:any) => acc + Number(t.monto), 0) || 0;
+
+    return { 
+      ...l, 
+      reservaId: res?.id,
+      // Si hay reserva, usamos su total real de transacciones. Si no hay (y es línea manual), usamos l.montoPagado
+      montoPagado: res ? totalPagadoReal : (l.montoPagado || 0),
+      pagos: res?.transacciones || l.pagos || []
+    };
   });
   
   reservas.forEach((res: any) => {
     const existeLinea = lineasPresupuesto.some((l: any) => l.servicioId === res.servicioId);
     if (!existeLinea && res.estado !== 'CANCELADO') {
+      const totalPagadoReal = res.transacciones
+        ?.filter((t:any) => t.estado === 'PAGADO')
+        .reduce((acc:number, t:any) => acc + Number(t.monto), 0) || 0;
+
       lineasConReservas.push({
         id: `res-${res.id}`,
         reservaId: res.id,
         descripcion: res.servicio?.nombre || 'Servicio Apartado',
         montoTotal: res.montoTotal || 0,
-        montoPagado: res.montoPagado || 0,
-        montoSaldado: res.montoPagado || 0,
+        montoPagado: totalPagadoReal,
+        montoSaldado: totalPagadoReal,
         servicio: res.servicio,
         proveedor: res.proveedor,
         isReserva: true,

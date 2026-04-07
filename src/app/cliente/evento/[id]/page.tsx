@@ -30,6 +30,7 @@ export default async function EventDetailPage({ params }: Props) {
         include: {
           servicio: true,
           proveedor: true,
+          transacciones: true,
         },
         orderBy: { creadoEn: 'desc' },
       },

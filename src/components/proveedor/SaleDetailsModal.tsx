@@ -83,25 +83,39 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
   };
   const handleAddAbono = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    if (!abono.monto || Number(abono.monto) <= 0) return alert('Ingresa un monto válido');
     
-    const res = await registrarAbono({
-      reservaId: venta.id,
-      monto: Number(abono.monto),
-      tipo: abono.tipo as any,
-      metodoPago: abono.metodoPago,
-      notas: abono.notas,
-      esCliente: false
-    });
+    setIsSubmitting(true);
+    try {
+      const res = await registrarAbono({
+        reservaId: venta.id,
+        monto: Number(abono.monto),
+        tipo: abono.tipo as any,
+        metodoPago: abono.metodoPago,
+        notas: abono.notas,
+        esCliente: false
+      });
 
-    if (res.success) {
-      alert('Abono registrado y sincronizado con el presupuesto del cliente.');
-      setShowAbonoForm(false);
-      onClose();
-    } else {
-      alert(res.error);
+      if (res.success && res.data) {
+        alert('Abono registrado y sincronizado con el presupuesto del cliente.');
+        setShowAbonoForm(false);
+        // Actualizar el estado local antes de cerrar para que se vea el cambio
+        const nuevaTx = res.data.transaccion;
+        onUpdate({ 
+          ...venta, 
+          estado: res.data.reserva.estado,
+          transacciones: [...(venta.transacciones || []), nuevaTx] 
+        });
+        onClose();
+      } else {
+        alert(res.error || 'No se pudo registrar el abono');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error de conexión al registrar el abono.');
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   const handleReschedule = async (e: React.FormEvent) => {
