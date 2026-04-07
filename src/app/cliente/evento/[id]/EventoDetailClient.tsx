@@ -11,7 +11,8 @@ import {
   Check,
   MessageCircle,
   Baby,
-  User as UserIcon
+  User as UserIcon,
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { formatearMoneda, formatearFechaCorta, cn } from '@/lib/utils';

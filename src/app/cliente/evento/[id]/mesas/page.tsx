@@ -508,7 +508,7 @@ export default function SeatingPage() {
                       {invitadosSinMesa.map(i => (
                         <button 
                           key={i.id}
-                          onClick={() => asignarInvitadoAMesa(i, (mesaSeleccionada as Mesa).id)}
+                          onClick={() => asignarInvitadoAMesa(i.id, (mesaSeleccionada as Mesa).id)}
                           className="w-full group flex items-center justify-between p-2 rounded-xl border border-slate-100 hover:border-[#D4AF37] hover:bg-[#F5E6BE]/20 transition-all text-left"
                         >
                           <div className="flex items-center gap-2">
@@ -617,7 +617,7 @@ export default function SeatingPage() {
                   draggable="true"
                   onDragStart={(e) => e.dataTransfer.setData('invitadoId', i.id)}
                   style={{ left: i.x, top: i.y }}
-                  className="absolute z-20 transition-all flex flex-col items-center gap-1 group"
+                  className="absolute z-20 transition-all flex flex-col items-center gap-1 group cursor-grab active:cursor-grabbing hover:scale-110"
                 >
                     <div className={cn(
                        "w-10 h-10 rounded-full border-2 shadow-xl flex items-center justify-center font-bold text-xs ring-4 ring-white animate-in zoom-in-50 bg-white",
@@ -655,15 +655,17 @@ export default function SeatingPage() {
                   )}
                 >
                    {/* DISEÑO DE MESA REDISEÑADO (TIPO SKETCH / PREMIUM) */}
-                   <div className="relative group">
+                   <div 
+                     className="relative group"
+                     onDragOver={(e) => e.preventDefault()}
+                     onDrop={(e) => {
+                       e.stopPropagation();
+                       const invId = e.dataTransfer.getData('invitadoId');
+                       if (invId) asignarInvitadoAMesa(invId, m.id);
+                     }}
+                   >
                       {/* Mesa Central */}
                       <div 
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={(e) => {
-                          e.stopPropagation();
-                          const invId = e.dataTransfer.getData('invitadoId');
-                          if (invId) asignarInvitadoAMesa(invId, m.id);
-                        }}
                         className={cn(
                         "w-32 h-32 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.05)] border-2 flex flex-col items-center justify-center transition-all",
                         m.tipo === 'circular' ? "rounded-full" : "rounded-2xl",
