@@ -59,7 +59,7 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
     const vencidos = pendientes.filter((t: any) => t.fechaVencimiento && new Date(t.fechaVencimiento) < hoy);
     if (vencidos.length > 0) {
       const montoVencido = vencidos.reduce((acc: number, t: any) => acc + Number(t.monto), 0);
-      return <span className="text-red-500 font-bold uppercase text-[10px]">VENCIDO {formatearMoneda(montoVencido)}</span>;
+      return <span className="text-red-600 font-bold uppercase text-[10px] bg-red-50 px-2 py-0.5 rounded border border-red-200 shadow-sm">VENCIDO {formatearMoneda(montoVencido)}</span>;
     }
 
     const proximos = pendientes
@@ -73,12 +73,12 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       const montoProximo = formatearMoneda(Number(proximaTransaccion.monto));
       
-      if (diffDays === 0) return <span className="text-red-500 font-bold uppercase text-[10px] animate-pulse">VENCE HOY {montoProximo}</span>;
-      if (diffDays === 1) return <span className="text-red-500 font-bold uppercase text-[10px]">{montoProximo} VENCE MAÑANA</span>;
-      return <span className="text-red-500 font-bold uppercase text-[10px]">{montoProximo} VENCE EN {diffDays} DIAS</span>;
+      if (diffDays === 0) return <span className="text-red-500 font-bold uppercase text-[10px] animate-pulse bg-red-50 px-2 py-0.5 rounded border border-red-200">VENCE HOY {montoProximo}</span>;
+      if (diffDays === 1) return <span className="text-red-500 font-bold uppercase text-[10px] bg-red-50/50 px-2 py-0.5 rounded border border-red-100">{montoProximo} VENCE MAÑANA</span>;
+      return <span className="text-red-500 font-bold uppercase text-[10px] bg-red-50/30 px-2 py-0.5 rounded border border-red-100">{montoProximo} VENCE EN {diffDays} DIAS</span>;
     }
 
-    return 'Pendiente s/f';
+    return <span className="text-green-600 uppercase font-black tracking-widest text-[10px] bg-green-50 px-2 py-0.5 rounded border border-green-200">AL CORRIENTE</span>;
   };
 
   return (
@@ -213,9 +213,9 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-[9px] uppercase font-black tracking-widest text-[var(--color-texto-muted)] mb-1">Estatus Pago</p>
-                    <p className={`text-xs font-bold ${getVencimientoText(venta).includes('VENCE') || getVencimientoText(venta).includes('VENCIDO') ? 'text-red-500' : 'text-green-500'}`}>
+                    <div className="text-xs font-bold mt-1">
                       {getVencimientoText(venta)}
-                    </p>
+                    </div>
                   </div>
                   <div className="text-right">
                     <p className="text-[9px] uppercase font-black tracking-widest text-[var(--color-texto-muted)] mb-1">Total</p>
@@ -305,9 +305,9 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <p className={`text-xs font-black ${getVencimientoText(venta).includes('VENCE') || getVencimientoText(venta).includes('VENCIDO') ? 'text-red-500' : 'text-green-600'}`}>
+                        <div className="text-xs font-black">
                           {getVencimientoText(venta)}
-                        </p>
+                        </div>
                         {saldoVencido > 0 && <span className="text-[10px] text-red-400 block">{formatearMoneda(saldoVencido)} vencido</span>}
                       </td>
                       <td className="px-6 py-4 text-center">
