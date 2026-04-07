@@ -59,7 +59,7 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
     const vencidos = pendientes.filter((t: any) => t.fechaVencimiento && new Date(t.fechaVencimiento) < hoy);
     if (vencidos.length > 0) {
       const montoVencido = vencidos.reduce((acc: number, t: any) => acc + Number(t.monto), 0);
-      return `VENCIDO ${formatearMoneda(montoVencido)}`;
+      return <span className="text-red-500 font-bold uppercase text-[10px]">VENCIDO {formatearMoneda(montoVencido)}</span>;
     }
 
     const proximos = pendientes
@@ -67,13 +67,15 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
       .sort((a: any, b: any) => new Date(a.fechaVencimiento).getTime() - new Date(b.fechaVencimiento).getTime());
 
     if (proximos.length > 0) {
-      const proximaFecha = new Date(proximos[0].fechaVencimiento);
+      const proximaTransaccion = proximos[0];
+      const proximaFecha = new Date(proximaTransaccion.fechaVencimiento);
       const diffTime = proximaFecha.getTime() - hoy.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const montoProximo = formatearMoneda(Number(proximaTransaccion.monto));
       
-      if (diffDays === 0) return 'VENCE HOY';
-      if (diffDays === 1) return 'VENCE MAÑANA';
-      return `VENCE EN ${diffDays} DIAS`;
+      if (diffDays === 0) return <span className="text-red-500 font-bold uppercase text-[10px] animate-pulse">VENCE HOY {montoProximo}</span>;
+      if (diffDays === 1) return <span className="text-red-500 font-bold uppercase text-[10px]">{montoProximo} VENCE MAÑANA</span>;
+      return <span className="text-red-500 font-bold uppercase text-[10px]">{montoProximo} VENCE EN {diffDays} DIAS</span>;
     }
 
     return 'Pendiente s/f';

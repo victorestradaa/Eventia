@@ -119,3 +119,18 @@ export async function addInvitado(data: {
     return { success: false, error: 'No se pudo agregar al invitado.' };
   }
 }
+/**
+ * Obtiene los invitados de un evento específico.
+ */
+export async function getInvitadosByEvento(eventoId: string) {
+  try {
+    const invitados = await prisma.invitado.findMany({
+      where: { eventoId },
+      orderBy: { nombre: 'asc' }
+    });
+    return { success: true, data: invitados };
+  } catch (error) {
+    console.error('Error al obtener invitados:', error);
+    return { success: false, error: 'No se pudieron cargar los invitados.' };
+  }
+}

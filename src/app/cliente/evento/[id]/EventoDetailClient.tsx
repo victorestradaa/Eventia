@@ -652,7 +652,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
         <div className="flex flex-col items-center justify-center p-20 text-center space-y-6 card border-dashed border-2">
            <div className="p-6 rounded-full bg-violet-500/10 text-violet-400"><LayoutGrid size={48} /></div>
            <div><h2 className="text-2xl font-bold">Organizador de Mesas</h2><p className="text-[var(--color-texto-suave)] max-w-sm mx-auto mt-2">Utiliza nuestra herramienta visual para organizar a tus invitados y optimizar el espacio de tu evento.</p></div>
-           <Link href="/cliente/mesas"><button className="btn btn-primario px-10">Abrir Plano Interactivo</button></Link>
+           <Link href={`/cliente/evento/${evento.id}/mesas`}><button className="btn btn-primario px-10">Abrir Plano Interactivo</button></Link>
         </div>
       )}
 
