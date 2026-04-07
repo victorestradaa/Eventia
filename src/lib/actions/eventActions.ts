@@ -15,6 +15,17 @@ export async function getEventosCliente(clienteId: string) {
       include: {
         _count: {
           select: { invitados: true }
+        },
+        lineasPresupuesto: {
+          include: { pagos: true }
+        },
+        reservas: {
+          where: { estado: { not: 'CANCELADO' } },
+          include: {
+            servicio: true,
+            proveedor: true,
+            transacciones: true
+          }
         }
       }
     });

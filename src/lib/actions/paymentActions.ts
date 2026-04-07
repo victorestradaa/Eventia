@@ -13,12 +13,13 @@ export async function registrarAbono(data: {
   tipo: 'ANTICIPO' | 'ABONO' | 'PENALIZACION';
   estado?: 'PAGADO' | 'PENDIENTE'; // Nuevo: Soporte para compromisos de pago
   fechaVencimiento?: string;      // Nuevo: Fecha programada para el pagaré
+  transaccionId?: string;         // Nuevo: ID de la transacción en caso de estar liquidando un pagaré
   notas?: string;
   esCliente?: boolean;
 }) {
   try {
     const result = await prisma.$transaction(async (tx: any) => {
-      // 1. Obtener datos de la reserva para saber a qué evento pertenece
+      // 1. Obtener datos de la reserva
       const reserva = await tx.reserva.findUnique({
         where: { id: data.reservaId },
         include: {
@@ -32,31 +33,49 @@ export async function registrarAbono(data: {
       const nuevoEstadoTx = data.estado || 'PAGADO';
       const esPagado = nuevoEstadoTx === 'PAGADO';
 
-      // 2. Crear la transacción
-      const transaccion = await tx.transaccion.create({
-        data: {
-          reservaId: data.reservaId,
-          monto: data.monto,
-          tipo: data.tipo,
-          metodoPago: data.metodoPago,
-          estado: nuevoEstadoTx,
-          fechaPago: esPagado ? new Date() : null, // Solo tiene fecha de pago si ya se cobró
-          fechaVencimiento: data.fechaVencimiento ? new Date(data.fechaVencimiento) : null,
-          notas: data.notas || (data.esCliente ? 'Abono realizado por el cliente' : 'Abono registrado por el proveedor')
-        }
-      });
+      let transaccion;
 
-      // Si es PENDIENTE (un pagaré), no actualizamos los totales del presupuesto aún
-      if (!esPagado) {
+      // 2. Si transaccionId está presente, es una actualización (liquidando un pagaré)
+      if (data.transaccionId) {
+        transaccion = await tx.transaccion.update({
+          where: { id: data.transaccionId },
+          data: {
+            estado: 'PAGADO',
+            monto: data.monto, // Sincronizar monto en caso de que haya sido modificado en el modal
+            metodoPago: data.metodoPago,
+            fechaPago: new Date(),
+            notas: data.notas || (data.esCliente ? 'Pagaré liquidado por el cliente' : 'Pagaré liquidado por el proveedor')
+          }
+        });
+      } else {
+        // Modo normal: Crear nueva transacción
+        transaccion = await tx.transaccion.create({
+          data: {
+            reservaId: data.reservaId,
+            monto: data.monto,
+            tipo: data.tipo,
+            metodoPago: data.metodoPago,
+            estado: nuevoEstadoTx,
+            fechaPago: esPagado ? new Date() : null, // Solo tiene fecha de pago si ya se cobró
+            fechaVencimiento: data.fechaVencimiento ? new Date(data.fechaVencimiento) : null,
+            notas: data.notas || (data.esCliente ? 'Abono realizado por el cliente' : 'Abono registrado por el proveedor')
+          }
+        });
+      }
+
+      // Si la transacción sigue siendo PENDIENTE (un nuevo pagaré), no actualizamos totales
+      if (!esPagado && !data.transaccionId) {
          return { reserva, transaccion };
       }
 
-      // 3. Calcular nuevo total pagado de la reserva (solo sumando transacciones PAGADAS)
-      const totalPagado = reserva.transacciones
-        .filter((t: any) => t.estado === 'PAGADO')
-        .reduce((sum: number, t: any) => sum + Number(t.monto), 0) + Number(data.monto);
+      // 3. Calcular nuevo total pagado de la reserva (solo transacciones PAGADAS)
+      // Nota: Volvemos a consultar o recalculamos para asegurar consistencia
+      const todasLasTransacciones = await tx.transaccion.findMany({
+        where: { reservaId: data.reservaId, estado: 'PAGADO' }
+      });
+      const totalPagado = todasLasTransacciones.reduce((sum: number, t: any) => sum + Number(t.monto), 0);
 
-      // 4. Actualizar estado de la reserva si es necesario
+      // 4. Actualizar estado de la reserva
       let nuevoEstadoReserva = reserva.estado;
       if (totalPagado >= Number(reserva.montoTotal)) {
         nuevoEstadoReserva = 'LIQUIDADO';
@@ -106,6 +125,7 @@ export async function registrarAbono(data: {
     // Revalidar rutas involucradas
     revalidatePath('/proveedor/ventas');
     revalidatePath('/proveedor/dashboard');
+    revalidatePath('/cliente/dashboard');
     if (result.reserva.eventoId) {
       revalidatePath(`/cliente/evento/${result.reserva.eventoId}`);
     }

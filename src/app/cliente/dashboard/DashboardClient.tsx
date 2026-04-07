@@ -195,6 +195,46 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
   const fechaEvt = proximoEvento.fecha ? new Date(proximoEvento.fecha) : null;
   const diasRestantes = fechaEvt ? Math.max(0, Math.ceil((fechaEvt.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))) : 0;
 
+  // --- LÓGICA DE SINCRONIZACIÓN FINANCIERA (Igual a EventoDetailClient) ---
+  const lineasPresupuesto = proximoEvento.lineasPresupuesto || [];
+  const reservas = proximoEvento.reservas || [];
+
+  const lineasSinReserva = lineasPresupuesto.filter((l: any) => !l.servicioId);
+  const lineasConReservas = [
+    ...lineasSinReserva,
+    ...reservas.map((r: any) => {
+      const transacciones = r.transacciones || [];
+      const pagado = transacciones
+        .filter((t: any) => t.estado === 'PAGADO')
+        .reduce((sum: number, t: any) => sum + Number(t.monto), 0);
+      
+      const penalizaciones = transacciones
+        .filter((t: any) => t.tipo === 'PENALIZACION')
+        .reduce((sum: number, t: any) => sum + Number(t.monto), 0);
+
+      const subtotal = Number(r.montoTotal) + penalizaciones;
+
+      return {
+        id: `res-${r.id}`,
+        descripcion: r.servicio?.nombre || 'Servicio',
+        categoria: r.servicio?.categoria || 'Contratado',
+        montoTotal: subtotal,
+        montoPagado: pagado,
+        esReserva: true,
+        proveedorNombre: r.proveedor?.nombre,
+        notas: r.notas,
+        fechaEvento: r.fechaEvento,
+        metodoPagoSugerido: r.metodoPagoSugerido
+      };
+    })
+  ];
+
+  const totalPagadoReal = lineasConReservas.reduce((acc: number, l: any) => acc + Number(l.montoPagado), 0);
+  const totalContratadoReal = lineasConReservas.reduce((acc: number, l: any) => acc + Number(l.montoTotal), 0);
+  const porcentajePresupuesto = totalContratadoReal > 0 ? (totalPagadoReal / totalContratadoReal) * 100 : 0;
+  const numProveedoresContratados = reservas.length;
+  const numInvitadosConfirmados = proximoEvento._count?.invitados || 0;
+
   return (
     <div className="space-y-10">
       {/* Event Selection (Solo para Planner) */}
@@ -284,15 +324,15 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
             </div>
             <Link href={`/cliente/evento/${proximoEvento.id}`} className="text-xs text-[var(--color-texto-muted)] hover:text-white">Ver más</Link>
           </div>
-          <p className="text-sm font-medium text-[var(--color-texto-suave)]">Presupuesto</p>
+          <p className="text-sm font-medium text-[var(--color-texto-suave)]">Presupuesto Pagado</p>
           <div className="flex items-baseline gap-2">
-            <h3 className="text-2xl font-bold">{formatearMoneda(0)}</h3>
-            <span className="text-xs text-[var(--color-texto-muted)]">de {formatearMoneda(proximoEvento.presupuestoTotal)}</span>
+            <h3 className="text-2xl font-bold">{formatearMoneda(totalPagadoReal)}</h3>
+            <span className="text-xs text-[var(--color-texto-muted)]">de {formatearMoneda(totalContratadoReal || proximoEvento.presupuestoTotal)}</span>
           </div>
           <div className="w-full h-1.5 bg-[var(--color-fondo-input)] rounded-full mt-4 overflow-hidden">
             <div 
-              className="h-full bg-gradient-to-r from-[var(--color-primario)] to-[var(--color-acento)]" 
-              style={{ width: `0%` }}
+              className="h-full bg-gradient-to-r from-[var(--color-primario)] to-[var(--color-acento)] transition-all duration-1000" 
+              style={{ width: `${Math.min(100, porcentajePresupuesto)}%` }}
             />
           </div>
         </div>
@@ -305,8 +345,8 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
             <Link href={`/cliente/evento/${proximoEvento.id}`} className="text-xs text-[var(--color-texto-muted)] hover:text-white">Lista completa</Link>
           </div>
           <p className="text-sm font-medium text-[var(--color-texto-suave)]">Invitados</p>
-          <h3 className="text-2xl font-bold">0 / {proximoEvento.numInvitados || 0}</h3>
-          <p className="text-xs text-[var(--color-texto-muted)] mt-1">Confirmados (0%)</p>
+          <h3 className="text-2xl font-bold">{numInvitadosConfirmados} / {proximoEvento.numInvitados || 0}</h3>
+          <p className="text-xs text-[var(--color-texto-muted)] mt-1">Confirmados ({proximoEvento.numInvitados > 0 ? Math.round((numInvitadosConfirmados / proximoEvento.numInvitados) * 100) : 0}%)</p>
         </div>
 
         <div className="stat-card">
@@ -317,8 +357,8 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
             <Link href="/cliente/explorar" className="text-xs text-[var(--color-texto-muted)] hover:text-white">Buscar más</Link>
           </div>
           <p className="text-sm font-medium text-[var(--color-texto-suave)]">Proveedores</p>
-          <h3 className="text-2xl font-bold">0 Contratados</h3>
-          <p className="text-xs text-[var(--color-texto-muted)] mt-1">¡Empieza a buscar!</p>
+          <h3 className="text-2xl font-bold">{numProveedoresContratados} Contratados</h3>
+          <p className="text-xs text-[var(--color-texto-muted)] mt-1">{numProveedoresContratados > 0 ? '¡Vas por buen camino!' : '¡Empieza a buscar!'}</p>
         </div>
       </div>
 

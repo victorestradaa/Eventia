@@ -71,15 +71,33 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
     if (!metodo) return;
 
     setIsSubmitting(true);
-    const res = await payTransaction(id, metodo.toUpperCase());
-    if (res.success) {
-      // Simular cambio local
-      const updatedTx = venta.transacciones.map((t: any) => t.id === id ? { ...t, estado: 'PAGADO', metodoPago: metodo.toUpperCase(), fechaPago: new Date() } : t);
-      onUpdate({ ...venta, transacciones: updatedTx });
-    } else {
-      alert(res.error);
+    try {
+      // Usar registrarAbono con el transaccionId para que se sincronice el presupuesto del cliente
+      const res = await registrarAbono({
+        reservaId: venta.id,
+        monto: 0, // El monto se tomará de la transacción existente en el backend
+        metodoPago: metodo.toUpperCase(),
+        tipo: 'ABONO', // Requerido por la firma pero se ignorará al usar transaccionId
+        transaccionId: id,
+        esCliente: false
+      });
+
+      if (res.success) {
+        // Actualizar el estado local
+        const updatedTx = venta.transacciones.map((t: any) => 
+          t.id === id ? { ...t, estado: 'PAGADO', metodoPago: metodo.toUpperCase(), fechaPago: new Date() } : t
+        );
+        onUpdate({ ...venta, transacciones: updatedTx });
+        alert('Pago liquidado y sincronizado con el cliente.');
+      } else {
+        alert(res.error || 'No se pudo procesar el pago.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error de conexión al procesar el pago.');
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
   const handleAddAbono = async (e: React.FormEvent) => {
     e.preventDefault();

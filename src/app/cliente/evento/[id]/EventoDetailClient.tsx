@@ -18,7 +18,7 @@ import {
   AlertCircle,
   LayoutGrid
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { formatearMoneda, formatearFechaCorta, cn } from '@/lib/utils';
 import Link from 'next/link';
 import { updateEvento, addInvitado } from '@/lib/actions/eventActions';
@@ -31,7 +31,17 @@ interface EventoDetailClientProps {
 
 export default function EventoDetailClient({ evento: initialEvento }: EventoDetailClientProps) {
   const router = useRouter();
-  const [evento, setEvento] = useState(initialEvento);
+  const evento = initialEvento;
+
+  useEffect(() => {
+    setTempEvento({
+      nombre: initialEvento.nombre,
+      fecha: initialEvento.fecha ? new Date(initialEvento.fecha).toISOString().split('T')[0] : '',
+      tipo: initialEvento.tipo,
+      numInvitados: initialEvento.numInvitados || 0,
+      presupuestoTotal: Number(initialEvento.presupuestoTotal) || 0,
+    });
+  }, [initialEvento]);
   const [tabActiva, setTabActiva] = useState('resumen');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -53,6 +63,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
 
   // UI Pagos
   const [showPagoModal, setShowPagoModal] = useState<any | null>(null);
+  const [selectedTransaccionId, setSelectedTransaccionId] = useState<string | null>(null);
   const [montoAbono, setMontoAbono] = useState('');
   const [procesandoPago, setProcesandoPago] = useState(false);
 
@@ -449,6 +460,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                                        onClick={() => {
                                           setShowPagoModal(p.parentLine);
                                           setMontoAbono(p.monto.toString());
+                                          setSelectedTransaccionId(p.id);
                                        }}
                                        className="flex flex-col items-start hover:scale-105 transition-transform text-left group/pay"
                                      >
@@ -790,17 +802,19 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                        monto: Number(montoAbono),
                        metodoPago: 'TARJETA (TEST)',
                        tipo: 'ABONO',
+                       transaccionId: selectedTransaccionId || undefined,
                        esCliente: true
                      });
 
-                     if (res.success) {
-                       setShowPagoModal(null);
-                       setMontoAbono('');
-                       router.refresh();
-                     } else {
-                       alert("Error al procesar el abono. Verifica el monto.");
-                     }
-                     setProcesandoPago(false);
+                      if (res.success) {
+                        setMontoAbono('');
+                        setSelectedTransaccionId(null);
+                        setShowPagoModal(null);
+                        router.refresh();
+                      } else {
+                        alert(res.error || "Error al procesar el abono. Verifica el monto.");
+                        setProcesandoPago(false);
+                      }
                    }}
                    disabled={procesandoPago || !montoAbono}
                    className={cn(
