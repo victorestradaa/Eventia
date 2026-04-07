@@ -12,7 +12,15 @@ import {
   MessageCircle,
   Baby,
   User as UserIcon,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Users,
+  Plus,
+  Mail,
+  CreditCard,
+  Wallet,
+  CheckCircle2,
+  Clock as ClockIcon,
+  DollarSign
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { formatearMoneda, formatearFechaCorta, cn } from '@/lib/utils';
