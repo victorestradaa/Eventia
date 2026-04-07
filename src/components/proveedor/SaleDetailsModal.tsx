@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Calendar as CalendarIcon, DollarSign, AlertCircle, CheckCircle, RotateCcw, Plus, CalendarDays } from 'lucide-react';
+import { X, Calendar as CalendarIcon, DollarSign, AlertCircle, CheckCircle, RotateCcw, Plus, CalendarDays, Loader2 } from 'lucide-react';
 import { formatearMoneda, formatearFechaCorta } from '@/lib/utils';
 import { updateReservaStatus, payTransaction, rescheduleReserva, updateManualClientName } from '@/lib/actions/salesActions';
 import { registrarAbono } from '@/lib/actions/paymentActions';
@@ -323,7 +323,16 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
               </div>
               <textarea value={abono.notas} onChange={e=>setAbono({...abono, notas: e.target.value})} className="input w-full p-2 h-16 min-h-[64px]" placeholder="Notas (Ej: Fue pagado por el padrino)"></textarea>
               <div className="flex justify-end pt-2">
-                <button disabled={isSubmitting} type="submit" className="btn btn-primario py-2 px-6">Registrar Transacción</button>
+                <button disabled={isSubmitting} type="submit" className="btn btn-primario py-2 px-6 flex items-center justify-center gap-2 min-w-[200px]">
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin text-white" />
+                      Registrando...
+                    </>
+                  ) : (
+                    'Registrar Transacción'
+                  )}
+                </button>
               </div>
             </form>
           )}
@@ -355,7 +364,16 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
                 )}
               </div>
               <div className="flex justify-end pt-2">
-                <button disabled={isSubmitting} type="submit" className="btn btn-primario py-2 px-6">Confirmar Reprogramación</button>
+                <button disabled={isSubmitting} type="submit" className="btn btn-primario py-2 px-6 flex items-center justify-center gap-2 min-w-[220px]">
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin text-white" />
+                      Guardando...
+                    </>
+                  ) : (
+                    'Confirmar Reprogramación'
+                  )}
+                </button>
               </div>
             </form>
           )}

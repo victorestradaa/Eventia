@@ -430,31 +430,48 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 font-medium">
-                          {lineasConReservas.flatMap((l:any) => (l.pagos || []).map((p:any) => ({...p, targetDesc: l.descripcion}))).sort((a:any, b:any) => new Date(b.fechaPago || b.fechaVencimiento || b.fecha).getTime() - new Date(a.fechaPago || a.fechaVencimiento || a.fecha).getTime()).map((p:any, idx:number) => (
-                            <tr key={p.id || idx} className={cn("hover:bg-white/[0.01] transition-colors group", p.estado === 'PENDIENTE' && "bg-amber-500/[0.02]")}>
-                               <td className="px-6 py-5">
-                                  <span className="font-bold group-hover:text-[var(--color-primario-claro)] transition-colors">
-                                    {(p.tipo || 'ABONO').toUpperCase()} - {p.targetDesc}
-                                  </span>
-                                  {p.nota && <p className="text-[10px] text-[var(--color-texto-muted)] italic font-normal tracking-tight">{p.nota}</p>}
-                               </td>
-                               <td className="px-6 py-5 text-emerald-400 font-black text-lg">
-                                 {formatearMoneda(p.monto)}
-                               </td>
-                               <td className="px-6 py-5 text-sm text-[var(--color-texto-suave)] font-bold">
-                                 {new Date(p.fechaPago || p.fechaVencimiento || p.fecha).toLocaleDateString()}
-                                 {p.estado === 'PENDIENTE' && <span className="block text-[9px] text-amber-500 italic mt-0.5 font-black uppercase">¡Vence Pronto!</span>}
-                               </td>
-                               <td className="px-6 py-5 text-center">
-                                  <span className={cn(
-                                    "badge text-[9px] font-black shadow-sm tracking-widest",
-                                    p.estado === 'PENDIENTE' ? "badge-apartado" : "badge-liquidado"
-                                  )}>
-                                    {(p.estado || 'PAGADO').toUpperCase()}
-                                  </span>
-                               </td>
-                            </tr>
-                          ))}
+                          {lineasConReservas.flatMap((l:any) => (l.pagos || []).map((p:any) => ({...p, targetDesc: l.descripcion, parentLine: l}))).sort((a:any, b:any) => new Date(b.fechaPago || b.fechaVencimiento || b.fecha).getTime() - new Date(a.fechaPago || a.fechaVencimiento || a.fecha).getTime()).map((p:any, idx:number) => {
+                            const isPending = p.estado === 'PENDIENTE';
+                            return (
+                              <tr key={p.id || idx} className={cn("hover:bg-white/[0.01] transition-colors group", isPending && "bg-amber-500/[0.03]")}>
+                                 <td className="px-6 py-5">
+                                    <span className="font-bold group-hover:text-[var(--color-primario-claro)] transition-colors">
+                                      {(p.tipo || 'ABONO').toUpperCase()} - {p.targetDesc}
+                                    </span>
+                                    {p.nota && <p className="text-[10px] text-[var(--color-texto-muted)] italic font-normal tracking-tight">{p.nota}</p>}
+                                 </td>
+                                 <td className="px-6 py-5 text-emerald-400 font-black text-lg">
+                                   {formatearMoneda(p.monto)}
+                                 </td>
+                                 <td className="px-6 py-5">
+                                   {isPending ? (
+                                     <button 
+                                       onClick={() => {
+                                          setShowPagoModal(p.parentLine);
+                                          setMontoAbono(p.monto.toString());
+                                       }}
+                                       className="flex flex-col items-start hover:scale-105 transition-transform text-left group/pay"
+                                     >
+                                       <span className="text-[9px] text-amber-500 font-black uppercase leading-none mb-1 opacity-70">PENDIENTE</span>
+                                       <span className="text-xl font-black text-amber-500 leading-none group-hover:text-amber-400 transition-colors">PAGA HOY</span>
+                                     </button>
+                                   ) : (
+                                     <span className="text-sm text-[var(--color-texto-suave)] font-bold">
+                                       {new Date(p.fechaPago || p.fechaVencimiento || p.fecha).toLocaleDateString()}
+                                     </span>
+                                   )}
+                                 </td>
+                                 <td className="px-6 py-5 text-center">
+                                    <span className={cn(
+                                      "badge text-[9px] font-black shadow-sm tracking-widest",
+                                      isPending ? "badge-apartado" : "badge-liquidado"
+                                    )}>
+                                      {(p.estado || 'PAGADO').toUpperCase()}
+                                    </span>
+                                 </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                      </table>
                    </div>
