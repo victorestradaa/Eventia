@@ -20,6 +20,7 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
   // Forms State
   const [showAbonoForm, setShowAbonoForm] = useState(false);
   const [showRescheduleForm, setShowRescheduleForm] = useState(false);
+  const [payConfirmData, setPayConfirmData] = useState<{ id: string, metodo: string } | null>(null);
   
   // Edit Name State
   const [isEditingName, setIsEditingName] = useState(false);
@@ -66,29 +67,33 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
     setIsSubmitting(false);
   };
 
-  const handlePagarTransaccion = async (id: string) => {
-    const metodo = prompt('¿Método de pago? (EJ: EFECTIVO, TRANSFERENCIA, TARJETA)', 'EFECTIVO');
-    if (!metodo) return;
-
+  const handlePagarTransaccion = (id: string) => {
+    setPayConfirmData({ id, metodo: 'EFECTIVO' });
+  };
+  const confirmLiquidation = async () => {
+    if (!payConfirmData) return;
+    
     setIsSubmitting(true);
     try {
-      // Usar registrarAbono con el transaccionId para que se sincronice el presupuesto del cliente
       const res = await registrarAbono({
         reservaId: venta.id,
-        monto: 0, // El monto se tomará de la transacción existente en el backend
-        metodoPago: metodo.toUpperCase(),
-        tipo: 'ABONO', // Requerido por la firma pero se ignorará al usar transaccionId
-        transaccionId: id,
+        monto: 0,
+        metodoPago: payConfirmData.metodo,
+        tipo: 'ABONO',
+        transaccionId: payConfirmData.id,
         esCliente: false
       });
 
-      if (res.success) {
-        // Actualizar el estado local
-        const updatedTx = venta.transacciones.map((t: any) => 
-          t.id === id ? { ...t, estado: 'PAGADO', metodoPago: metodo.toUpperCase(), fechaPago: new Date() } : t
-        );
-        onUpdate({ ...venta, transacciones: updatedTx });
-        alert('Pago liquidado y sincronizado con el cliente.');
+      if (res.success && res.data) {
+        // Usar los datos retornados por el servidor para una actualización real
+        onUpdate({ 
+          ...venta, 
+          estado: res.data.reserva.estado,
+          transacciones: venta.transacciones.map((t: any) => 
+            t.id === payConfirmData.id ? res.data.transaccion : t
+          )
+        });
+        setPayConfirmData(null);
       } else {
         alert(res.error || 'No se pudo procesar el pago.');
       }
@@ -99,6 +104,7 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
       setIsSubmitting(false);
     }
   };
+
   const handleAddAbono = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!abono.monto || Number(abono.monto) <= 0) return alert('Ingresa un monto válido');
@@ -124,6 +130,7 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
         onUpdate({ 
           ...venta, 
           estado: res.data.reserva.estado,
+          montoAnticipo: res.data.reserva.montoAnticipo,
           transacciones: [...(venta.transacciones || []), nuevaTx] 
         });
         onClose();
@@ -152,8 +159,15 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
     );
     
     if (res.success) {
-      alert('Fecha reprogramada. Actualiza la página si no ves los cambios (WIP local state update).');
       setShowRescheduleForm(false);
+      // Para reschedule no tenemos retorno de data fácil, pero podemos forzar un refresh o actualizar campos básicos
+      onUpdate({
+        ...venta,
+        fechaEvento: new Date(reschedule.nuevaFecha),
+        // Si hubo penalidad, el total contratado cambiará, pero aquí solo actualizamos lo que sabemos
+        // Lo ideal sería retornar la reserva actualizada desde el server
+      });
+      alert('Fecha actualizada correctamente.');
       onClose();
     } else {
       alert(res.error);
@@ -457,6 +471,49 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
 
         </div>
       </div>
+
+      {/* Confirmation Modal for Liquidation */}
+      {payConfirmData && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200">
+          <div className="bg-[var(--color-fondo-card)] w-full max-w-sm rounded-3xl shadow-2xl border border-[var(--color-borde-suave)] p-6 animate-in zoom-in-95 duration-200">
+            <h3 className="text-xl font-bold mb-2">Confirmar Liquidación</h3>
+            <p className="text-sm text-[var(--color-texto-suave)] mb-6">Selecciona el método de pago para registrar la entrada de dinero.</p>
+            
+            <div className="space-y-4 mb-8">
+               <div className="space-y-1">
+                 <label className="text-xs font-bold uppercase text-[var(--color-texto-muted)]">Método de Pago</label>
+                 <select 
+                   value={payConfirmData.metodo}
+                   onChange={e => setPayConfirmData({...payConfirmData, metodo: e.target.value})}
+                   className="input w-full h-12 text-lg font-bold"
+                 >
+                   <option value="EFECTIVO">💵 EFECTIVO</option>
+                   <option value="TRANSFERENCIA">📱 TRANSFERENCIA</option>
+                   <option value="TARJETA">💳 TARJETA</option>
+                   <option value="DEPOSITO">🏦 DEPOSITO</option>
+                 </select>
+               </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <button 
+                disabled={isSubmitting}
+                onClick={confirmLiquidation}
+                className="btn btn-primario w-full h-12 flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : 'Confirmar Pago'}
+              </button>
+              <button 
+                disabled={isSubmitting}
+                onClick={() => setPayConfirmData(null)}
+                className="btn bg-[var(--color-fondo-input)] hover:bg-[var(--color-borde-fuerte)] w-full h-12"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

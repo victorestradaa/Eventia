@@ -49,6 +49,36 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
     return name.charAt(0).toUpperCase();
   };
 
+  const getVencimientoText = (venta: any) => {
+    const pendientes = venta.transacciones?.filter((t: any) => t.estado === 'PENDIENTE') || [];
+    if (pendientes.length === 0) return 'Al corriente';
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const vencidos = pendientes.filter((t: any) => t.fechaVencimiento && new Date(t.fechaVencimiento) < hoy);
+    if (vencidos.length > 0) {
+      const montoVencido = vencidos.reduce((acc: number, t: any) => acc + Number(t.monto), 0);
+      return `VENCIDO ${formatearMoneda(montoVencido)}`;
+    }
+
+    const proximos = pendientes
+      .filter((t: any) => t.fechaVencimiento)
+      .sort((a: any, b: any) => new Date(a.fechaVencimiento).getTime() - new Date(b.fechaVencimiento).getTime());
+
+    if (proximos.length > 0) {
+      const proximaFecha = new Date(proximos[0].fechaVencimiento);
+      const diffTime = proximaFecha.getTime() - hoy.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return 'VENCE HOY';
+      if (diffDays === 1) return 'VENCE MAÑANA';
+      return `VENCE EN ${diffDays} DIAS`;
+    }
+
+    return 'Pendiente s/f';
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -139,44 +169,60 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
             No se encontraron reservas.
           </div>
         ) : (
-          filteredVentas.map((venta) => (
-            <div 
-              key={venta.id} 
-              onClick={() => setSelectedVenta(venta)}
-              className="card bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] p-5 space-y-4 hover:border-[var(--color-acento)]/30 active:scale-95 transition-all shadow-md"
-            >
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm ${venta.esManual ? 'bg-gradient-to-tr from-emerald-500 to-emerald-400' : 'bg-gradient-to-tr from-[var(--color-primario)] to-[var(--color-primario-claro)]'}`}>
-                    {getClienteInitial(venta)}
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm group-hover:text-[var(--color-acento)] transition-colors">{getClienteName(venta)}</h4>
-                    <span className="text-[10px] font-mono text-[var(--color-texto-muted)]">#{venta.id.split('-')[0].substring(0,8).toUpperCase()}</span>
-                  </div>
-                </div>
-                <span className={`badge badge-${venta.estado.toLowerCase()} text-[9px] font-black tracking-widest`}>
-                  {venta.estado}
-                </span>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4 py-3 border-y border-[var(--color-borde-suave)]">
-                <div>
-                  <p className="text-[9px] uppercase font-black tracking-widest text-[var(--color-texto-muted)] mb-1">Fecha</p>
-                  <p className="text-xs font-bold">{formatearFechaCorta(venta.fechaEvento)}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[9px] uppercase font-black tracking-widest text-[var(--color-texto-muted)] mb-1">Monto</p>
-                  <p className="text-sm font-black text-[var(--color-acento)]">{formatearMoneda(venta.montoTotal)}</p>
-                </div>
-              </div>
+          filteredVentas.map((venta) => {
+            const totalPagado = venta.transacciones?.filter((t: any) => t.estado === 'PAGADO').reduce((sum: number, t: any) => sum + Number(t.monto), 0) || 0;
+            const penalizaciones = venta.transacciones?.filter((t: any) => t.tipo === 'PENALIZACION').reduce((sum: number, t: any) => sum + Number(t.monto), 0) || 0;
+            const totalContratado = Number(venta.montoTotal) + penalizaciones;
+            const saldoRestante = totalContratado - totalPagado;
+            const saldoVencido = venta.transacciones?.filter((t: any) => t.estado === 'PENDIENTE' && t.fechaVencimiento && new Date(t.fechaVencimiento) < new Date()).reduce((sum: number, t: any) => sum + Number(t.monto), 0) || 0;
 
-              <div>
-                <p className="text-[9px] uppercase font-black tracking-widest text-[var(--color-texto-muted)] mb-1">Servicio</p>
-                <p className="text-xs font-medium truncate">{venta.servicio?.nombre || 'Desconocido'}</p>
+            return (
+              <div 
+                key={venta.id} 
+                onClick={() => setSelectedVenta(venta)}
+                className="card bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] p-5 space-y-4 hover:border-[var(--color-acento)]/30 active:scale-95 transition-all shadow-md"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm ${venta.esManual ? 'bg-gradient-to-tr from-emerald-500 to-emerald-400' : 'bg-gradient-to-tr from-[var(--color-primario)] to-[var(--color-primario-claro)]'}`}>
+                      {getClienteInitial(venta)}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm group-hover:text-[var(--color-acento)] transition-colors">{getClienteName(venta)}</h4>
+                      <span className="text-[10px] font-mono text-[var(--color-texto-muted)]">#{venta.id.split('-')[0].substring(0,8).toUpperCase()}</span>
+                    </div>
+                  </div>
+                  <span className={`badge badge-${venta.estado.toLowerCase()} text-[9px] font-black tracking-widest`}>
+                    {venta.estado}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 py-3 border-y border-[var(--color-borde-suave)]">
+                  <div>
+                    <p className="text-[9px] uppercase font-black tracking-widest text-[var(--color-texto-muted)] mb-1">Fecha</p>
+                    <p className="text-xs font-bold">{formatearFechaCorta(venta.fechaEvento)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] uppercase font-black tracking-widest text-[var(--color-texto-muted)] mb-1">Restante</p>
+                    <p className="text-sm font-black text-orange-500">{formatearMoneda(saldoRestante)}</p>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-[9px] uppercase font-black tracking-widest text-[var(--color-texto-muted)] mb-1">Estatus Pago</p>
+                    <p className={`text-xs font-bold ${getVencimientoText(venta).includes('VENCE') || getVencimientoText(venta).includes('VENCIDO') ? 'text-red-500' : 'text-green-500'}`}>
+                      {getVencimientoText(venta)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] uppercase font-black tracking-widest text-[var(--color-texto-muted)] mb-1">Total</p>
+                    <p className="text-xs font-medium">{formatearMoneda(totalContratado)}</p>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -191,64 +237,85 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
                 <th className="px-6 py-4 font-bold text-left">Fecha Evento</th>
                 <th className="px-6 py-4 font-bold text-left">Servicio</th>
                 <th className="px-6 py-4 font-bold text-right">Contratado</th>
+                <th className="px-6 py-4 font-bold text-right">Restante</th>
+                <th className="px-6 py-4 font-bold text-right">Saldo Vencido</th>
                 <th className="px-6 py-4 font-bold text-center">Estado</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-borde-suave)]">
               {filteredVentas.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-[var(--color-texto-muted)]">
+                  <td colSpan={8} className="px-6 py-12 text-center text-[var(--color-texto-muted)]">
                     No se encontraron reservas que coincidan con la búsqueda.
                   </td>
                 </tr>
               ) : (
-                filteredVentas.map((venta) => (
-                  <tr 
-                    key={venta.id} 
-                    onClick={() => setSelectedVenta(venta)}
-                    className="cursor-pointer group hover:bg-[var(--color-primario)]/5 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-[var(--color-texto-muted)] group-hover:text-[var(--color-primario-claro)] transition-colors">
-                          {venta.id.split('-')[0].substring(0,8).toUpperCase()}
-                        </span>
-                        {venta.esManual && (
-                          <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500">Manual</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm ${venta.esManual ? 'bg-gradient-to-tr from-emerald-500 to-emerald-400' : 'bg-gradient-to-tr from-[var(--color-primario)] to-[var(--color-primario-claro)]'}`}>
-                          {getClienteInitial(venta)}
-                        </div>
-                        <div>
-                          <span className="font-semibold text-sm">{getClienteName(venta)}</span>
-                          {venta.esManual && venta.telefonoClienteExterno && (
-                            <p className="text-[10px] text-[var(--color-texto-muted)]">{venta.telefonoClienteExterno}</p>
+                filteredVentas.map((venta) => {
+                  const totalPagado = venta.transacciones?.filter((t: any) => t.estado === 'PAGADO').reduce((sum: number, t: any) => sum + Number(t.monto), 0) || 0;
+                  const penalizaciones = venta.transacciones?.filter((t: any) => t.tipo === 'PENALIZACION').reduce((sum: number, t: any) => sum + Number(t.monto), 0) || 0;
+                  const totalContratado = Number(venta.montoTotal) + penalizaciones;
+                  const saldoRestante = totalContratado - totalPagado;
+                  const saldoVencido = venta.transacciones?.filter((t: any) => t.estado === 'PENDIENTE' && t.fechaVencimiento && new Date(t.fechaVencimiento) < new Date()).reduce((sum: number, t: any) => sum + Number(t.monto), 0) || 0;
+
+                  return (
+                    <tr 
+                      key={venta.id} 
+                      onClick={() => setSelectedVenta(venta)}
+                      className="cursor-pointer group hover:bg-[var(--color-primario)]/5 transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs text-[var(--color-texto-muted)] group-hover:text-[var(--color-primario-claro)] transition-colors">
+                            {venta.id.split('-')[0].substring(0,8).toUpperCase()}
+                          </span>
+                          {venta.esManual && (
+                            <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-500">Manual</span>
                           )}
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-[var(--color-texto-suave)]">
-                      {formatearFechaCorta(venta.fechaEvento)}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium text-[var(--color-texto-fuerte)]">
-                      {venta.servicio?.nombre || 'Servicio Desconocido'}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="font-black text-[var(--color-texto-fuerte)] text-sm">
-                        {formatearMoneda(venta.montoTotal)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`badge badge-${venta.estado.toLowerCase()} text-[10px] shadow-sm`}>
-                        {venta.estado}
-                      </span>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm ${venta.esManual ? 'bg-gradient-to-tr from-emerald-500 to-emerald-400' : 'bg-gradient-to-tr from-[var(--color-primario)] to-[var(--color-primario-claro)]'}`}>
+                            {getClienteInitial(venta)}
+                          </div>
+                          <div>
+                            <span className="font-semibold text-sm">{getClienteName(venta)}</span>
+                            {venta.esManual && venta.telefonoClienteExterno && (
+                              <p className="text-[10px] text-[var(--color-texto-muted)]">{venta.telefonoClienteExterno}</p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-[var(--color-texto-suave)]">
+                        {formatearFechaCorta(venta.fechaEvento)}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-[var(--color-texto-fuerte)]">
+                        {venta.servicio?.nombre || 'Servicio Desconocido'}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="font-black text-[var(--color-texto-fuerte)] text-sm">
+                          {formatearMoneda(totalContratado)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <span className="font-bold text-orange-500 text-sm">
+                          {formatearMoneda(saldoRestante)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <p className={`text-xs font-black ${getVencimientoText(venta).includes('VENCE') || getVencimientoText(venta).includes('VENCIDO') ? 'text-red-500' : 'text-green-600'}`}>
+                          {getVencimientoText(venta)}
+                        </p>
+                        {saldoVencido > 0 && <span className="text-[10px] text-red-400 block">{formatearMoneda(saldoVencido)} vencido</span>}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`badge badge-${venta.estado.toLowerCase()} text-[10px] shadow-sm`}>
+                          {venta.estado}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
