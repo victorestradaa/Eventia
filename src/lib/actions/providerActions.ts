@@ -398,10 +398,34 @@ export async function verificarDisponibilidadServicio(
   try {
     const servicio = await prisma.servicio.findUnique({
       where: { id: servicioId },
-      select: { capacidadSimultanea: true, bloquesHorario: true }
+      select: { capacidadSimultanea: true, bloquesHorario: true, diasDisponibles: true }
     });
 
     if (!servicio) return { success: false, error: 'Servicio no encontrado' };
+
+    // 0. Verificar si el día de la semana está permitido
+    const diasPermitidos = (servicio.diasDisponibles as number[]) || [];
+    if (diasPermitidos.length > 0) {
+      const fechaObj = new Date(fechaEvento);
+      // Para evitar problemas de zona horaria al recibir solo el string YYYY-MM-DD
+      let diaSemana;
+      if (typeof fechaEvento === 'string' && !fechaEvento.includes('T')) {
+        const [y, m, d] = fechaEvento.split('-').map(Number);
+        diaSemana = new Date(y, m - 1, d).getDay();
+      } else {
+        diaSemana = fechaObj.getUTCDay(); // Si es ISO completo, el cliente manda la fecha exacta
+        // Pero espera, si mandamos ISO completo con T00:00:00Z, getUTCDay es más seguro.
+      }
+
+      if (!diasPermitidos.includes(diaSemana)) {
+        const diasNombres = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+        const nombresPermitidos = diasPermitidos.map(d => diasNombres[d]).join(', ');
+        return { 
+          success: false, 
+          error: `Este servicio no está disponible para el día solicitado. Días permitidos: ${nombresPermitidos}` 
+        };
+      }
+    }
 
     // Buscar reservas existentes para este servicio en este día
     const fechaInicioDia = new Date(fechaEvento);

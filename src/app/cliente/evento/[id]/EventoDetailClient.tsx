@@ -79,6 +79,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
         montoPagado: res.montoPagado || 0,
         montoSaldado: res.montoPagado || 0,
         servicio: res.servicio,
+        proveedor: res.proveedor,
         isReserva: true,
         pagos: []
       });
@@ -440,26 +441,28 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
         </div>
       )}
 
-      {/* TAB: Proveedores */}
+       {/* TAB: Proveedores */}
       {tabActiva === 'proveedores' && (
         <div className="space-y-6">
            <h2 className="text-2xl font-bold">Proveedores Contratados</h2>
-           {lineasPresupuesto.length > 0 ? (
+           {lineasConReservas.length > 0 ? (
              <div className="card p-0 overflow-hidden">
                <table className="tabla">
                   <thead><tr><th>Servicio</th><th>Total</th><th>Pagado</th><th>Saldo</th></tr></thead>
                   <tbody>
-                    {lineasPresupuesto.map((l: any) => (
+                    {lineasConReservas.map((l: any) => (
                       <tr key={l.id}>
                         <td className="font-bold">
                           {l.descripcion}
-                          {l.servicio?.proveedor && (
-                            <span className="block text-[10px] font-normal text-[var(--color-texto-muted)]">{l.servicio.proveedor.nombre}</span>
+                          {(l.servicio?.proveedor || l.proveedor) && (
+                            <span className="block text-[10px] font-normal text-[var(--color-texto-muted)]">
+                              {(l.servicio?.proveedor?.nombre || l.proveedor?.nombre)}
+                            </span>
                           )}
                         </td>
                         <td>{formatearMoneda(l.montoTotal)}</td>
-                        <td className="text-emerald-400">{formatearMoneda(l.montoPagado)}</td>
-                        <td className="text-red-400">{formatearMoneda(Number(l.montoTotal) - Number(l.montoPagado))}</td>
+                        <td className="text-emerald-400">{formatearMoneda(l.montoPagado || 0)}</td>
+                        <td className="text-red-400">{formatearMoneda(Number(l.montoTotal) - Number(l.montoPagado || 0))}</td>
                       </tr>
                     ))}
                   </tbody>

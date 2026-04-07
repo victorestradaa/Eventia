@@ -280,8 +280,11 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
                             return;
                          }
 
-                         const fechaEvento = new Date(activeEvent.fecha);
-                         const diaEvento = fechaEvento.getUTCDay(); 
+                         // Robust day calculation: ensure we get the local day of the week for the event date
+                         const fechaString = typeof activeEvent.fecha === 'string' ? activeEvent.fecha.split('T')[0] : new Date(activeEvent.fecha).toISOString().split('T')[0];
+                         const [year, month, day] = fechaString.split('-').map(Number);
+                         const fechaLocal = new Date(year, month - 1, day);
+                         const diaEvento = fechaLocal.getDay(); 
                          
                          if (diasPermitidos.length > 0 && !diasPermitidos.includes(diaEvento)) {
                             const diasNombres = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
