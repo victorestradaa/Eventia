@@ -14,13 +14,14 @@ import {
   Sparkles,
   Heart,
   UserPlus,
-  Loader2
+  Loader2,
+  CheckCircle2
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { getInvitadosByEvento } from '@/lib/actions/eventActions';
+import { getInvitadosByEvento, savePlanoMesas, getPlanoMesas } from '@/lib/actions/eventActions';
 
 interface Invitado {
   id: string;
@@ -47,10 +48,10 @@ export default function SeatingPage() {
   const eventoId = params.id as string;
 
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [invitadosSinMesa, setInvitadosSinMesa] = useState<Invitado[]>([]);
-  const [mesas, setMesas] = useState<Mesa[]>([
-    { id: '1', nombre: 'Mesa Principal', capacidad: 10, tipo: 'circular', x: 450, y: 50, escala: 1.2, invitados: [] },
-  ]);
+  const [mesas, setMesas] = useState<Mesa[]>([]);
+  const [pistaPos, setPistaPos] = useState({ x: 450, y: 350 });
 
   const [draggedMesa, setDraggedMesa] = useState<string | null>(null);
   const [selectedMesaId, setSelectedMesaId] = useState<string | null>(null);
@@ -59,14 +60,67 @@ export default function SeatingPage() {
 
   useEffect(() => {
     async function loadData() {
-      const res = await getInvitadosByEvento(eventoId);
-      if (res.success) {
-        setInvitadosSinMesa(res.data || []);
+      // Cargar invitados
+      const resInv = await getInvitadosByEvento(eventoId);
+      
+      // Cargar layout guardado
+      const resPlano = await getPlanoMesas(eventoId);
+      
+      if (resPlano.success && resPlano.data) {
+        const layout = resPlano.data.layout as any;
+        if (layout.mesas) setMesas(layout.mesas);
+        if (layout.pista) setPistaPos(layout.pista);
+        
+        // Filtrar invitados que ya están en mesas
+        if (resInv.success) {
+          const todosLosInvitados = resInv.data || [];
+          const idsEnMesas = new Set();
+          layout.mesas.forEach((m: any) => {
+            m.invitados.forEach((inv: any) => {
+              if (inv) idsEnMesas.add(inv.id);
+            });
+          });
+          
+          // Sincronizar invitados sin mesa (incluyendo posiciones en el suelo del layout)
+          const invitadosSuelo = layout.invitadosSuelo || [];
+          setInvitadosSinMesa(todosLosInvitados.map(inv => {
+            const guardado = invitadosSuelo.find((is: any) => is.id === inv.id);
+            if (guardado) return { ...inv, x: guardado.x, y: guardado.y };
+            if (idsEnMesas.has(inv.id)) return null;
+            return inv;
+          }).filter(Boolean) as Invitado[]);
+        }
+      } else {
+        // Valores por defecto si no hay plano
+        setMesas([
+          { id: '1', nombre: 'Mesa Principal', capacidad: 10, tipo: 'circular', x: 450, y: 50, escala: 1.2, invitados: [] },
+        ]);
+        if (resInv.success) {
+          setInvitadosSinMesa(resInv.data || []);
+        }
       }
+      
       setLoading(false);
     }
     loadData();
   }, [eventoId]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    const layout = {
+      mesas,
+      pista: pistaPos,
+      invitadosSuelo: invitadosSinMesa.filter(i => i.x !== undefined).map(i => ({ id: i.id, x: i.x, y: i.y }))
+    };
+    
+    const res = await savePlanoMesas(eventoId, layout);
+    if (res.success) {
+      alert('Plano guardado correctamente');
+    } else {
+      alert('Error al guardar el plano');
+    }
+    setIsSaving(false);
+  };
 
   const handleMouseDown = (e: React.MouseEvent, id: string, x: number, y: number) => {
     setDraggedMesa(id);
@@ -79,6 +133,14 @@ export default function SeatingPage() {
   const handleMouseMove = (e: React.MouseEvent) => {
     if (draggedMesa === null) return;
     
+    if (draggedMesa === 'pista') {
+      setPistaPos({
+        x: e.clientX - dragOffset.x,
+        y: e.clientY - dragOffset.y
+      });
+      return;
+    }
+
     setMesas(mesas.map(m => {
       if (m.id === draggedMesa) {
         return {
@@ -106,7 +168,6 @@ export default function SeatingPage() {
       return guest;
     }
 
-    // 2. Buscar en las mesas
     // 2. Buscar en las mesas
     for (const m of mesas) {
       const seatIdx = m.invitados.findIndex(i => i?.id === id);
@@ -235,8 +296,13 @@ export default function SeatingPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">
-            <Save size={18} /> Guardar
+          <button 
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors disabled:opacity-50"
+          >
+            {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} 
+            {isSaving ? 'Guardando...' : 'Guardar'}
           </button>
           <button 
             onClick={() => setShowAutoModal(true)}
@@ -402,7 +468,14 @@ export default function SeatingPage() {
            <div className="absolute inset-0 opacity-[0.4]" style={{ backgroundImage: 'radial-gradient(#94a3b8 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }} />
            
            {/* Dance Floor Placeholder (Estilo Dorado Sketch) */}
-           <div className="absolute top-[350px] left-1/2 -translate-x-1/2 w-[400px] h-[150px] border-4 border-dashed border-[#D4AF37]/40 flex flex-col items-center justify-center text-[#D4AF37]/30 font-black uppercase tracking-[0.5em] pointer-events-none rounded-xl bg-[#F5E6BE]/10 backdrop-blur-[1px]">
+           <div 
+             onMouseDown={(e) => handleMouseDown(e, 'pista', pistaPos.x, pistaPos.y)}
+             style={{ left: pistaPos.x, top: pistaPos.y }}
+             className={cn(
+               "absolute w-[400px] h-[150px] border-4 border-dashed border-[#D4AF37]/40 flex flex-col items-center justify-center text-[#D4AF37]/30 font-black uppercase tracking-[0.5em] rounded-xl bg-[#F5E6BE]/10 backdrop-blur-[1px] transition-all",
+               draggedMesa === 'pista' ? "cursor-grabbing z-50 duration-0" : "cursor-grab z-10"
+             )}
+           >
               <span className="text-3xl italic">Pista de Baile</span>
            </div>
 
@@ -506,6 +579,7 @@ export default function SeatingPage() {
                           >
                              {/* Chair / Avatar */}
                               <div 
+                                onMouseDown={(e) => e.stopPropagation()}
                                 draggable={!!inv}
                                 onDragStart={(e) => {
                                   if (inv) e.dataTransfer.setData('invitadoId', inv.id);

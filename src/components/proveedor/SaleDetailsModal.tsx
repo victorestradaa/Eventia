@@ -73,11 +73,14 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
   const confirmLiquidation = async () => {
     if (!payConfirmData) return;
     
+    const originalTx = venta.transacciones?.find((t: any) => t.id === payConfirmData.id);
+    const montoALiquidar = originalTx ? Number(originalTx.monto) : 0;
+
     setIsSubmitting(true);
     try {
       const res = await registrarAbono({
         reservaId: venta.id,
-        monto: 0,
+        monto: montoALiquidar,
         metodoPago: payConfirmData.metodo,
         tipo: 'ABONO',
         transaccionId: payConfirmData.id,

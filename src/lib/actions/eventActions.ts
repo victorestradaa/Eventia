@@ -134,3 +134,36 @@ export async function getInvitadosByEvento(eventoId: string) {
     return { success: false, error: 'No se pudieron cargar los invitados.' };
   }
 }
+
+/**
+ * Guarda la disposición de mesas de un evento.
+ */
+export async function savePlanoMesas(eventoId: string, layout: any) {
+  try {
+    const upserted = await prisma.disposicionMesa.upsert({
+      where: { eventoId },
+      update: { layout },
+      create: { eventoId, layout }
+    });
+    revalidatePath(`/cliente/evento/${eventoId}/mesas`);
+    return { success: true, data: upserted };
+  } catch (error) {
+    console.error('Error al guardar plano de mesas:', error);
+    return { success: false, error: 'No se pudo guardar el diseño del plano.' };
+  }
+}
+
+/**
+ * Obtiene la disposición de mesas de un evento.
+ */
+export async function getPlanoMesas(eventoId: string) {
+  try {
+    const plano = await prisma.disposicionMesa.findUnique({
+      where: { eventoId }
+    });
+    return { success: true, data: plano };
+  } catch (error) {
+    console.error('Error al obtener plano de mesas:', error);
+    return { success: false, error: 'No se pudo cargar el diseño del plano.' };
+  }
+}
