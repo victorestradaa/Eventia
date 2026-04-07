@@ -464,7 +464,23 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                                        }}
                                        className="flex flex-col items-start hover:scale-105 transition-transform text-left group/pay"
                                      >
-                                       <span className="text-[9px] text-amber-500 font-black uppercase leading-none mb-1 opacity-70">PENDIENTE</span>
+                                       {(() => {
+                                          const venceDate = new Date(p.fechaVencimiento || p.fecha);
+                                          const hoy = new Date();
+                                          hoy.setHours(0, 0, 0, 0);
+                                          venceDate.setHours(0, 0, 0, 0);
+                                          const diffTime = venceDate.getTime() - hoy.getTime();
+                                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                          
+                                          let label = "PENDIENTE";
+                                          if (diffDays > 0) label = `VENCE EN ${diffDays} DIAS`;
+                                          else if (diffDays === 0) label = "VENCE HOY";
+                                          else label = "VENCIDO";
+
+                                          return (
+                                            <span className="text-[9px] text-red-500 font-black uppercase leading-none mb-1 opacity-90">{label}</span>
+                                          );
+                                       })()}
                                        <span className="text-xl font-black text-amber-500 leading-none group-hover:text-amber-400 transition-colors">PAGA HOY</span>
                                      </button>
                                    ) : (
