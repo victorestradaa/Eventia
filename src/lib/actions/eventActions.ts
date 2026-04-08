@@ -322,6 +322,17 @@ export async function getOrCreateInvitacion(eventoId: string) {
 export async function updateInvitacionPlantilla(eventoId: string, plantillaRaw: string) {
   try {
     const plantilla = plantillaRaw.toUpperCase();
+    
+    // Verificamos si existe el evento para evitar errores de clave foránea
+    const eventoExiste = await prisma.evento.findUnique({
+      where: { id: eventoId },
+      select: { id: true }
+    });
+
+    if (!eventoExiste) {
+      return { success: false, error: `El evento con ID ${eventoId} no existe en la base de datos.` };
+    }
+
     const invitacion = await prisma.invitacionDigital.upsert({
       where: { eventoId },
       update: { plantilla },
@@ -332,7 +343,6 @@ export async function updateInvitacionPlantilla(eventoId: string, plantillaRaw: 
       }
     });
 
-    // Mapeamos manualmente para asegurar que no haya objetos no serializables (como Dates de Prisma)
     const resultToReturn = {
       id: invitacion.id,
       eventoId: invitacion.eventoId,
@@ -342,13 +352,17 @@ export async function updateInvitacionPlantilla(eventoId: string, plantillaRaw: 
 
     try {
       revalidatePath(`/cliente/evento/${eventoId}`);
-    } catch (revalidateError) {
-      console.warn('RevalidatePath falló silenciosamente:', revalidateError);
+    } catch (revalidateError: any) {
+      console.warn('RevalidatePath falló:', revalidateError.message);
     }
 
     return { success: true, data: resultToReturn };
-  } catch (error) {
-    console.error('Error al actualizar plantilla:', error);
-    return { success: false, error: 'No se pudo actualizar el diseño.' };
+  } catch (error: any) {
+    console.error('Error crítico al actualizar plantilla:', error);
+    // Retornamos el mensaje de error real para diagnosticar en producción
+    return { 
+      success: false, 
+      error: `Error de base de datos: ${error.message || 'Desconocido'}. Por favor, contacta a soporte.`
+    };
   }
 }
