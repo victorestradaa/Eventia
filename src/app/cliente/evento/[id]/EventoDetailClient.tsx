@@ -148,8 +148,6 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
 
   const eventTypes = ['Boda', 'XV Años', 'Fiesta Infantil', 'Graduación', 'Fiesta', 'Bautizo'];
 
-  const evento = initialEvento;
-
   useEffect(() => {
     setTempEvento({
       nombre: initialEvento.nombre,
