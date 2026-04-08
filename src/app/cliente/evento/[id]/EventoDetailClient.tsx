@@ -20,7 +20,8 @@ import {
   Wallet,
   CheckCircle2,
   Clock as ClockIcon,
-  DollarSign
+  DollarSign,
+  Link as LinkIcon
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { formatearMoneda, formatearFechaCorta, cn } from '@/lib/utils';
@@ -851,15 +852,26 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                              >
                                <Edit size={16} />
                              </button>
-                             <button 
-                               onClick={() => handleOpenInvitationModal(i)}
-                               className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all underline-none"
-                               title="Enviar invitación"
-                             >
-                               <MessageCircle size={18} />
-                             </button>
-                           </div>
-                        </td>
+                              <button 
+                                onClick={() => {
+                                  const invitationUrl = `${window.location.origin}/invitacion/${i.id}`;
+                                  navigator.clipboard.writeText(invitationUrl);
+                                  alert('¡Enlace de invitación copiado!');
+                                }}
+                                className="p-2 rounded-lg bg-violet-500/10 text-violet-400 hover:bg-violet-500 hover:text-white transition-all"
+                                title="Copiar enlace real"
+                              >
+                                <LinkIcon size={16} />
+                              </button>
+                              <button 
+                                onClick={() => handleOpenInvitationModal(i)}
+                                className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all underline-none"
+                                title="Opciones de invitación"
+                              >
+                                <MessageCircle size={18} />
+                              </button>
+                            </div>
+                         </td>
                       </tr>
                     ))}
                   </tbody>
