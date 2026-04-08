@@ -281,19 +281,27 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
     
     setSavingTemplate(true);
     try {
-      const res = await updateInvitacionPlantilla(evento.id, plantilla);
+      // Usamos el nuevo Endpoint API para mayor estabilidad en AWS
+      const response = await fetch('/api/evento/plantilla', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventoId: evento.id, plantilla })
+      });
+      
+      const res = await response.json();
+
       if (res.success) {
         setInvitacion(res.data);
         // Forzamos un refresh manual para asegurar que los props del servidor se actualicen
         router.refresh();
       } else {
         setInvitacion(oldInvitacion);
-        alert(res.error);
+        alert('Error al guardar: ' + res.error);
       }
     } catch (error: any) {
       setInvitacion(oldInvitacion);
-      console.error(error);
-      alert('Error de conexión: ' + (error.message || 'Desconocido'));
+      console.error('Error de red:', error);
+      alert('Error de conexión con el servidor: ' + (error.message || 'Desconocido'));
     } finally {
       // Retrasamos un poco el fin del estado de carga para esperar al refresh
       setTimeout(() => {
