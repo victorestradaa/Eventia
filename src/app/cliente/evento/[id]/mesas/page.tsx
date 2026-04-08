@@ -115,6 +115,10 @@ export default function SeatingPage() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showAutoModal, setShowAutoModal] = useState(false);
 
+  // Drag & Drop Invitados
+  const [draggedGuest, setDraggedGuest] = useState<Invitado | null>(null);
+  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
+
   useEffect(() => {
     async function loadData() {
       // Cargar invitados
@@ -186,46 +190,69 @@ export default function SeatingPage() {
   };
 
   const handleMouseDown = (e: React.MouseEvent, id: string, x: number, y: number) => {
+    const rect = e.currentTarget.parentElement?.getBoundingClientRect();
+    if (!rect) return;
+    
     setDraggedMesa(id);
     setDragOffset({
-      x: e.clientX - x,
-      y: e.clientY - y
+      x: (e.clientX - rect.left) - x,
+      y: (e.clientY - rect.top) - y
     });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    setCursorPos({ x: e.clientX, y: e.clientY });
+
     if (draggedMesa === null) return;
     
+    const newX = x - dragOffset.x;
+    const newY = y - dragOffset.y;
+
     if (draggedMesa === 'pista') {
-      setPistaPos({
-        x: e.clientX - dragOffset.x,
-        y: e.clientY - dragOffset.y
-      });
+      setPistaPos({ x: newX, y: newY });
       return;
     }
 
     if (draggedMesa === 'escenario') {
-      setEscenarioPos({
-        x: e.clientX - dragOffset.x,
-        y: e.clientY - dragOffset.y
-      });
+      setEscenarioPos({ x: newX, y: newY });
       return;
     }
 
     setMesas(mesas.map(m => {
       if (m.id === draggedMesa) {
-        return {
-          ...m,
-          x: e.clientX - dragOffset.x,
-          y: e.clientY - dragOffset.y
-        };
+        return { ...m, x: newX, y: newY };
       }
       return m;
     }));
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (draggedGuest) {
+      // Intentar soltar en el lugar actual
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      // Si el mouse está sobre una mesa durante el mouseup, se asignará ahí
+      // Pero como estamos usando el mouseup global del canvas:
+      const targetMesa = mesas.find(m => {
+        const dx = x - m.x - 64; // centro aproximado
+        const dy = y - m.y - 64;
+        return Math.sqrt(dx*dx + dy*dy) < 80;
+      });
+
+      if (targetMesa) {
+        asignarInvitadoAMesa(draggedGuest.id, targetMesa.id);
+      } else {
+        asignarInvitadoAlSuelo(draggedGuest.id, x, y);
+      }
+    }
     setDraggedMesa(null);
+    setDraggedGuest(null);
   };
 
   const findAndRemoveInvitado = (id: string) => {
@@ -451,9 +478,10 @@ export default function SeatingPage() {
                     {invitadosSinMesa.map(i => (
                       <div 
                         key={i.id} 
-                        draggable="true"
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData('invitadoId', i.id);
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setDraggedGuest(i);
+                          setCursorPos({ x: e.clientX, y: e.clientY });
                         }}
                         className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm flex items-center gap-3 group hover:border-[#D4AF37] transition-all cursor-grab active:cursor-grabbing hover:shadow-md"
                       >
@@ -743,6 +771,27 @@ export default function SeatingPage() {
                 </div>
               ))}
            </div>
+
+           {/* Guest Drag Overlay */}
+           {draggedGuest && (
+             <div 
+               className="fixed pointer-events-none z-[9999] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2"
+               style={{ left: cursorPos.x, top: cursorPos.y }}
+             >
+                <div className={cn(
+                  "w-12 h-12 rounded-full border-4 shadow-2xl flex items-center justify-center bg-white scale-110",
+                  draggedGuest.tipoPersona === 'MUJER' && "border-pink-500 text-pink-500",
+                  draggedGuest.tipoPersona === 'NINO' && "border-blue-500 text-blue-500",
+                  draggedGuest.tipoPersona === 'NINA' && "border-pink-500 text-pink-500",
+                  !draggedGuest.tipoPersona && "border-[#D4AF37] text-[#D4AF37]"
+                )}>
+                  <PersonIcon tipo={draggedGuest.tipoPersona} className="w-8 h-8" />
+                </div>
+                <span className="bg-slate-900/80 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full backdrop-blur-md whitespace-nowrap">
+                  {draggedGuest.nombre}
+                </span>
+             </div>
+           )}
         </main>
       </div>
 

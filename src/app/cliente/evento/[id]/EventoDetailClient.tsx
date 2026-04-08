@@ -26,7 +26,7 @@ import { useState, useEffect } from 'react';
 import { formatearMoneda, formatearFechaCorta, cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { updateEvento, addInvitado, updateInvitadoRSVP } from '@/lib/actions/eventActions';
+import { updateEvento, addInvitado, updateInvitadoRSVP, updateInvitado } from '@/lib/actions/eventActions';
 import { registrarAbono } from '@/lib/actions/paymentActions';
 
 // Componente para los iconos de persona con diseño premium
@@ -108,6 +108,22 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   const [selectedTransaccionId, setSelectedTransaccionId] = useState<string | null>(null);
   const [montoAbono, setMontoAbono] = useState('');
   const [procesandoPago, setProcesandoPago] = useState(false);
+
+  // Detalle de Abono
+  const [selectedAbono, setSelectedAbono] = useState<any | null>(null);
+  const [isAbonoDetailModalOpen, setIsAbonoDetailModalOpen] = useState(false);
+
+  // Edición de Invitados
+  const [isEditGuestModalOpen, setIsEditGuestModalOpen] = useState(false);
+  const [guestToEdit, setGuestToEdit] = useState<any | null>(null);
+  const [editGuestForm, setEditGuestForm] = useState({
+    nombre: '',
+    email: '',
+    telefono: '',
+    categoria: '',
+    tipoPersona: '',
+    lado: ''
+  });
 
   const eventTypes = ['Boda', 'XV Años', 'Fiesta Infantil', 'Graduación', 'Fiesta', 'Bautizo'];
 
@@ -227,8 +243,22 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
 
   const handleSendWhatsApp = (invitado: any) => {
     if (!invitado.telefono) return alert('El invitado no tiene teléfono registrado');
-    const msg = encodeURIComponent(`¡Hola ${invitado.nombre}! Te invitamos a nuestro evento: ${evento.nombre}. Por favor confirma tu asistencia aquí: ${window.location.origin}/rsvp?id=${invitado.id}`);
+    const invitationUrl = `${window.location.origin}/invitacion/${invitado.id}`;
+    const msg = encodeURIComponent(`¡Hola ${invitado.nombre}! Te invitamos a nuestro evento: ${evento.nombre}. Por favor confirma tu asistencia aquí: ${invitationUrl}`);
     window.open(`https://wa.me/${invitado.telefono}?text=${msg}`, '_blank');
+  };
+
+  const handleUpdateGuest = async () => {
+    if (!guestToEdit) return;
+    setSaving(true);
+    const res = await updateInvitado(guestToEdit.id, editGuestForm);
+    if (res.success) {
+      setIsEditGuestModalOpen(false);
+      router.refresh();
+    } else {
+      alert(res.error);
+    }
+    setSaving(false);
   };
 
   return (
@@ -512,60 +542,71 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                           {lineasConReservas.flatMap((l:any) => (l.pagos || []).map((p:any) => ({...p, targetDesc: l.descripcion, parentLine: l}))).sort((a:any, b:any) => new Date(b.fechaPago || b.fechaVencimiento || b.fecha).getTime() - new Date(a.fechaPago || a.fechaVencimiento || a.fecha).getTime()).map((p:any, idx:number) => {
                             const isPending = p.estado === 'PENDIENTE';
                             return (
-                              <tr key={p.id || idx} className={cn("hover:bg-white/[0.01] transition-colors group", isPending && "bg-amber-500/[0.03]")}>
-                                 <td className="px-6 py-5">
-                                    <span className="font-bold group-hover:text-[var(--color-primario-claro)] transition-colors">
-                                      {(p.tipo || 'ABONO').toUpperCase()} - {p.targetDesc}
-                                    </span>
-                                    {p.nota && <p className="text-[10px] text-[var(--color-texto-muted)] italic font-normal tracking-tight">{p.nota}</p>}
-                                 </td>
-                                 <td className="px-6 py-5 text-emerald-400 font-black text-lg">
-                                   {formatearMoneda(p.monto)}
-                                 </td>
-                                 <td className="px-6 py-5">
-                                   {isPending ? (
-                                     <button 
-                                       onClick={() => {
-                                          setShowPagoModal(p.parentLine);
-                                          setMontoAbono(p.monto.toString());
-                                          setSelectedTransaccionId(p.id);
-                                       }}
-                                       className="flex flex-col items-start hover:scale-105 transition-transform text-left group/pay"
-                                     >
-                                       {(() => {
-                                          const venceDate = new Date(p.fechaVencimiento || p.fecha);
-                                          const hoy = new Date();
-                                          hoy.setHours(0, 0, 0, 0);
-                                          venceDate.setHours(0, 0, 0, 0);
-                                          const diffTime = venceDate.getTime() - hoy.getTime();
-                                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                          
-                                          let label = "PENDIENTE";
-                                          if (diffDays > 0) label = `VENCE EN ${diffDays} DIAS`;
-                                          else if (diffDays === 0) label = "VENCE HOY";
-                                          else label = "VENCIDO";
-
-                                          return (
-                                            <span className="text-[9px] text-red-500 font-black uppercase leading-none mb-1 opacity-90">{label}</span>
-                                          );
-                                       })()}
-                                       <span className="text-xl font-black text-amber-500 leading-none group-hover:text-amber-400 transition-colors">PAGA HOY</span>
-                                     </button>
-                                   ) : (
-                                     <span className="text-sm text-[var(--color-texto-suave)] font-bold">
-                                       {new Date(p.fechaPago || p.fechaVencimiento || p.fecha).toLocaleDateString()}
+                               <tr 
+                                 key={p.id || idx} 
+                                 onClick={() => {
+                                   setSelectedAbono({...p, concepto: `${(p.tipo || 'ABONO').toUpperCase()} - ${p.targetDesc}`});
+                                   setIsAbonoDetailModalOpen(true);
+                                 }}
+                                 className={cn(
+                                   "hover:bg-white/[0.03] cursor-pointer transition-colors group", 
+                                   isPending && "bg-amber-500/[0.03]"
+                                 )}
+                               >
+                                  <td className="px-6 py-5">
+                                     <span className="font-bold group-hover:text-[var(--color-primario-claro)] transition-colors">
+                                       {(p.tipo || 'ABONO').toUpperCase()} - {p.targetDesc}
                                      </span>
-                                   )}
-                                 </td>
-                                 <td className="px-6 py-5 text-center">
-                                    <span className={cn(
-                                      "badge text-[9px] font-black shadow-sm tracking-widest",
-                                      isPending ? "badge-apartado" : "badge-liquidado"
-                                    )}>
-                                      {(p.estado || 'PAGADO').toUpperCase()}
-                                    </span>
-                                 </td>
-                              </tr>
+                                     {p.nota && <p className="text-[10px] text-[var(--color-texto-muted)] italic font-normal tracking-tight">{p.nota}</p>}
+                                  </td>
+                                  <td className="px-6 py-5 text-emerald-400 font-black text-lg">
+                                    {formatearMoneda(p.monto)}
+                                  </td>
+                                  <td className="px-6 py-5">
+                                    {isPending ? (
+                                      <div 
+                                        onClick={(e) => {
+                                           e.stopPropagation();
+                                           setShowPagoModal(p.parentLine);
+                                           setMontoAbono(p.monto.toString());
+                                           setSelectedTransaccionId(p.id);
+                                        }}
+                                        className="flex flex-col items-start hover:scale-105 transition-transform text-left group/pay"
+                                      >
+                                        {(() => {
+                                           const venceDate = new Date(p.fechaVencimiento || p.fecha);
+                                           const hoy = new Date();
+                                           hoy.setHours(0, 0, 0, 0);
+                                           venceDate.setHours(0, 0, 0, 0);
+                                           const diffTime = venceDate.getTime() - hoy.getTime();
+                                           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                           
+                                           let label = "PENDIENTE";
+                                           if (diffDays > 0) label = `VENCE EN ${diffDays} DIAS`;
+                                           else if (diffDays === 0) label = "VENCE HOY";
+                                           else label = "VENCIDO";
+
+                                           return (
+                                             <span className="text-[9px] text-red-500 font-black uppercase leading-none mb-1 opacity-90">{label}</span>
+                                           );
+                                        })()}
+                                        <span className="text-xl font-black text-amber-500 leading-none group-hover:text-amber-400 transition-colors">PAGA HOY</span>
+                                      </div>
+                                    ) : (
+                                      <span className="text-sm text-[var(--color-texto-suave)] font-bold">
+                                        {new Date(p.fechaPago || p.fechaVencimiento || p.fecha).toLocaleDateString()}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-5 text-center">
+                                     <span className={cn(
+                                       "badge text-[9px] font-black shadow-sm tracking-widest",
+                                       isPending ? "badge-apartado" : "badge-liquidado"
+                                     )}>
+                                       {(p.estado || 'PAGADO').toUpperCase()}
+                                     </span>
+                                  </td>
+                               </tr>
                             );
                           })}
                         </tbody>
@@ -708,37 +749,64 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                            </span>
                         </td>
                         <td>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
+                             <button 
+                               onClick={() => handleUpdateRSVP(i.id, 'PENDIENTE')}
+                               className={cn(
+                                 "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border",
+                                 i.rsvpEstado === 'PENDIENTE' ? "bg-slate-500 text-white border-slate-400 shadow-lg shadow-slate-500/20" : "bg-white/5 text-slate-500 border-white/5 hover:bg-white/10"
+                               )}
+                             >
+                                Pendiente
+                             </button>
                              <button 
                                onClick={() => handleUpdateRSVP(i.id, 'CONFIRMADO')}
                                className={cn(
-                                 "p-2 rounded-lg transition-all",
-                                 i.rsvpEstado === 'CONFIRMADO' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-white/5 text-[var(--color-texto-muted)] hover:bg-emerald-500/20 hover:text-emerald-400"
+                                 "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border",
+                                 i.rsvpEstado === 'CONFIRMADO' ? "bg-emerald-500 text-white border-emerald-400 shadow-lg shadow-emerald-500/20" : "bg-white/5 text-emerald-500 border-white/5 hover:bg-emerald-500/20"
                                )}
-                               title="Confirmar"
                              >
-                                <Check size={16} />
+                                Asistirá
                              </button>
                              <button 
                                onClick={() => handleUpdateRSVP(i.id, 'RECHAZADO')}
                                className={cn(
-                                 "p-2 rounded-lg transition-all",
-                                 i.rsvpEstado === 'RECHAZADO' ? "bg-red-500 text-white shadow-lg shadow-red-500/20" : "bg-white/5 text-[var(--color-texto-muted)] hover:bg-red-500/20 hover:text-red-400"
+                                 "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border",
+                                 i.rsvpEstado === 'RECHAZADO' ? "bg-red-500 text-white border-red-400 shadow-lg shadow-red-500/20" : "bg-white/5 text-red-500 border-white/5 hover:bg-red-500/20"
                                )}
-                               title="Rechazar"
                              >
-                                <X size={16} />
+                                No Asiste
                              </button>
                           </div>
                         </td>
                         <td className="text-right">
-                           <button 
-                             onClick={() => handleSendWhatsApp(i)}
-                             className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all opacity-0 group-hover/row:opacity-100"
-                             title="Enviar invitación por WhatsApp"
-                           >
-                             <MessageCircle size={18} />
-                           </button>
+                           <div className="flex items-center justify-end gap-2 opacity-0 group-hover/row:opacity-100 transition-all">
+                             <button 
+                               onClick={() => {
+                                 setGuestToEdit(i);
+                                 setEditGuestForm({
+                                   nombre: i.nombre,
+                                   email: i.email || '',
+                                   telefono: i.telefono || '',
+                                   categoria: i.categoria || 'AMIGOS',
+                                   tipoPersona: i.tipoPersona || 'HOMBRE',
+                                   lado: i.lado || ''
+                                 });
+                                 setIsEditGuestModalOpen(true);
+                               }}
+                               className="p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-all"
+                               title="Editar invitado"
+                             >
+                               <Edit size={16} />
+                             </button>
+                             <button 
+                               onClick={() => handleSendWhatsApp(i)}
+                               className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all"
+                               title="Enviar invitación por WhatsApp"
+                             >
+                               <MessageCircle size={18} />
+                             </button>
+                           </div>
                         </td>
                       </tr>
                     ))}
@@ -976,6 +1044,162 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                  </button>
               </div>
            </div>
+        </div>
+      )}
+      {/* MODAL DETALLE DE ABONO */}
+      {isAbonoDetailModalOpen && selectedAbono && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="card max-w-lg w-full p-8 border-white/10 shadow-2xl animate-in zoom-in-95 duration-300">
+              <div className="flex justify-between items-center mb-6">
+                 <h2 className="text-xl font-black italic uppercase tracking-tighter">Detalle del Pago</h2>
+                 <button onClick={() => setIsAbonoDetailModalOpen(false)} className="p-2 rounded-full hover:bg-white/5 transition-colors"><X size={20} /></button>
+              </div>
+
+              <div className="space-y-6">
+                 <div className="p-6 rounded-2xl bg-white/5 border border-white/5 space-y-4">
+                    <div className="flex justify-between items-start">
+                       <div>
+                          <p className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest leading-none mb-1">Concepto</p>
+                          <p className="text-lg font-bold text-[var(--color-texto-fuerte)] leading-tight">{selectedAbono.concepto}</p>
+                       </div>
+                       <span className={cn(
+                          "badge text-[9px] font-black uppercase tracking-widest px-3 py-1",
+                          selectedAbono.estado === 'PAGADO' ? "badge-liquidado" : "badge-apartado"
+                       )}>
+                          {selectedAbono.estado || 'PAGADO'}
+                       </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                       <div>
+                          <p className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest leading-none mb-1">Monto Aplicado</p>
+                          <p className="text-2xl font-black text-emerald-400">{formatearMoneda(selectedAbono.monto)}</p>
+                       </div>
+                       <div>
+                          <p className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest leading-none mb-1">Fecha</p>
+                          <p className="font-bold text-[var(--color-texto-suave)]">
+                            {new Date(selectedAbono.fechaPago || selectedAbono.fechaVencimiento || selectedAbono.fecha).toLocaleDateString()}
+                          </p>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 gap-3">
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5 text-sm">
+                       <CreditCard size={18} className="text-[var(--color-primario-claro)]" />
+                       <span className="text-[var(--color-texto-muted)]">Método de Pago:</span>
+                       <span className="font-bold ml-auto">{selectedAbono.metodoPago || 'No especificado'}</span>
+                    </div>
+                    {selectedAbono.referencia && (
+                       <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5 text-sm">
+                          <AlertCircle size={18} className="text-blue-400" />
+                          <span className="text-[var(--color-texto-muted)]">Referencia:</span>
+                          <span className="font-bold ml-auto">{selectedAbono.referencia}</span>
+                       </div>
+                    )}
+                 </div>
+
+                 {selectedAbono.nota && (
+                    <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 space-y-1">
+                       <p className="text-[9px] font-black uppercase text-amber-500 tracking-widest leading-none">Notas / Comentarios</p>
+                       <p className="text-xs text-amber-200/70 italic leading-relaxed">{selectedAbono.nota}</p>
+                    </div>
+                 )}
+
+                 <button onClick={() => setIsAbonoDetailModalOpen(false)} className="btn btn-secundario w-full py-4 uppercase font-black tracking-widest text-xs">Cerrar</button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* MODAL EDITAR INVITADO (SIMPLIFICADO) */}
+      {isEditGuestModalOpen && guestToEdit && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="card max-w-lg w-full p-8 space-y-8 animate-in zoom-in-95 duration-300">
+             <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                <div className="flex items-center gap-3">
+                   <Edit size={20} className="text-[var(--color-primario-claro)]" />
+                   <h2 className="text-2xl font-bold italic tracking-tighter uppercase">Editar Invitado</h2>
+                </div>
+                <button onClick={() => setIsEditGuestModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors"><X size={20} /></button>
+             </div>
+             
+             <div className="space-y-6">
+                <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-1">Nombre del Invitado</label>
+                   <input 
+                     type="text" 
+                     value={editGuestForm.nombre} 
+                     onChange={(e) => setEditGuestForm({...editGuestForm, nombre: e.target.value})} 
+                     className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-4 outline-none focus:border-[var(--color-primario)] transition-all text-lg font-bold" 
+                     placeholder="Nombre completo" 
+                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-1">Categoría</label>
+                      <select 
+                        value={editGuestForm.categoria} 
+                        onChange={(e) => setEditGuestForm({...editGuestForm, categoria: e.target.value})} 
+                        className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario)] transition-all font-bold"
+                      >
+                        <option value="FAMILIA">Familia</option>
+                        <option value="AMIGOS">Amigos</option>
+                        <option value="TRABAJO">Trabajo</option>
+                        <option value="OTRO">Otro</option>
+                      </select>
+                   </div>
+                   {evento.tipo === 'Boda' && (
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-1">Lado</label>
+                        <select 
+                          value={editGuestForm.lado} 
+                          onChange={(e) => setEditGuestForm({...editGuestForm, lado: e.target.value})} 
+                          className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario)] transition-all font-bold"
+                        >
+                          <option value="">Sin asignar</option>
+                          <option value="NOVIO">Novio</option>
+                          <option value="NOVIA">Novia</option>
+                        </select>
+                     </div>
+                   )}
+                </div>
+
+                <div className="space-y-3">
+                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-1">Seleccionar Icono</label>
+                   <div className="grid grid-cols-4 gap-3">
+                      {[
+                        { id: 'HOMBRE', label: 'H' },
+                        { id: 'MUJER', label: 'M' },
+                        { id: 'NINO', label: 'Niño' },
+                        { id: 'NINA', label: 'Niña' }
+                      ].map(tipo => (
+                        <button
+                          key={tipo.id}
+                          onClick={() => setEditGuestForm({ ...editGuestForm, tipoPersona: tipo.id })}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-3 rounded-xl border transition-all",
+                            editGuestForm.tipoPersona === tipo.id 
+                              ? "border-[var(--color-primario)] bg-[var(--color-primario)]/20 text-white" 
+                              : "border-white/5 bg-white/5 text-[var(--color-texto-muted)] hover:bg-white/10"
+                          )}
+                        >
+                          <PersonIcon tipo={tipo.id} className="w-6 h-6" />
+                          <span className="text-[8px] font-black uppercase">{tipo.label}</span>
+                        </button>
+                      ))}
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                   <button onClick={() => setIsEditGuestModalOpen(false)} className="btn btn-secundario py-4 text-xs font-black uppercase tracking-widest" disabled={saving}>Cancelar</button>
+                   <button onClick={handleUpdateGuest} className="btn btn-primario py-4 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2" disabled={saving}>
+                     {saving ? <Loader2 size={16} className="animate-spin" /> : 'Actualizar'}
+                   </button>
+                </div>
+             </div>
+          </div>
         </div>
       )}
     </div>

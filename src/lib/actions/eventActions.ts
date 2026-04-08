@@ -141,6 +141,38 @@ export async function updateInvitadoRSVP(id: string, rsvpEstado: 'CONFIRMADO' | 
 }
 
 /**
+ * Actualiza la información general de un invitado.
+ */
+export async function updateInvitado(id: string, data: {
+  nombre?: string;
+  email?: string;
+  telefono?: string;
+  lado?: string;
+  categoria?: string;
+  tipoPersona?: string;
+}) {
+  try {
+    const invitado = await prisma.invitado.update({
+      where: { id },
+      data: {
+        nombre: data.nombre,
+        email: data.email,
+        telefono: data.telefono,
+        lado: data.lado,
+        categoria: data.categoria,
+        tipoPersona: data.tipoPersona,
+      }
+    });
+
+    revalidatePath(`/cliente/evento/${invitado.eventoId}`);
+    return { success: true, data: invitado };
+  } catch (error) {
+    console.error('Error al actualizar invitado:', error);
+    return { success: false, error: 'No se pudo actualizar la información del invitado.' };
+  }
+}
+
+/**
  * Actualiza el tipo de persona/género de un invitado.
  */
 export async function updateInvitadoTipo(id: string, tipoPersona: string) {
@@ -203,5 +235,32 @@ export async function getPlanoMesas(eventoId: string) {
   } catch (error) {
     console.error('Error al obtener plano de mesas:', error);
     return { success: false, error: 'No se pudo cargar el diseño del plano.' };
+  }
+}
+
+/**
+ * Obtiene los detalles de un invitado y su evento para la página de RSVP pública.
+ */
+export async function getInvitadoRSVPDetail(invitadoId: string) {
+  try {
+    const invitado = await prisma.invitado.findUnique({
+      where: { id: invitadoId },
+      include: {
+        evento: true
+      }
+    });
+
+    if (!invitado) {
+      return { success: false, error: 'Invitado no encontrado.' };
+    }
+
+    return { 
+      success: true, 
+      invitado: { id: invitado.id, nombre: invitado.nombre },
+      evento: { id: invitado.evento.id, nombre: invitado.evento.nombre, fecha: invitado.evento.fecha }
+    };
+  } catch (error) {
+    console.error('Error al obtener detalle de RSVP:', error);
+    return { success: false, error: 'Hubo un error al cargar la invitación.' };
   }
 }
