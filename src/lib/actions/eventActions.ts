@@ -246,7 +246,11 @@ export async function getInvitadoRSVPDetail(invitadoId: string) {
     const invitado = await prisma.invitado.findUnique({
       where: { id: invitadoId },
       include: {
-        evento: true
+        evento: {
+          include: {
+            invitacion: true
+          }
+        }
       }
     });
 
@@ -286,7 +290,7 @@ export async function getOrCreateInvitacion(eventoId: string) {
     }
 
     // Si no existe, la creamos con valores por defecto basados en el tipo de evento
-    let plantillaDefault = 'clasica';
+    let plantillaDefault = 'FIESTA';
     if (evento?.tipo === 'Boda') plantillaDefault = 'BODA';
     else if (evento?.tipo === 'XV Años') plantillaDefault = 'XV_ANOS';
     else if (evento?.tipo === 'Fiesta Infantil') plantillaDefault = 'INFANTIL';

@@ -797,7 +797,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                   className={cn(
                     "relative flex flex-col items-center p-3 rounded-xl border-2 transition-all text-center group",
                     invitacion?.plantilla === t.id 
-                      ? "border-violet-500 bg-violet-500/10" 
+                      ? "border-violet-600 bg-violet-500/10 shadow-lg shadow-violet-500/20 border-4 scale-105" 
                       : "border-transparent bg-white/5 hover:border-white/20"
                   )}
                 >
