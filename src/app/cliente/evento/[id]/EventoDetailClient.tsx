@@ -27,33 +27,48 @@ import { formatearMoneda, formatearFechaCorta, cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { updateEvento, addInvitado, updateInvitadoRSVP } from '@/lib/actions/eventActions';
+import { registrarAbono } from '@/lib/actions/paymentActions';
 
 // Componente para los iconos de persona con diseño premium
 const PersonIcon = ({ tipo, className = "w-8 h-8" }: { tipo: string, className?: string }) => {
   if (tipo === 'HOMBRE') {
     return (
       <div className={cn("relative flex items-center justify-center", className)}>
-        <UserIcon className="w-full h-full" />
-        <div className="absolute top-[60%] left-1/2 -translate-x-1/2 w-[20%] h-[30%] bg-[#D4AF37] rounded-full" /> {/* Corbata simbólica */}
+        <UserIcon className="w-full h-full text-slate-400" />
+        {/* Corbata y Solapa */}
+        <div className="absolute top-[55%] left-1/2 -translate-x-1/2 w-[15%] h-[30%] bg-slate-800 rounded-b-sm" /> 
+        <div className="absolute top-[52%] left-1/2 -translate-x-1/2 w-[25%] h-[10%] bg-slate-800 rounded-t-full" />
       </div>
     );
   }
   if (tipo === 'MUJER') {
     return (
       <div className={cn("relative flex items-center justify-center", className)}>
-        <UserIcon className="w-full h-full" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90%] h-[40%] border-t-4 border-pink-400 rounded-full" /> {/* Pelo simbólico */}
+        <UserIcon className="w-full h-full text-pink-300" />
+        {/* Peinado Estilizado */}
+        <div className="absolute top-1 left-1/2 -translate-x-1/2 w-[85%] h-[35%] border-t-[3px] border-pink-500 rounded-full" />
+        <div className="absolute top-2 -right-1 w-2 h-4 bg-pink-500 rounded-full rotate-12" />
       </div>
     );
   }
   if (tipo === 'NINO') {
-    return <Baby className={cn("text-blue-400", className)} />;
+    return (
+      <div className={cn("relative flex items-center justify-center", className)}>
+        <Baby className="w-full h-full text-blue-400" />
+        {/* Moñito de traje para niño */}
+        <div className="absolute top-[65%] left-1/2 -translate-x-1/2 flex gap-0.5">
+          <div className="w-1 h-1 bg-blue-600 rotate-45" />
+          <div className="w-1 h-1 bg-blue-600 -rotate-45" />
+        </div>
+      </div>
+    );
   }
   if (tipo === 'NINA') {
     return (
       <div className={cn("relative flex items-center justify-center", className)}>
         <Baby className="w-full h-full text-pink-400" />
-        <div className="absolute -top-1 -right-1 w-3 h-3 bg-pink-500 rounded-full border border-white" /> {/* Moño simbólico */}
+        {/* Moño grande para niña */}
+        <div className="absolute -top-1 right-0 w-3 h-3 bg-pink-500 rounded-sm rotate-45 border border-white shadow-sm" />
       </div>
     );
   }
@@ -66,28 +81,19 @@ interface EventoDetailClientProps {
 
 export default function EventoDetailClient({ evento: initialEvento }: EventoDetailClientProps) {
   const router = useRouter();
-  const evento = initialEvento;
-
-  useEffect(() => {
-    setTempEvento({
-      nombre: initialEvento.nombre,
-      fecha: initialEvento.fecha ? new Date(initialEvento.fecha).toISOString().split('T')[0] : '',
-      tipo: initialEvento.tipo,
-      numInvitados: initialEvento.numInvitados || 0,
-      presupuestoTotal: Number(initialEvento.presupuestoTotal) || 0,
-    });
-  }, [initialEvento]);
   const [tabActiva, setTabActiva] = useState('resumen');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [tempEvento, setTempEvento] = useState({
-    nombre: evento.nombre,
-    fecha: evento.fecha ? new Date(evento.fecha).toISOString().split('T')[0] : '',
-    tipo: evento.tipo,
-    numInvitados: evento.numInvitados || 0,
-    presupuestoTotal: Number(evento.presupuestoTotal) || 0,
-  });
   const [isAddGuestModalOpen, setIsAddGuestModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  
+  const [tempEvento, setTempEvento] = useState({
+    nombre: initialEvento.nombre,
+    fecha: initialEvento.fecha ? new Date(initialEvento.fecha).toISOString().split('T')[0] : '',
+    tipo: initialEvento.tipo,
+    numInvitados: initialEvento.numInvitados || 0,
+    presupuestoTotal: Number(initialEvento.presupuestoTotal) || 0,
+  });
+
   const [newGuest, setNewGuest] = useState({
     nombre: '',
     email: '',
@@ -104,6 +110,18 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   const [procesandoPago, setProcesandoPago] = useState(false);
 
   const eventTypes = ['Boda', 'XV Años', 'Fiesta Infantil', 'Graduación', 'Fiesta', 'Bautizo'];
+
+  const evento = initialEvento;
+
+  useEffect(() => {
+    setTempEvento({
+      nombre: initialEvento.nombre,
+      fecha: initialEvento.fecha ? new Date(initialEvento.fecha).toISOString().split('T')[0] : '',
+      tipo: initialEvento.tipo,
+      numInvitados: initialEvento.numInvitados || 0,
+      presupuestoTotal: Number(initialEvento.presupuestoTotal) || 0,
+    });
+  }, [initialEvento]);
 
   // Datos reales del evento
   const invitados = evento.invitados || [];
@@ -642,14 +660,15 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                     </tr>
                   </thead>
                   <tbody>
+                    {invitados.map((i: any) => (
                       <tr key={i.id} className="group/row">
                         <td className="py-4">
                            <div className="flex items-center gap-3">
                               <div className={cn(
-                                "w-10 h-10 rounded-full flex items-center justify-center bg-white/5 border border-white/10 text-[var(--color-primario-claro)]",
-                                i.tipoPersona === 'MUJER' && "border-pink-500/30 text-pink-400",
-                                i.tipoPersona === 'NINO' && "border-blue-500/30 text-blue-400",
-                                i.tipoPersona === 'NINA' && "border-pink-500/30 text-pink-400"
+                                "w-10 h-10 rounded-full flex items-center justify-center bg-white/5 border border-white/10 text-[var(--color-primario-claro)] transition-all group-hover/row:scale-110",
+                                i.tipoPersona === 'MUJER' && "border-pink-500/30",
+                                i.tipoPersona === 'NINO' && "border-blue-500/30",
+                                i.tipoPersona === 'NINA' && "border-pink-500/30"
                               )}>
                                 <PersonIcon tipo={i.tipoPersona} className="w-6 h-6" />
                               </div>
@@ -722,6 +741,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                            </button>
                         </td>
                       </tr>
+                    ))}
                   </tbody>
                </table>
             </div>

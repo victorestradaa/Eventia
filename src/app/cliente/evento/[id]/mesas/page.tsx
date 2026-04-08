@@ -44,27 +44,41 @@ const PersonIcon = ({ tipo, className = "w-8 h-8" }: { tipo: string | null | und
   if (tipo === 'HOMBRE') {
     return (
       <div className={cn("relative flex items-center justify-center", className)}>
-        <UserIcon className="w-full h-full" />
-        <div className="absolute top-[60%] left-1/2 -translate-x-1/2 w-[20%] h-[30%] bg-[#D4AF37] rounded-full" />
+        <UserIcon className="w-full h-full text-slate-400" />
+        {/* Corbata y Solapa */}
+        <div className="absolute top-[55%] left-1/2 -translate-x-1/2 w-[15%] h-[30%] bg-slate-800 rounded-b-sm" /> 
+        <div className="absolute top-[52%] left-1/2 -translate-x-1/2 w-[25%] h-[10%] bg-slate-800 rounded-t-full" />
       </div>
     );
   }
   if (tipo === 'MUJER') {
     return (
       <div className={cn("relative flex items-center justify-center", className)}>
-        <UserIcon className="w-full h-full" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90%] h-[40%] border-t-2 border-pink-400 rounded-full" />
+        <UserIcon className="w-full h-full text-pink-300" />
+        {/* Peinado Estilizado */}
+        <div className="absolute top-1 left-1/2 -translate-x-1/2 w-[85%] h-[35%] border-t-[3px] border-pink-500 rounded-full" />
+        <div className="absolute top-2 -right-1 w-2 h-4 bg-pink-500 rounded-full rotate-12" />
       </div>
     );
   }
   if (tipo === 'NINO') {
-    return <Baby className={cn("text-blue-400", className)} />;
+    return (
+      <div className={cn("relative flex items-center justify-center", className)}>
+        <Baby className="w-full h-full text-blue-400" />
+        {/* Moñito de traje para niño */}
+        <div className="absolute top-[65%] left-1/2 -translate-x-1/2 flex gap-0.5">
+          <div className="w-1 h-1 bg-blue-600 rotate-45" />
+          <div className="w-1 h-1 bg-blue-600 -rotate-45" />
+        </div>
+      </div>
+    );
   }
   if (tipo === 'NINA') {
     return (
       <div className={cn("relative flex items-center justify-center", className)}>
         <Baby className="w-full h-full text-pink-400" />
-        <div className="absolute -top-1 -right-1 w-2 h-2 bg-pink-500 rounded-full border border-white" />
+        {/* Moño grande para niña */}
+        <div className="absolute -top-1 right-0 w-3 h-3 bg-pink-500 rounded-sm rotate-45 border border-white shadow-sm" />
       </div>
     );
   }
