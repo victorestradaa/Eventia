@@ -150,7 +150,10 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
 
   useEffect(() => {
     setEvento(initialEvento);
-    setInvitacion(initialEvento.invitacion);
+    // Solo sincronizamos si no estamos en medio de una actualización
+    if (!savingTemplate) {
+      setInvitacion(initialEvento.invitacion);
+    }
     setTempEvento({
       nombre: initialEvento.nombre,
       fecha: initialEvento.fecha ? new Date(initialEvento.fecha).toISOString().split('T')[0] : '',
@@ -158,7 +161,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
       numInvitados: initialEvento.numInvitados || 0,
       presupuestoTotal: Number(initialEvento.presupuestoTotal) || 0,
     });
-  }, [initialEvento]);
+  }, [initialEvento, savingTemplate]);
 
   // Datos reales del evento
   const invitados = evento.invitados || [];
@@ -269,17 +272,20 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   };
 
   const handleUpdateTemplate = async (plantilla: string) => {
-    // Feedback instantáneo local
+    // Feedback instantáneo local optimista
     const oldInvitacion = invitacion;
-    setInvitacion(prev => prev ? { ...prev, plantilla } : { plantilla } as any);
+    setInvitacion(prev => ({
+      ...prev,
+      plantilla: plantilla
+    } as any));
     
     setSavingTemplate(true);
     try {
       const res = await updateInvitacionPlantilla(evento.id, plantilla);
       if (res.success) {
         setInvitacion(res.data);
-        // El revalidatePath en el servidor hará que initialEvento cambie,
-        // lo que activará el useEffect de arriba para sincronizar todo.
+        // Forzamos un refresh manual para asegurar que los props del servidor se actualicen
+        router.refresh();
       } else {
         setInvitacion(oldInvitacion);
         alert(res.error);
@@ -288,7 +294,10 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
       setInvitacion(oldInvitacion);
       console.error(error);
     } finally {
-      setSavingTemplate(false);
+      // Retrasamos un poco el fin del estado de carga para esperar al refresh
+      setTimeout(() => {
+        setSavingTemplate(false);
+      }, 1000);
     }
   };
 

@@ -2,6 +2,9 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import EventoDetailClient from './EventoDetailClient';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface Props {
   params: Promise<{ id: string }>;
 }
