@@ -34,6 +34,7 @@ export default async function EventDetailPage({ params }: Props) {
         },
         orderBy: { creadoEn: 'desc' },
       },
+      invitacion: true,
     },
   });
 

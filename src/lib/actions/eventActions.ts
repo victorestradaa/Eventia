@@ -257,10 +257,77 @@ export async function getInvitadoRSVPDetail(invitadoId: string) {
     return { 
       success: true, 
       invitado: { id: invitado.id, nombre: invitado.nombre },
-      evento: { id: invitado.evento.id, nombre: invitado.evento.nombre, fecha: invitado.evento.fecha }
+      evento: { 
+        id: invitado.evento.id, 
+        nombre: invitado.evento.nombre, 
+        fecha: invitado.evento.fecha,
+        tipo: invitado.evento.tipo,
+        invitacion: invitado.evento.invitacion
+      }
     };
   } catch (error) {
     console.error('Error al obtener detalle de RSVP:', error);
     return { success: false, error: 'Hubo un error al cargar la invitación.' };
+  }
+}
+
+/**
+ * Obtiene o crea la invitación digital para un evento.
+ */
+export async function getOrCreateInvitacion(eventoId: string) {
+  try {
+    const evento = await prisma.evento.findUnique({
+      where: { id: eventoId },
+      include: { invitacion: true }
+    });
+
+    if (evento?.invitacion) {
+      return { success: true, data: evento.invitacion };
+    }
+
+    // Si no existe, la creamos con valores por defecto basados en el tipo de evento
+    let plantillaDefault = 'clasica';
+    if (evento?.tipo === 'Boda') plantillaDefault = 'BODA';
+    else if (evento?.tipo === 'XV Años') plantillaDefault = 'XV_ANOS';
+    else if (evento?.tipo === 'Fiesta Infantil') plantillaDefault = 'INFANTIL';
+    else if (evento?.tipo === 'Graduación') plantillaDefault = 'GRADUACION';
+    else if (evento?.tipo === 'Bautizo') plantillaDefault = 'BAUTIZO';
+    else plantillaDefault = 'FIESTA';
+
+    const nuevaInvitacion = await prisma.invitacionDigital.create({
+      data: {
+        eventoId,
+        plantilla: plantillaDefault,
+        titulo: evento?.nombre || 'Invitación Especial',
+      }
+    });
+
+    return { success: true, data: nuevaInvitacion };
+  } catch (error) {
+    console.error('Error al gestionar invitación digital:', error);
+    return { success: false, error: 'No se pudo cargar la configuración de la invitación.' };
+  }
+}
+
+/**
+ * Actualiza la plantilla de la invitación digital.
+ */
+export async function updateInvitacionPlantilla(eventoId: string, plantilla: string) {
+  try {
+    const invitacion = await prisma.invitacionDigital.upsert({
+      where: { eventoId },
+      update: { plantilla },
+      create: { 
+        eventoId, 
+        plantilla,
+        titulo: 'Invitación Especial'
+      }
+    });
+
+    revalidatePath(`/cliente/evento/${eventoId}`);
+    return { success: true, data: invitacion };
+  } catch (error) {
+    console.error('Error al actualizar plantilla:', error);
+    return { success: false, error: 'No se pudo actualizar el diseño.' };
   }
 }

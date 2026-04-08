@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { CheckCircle2, XCircle, Loader2, Calendar, MapPin, Users } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, Calendar, MapPin, Users, Heart, Star, Sparkles, Gift, Baby, GraduationCap, PartyPopper } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getInvitadoRSVPDetail, updateInvitadoRSVP } from '@/lib/actions/eventActions';
 
@@ -53,21 +53,92 @@ export default function InvitacionPublica() {
     }
   };
 
+  // Configuración de temas
+  const getTheme = (plantilla: string) => {
+    switch (plantilla) {
+      case 'BODA':
+        return {
+          bg: 'bg-[#faf9f6]',
+          card: 'bg-white border-[#C5A059]/20 shadow-[0_20px_50px_rgba(197,160,89,0.1)]',
+          accent: 'text-[#C5A059]',
+          btnPrimary: 'bg-[#C5A059] text-white hover:bg-[#A68648]',
+          textMain: 'text-[#2c2c2c]',
+          textMuted: 'text-[#5c5c5c]',
+          icon: <Heart size={40} className="text-[#C5A059] mx-auto mb-4" />,
+          decor: <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]" />,
+          font: 'font-serif'
+        };
+      case 'XV_ANOS':
+        return {
+          bg: 'bg-[#fff5f8]',
+          card: 'bg-white border-pink-200 shadow-[0_20px_50px_rgba(236,72,153,0.1)]',
+          accent: 'text-pink-500',
+          btnPrimary: 'bg-pink-500 text-white hover:bg-pink-600',
+          textMain: 'text-[#333]',
+          textMuted: 'text-[#666]',
+          icon: <Sparkles size={40} className="text-pink-400 mx-auto mb-4" />,
+          decor: <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-pink-300 via-purple-300 to-pink-300" />
+        };
+      case 'INFANTIL':
+        return {
+          bg: 'bg-[#f0f9ff]',
+          card: 'bg-white border-blue-200 rounded-[3rem] shadow-xl',
+          accent: 'text-blue-500',
+          btnPrimary: 'bg-yellow-400 text-blue-900 hover:bg-yellow-500 font-black rounded-full',
+          textMain: 'text-blue-900',
+          textMuted: 'text-blue-700/60',
+          icon: <Gift size={40} className="text-blue-400 mx-auto mb-4" />
+        };
+      case 'GRADUACION':
+        return {
+          bg: 'bg-[#0f172a]',
+          card: 'bg-slate-900 border-yellow-500/30 shadow-2xl',
+          accent: 'text-yellow-500',
+          btnPrimary: 'bg-yellow-600 text-white hover:bg-yellow-700',
+          textMain: 'text-white',
+          textMuted: 'text-slate-400',
+          icon: <GraduationCap size={40} className="text-yellow-500 mx-auto mb-4" />
+        };
+       case 'BAUTIZO':
+        return {
+          bg: 'bg-[#f8fafc]',
+          card: 'bg-white border-blue-100 shadow-md rounded-[2rem]',
+          accent: 'text-blue-300',
+          btnPrimary: 'bg-blue-100 text-blue-600 hover:bg-blue-200',
+          textMain: 'text-slate-700',
+          textMuted: 'text-slate-400',
+          icon: <Baby size={40} className="text-blue-200 mx-auto mb-4" />
+        };
+      default: // FIESTA / GENERAL
+        return {
+          bg: 'bg-[#09090b]',
+          card: 'bg-white/[0.03] border-white/5 backdrop-blur-xl shadow-2xl',
+          accent: 'text-violet-400',
+          btnPrimary: 'bg-emerald-500 text-emerald-950 hover:bg-emerald-400 shadow-[0_10px_40px_rgba(16,185,129,0.3)]',
+          textMain: 'text-white',
+          textMuted: 'text-slate-400',
+          icon: <PartyPopper size={40} className="text-violet-400 mx-auto mb-1" />
+        };
+    }
+  };
+
+  const currentTheme = getTheme(evento?.invitacion?.plantilla || 'FIESTA');
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#09090b] text-white">
-        <Loader2 className="animate-spin text-violet-500" size={48} />
+      <div className={cn("min-h-screen flex items-center justify-center", currentTheme.bg)}>
+        <Loader2 className="animate-spin text-[var(--color-primario)]" size={48} />
       </div>
     );
   }
 
   if (status === 'ERROR' || !evento) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#09090b] text-white p-6 text-center">
+      <div className={cn("min-h-screen flex items-center justify-center p-6 text-center", currentTheme.bg, currentTheme.textMain)}>
         <div className="space-y-4">
           <XCircle size={64} className="mx-auto text-red-500" />
-          <h1 className="text-2xl font-bold italic uppercase tracking-tighter">Invitación no encontrada</h1>
-          <p className="text-slate-400">El enlace podría estar vencido o ser incorrecto.</p>
+          <h1 className="text-2xl font-bold uppercase tracking-tighter">Invitación no encontrada</h1>
+          <p className={currentTheme.textMuted}>El enlace podría estar vencido o ser incorrecto.</p>
         </div>
       </div>
     );
@@ -75,26 +146,23 @@ export default function InvitacionPublica() {
 
   if (status === 'SUCCESS') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#09090b] text-white p-6 text-center">
-        <div className="max-w-md w-full space-y-8 animate-in zoom-in-95 duration-500">
-          <div className="p-8 rounded-[40px] bg-white/5 border border-white/10 shadow-2xl relative overflow-hidden">
-             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500 to-fuchsia-500" />
-             
+      <div className={cn("min-h-screen flex items-center justify-center p-6 text-center", currentTheme.bg)}>
+        <div className="max-w-md w-full animate-in zoom-in-95 duration-500">
+          <div className={cn("p-8 rounded-[40px] border relative overflow-hidden", currentTheme.card)}>
              {response === 'CONFIRMADO' ? (
                 <>
-                  <CheckCircle2 size={80} className="mx-auto text-emerald-500 mb-6 drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]" />
-                  <h1 className="text-3xl font-black italic uppercase tracking-tighter mb-4">¡Confirmado!</h1>
-                  <p className="text-slate-300 leading-relaxed">
-                    Muchas gracias <span className="text-white font-bold">{invitado.nombre}</span>, hemos registrado tu asistencia para <span className="text-[var(--color-primario-claro)] font-bold">{evento.nombre}</span>.
+                  <CheckCircle2 size={80} className="mx-auto text-emerald-500 mb-6" />
+                  <h1 className={cn("text-3xl font-black uppercase mb-4", currentTheme.textMain)}>¡Confirmado!</h1>
+                  <p className={cn("leading-relaxed", currentTheme.textMuted)}>
+                    Muchas gracias <span className={cn("font-bold", currentTheme.textMain)}>{invitado.nombre}</span>, hemos registrado tu asistencia para <span className={cn("font-bold", currentTheme.accent)}>{evento.nombre}</span>.
                   </p>
-                  <p className="mt-4 text-sm text-slate-500 italic">¡Te esperamos pronto!</p>
                 </>
              ) : (
                 <>
                    <XCircle size={80} className="mx-auto text-slate-500 mb-6" />
-                   <h1 className="text-3xl font-black italic uppercase tracking-tighter mb-4">Entendido</h1>
-                   <p className="text-slate-300 leading-relaxed">
-                     Lamentamos que no puedas acompañarnos <span className="text-white font-bold">{invitado.nombre}</span> en esta ocasión. Tu respuesta ha sido enviada.
+                   <h1 className={cn("text-3xl font-black uppercase mb-4", currentTheme.textMain)}>Entendido</h1>
+                   <p className={cn("leading-relaxed", currentTheme.textMuted)}>
+                     Lamentamos que no puedas acompañarnos <span className={cn("font-bold", currentTheme.textMain)}>{invitado.nombre}</span>.
                    </p>
                 </>
              )}
@@ -105,58 +173,52 @@ export default function InvitacionPublica() {
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
-      {/* Background Decor */}
-      <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-violet-600/10 blur-[120px] rounded-full" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-fuchsia-600/10 blur-[120px] rounded-full" />
-
+    <div className={cn("min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden", currentTheme.bg, currentTheme.font)}>
+      {/* Decorative elements */}
+      {currentTheme.decor}
+      
       <div className="max-w-md w-full space-y-12 relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-        {/* Header / Invitation card */}
-        <div className="text-center space-y-6">
-           <div className="inline-block px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-[0.3em] text-violet-400 mb-2">
-              Invitación Especial
-           </div>
-           <h1 className="text-5xl font-black italic uppercase tracking-tighter leading-none bg-gradient-to-br from-white via-white to-white/40 bg-clip-text text-transparent">
+        <div className="text-center space-y-4">
+           {currentTheme.icon}
+           <h1 className={cn("text-5xl font-black uppercase tracking-tighter leading-tight", currentTheme.textMain)}>
              {evento.nombre}
            </h1>
-           <div className="h-0.5 w-24 mx-auto bg-gradient-to-r from-transparent via-violet-500 to-transparent" />
+           <div className={cn("h-1 w-24 mx-auto rounded-full", currentTheme.accent.replace('text', 'bg'))} />
         </div>
 
-        <div className="p-10 rounded-[48px] bg-white/[0.03] border border-white/5 backdrop-blur-xl shadow-2xl space-y-10 relative group">
-           <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.05] to-transparent rounded-[48px] pointer-events-none" />
-           
-           <div className="text-center space-y-4">
-              <p className="text-slate-400 text-sm tracking-wide uppercase font-bold opacity-80">Hola,</p>
-              <h2 className="text-3xl font-black text-white">{invitado.nombre}</h2>
-              <p className="text-slate-300 text-sm leading-relaxed max-w-[280px] mx-auto">
+        <div className={cn("p-10 rounded-[48px] border shadow-2xl space-y-8 relative", currentTheme.card)}>
+           <div className="text-center space-y-2">
+              <p className={cn("text-xs tracking-widest uppercase font-bold opacity-60", currentTheme.textMuted)}>Hola,</p>
+              <h2 className={cn("text-3xl font-black", currentTheme.textMain)}>{invitado.nombre}</h2>
+              <p className={cn("text-sm leading-relaxed max-w-[280px] mx-auto", currentTheme.textMuted)}>
                 Nos encantaría contar con tu presencia en este momento tan especial.
               </p>
            </div>
 
-           <div className="grid grid-cols-2 gap-4 py-6 border-y border-white/5">
+           <div className="grid grid-cols-2 gap-4 py-8 border-y border-black/5 dark:border-white/5">
               <div className="text-center space-y-1">
-                 <Calendar size={20} className="mx-auto text-violet-400 mb-1" />
-                 <p className="text-[10px] font-black uppercase text-slate-500">Fecha</p>
-                 <p className="text-sm font-bold">{evento.fecha ? new Date(evento.fecha).toLocaleDateString() : 'Por confirmar'}</p>
+                 <Calendar size={20} className={cn("mx-auto mb-1", currentTheme.accent)} />
+                 <p className={cn("text-[10px] font-black uppercase opacity-40", currentTheme.textMuted)}>Fecha</p>
+                 <p className={cn("text-sm font-bold", currentTheme.textMain)}>{evento.fecha ? new Date(evento.fecha).toLocaleDateString() : 'Por confirmar'}</p>
               </div>
               <div className="text-center space-y-1">
-                 <Users size={20} className="mx-auto text-violet-400 mb-1" />
-                 <p className="text-[10px] font-black uppercase text-slate-500">Lugar</p>
-                 <p className="text-sm font-bold truncate px-2">Sede del Evento</p>
+                 <Users size={20} className={cn("mx-auto mb-1", currentTheme.accent)} />
+                 <p className={cn("text-[10px] font-black uppercase opacity-40", currentTheme.textMuted)}>Lugar</p>
+                 <p className={cn("text-sm font-bold truncate px-2", currentTheme.textMain)}>Sede del Evento</p>
               </div>
            </div>
 
-           <div className="space-y-4 pt-4">
-              <p className="text-[10px] font-black uppercase text-slate-500 text-center tracking-widest">¿Podrás acompañarnos?</p>
+           <div className="space-y-4">
+              <p className={cn("text-[10px] font-black uppercase text-center tracking-widest opacity-60", currentTheme.textMuted)}>¿Podrás acompañarnos?</p>
               
-              <div className="grid grid-cols-1 gap-4">
+              <div className="flex flex-col gap-3">
                  <button 
                    onClick={() => handleRSVP('CONFIRMADO')}
                    disabled={status === 'SAVING'}
                    className={cn(
-                     "relative overflow-hidden group/btn px-8 py-5 rounded-3xl font-black uppercase tracking-widest text-xs transition-all duration-300",
-                     "bg-emerald-500 text-emerald-950 shadow-[0_10px_40px_rgba(16,185,129,0.3)] hover:scale-[1.02] active:scale-95",
-                     status === 'SAVING' && "opacity-50 grayscale pointer-events-none"
+                     "px-8 py-5 rounded-3xl font-black uppercase tracking-widest text-xs transition-all duration-300",
+                     currentTheme.btnPrimary,
+                     status === 'SAVING' && "opacity-50 pointer-events-none"
                    )}
                  >
                     {status === 'SAVING' ? <Loader2 className="animate-spin mx-auto" /> : "Sí, asistiré"}
@@ -167,7 +229,7 @@ export default function InvitacionPublica() {
                    disabled={status === 'SAVING'}
                    className={cn(
                      "px-8 py-5 rounded-3xl font-black uppercase tracking-widest text-xs transition-all duration-300",
-                     "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10 hover:text-white",
+                     "bg-black/5 text-slate-400 border border-black/10 hover:bg-black/10",
                      status === 'SAVING' && "opacity-20 pointer-events-none"
                    )}
                  >
@@ -177,7 +239,7 @@ export default function InvitacionPublica() {
            </div>
         </div>
 
-        <p className="text-center text-[10px] font-bold text-slate-600 uppercase tracking-[0.4em] opacity-50">
+        <p className={cn("text-center text-[10px] font-bold uppercase tracking-[0.4em] opacity-30", currentTheme.textMuted)}>
            Eventia · Gestión de Eventos
         </p>
       </div>

@@ -21,13 +21,21 @@ import {
   CheckCircle2,
   Clock as ClockIcon,
   DollarSign,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Palette,
+  Sparkles
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { formatearMoneda, formatearFechaCorta, cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { updateEvento, addInvitado, updateInvitadoRSVP, updateInvitado } from '@/lib/actions/eventActions';
+import { 
+  updateEvento, 
+  addInvitado, 
+  updateInvitadoRSVP, 
+  updateInvitado,
+  updateInvitacionPlantilla 
+} from '@/lib/actions/eventActions';
 import { registrarAbono } from '@/lib/actions/paymentActions';
 import { sendInvitationEmail } from '@/lib/actions/emailActions';
 
@@ -83,8 +91,11 @@ interface EventoDetailClientProps {
 
 export default function EventoDetailClient({ evento: initialEvento }: EventoDetailClientProps) {
   const router = useRouter();
+  const [evento, setEvento] = useState(initialEvento);
   const [tabActiva, setTabActiva] = useState('resumen');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [invitacion, setInvitacion] = useState(initialEvento.invitacion);
+  const [savingTemplate, setSavingTemplate] = useState(false);
   const [isAddGuestModalOpen, setIsAddGuestModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   
@@ -226,21 +237,27 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   const handleAddGuest = async () => {
     if (!newGuest.nombre) return alert('El nombre es obligatorio');
     setSaving(true);
-    const res = await addInvitado({
-      eventoId: evento.id,
-      ...newGuest,
-      // Si no es boda, el lado es null
-      lado: evento.tipo === 'Boda' ? newGuest.lado : undefined
-    });
+    try {
+      const res = await addInvitado({
+        eventoId: evento.id,
+        ...newGuest,
+        // Si no es boda, el lado es null
+        lado: evento.tipo === 'Boda' ? newGuest.lado : undefined
+      });
 
-    if (res.success) {
-      setIsAddGuestModalOpen(false);
-      setNewGuest({ nombre: '', email: '', telefono: '', lado: '', categoria: 'AMIGOS', tipoPersona: 'HOMBRE' });
-      router.refresh();
-    } else {
-      alert(res.error);
+      if (res.success) {
+        setIsAddGuestModalOpen(false);
+        setNewGuest({ nombre: '', email: '', telefono: '', lado: '', categoria: 'AMIGOS', tipoPersona: 'HOMBRE' });
+        router.refresh();
+      } else {
+        alert(res.error);
+      }
+    } catch (error) {
+      console.error('Error al agregar invitado:', error);
+      alert('Hubo un problema al conectar con el servidor.');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleUpdateRSVP = async (invitadoId: string, estado: any) => {
@@ -250,6 +267,32 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
     else router.refresh();
     setUpdatingRSVP(null);
   };
+
+  const handleUpdateTemplate = async (plantilla: string) => {
+    setSavingTemplate(true);
+    try {
+      const res = await updateInvitacionPlantilla(evento.id, plantilla);
+      if (res.success) {
+        setInvitacion(res.data);
+        // Opcional: mostrar un toast de éxito
+      } else {
+        alert(res.error);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
+
+  const templates = [
+    { id: 'BODA', nombre: 'Boda Clásica', color: 'bg-[#C5A059]', icon: '💍', desc: 'Elegancia en oro y blanco' },
+    { id: 'XV_ANOS', nombre: 'XV Años', color: 'bg-pink-500', icon: '👑', desc: 'Juvenil y brillante' },
+    { id: 'INFANTIL', nombre: 'Fiesta Infantil', color: 'bg-yellow-400', icon: '🎈', desc: 'Divertida y colorida' },
+    { id: 'GRADUACION', nombre: 'Graduación', color: 'bg-blue-900', icon: '🎓', desc: 'Sobra y profesional' },
+    { id: 'BAUTIZO', nombre: 'Bautizo', color: 'bg-blue-200', icon: '🕊️', desc: 'Delicado y tierno' },
+    { id: 'FIESTA', nombre: 'Fiesta General', color: 'bg-slate-800', icon: '🎉', desc: 'Moderno y versátil' },
+  ];
 
   const handleOpenInvitationModal = (invitado: any) => {
     setGuestForInvitation(invitado);
@@ -734,6 +777,48 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                 <Plus size={18} /> Agregar Invitado
              </button>
           </div>
+
+          {/* Selector de Plantillas */}
+          <div className="card border-violet-500/30 bg-violet-500/5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-violet-500/20 text-violet-400">
+                <Palette size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg">Diseño de Invitación RSVP</h3>
+                <p className="text-xs text-[var(--color-texto-suave)]">Personaliza cómo verán la invitación tus invitados al confirmar</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {templates.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => handleUpdateTemplate(t.id)}
+                  disabled={savingTemplate}
+                  className={cn(
+                    "relative flex flex-col items-center p-3 rounded-xl border-2 transition-all text-center group",
+                    invitacion?.plantilla === t.id 
+                      ? "border-violet-500 bg-violet-500/10" 
+                      : "border-transparent bg-white/5 hover:border-white/20"
+                  )}
+                >
+                  {invitacion?.plantilla === t.id && (
+                    <div className="absolute top-1 right-1 bg-violet-500 text-white rounded-full p-0.5">
+                      <Check size={10} strokeWidth={4} />
+                    </div>
+                  )}
+                  <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">{t.icon}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider">{t.nombre}</span>
+                  {savingTemplate && invitacion?.plantilla !== t.id && (
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center rounded-xl">
+                      <Loader2 size={16} className="animate-spin" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
           {invitados.length > 0 ? (
             <div className="card p-0 overflow-hidden">
                <table className="tabla">
@@ -833,7 +918,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                           </div>
                         </td>
                         <td className="text-right">
-                           <div className="flex items-center justify-end gap-2 opacity-0 group-hover/row:opacity-100 transition-all">
+                           <div className="flex items-center justify-end gap-2 transition-all">
                              <button 
                                onClick={() => {
                                  setGuestToEdit(i);
