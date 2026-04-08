@@ -18,16 +18,24 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
   const [ventas, setVentas] = useState(ventasIniciales);
   const [selectedVenta, setSelectedVenta] = useState<any | null>(null);
   const [showManualModal, setShowManualModal] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [serviceFilter, setServiceFilter] = useState('');
 
   const isElite = planProveedor === 'ELITE';
 
   // Filtro de búsqueda
-  const filteredVentas = ventas.filter(v => 
-    v.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.cliente?.usuario?.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.servicio?.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    v.nombreClienteExterno?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredVentas = ventas.filter(v => {
+    const matchesSearch = v.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.cliente?.usuario?.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.servicio?.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      v.nombreClienteExterno?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === '' || v.estado === statusFilter;
+    const matchesService = serviceFilter === '' || v.servicioId === serviceFilter;
+
+    return matchesSearch && matchesStatus && matchesService;
+  });
 
   // Cálculos rápidos
   const totalBruto = ventas.reduce((acc, v) => {
@@ -154,15 +162,76 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
             placeholder="Buscar por cliente, identificador o servicio..." 
           />
         </div>
-        <div className="flex items-center gap-2 px-4 py-3 bg-[var(--color-fondo-input)] rounded-xl border border-[var(--color-borde-suave)] text-sm cursor-pointer hover:border-[var(--color-primario-claro)] hover:bg-[var(--color-primario)]/5 transition-all font-medium text-[var(--color-texto-suave)]">
+        <div className="relative flex items-center gap-2 px-4 py-3 bg-[var(--color-fondo-input)] rounded-xl border border-[var(--color-borde-suave)] text-sm cursor-pointer hover:border-[var(--color-primario-claro)] hover:bg-[var(--color-primario)]/5 transition-all font-medium text-[var(--color-texto-suave)]">
           <CalendarIcon size={16} />
           <span>Todos los Tiempos</span>
         </div>
-        <div className="flex items-center gap-2 px-4 py-3 bg-[var(--color-fondo-input)] rounded-xl border border-[var(--color-borde-suave)] text-sm cursor-pointer hover:border-[var(--color-primario-claro)] hover:bg-[var(--color-primario)]/5 transition-all font-medium text-[var(--color-texto-suave)]">
+        <div 
+          onClick={() => setShowFilters(!showFilters)}
+          className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm cursor-pointer transition-all font-medium ${showFilters ? 'bg-[var(--color-primario)]/10 border-[var(--color-primario)] text-[var(--color-primario-claro)]' : 'bg-[var(--color-fondo-input)] border-[var(--color-borde-suave)] text-[var(--color-texto-suave)] hover:border-[var(--color-primario-claro)]'}`}
+        >
           <Filter size={16} />
           <span>Filtros</span>
+          {(statusFilter || serviceFilter) && (
+            <span className="w-2 h-2 rounded-full bg-[var(--color-primario-claro)] ml-1"></span>
+          )}
         </div>
       </div>
+
+      {/* Panel de Filtros Expandible */}
+      {showFilters && (
+        <div className="bg-[var(--color-fondo-card)] p-6 rounded-2xl border border-[var(--color-borde-suave)] shadow-xl animate-in slide-in-from-top-4 duration-300">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--color-texto-muted)]">Filtros Avanzados</h3>
+            <button 
+              onClick={() => {
+                setStatusFilter('');
+                setServiceFilter('');
+              }}
+              className="text-[10px] font-black uppercase text-[var(--color-primario-claro)] hover:underline"
+            >
+              Limpiar Todo
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-1">Estado de Reserva</label>
+              <select 
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="input w-full h-12"
+              >
+                <option value="">Cualquier Estado</option>
+                <option value="APARTADO">Apartado</option>
+                <option value="LIQUIDADO">Liquidado</option>
+                <option value="CANCELADO">Cancelado</option>
+                <option value="PENDIENTE">Pendiente</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-1">Servicio</label>
+              <select 
+                value={serviceFilter}
+                onChange={(e) => setServiceFilter(e.target.value)}
+                className="input w-full h-12"
+              >
+                <option value="">Todos los Servicios</option>
+                {servicios.map((s: any) => (
+                  <option key={s.id} value={s.id}>{s.nombre}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button 
+                onClick={() => setShowFilters(false)}
+                className="btn btn-primario w-full h-12 uppercase font-black tracking-widest text-xs"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Vista Móvil (Lista de Tarjetas) */}
       <div className="grid grid-cols-1 gap-4 sm:hidden">

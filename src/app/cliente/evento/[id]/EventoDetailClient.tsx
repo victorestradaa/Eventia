@@ -125,6 +125,8 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
     lado: ''
   });
 
+  const [updatingRSVP, setUpdatingRSVP] = useState<string | null>(null);
+
   const eventTypes = ['Boda', 'XV Años', 'Fiesta Infantil', 'Graduación', 'Fiesta', 'Bautizo'];
 
   const evento = initialEvento;
@@ -234,11 +236,11 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   };
 
   const handleUpdateRSVP = async (invitadoId: string, estado: any) => {
-    setSaving(true);
+    setUpdatingRSVP(`${invitadoId}-${estado}`);
     const res = await updateInvitadoRSVP(invitadoId, estado);
     if (!res.success) alert(res.error);
     else router.refresh();
-    setSaving(false);
+    setUpdatingRSVP(null);
   };
 
   const handleSendWhatsApp = (invitado: any) => {
@@ -750,33 +752,39 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                         </td>
                         <td>
                           <div className="flex items-center gap-1.5">
-                             <button 
-                               onClick={() => handleUpdateRSVP(i.id, 'PENDIENTE')}
-                               className={cn(
-                                 "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border",
-                                 i.rsvpEstado === 'PENDIENTE' ? "bg-slate-500 text-white border-slate-400 shadow-lg shadow-slate-500/20" : "bg-white/5 text-slate-500 border-white/5 hover:bg-white/10"
-                               )}
-                             >
-                                Pendiente
-                             </button>
-                             <button 
-                               onClick={() => handleUpdateRSVP(i.id, 'CONFIRMADO')}
-                               className={cn(
-                                 "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border",
-                                 i.rsvpEstado === 'CONFIRMADO' ? "bg-emerald-500 text-white border-emerald-400 shadow-lg shadow-emerald-500/20" : "bg-white/5 text-emerald-500 border-white/5 hover:bg-emerald-500/20"
-                               )}
-                             >
-                                Asistirá
-                             </button>
-                             <button 
-                               onClick={() => handleUpdateRSVP(i.id, 'RECHAZADO')}
-                               className={cn(
-                                 "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border",
-                                 i.rsvpEstado === 'RECHAZADO' ? "bg-red-500 text-white border-red-400 shadow-lg shadow-red-500/20" : "bg-white/5 text-red-500 border-white/5 hover:bg-red-500/20"
-                               )}
-                             >
-                                No Asiste
-                             </button>
+                              <button 
+                                onClick={() => handleUpdateRSVP(i.id, 'PENDIENTE')}
+                                disabled={updatingRSVP !== null}
+                                className={cn(
+                                  "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border flex items-center gap-1",
+                                  i.rsvpEstado === 'PENDIENTE' ? "bg-slate-500 text-white border-slate-400 shadow-lg shadow-slate-500/20" : "bg-white/5 text-slate-500 border-white/5 hover:bg-white/10"
+                                )}
+                              >
+                                 {updatingRSVP === `${i.id}-PENDIENTE` && <Loader2 size={10} className="animate-spin" />}
+                                 Pendiente
+                              </button>
+                              <button 
+                                onClick={() => handleUpdateRSVP(i.id, 'CONFIRMADO')}
+                                disabled={updatingRSVP !== null}
+                                className={cn(
+                                  "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border flex items-center gap-1",
+                                  i.rsvpEstado === 'CONFIRMADO' ? "bg-emerald-500 text-white border-emerald-400 shadow-lg shadow-emerald-500/20" : "bg-white/5 text-emerald-500 border-white/5 hover:bg-emerald-500/20"
+                                )}
+                              >
+                                 {updatingRSVP === `${i.id}-CONFIRMADO` && <Loader2 size={10} className="animate-spin" />}
+                                 Asistirá
+                              </button>
+                              <button 
+                                onClick={() => handleUpdateRSVP(i.id, 'RECHAZADO')}
+                                disabled={updatingRSVP !== null}
+                                className={cn(
+                                  "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border flex items-center gap-1",
+                                  i.rsvpEstado === 'RECHAZADO' ? "bg-red-500 text-white border-red-400 shadow-lg shadow-red-500/20" : "bg-white/5 text-red-500 border-white/5 hover:bg-red-500/20"
+                                )}
+                              >
+                                 {updatingRSVP === `${i.id}-RECHAZADO` && <Loader2 size={10} className="animate-spin" />}
+                                 No Asiste
+                              </button>
                           </div>
                         </td>
                         <td className="text-right">
@@ -1131,9 +1139,32 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                      type="text" 
                      value={editGuestForm.nombre} 
                      onChange={(e) => setEditGuestForm({...editGuestForm, nombre: e.target.value})} 
-                     className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-4 outline-none focus:border-[var(--color-primario)] transition-all text-lg font-bold" 
+                     className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-4 outline-none focus:border-[var(--color-primario)] transition-all text-lg font-bold" 
                      placeholder="Nombre completo" 
                    />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-1">Correo Electrónico</label>
+                     <input 
+                       type="email" 
+                       value={editGuestForm.email} 
+                       onChange={(e) => setEditGuestForm({...editGuestForm, email: e.target.value})} 
+                       className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario)] transition-all font-bold" 
+                       placeholder="correo@ejemplo.com" 
+                     />
+                  </div>
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-1">Teléfono (WhatsApp)</label>
+                     <input 
+                       type="text" 
+                       value={editGuestForm.telefono} 
+                       onChange={(e) => setEditGuestForm({...editGuestForm, telefono: e.target.value})} 
+                       className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario)] transition-all font-bold" 
+                       placeholder="+52 ..." 
+                     />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -1142,7 +1173,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                       <select 
                         value={editGuestForm.categoria} 
                         onChange={(e) => setEditGuestForm({...editGuestForm, categoria: e.target.value})} 
-                        className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario)] transition-all font-bold"
+                        className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario)] transition-all font-bold"
                       >
                         <option value="FAMILIA">Familia</option>
                         <option value="AMIGOS">Amigos</option>
@@ -1156,7 +1187,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                         <select 
                           value={editGuestForm.lado} 
                           onChange={(e) => setEditGuestForm({...editGuestForm, lado: e.target.value})} 
-                          className="w-full bg-white/5 border border-white/10 text-white rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario)] transition-all font-bold"
+                          className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario)] transition-all font-bold"
                         >
                           <option value="">Sin asignar</option>
                           <option value="NOVIO">Novio</option>
