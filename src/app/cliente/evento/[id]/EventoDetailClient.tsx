@@ -290,9 +290,10 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
         setInvitacion(oldInvitacion);
         alert(res.error);
       }
-    } catch (error) {
+    } catch (error: any) {
       setInvitacion(oldInvitacion);
       console.error(error);
+      alert('Error de conexión: ' + (error.message || 'Desconocido'));
     } finally {
       // Retrasamos un poco el fin del estado de carga para esperar al refresh
       setTimeout(() => {
@@ -814,12 +815,12 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                   disabled={savingTemplate}
                   className={cn(
                     "relative flex flex-col items-center p-3 rounded-xl border-2 transition-all text-center group",
-                    invitacion?.plantilla === t.id 
+                    (invitacion?.plantilla?.toUpperCase() === t.id.toUpperCase())
                       ? "border-violet-600 bg-violet-500/10 shadow-lg shadow-violet-500/20 border-4 scale-105" 
                       : "border-transparent bg-white/5 hover:border-white/20"
                   )}
                 >
-                  {invitacion?.plantilla === t.id && (
+                  {invitacion?.plantilla?.toUpperCase() === t.id.toUpperCase() && (
                     <div className="absolute top-1 right-1 bg-violet-500 text-white rounded-full p-0.5">
                       <Check size={10} strokeWidth={4} />
                     </div>

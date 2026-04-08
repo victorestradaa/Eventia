@@ -316,8 +316,9 @@ export async function getOrCreateInvitacion(eventoId: string) {
 /**
  * Actualiza la plantilla de la invitación digital.
  */
-export async function updateInvitacionPlantilla(eventoId: string, plantilla: string) {
+export async function updateInvitacionPlantilla(eventoId: string, plantillaRaw: string) {
   try {
+    const plantilla = plantillaRaw.toUpperCase();
     const invitacion = await prisma.invitacionDigital.upsert({
       where: { eventoId },
       update: { plantilla },
