@@ -149,6 +149,8 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   const eventTypes = ['Boda', 'XV Años', 'Fiesta Infantil', 'Graduación', 'Fiesta', 'Bautizo'];
 
   useEffect(() => {
+    setEvento(initialEvento);
+    setInvitacion(initialEvento.invitacion);
     setTempEvento({
       nombre: initialEvento.nombre,
       fecha: initialEvento.fecha ? new Date(initialEvento.fecha).toISOString().split('T')[0] : '',
@@ -267,16 +269,23 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   };
 
   const handleUpdateTemplate = async (plantilla: string) => {
+    // Feedback instantáneo local
+    const oldInvitacion = invitacion;
+    setInvitacion(prev => prev ? { ...prev, plantilla } : { plantilla } as any);
+    
     setSavingTemplate(true);
     try {
       const res = await updateInvitacionPlantilla(evento.id, plantilla);
       if (res.success) {
         setInvitacion(res.data);
-        // Opcional: mostrar un toast de éxito
+        // El revalidatePath en el servidor hará que initialEvento cambie,
+        // lo que activará el useEffect de arriba para sincronizar todo.
       } else {
+        setInvitacion(oldInvitacion);
         alert(res.error);
       }
     } catch (error) {
+      setInvitacion(oldInvitacion);
       console.error(error);
     } finally {
       setSavingTemplate(false);
