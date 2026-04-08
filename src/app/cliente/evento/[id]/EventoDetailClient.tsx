@@ -28,6 +28,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { updateEvento, addInvitado, updateInvitadoRSVP, updateInvitado } from '@/lib/actions/eventActions';
 import { registrarAbono } from '@/lib/actions/paymentActions';
+import { sendInvitationEmail } from '@/lib/actions/emailActions';
 
 // Componente para los iconos de persona con diseño premium
 const PersonIcon = ({ tipo, className = "w-8 h-8" }: { tipo: string, className?: string }) => {
@@ -126,6 +127,12 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   });
 
   const [updatingRSVP, setUpdatingRSVP] = useState<string | null>(null);
+
+  // Modal de Invitaciones (Multicanal)
+  const [isInvitationModalOpen, setIsInvitationModalOpen] = useState(false);
+  const [guestForInvitation, setGuestForInvitation] = useState<any | null>(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailToInvite, setEmailToInvite] = useState('');
 
   const eventTypes = ['Boda', 'XV Años', 'Fiesta Infantil', 'Graduación', 'Fiesta', 'Bautizo'];
 
@@ -243,11 +250,48 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
     setUpdatingRSVP(null);
   };
 
+  const handleOpenInvitationModal = (invitado: any) => {
+    setGuestForInvitation(invitado);
+    setEmailToInvite(invitado.email || '');
+    setIsInvitationModalOpen(true);
+  };
+
+  const handleCopyLink = () => {
+    if (!guestForInvitation) return;
+    const invitationUrl = `${window.location.origin}/invitacion/${guestForInvitation.id}`;
+    navigator.clipboard.writeText(invitationUrl);
+    alert('Enlace copiado al portapapeles');
+  };
+
+  const handleSendInvitationEmail = async () => {
+    if (!guestForInvitation || !emailToInvite) return alert('El correo es obligatorio');
+    setSendingEmail(true);
+    const invitationUrl = `${window.location.origin}/invitacion/${guestForInvitation.id}`;
+    
+    const res = await sendInvitationEmail({
+      to: emailToInvite,
+      guestName: guestForInvitation.nombre,
+      eventName: evento.nombre,
+      eventDate: evento.fecha || '',
+      rsvpLink: invitationUrl
+    });
+
+    if (res.success) {
+      alert('Invitación enviada por correo exitosamente');
+    } else {
+      alert(res.error);
+    }
+    setSendingEmail(false);
+  };
+
   const handleSendWhatsApp = (invitado: any) => {
-    if (!invitado.telefono) return alert('El invitado no tiene teléfono registrado');
+    // Limpiar el teléfono de espacios, guiones, etc.
+    const telefonoLimpio = invitado.telefono?.replace(/\D/g, '');
+    if (!telefonoLimpio) return alert('El invitado no tiene un teléfono válido registrado.');
+    
     const invitationUrl = `${window.location.origin}/invitacion/${invitado.id}`;
     const msg = encodeURIComponent(`¡Hola ${invitado.nombre}! Te invitamos a nuestro evento: ${evento.nombre}. Por favor confirma tu asistencia aquí: ${invitationUrl}`);
-    window.open(`https://wa.me/${invitado.telefono}?text=${msg}`, '_blank');
+    window.open(`https://wa.me/${telefonoLimpio}?text=${msg}`, '_blank');
   };
 
   const handleUpdateGuest = async () => {
@@ -808,9 +852,9 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                                <Edit size={16} />
                              </button>
                              <button 
-                               onClick={() => handleSendWhatsApp(i)}
-                               className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all"
-                               title="Enviar invitación por WhatsApp"
+                               onClick={() => handleOpenInvitationModal(i)}
+                               className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all underline-none"
+                               title="Enviar invitación"
                              >
                                <MessageCircle size={18} />
                              </button>
@@ -1231,6 +1275,92 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                 </div>
              </div>
           </div>
+        </div>
+      )}
+      {/* MODAL ENVIAR INVITACIÓN (MULTICANAL) */}
+      {isInvitationModalOpen && guestForInvitation && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="card max-w-lg w-full p-8 border-white/10 shadow-2xl animate-in zoom-in-95 duration-300">
+              <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-4">
+                 <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+                       <Mail size={24} />
+                    </div>
+                    <div>
+                       <h2 className="text-xl font-black italic uppercase tracking-tighter">Enviar Invitación</h2>
+                       <p className="text-[10px] text-[var(--color-texto-muted)] uppercase tracking-widest font-bold">Invitado: {guestForInvitation.nombre}</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setIsInvitationModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors"><X size={20} /></button>
+              </div>
+
+              <div className="space-y-8">
+                 {/* OPCIÓN 1: WHATSAPP */}
+                 <div className="p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 space-y-4">
+                    <div className="flex items-center gap-3">
+                       <MessageCircle className="text-emerald-400" size={20} />
+                       <h3 className="text-sm font-black uppercase tracking-widest text-emerald-400">WhatsApp</h3>
+                    </div>
+                    <p className="text-xs text-[var(--color-texto-suave)] leading-relaxed">Envía un mensaje directo con el enlace de confirmación personalizado.</p>
+                    <button 
+                      onClick={() => handleSendWhatsApp(guestForInvitation)}
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest text-[10px] py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+                    >
+                      Abrir WhatsApp
+                    </button>
+                 </div>
+
+                 {/* OPCIÓN 2: EMAIL */}
+                 <div className="p-6 rounded-2xl bg-blue-500/5 border border-blue-500/10 space-y-4">
+                    <div className="flex items-center gap-3">
+                       <Mail className="text-blue-400" size={20} />
+                       <h3 className="text-sm font-black uppercase tracking-widest text-blue-400">Correo Electrónico</h3>
+                    </div>
+                    <div className="space-y-3">
+                       <input 
+                         type="email" 
+                         value={emailToInvite} 
+                         onChange={(e) => setEmailToInvite(e.target.value)}
+                         placeholder="correo@ejemplo.com"
+                         className="w-full bg-[var(--color-fondo-input)] border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-500/50 transition-all"
+                       />
+                       <button 
+                         onClick={handleSendInvitationEmail}
+                         disabled={sendingEmail}
+                         className="w-full bg-blue-500 hover:bg-blue-600 text-white font-black uppercase tracking-widest text-[10px] py-3 rounded-xl transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+                       >
+                         {sendingEmail ? <Loader2 size={14} className="animate-spin" /> : 'Enviar por Correo'}
+                       </button>
+                    </div>
+                 </div>
+
+                 {/* OPCIÓN 3: LINK MANUAL */}
+                 <div className="p-6 rounded-2xl bg-violet-500/5 border border-violet-500/10 space-y-4">
+                    <div className="flex items-center gap-3">
+                       <LayoutGrid className="text-violet-400" size={20} />
+                       <h3 className="text-sm font-black uppercase tracking-widest text-violet-400">Enlace Manual</h3>
+                    </div>
+                    <div className="flex gap-2">
+                       <input 
+                         type="text" 
+                         readOnly 
+                         value={`${typeof window !== 'undefined' ? window.location.origin : ''}/invitacion/${guestForInvitation.id}`} 
+                         className="flex-1 bg-[var(--color-fondo-input)] border border-white/10 rounded-xl px-4 py-2 text-[10px] text-[var(--color-texto-muted)] outline-none"
+                       />
+                       <button 
+                         onClick={handleCopyLink}
+                         className="px-4 bg-violet-600 hover:bg-violet-700 text-white font-black uppercase tracking-widest text-[10px] rounded-xl transition-all"
+                       >
+                         Copiar
+                       </button>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="mt-8 pt-4 border-t border-white/5">
+                 <button onClick={() => setIsInvitationModalOpen(false)} className="w-full py-3 text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)] hover:text-white transition-colors">Cerrar</button>
+              </div>
+           </div>
         </div>
       )}
     </div>
