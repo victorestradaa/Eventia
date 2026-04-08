@@ -241,23 +241,29 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
     if (!newGuest.nombre) return alert('El nombre es obligatorio');
     setSaving(true);
     try {
-      const res = await addInvitado({
-        eventoId: evento.id,
-        ...newGuest,
-        // Si no es boda, el lado es null
-        lado: evento.tipo === 'Boda' ? newGuest.lado : undefined
+      const response = await fetch('/api/evento/invitado', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventoId: evento.id,
+          ...newGuest,
+          // Si no es boda, el lado es null
+          lado: evento.tipo === 'Boda' ? newGuest.lado : undefined
+        })
       });
+
+      const res = await response.json();
 
       if (res.success) {
         setIsAddGuestModalOpen(false);
         setNewGuest({ nombre: '', email: '', telefono: '', lado: '', categoria: 'AMIGOS', tipoPersona: 'HOMBRE' });
         router.refresh();
       } else {
-        alert(res.error);
+        alert(res.error || 'Error desconocido al agregar invitado');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al agregar invitado:', error);
-      alert('Hubo un problema al conectar con el servidor.');
+      alert('Hubo un problema al conectar con el servidor: ' + (error.message || 'Desconocido'));
     } finally {
       setSaving(false);
     }
