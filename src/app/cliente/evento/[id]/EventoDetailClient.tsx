@@ -221,20 +221,31 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
 
   const handleSaveEvento = async () => {
     setSaving(true);
-    const res = await updateEvento(evento.id, {
-      nombre: tempEvento.nombre,
-      fecha: tempEvento.fecha || null,
-      tipo: tempEvento.tipo,
-      numInvitados: tempEvento.numInvitados,
-      presupuestoTotal: tempEvento.presupuestoTotal,
-    });
-    if (res.success) {
-      setIsEditModalOpen(false);
-      router.refresh();
-    } else {
-      alert(res.error);
+    try {
+      const response = await fetch(`/api/evento/${evento.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: tempEvento.nombre,
+          fecha: tempEvento.fecha || null,
+          tipo: tempEvento.tipo,
+          numInvitados: tempEvento.numInvitados,
+          presupuestoTotal: tempEvento.presupuestoTotal,
+        })
+      });
+      const res = await response.json();
+      if (res.success) {
+        setIsEditModalOpen(false);
+        router.refresh();
+      } else {
+        alert(res.error || 'Error al actualizar el evento');
+      }
+    } catch (error: any) {
+      console.error('Error al guardar evento:', error);
+      alert('Hubo un problema al conectar con el servidor: ' + error.message);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleAddGuest = async () => {
@@ -271,10 +282,21 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
 
   const handleUpdateRSVP = async (invitadoId: string, estado: any) => {
     setUpdatingRSVP(`${invitadoId}-${estado}`);
-    const res = await updateInvitadoRSVP(invitadoId, estado);
-    if (!res.success) alert(res.error);
-    else router.refresh();
-    setUpdatingRSVP(null);
+    try {
+      const response = await fetch(`/api/invitado/${invitadoId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rsvpStatus: estado })
+      });
+      const res = await response.json();
+      if (!res.success) alert(res.error || 'Error al actualizar RSVP');
+      else router.refresh();
+    } catch (error: any) {
+      console.error('Error al actualizar RSVP:', error);
+      alert('Error de conexión al actualizar RSVP');
+    } finally {
+      setUpdatingRSVP(null);
+    }
   };
 
   const handleUpdateTemplate = async (plantilla: string) => {
@@ -372,14 +394,25 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   const handleUpdateGuest = async () => {
     if (!guestToEdit) return;
     setSaving(true);
-    const res = await updateInvitado(guestToEdit.id, editGuestForm);
-    if (res.success) {
-      setIsEditGuestModalOpen(false);
-      router.refresh();
-    } else {
-      alert(res.error);
+    try {
+      const response = await fetch(`/api/invitado/${guestToEdit.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editGuestForm)
+      });
+      const res = await response.json();
+      if (res.success) {
+        setIsEditGuestModalOpen(false);
+        router.refresh();
+      } else {
+        alert(res.error || 'Error al actualizar invitado');
+      }
+    } catch (error: any) {
+      console.error('Error al actualizar invitado:', error);
+      alert('Error de conexión al actualizar invitado');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   return (
