@@ -21,9 +21,12 @@ import {
   ToggleLeft,
   ToggleRight,
   Music,
-  Mic2
+  Mic2,
+  FileDown
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -109,6 +112,8 @@ export default function SeatingPage() {
   const [escenarioPos, setEscenarioPos] = useState({ x: 450, y: 50 });
   const [showPista, setShowPista] = useState(true);
   const [showEscenario, setShowEscenario] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   const [draggedMesa, setDraggedMesa] = useState<string | null>(null);
   const [selectedMesaId, setSelectedMesaId] = useState<string | null>(null);
@@ -228,6 +233,38 @@ export default function SeatingPage() {
       }
       return m;
     }));
+  };
+
+  const handleExportPDF = async () => {
+    if (!canvasRef.current) return;
+    setIsExporting(true);
+    
+    // Esperar un poco para que el estado de isExporting oculte elementos si fuera necesario
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    try {
+      const canvas = await html2canvas(canvasRef.current, {
+        backgroundColor: '#f1f5f9',
+        scale: 2, // Mejor calidad
+        logging: false,
+        useCORS: true
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`Plano_Evento_${eventoId}.pdf`);
+    } catch (error) {
+      console.error('Error generando PDF:', error);
+      alert('Hubo un error al generar el PDF');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
@@ -394,6 +431,14 @@ export default function SeatingPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button 
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors disabled:opacity-50 border border-slate-200 rounded-xl mr-2"
+          >
+            {isExporting ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />} 
+            {isExporting ? 'Generando...' : 'Exportar PDF'}
+          </button>
           <button 
             onClick={handleSave}
             disabled={isSaving}
@@ -596,9 +641,12 @@ export default function SeatingPage() {
         </aside>
 
         {/* Canvas de Diseño (SKETCH / LIGHT THEME) */}
-        <main className="flex-1 relative overflow-hidden bg-[#f1f5f9] select-none">
+        <main 
+          ref={canvasRef}
+          className="flex-1 relative overflow-hidden bg-[#f1f5f9] select-none"
+        >
            {/* Grid de ayuda visual suave */}
-           <div className="absolute inset-0 opacity-[0.4]" style={{ backgroundImage: 'radial-gradient(#94a3b8 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }} />
+           <div className={cn("absolute inset-0 opacity-[0.4]", isExporting && "hidden")} style={{ backgroundImage: 'radial-gradient(#94a3b8 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }} />
            
            {/* Dance Floor (Estilo Dorado Sketch) */}
            {showPista && (
@@ -691,8 +739,8 @@ export default function SeatingPage() {
                   onClick={(e) => { e.stopPropagation(); setSelectedMesaId(m.id); }}
                   style={{ left: m.x, top: m.y, transform: `scale(${m.escala})` }}
                   className={cn(
-                    "absolute transition-all z-10",
-                    draggedMesa === m.id ? "z-50 cursor-grabbing duration-0" : "cursor-grab",
+                    "absolute z-10",
+                    draggedMesa === m.id ? "z-50 cursor-grabbing" : "cursor-grab transition-all duration-300",
                     selectedMesaId === m.id && "z-40"
                   )}
                 >

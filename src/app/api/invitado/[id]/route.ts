@@ -5,10 +5,10 @@ export const dynamic = 'force-dynamic';
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await params;
     const data = await req.json();
 
     const invitadoActualizado = await prisma.invitado.update({
@@ -20,7 +20,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: invitadoActualizado });
   } catch (error: any) {
-    console.error(`Error updating guest ${params.id}:`, error);
+    console.error(`Error updating guest ${id}:`, error);
     return NextResponse.json(
       { success: false, error: error.message || 'Error interno del servidor' },
       { status: 500 }

@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
+// Force build: 2026-04-09T01:54:30Z
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await params;
     const data = await req.json();
 
     const eventoActualizado = await prisma.evento.update({
@@ -21,7 +22,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: eventoActualizado });
   } catch (error: any) {
-    console.error(`Error updating event ${params.id}:`, error);
+    console.error(`Error updating event ${id}:`, error);
     return NextResponse.json(
       { success: false, error: error.message || 'Error interno del servidor' },
       { status: 500 }
