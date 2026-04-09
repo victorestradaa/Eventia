@@ -1228,24 +1228,30 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                      if (!montoAbono || isNaN(Number(montoAbono))) return;
                      setProcesandoPago(true);
                      
-                     const res = await registrarAbono({
-                       reservaId: showPagoModal.reservaId || '',
-                       monto: Number(montoAbono),
-                       metodoPago: 'TARJETA (TEST)',
-                       tipo: 'ABONO',
-                       transaccionId: selectedTransaccionId || undefined,
-                       esCliente: true
-                     });
+                     try {
+                       const res = await registrarAbono({
+                         reservaId: showPagoModal.reservaId || '',
+                         monto: Number(montoAbono),
+                         metodoPago: 'TARJETA (TEST)',
+                         tipo: 'ABONO',
+                         transaccionId: selectedTransaccionId || undefined,
+                         esCliente: true
+                       });
 
-                      if (res.success) {
-                        setMontoAbono('');
-                        setSelectedTransaccionId(null);
-                        setShowPagoModal(null);
-                        router.refresh();
-                      } else {
-                        alert(res.error || "Error al procesar el abono. Verifica el monto.");
-                        setProcesandoPago(false);
-                      }
+                       if (res.success) {
+                         setMontoAbono('');
+                         setSelectedTransaccionId(null);
+                         setShowPagoModal(null);
+                         router.refresh();
+                       } else {
+                         alert(res.error || "Error al procesar el abono. Verifica el monto.");
+                       }
+                     } catch (error: any) {
+                       console.error('Error en abono cliente:', error);
+                       alert('Error de conexión al procesar el abono.');
+                     } finally {
+                       setProcesandoPago(false);
+                     }
                    }}
                    disabled={procesandoPago || !montoAbono}
                    className={cn(

@@ -136,7 +136,15 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
           montoAnticipo: res.data.reserva.montoAnticipo,
           transacciones: [...(venta.transacciones || []), nuevaTx] 
         });
-        onClose();
+        // Reset abono form
+        setAbono({
+          monto: '',
+          tipo: 'ABONO',
+          metodoPago: 'TRANSFERENCIA',
+          estado: 'PAGADO',
+          notas: '',
+          fechaVencimiento: ''
+        });
       } else {
         alert(res.error || 'No se pudo registrar el abono');
       }

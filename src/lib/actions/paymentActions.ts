@@ -19,6 +19,8 @@ export async function registrarAbono(data: {
 }) {
   try {
     const result = await prisma.$transaction(async (tx: any) => {
+      console.log(`[registrarAbono] Iniciando transacción para reserva: ${data.reservaId}`);
+      
       // 1. Obtener datos de la reserva
       const reserva = await tx.reserva.findUnique({
         where: { id: data.reservaId },
@@ -28,7 +30,10 @@ export async function registrarAbono(data: {
         }
       });
 
-      if (!reserva) throw new Error('Reserva no encontrada');
+      if (!reserva) {
+        console.error(`[registrarAbono] Reserva no encontrada: ${data.reservaId}`);
+        throw new Error('Reserva no encontrada');
+      }
 
       const nuevoEstadoTx = data.estado || 'PAGADO';
       const esPagado = nuevoEstadoTx === 'PAGADO';
@@ -37,11 +42,12 @@ export async function registrarAbono(data: {
 
       // 2. Si transaccionId está presente, es una actualización (liquidando un pagaré)
       if (data.transaccionId) {
+        console.log(`[registrarAbono] Liquidando pagaré: ${data.transaccionId}`);
         transaccion = await tx.transaccion.update({
           where: { id: data.transaccionId },
           data: {
             estado: 'PAGADO',
-            monto: data.monto, // Sincronizar monto en caso de que haya sido modificado en el modal
+            monto: data.monto,
             metodoPago: data.metodoPago,
             fechaPago: new Date(),
             notas: data.notas || (data.esCliente ? 'Pagaré liquidado por el cliente' : 'Pagaré liquidado por el proveedor')
@@ -49,6 +55,7 @@ export async function registrarAbono(data: {
         });
       } else {
         // Modo normal: Crear nueva transacción
+        console.log(`[registrarAbono] Creando nueva transacción de tipo: ${data.tipo}`);
         transaccion = await tx.transaccion.create({
           data: {
             reservaId: data.reservaId,
@@ -56,20 +63,19 @@ export async function registrarAbono(data: {
             tipo: data.tipo,
             metodoPago: data.metodoPago,
             estado: nuevoEstadoTx,
-            fechaPago: esPagado ? new Date() : null, // Solo tiene fecha de pago si ya se cobró
+            fechaPago: esPagado ? new Date() : null,
             fechaVencimiento: data.fechaVencimiento ? new Date(data.fechaVencimiento) : null,
             notas: data.notas || (data.esCliente ? 'Abono realizado por el cliente' : 'Abono registrado por el proveedor')
           }
         });
       }
 
-      // Si la transacción sigue siendo PENDIENTE (un nuevo pagaré), no actualizamos totales
+      // Si la transacción sigue siendo PENDIENTE (un nuevo pagaré), no actualizamos totales aún
       if (!esPagado && !data.transaccionId) {
          return { reserva, transaccion };
       }
 
       // 3. Calcular nuevo total pagado de la reserva (solo transacciones PAGADAS)
-      // Nota: Volvemos a consultar o recalculamos para asegurar consistencia
       const todasLasTransacciones = await tx.transaccion.findMany({
         where: { reservaId: data.reservaId, estado: 'PAGADO' }
       });
@@ -83,6 +89,7 @@ export async function registrarAbono(data: {
         nuevoEstadoReserva = 'APARTADO';
       }
 
+      console.log(`[registrarAbono] Actualizando reserva ${data.reservaId} a estado: ${nuevoEstadoReserva}`);
       await tx.reserva.update({
         where: { id: data.reservaId },
         data: { 
@@ -101,6 +108,7 @@ export async function registrarAbono(data: {
         });
 
         if (linea) {
+          console.log(`[registrarAbono] Sincronizando presupuesto para línea: ${linea.id}`);
           await tx.lineaPresupuesto.update({
             where: { id: linea.id },
             data: {
@@ -108,7 +116,6 @@ export async function registrarAbono(data: {
             }
           });
 
-          // Registrar el pago en la tabla Pago vinculada a LineaPresupuesto (para historial de presupuesto)
           await tx.pago.create({
             data: {
               lineaId: linea.id,
@@ -122,6 +129,8 @@ export async function registrarAbono(data: {
       return { reserva, transaccion };
     });
 
+    console.log(`[registrarAbono] Éxito para reserva: ${data.reservaId}`);
+
     // Revalidar rutas involucradas
     revalidatePath('/proveedor/ventas');
     revalidatePath('/proveedor/dashboard');
@@ -130,9 +139,15 @@ export async function registrarAbono(data: {
       revalidatePath(`/cliente/evento/${result.reserva.eventoId}`);
     }
 
-    return { success: true, data: JSON.parse(JSON.stringify(result)) };
-  } catch (error) {
-    console.error('Error al registrar abono:', error);
-    return { success: false, error: 'No se pudo procesar el abono.' };
+    return { 
+      success: true, 
+      data: JSON.parse(JSON.stringify(result)) 
+    };
+  } catch (error: any) {
+    console.error('[registrarAbono] ERROR CRÍTICO:', error);
+    return { 
+      success: false, 
+      error: error.message || 'No se pudo procesar el abono.' 
+    };
   }
 }
