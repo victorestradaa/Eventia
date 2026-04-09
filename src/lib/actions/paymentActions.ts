@@ -141,13 +141,18 @@ export async function registrarAbono(data: {
 
     return { 
       success: true, 
-      data: JSON.parse(JSON.stringify(result)) 
+      data: {
+        reservaId: result.reserva.id,
+        transaccionId: result.transaccion.id,
+        nuevoEstado: result.reserva.estado,
+        montoAnticipo: Number(result.reserva.montoAnticipo)
+      }
     };
   } catch (error: any) {
     console.error('[registrarAbono] ERROR CRÍTICO:', error);
     return { 
       success: false, 
-      error: error.message || 'No se pudo procesar el abono.' 
+      error: error.message || 'Error interno al procesar el abono.' 
     };
   }
 }
