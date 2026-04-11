@@ -139,8 +139,9 @@ export async function registrarAbono(data: {
       revalidatePath(`/cliente/evento/${result.reserva.eventoId}`);
     }
 
-    return { 
-      success: true, 
+    // Retornar un objeto de estructura plana y simple para evitar problemas de serialización en AWS
+    const resultSerializable = {
+      success: true,
       data: {
         reservaId: result.reserva.id,
         transaccionId: result.transaccion.id,
@@ -148,8 +149,13 @@ export async function registrarAbono(data: {
         montoAnticipo: Number(result.reserva.montoAnticipo)
       }
     };
+
+    console.log(`[registrarAbono] Enviando respuesta exitosa:`, resultSerializable);
+    return resultSerializable;
+
   } catch (error: any) {
-    console.error('[registrarAbono] ERROR CRÍTICO:', error);
+    console.error('[registrarAbono] ERROR:', error);
+    // Asegurar que el error también sea un objeto plano simple
     return { 
       success: false, 
       error: error.message || 'Error interno al procesar el abono.' 
