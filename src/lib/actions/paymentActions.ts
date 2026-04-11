@@ -143,7 +143,9 @@ export async function registrarAbono(data: {
         reservaId: result.reserva.id,
         transaccionId: result.transaccion?.id || null,
         nuevoEstado: result.reserva.estado,
-        montoAnticipo: result.reserva.montoAnticipo ? Number(result.reserva.montoAnticipo) : 0
+        montoAnticipo: result.reserva.montoAnticipo ? Number(result.reserva.montoAnticipo) : 0,
+        reserva: result.reserva,
+        transaccion: result.transaccion
       }
     };
 
