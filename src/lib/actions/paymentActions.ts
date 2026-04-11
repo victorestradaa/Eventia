@@ -131,17 +131,10 @@ export async function registrarAbono(data: {
 
     console.log(`[registrarAbono] Éxito para reserva: ${data.reservaId}`);
 
-    // Revalidar rutas involucradas
-    try {
-      revalidatePath('/proveedor/ventas');
-      revalidatePath('/proveedor/dashboard');
-      revalidatePath('/cliente/dashboard');
-      if (result.reserva.eventoId) {
-        revalidatePath(`/cliente/evento/${result.reserva.eventoId}`);
-      }
-    } catch (e: any) {
-      console.warn('[registrarAbono] Aviso: Error menor al revalidar rutas:', e);
-    }
+    // Omitimos revalidatePath temporalmente para aislar un fallo de diseño interno
+    // de Next.js donde los Server Actions tiran 500 si algún Client Component
+    // falla en el re-render en segundo plano. La revalidación visual la hará
+    // router.refresh() desde el entorno aislado del navegador.
 
     // Retornar explícitamente a través de JSON puro
     const responsePayload = {

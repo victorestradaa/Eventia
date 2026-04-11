@@ -1238,7 +1238,13 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                        };
                        if (selectedTransaccionId) payload.transaccionId = selectedTransaccionId;
 
-                       const res = await registrarAbono(payload);
+                       const apiRes = await fetch('/api/abonos', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify(payload)
+                       });
+                       
+                       const res = await apiRes.json();
 
                        if (res.success) {
                          setMontoAbono('');

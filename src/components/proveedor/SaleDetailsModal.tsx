@@ -78,14 +78,19 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
 
     setIsSubmitting(true);
     try {
-      const res = await registrarAbono({
-        reservaId: venta.id,
-        monto: montoALiquidar,
-        metodoPago: payConfirmData.metodo,
-        tipo: 'ABONO',
-        transaccionId: payConfirmData.id,
-        esCliente: false
+      const apiRes = await fetch('/api/abonos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reservaId: venta.id,
+          monto: montoALiquidar,
+          metodoPago: payConfirmData.metodo,
+          tipo: 'ABONO',
+          transaccionId: payConfirmData.id,
+          esCliente: false
+        })
       });
+      const res = await apiRes.json();
 
       if (res.success && res.data) {
         // Usar los datos retornados por el servidor para una actualización real
@@ -114,16 +119,21 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
     
     setIsSubmitting(true);
     try {
-      const res = await registrarAbono({
-        reservaId: venta.id,
-        monto: Number(abono.monto),
-        tipo: abono.tipo as any,
-        metodoPago: abono.metodoPago,
-        estado: abono.estado as any,
-        fechaVencimiento: abono.fechaVencimiento,
-        notas: abono.notas,
-        esCliente: false
+      const apiRes = await fetch('/api/abonos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reservaId: venta.id,
+          monto: Number(abono.monto),
+          tipo: abono.tipo,
+          metodoPago: abono.metodoPago,
+          estado: abono.estado,
+          fechaVencimiento: abono.fechaVencimiento,
+          notas: abono.notas,
+          esCliente: false
+        })
       });
+      const res = await apiRes.json();
 
       if (res.success && res.data) {
         alert('Abono registrado y sincronizado con el presupuesto del cliente.');
