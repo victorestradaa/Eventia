@@ -100,9 +100,9 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
       } else {
         alert(res.error || 'No se pudo procesar el pago.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Error de conexión al procesar el pago.');
+      alert(`Error de conexión al procesar el pago. Detalle: ${err?.message || JSON.stringify(err)}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -148,9 +148,9 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
       } else {
         alert(res.error || 'No se pudo registrar el abono');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Error de conexión al registrar el abono.');
+      alert(`Error de conexión al registrar el abono. Detalle: ${err?.message || JSON.stringify(err)}`);
     } finally {
       setIsSubmitting(false);
     }

@@ -1229,14 +1229,16 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                      setProcesandoPago(true);
                      
                      try {
-                       const res = await registrarAbono({
+                       const payload: any = {
                          reservaId: showPagoModal.reservaId || '',
                          monto: Number(montoAbono),
                          metodoPago: 'TARJETA (TEST)',
                          tipo: 'ABONO',
-                         transaccionId: selectedTransaccionId || undefined,
                          esCliente: true
-                       });
+                       };
+                       if (selectedTransaccionId) payload.transaccionId = selectedTransaccionId;
+
+                       const res = await registrarAbono(payload);
 
                        if (res.success) {
                          setMontoAbono('');
@@ -1248,7 +1250,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                        }
                      } catch (error: any) {
                        console.error('Error en abono cliente:', error);
-                       alert('Error de conexión al procesar el abono.');
+                       alert(`Error de conexión al procesar el abono. Detalle: ${error?.message || JSON.stringify(error)}`);
                      } finally {
                        setProcesandoPago(false);
                      }
