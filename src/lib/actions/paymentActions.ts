@@ -72,7 +72,7 @@ export async function registrarAbono(data: {
 
       // Si la transacción sigue siendo PENDIENTE (un nuevo pagaré), no actualizamos totales aún
       if (!esPagado && !data.transaccionId) {
-         return { reserva, transaccion };
+         return JSON.parse(JSON.stringify({ reserva, transaccion }));
       }
 
       // 3. Calcular nuevo total pagado de la reserva (solo transacciones PAGADAS)
@@ -126,39 +126,43 @@ export async function registrarAbono(data: {
         }
       }
 
-      return { reserva, transaccion };
+      return JSON.parse(JSON.stringify({ reserva, transaccion }));
     });
 
     console.log(`[registrarAbono] Éxito para reserva: ${data.reservaId}`);
 
     // Revalidar rutas involucradas
-    revalidatePath('/proveedor/ventas');
-    revalidatePath('/proveedor/dashboard');
-    revalidatePath('/cliente/dashboard');
-    if (result.reserva.eventoId) {
-      revalidatePath(`/cliente/evento/${result.reserva.eventoId}`);
+    try {
+      revalidatePath('/proveedor/ventas');
+      revalidatePath('/proveedor/dashboard');
+      revalidatePath('/cliente/dashboard');
+      if (result.reserva.eventoId) {
+        revalidatePath(`/cliente/evento/${result.reserva.eventoId}`);
+      }
+    } catch (e: any) {
+      console.warn('[registrarAbono] Aviso: Error menor al revalidar rutas:', e);
     }
 
-    // Retornar un objeto de estructura plana y simple para evitar problemas de serialización en AWS
-    const resultSerializable = {
+    // Retornar explícitamente a través de JSON puro
+    const responsePayload = {
       success: true,
       data: {
         reservaId: result.reserva.id,
-        transaccionId: result.transaccion.id,
+        transaccionId: result.transaccion?.id || null,
         nuevoEstado: result.reserva.estado,
-        montoAnticipo: Number(result.reserva.montoAnticipo)
+        montoAnticipo: result.reserva.montoAnticipo ? Number(result.reserva.montoAnticipo) : 0
       }
     };
 
-    console.log(`[registrarAbono] Enviando respuesta exitosa:`, resultSerializable);
-    return resultSerializable;
+    console.log(`[registrarAbono] Enviando respuesta exitosa:`, responsePayload);
+    return JSON.parse(JSON.stringify(responsePayload));
 
   } catch (error: any) {
     console.error('[registrarAbono] ERROR:', error);
     // Asegurar que el error también sea un objeto plano simple
-    return { 
+    return JSON.parse(JSON.stringify({ 
       success: false, 
-      error: error.message || 'Error interno al procesar el abono.' 
-    };
+      error: error?.message || 'Error interno al procesar el abono.' 
+    }));
   }
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
-// Force build: 2026-04-10T19:34:00Z
+// Force build: 2026-04-10T21:55:00Z
 
 export async function PATCH(
   req: NextRequest,
