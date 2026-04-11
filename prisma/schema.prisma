@@ -334,6 +334,11 @@ model InvitacionDigital {
   vestimenta       String?
   enviadaEn        DateTime?
   rsvpFecha        DateTime?
+  
+  // Custom external invitation
+  isInvitacionPropia Boolean @default(false)
+  archivoAdjunto   String?   @db.Text
+  
   creadoEn         DateTime  @default(now())
   actualizadoEn    DateTime  @updatedAt
 }
