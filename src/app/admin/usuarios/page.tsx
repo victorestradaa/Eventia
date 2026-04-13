@@ -1,13 +1,22 @@
 import React from 'react';
+import { prisma } from '@/lib/prisma';
 
-export default function UsuariosPage() {
-  const users = [
-    { id: '1', nombre: 'Juan Pérez', email: 'juan@demo.com', rol: 'CLIENTE', estado: 'ACTIVO', registro: '12/03/2026' },
-    { id: '2', nombre: 'Eventos del Norte', email: 'contacto@eventos.com', rol: 'PROVEEDOR', estado: 'ACTIVO', registro: '10/03/2026' },
-    { id: '3', nombre: 'María García', email: 'maria@test.com', rol: 'CLIENTE', estado: 'INACTIVO', registro: '08/03/2026' },
-    { id: '4', nombre: 'Catering Premium', email: 'ventas@premium.com', rol: 'PROVEEDOR', estado: 'ACTIVO', registro: '05/03/2026' },
-    { id: '5', nombre: 'Admin Master', email: 'admin@gestor.com', rol: 'ADMIN', estado: 'ACTIVO', registro: '01/01/2026' },
-  ];
+export default async function UsuariosPage() {
+  const dbUsers = await prisma.usuario.findMany({
+    orderBy: { creadoEn: 'desc' },
+  });
+
+  // Mapeamos los usuarios de DB al formato UI
+  const users = dbUsers.map(user => ({
+    id: user.id,
+    nombre: user.nombre,
+    email: user.email,
+    rol: user.rol,
+    // Prisma no tiene estado explícito ACTIVO/INACTIVO en Usuario, usaremos proveedor o cliente. 
+    // Para simplificar, asumiremos ACTIVO
+    estado: 'ACTIVO', 
+    registro: user.creadoEn.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  }));
 
   return (
     <div className="space-y-6">

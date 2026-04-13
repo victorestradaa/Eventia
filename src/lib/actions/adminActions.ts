@@ -52,3 +52,47 @@ export async function getGlobalEventos() {
     return { success: false, error: 'Error del servidor' };
   }
 }
+
+export async function getCatalogoAssets(tipo?: string, categoria?: string) {
+  try {
+    const where: any = {};
+    if (tipo) where.tipo = tipo;
+    if (categoria && categoria !== 'TODAS') where.categoria = categoria;
+    
+    const assets = await prisma.catalogoAsset.findMany({
+      where,
+      orderBy: { creadoEn: 'desc' }
+    });
+    return { success: true, data: assets };
+  } catch (error) {
+    console.error('Error fetching catalog assets', error);
+    return { success: false, error: 'Error fetching catalog assets' };
+  }
+}
+
+export async function createCatalogoAsset(data: { tipo: string; categoria: string; nombre: string; url: string; etiquetas?: string }) {
+  try {
+    const asset = await prisma.catalogoAsset.create({
+      data: {
+        tipo: data.tipo,
+        categoria: data.categoria,
+        nombre: data.nombre,
+        url: data.url,
+        etiquetas: data.etiquetas || ''
+      }
+    });
+    return { success: true, data: asset };
+  } catch (error) {
+    console.error('Error creating asset', error);
+    return { success: false, error: 'Error creating asset' };
+  }
+}
+
+export async function deleteCatalogoAsset(id: string) {
+  try {
+    await prisma.catalogoAsset.delete({ where: { id } });
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: 'Error deleting asset' };
+  }
+}

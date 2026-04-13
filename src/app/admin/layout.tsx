@@ -33,6 +33,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <span className="text-lg">⚙️</span>
             Configuración
           </Link>
+          <Link href="/admin/catalogo" className="sidebar-item hover:bg-[var(--color-primario)]/10 text-[var(--color-primario)]">
+            <span className="text-lg">🖼️</span>
+            Catálogo D. Invitaciones
+          </Link>
         </nav>
 
         <div className="mt-auto p-4 border-t border-[var(--color-borde-suave)]">

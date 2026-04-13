@@ -44,12 +44,9 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        if (rol === 'CLIENTE') {
-          router.push('/cliente/dashboard');
-        } else {
-          router.push('/proveedor/dashboard');
-        }
-        router.refresh();
+        // Redirigimos a la raíz para que el Middleware de servidor evalúe
+        // su rol real (Admin/Cliente/Proveedor) en Prisma y lo enrute correcto.
+        window.location.href = '/';
       }
     } catch (err: any) {
       // Show the real exception message for debugging

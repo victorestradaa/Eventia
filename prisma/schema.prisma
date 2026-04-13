@@ -339,6 +339,23 @@ model InvitacionDigital {
   isInvitacionPropia Boolean @default(false)
   archivoAdjunto   String?   @db.Text
   
+  // Configuracion Visual de la plantilla base
+  fondoUrl         String?   @db.Text
+  colorTexto       String?   @default("#ffffff")
+  fuente           String?
+  
   creadoEn         DateTime  @default(now())
   actualizadoEn    DateTime  @updatedAt
+}
+
+model CatalogoAsset {
+  id               String       @id @default(cuid())
+  tipo             String       // "FONDO", "FUENTE", "ICONO"
+  categoria        String       // "BODA", "XV_ANOS", "BAUTIZO", etc.
+  nombre           String
+  url              String       @db.Text // String largo para Base64 o S3 URL
+  etiquetas        String?
+  activo           Boolean      @default(true)
+  creadoEn         DateTime     @default(now())
+  actualizadoEn    DateTime     @updatedAt
 }

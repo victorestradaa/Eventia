@@ -17,6 +17,8 @@ export async function POST(req: Request) {
       where: { eventoId: data.eventoId },
       update: {
         plantilla: data.plantilla,
+        fondoUrl: data.fondoUrl,
+        colorTexto: data.colorTexto,
         titulo: data.titulo,
         mensaje: data.mensaje,
         lugarTexto: data.lugarTexto,
@@ -26,7 +28,9 @@ export async function POST(req: Request) {
       },
       create: {
         eventoId: data.eventoId,
-        plantilla: data.plantilla || "clasica",
+        plantilla: data.plantilla || "custom",
+        fondoUrl: data.fondoUrl,
+        colorTexto: data.colorTexto,
         titulo: data.titulo || "¡Estás Invitado!",
         mensaje: data.mensaje,
         lugarTexto: data.lugarTexto,
