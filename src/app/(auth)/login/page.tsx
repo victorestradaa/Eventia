@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/cliente';
 import { useRouter } from 'next/navigation';
-import { getCurrentProfile } from '@/lib/actions/authActions';
 
 export default function LoginPage() {
   const [rol, setRol] = useState<'CLIENTE' | 'PROVEEDOR'>('CLIENTE');
@@ -45,20 +44,9 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        // Obtenemos el perfil real desde el servidor para redirigir directamente
-        const profileRes = await getCurrentProfile();
-        
-        if (profileRes.success && profileRes.data) {
-          const rol = profileRes.data.rol;
-          if (rol === 'ADMIN') router.push('/admin/dashboard');
-          else if (rol === 'PROVEEDOR') router.push('/proveedor/dashboard');
-          else router.push('/cliente/dashboard');
-          
-          router.refresh(); // Forzar actualización de datos
-        } else {
-          // Fallback en caso de error al obtener perfil
-          window.location.href = '/';
-        }
+        // Redirigimos a la raíz para que el servidor evalúe la sesión y lo enrute.
+        // Usamos window.location.href para asegurar un refresco total de la sesión.
+        window.location.href = '/';
       }
     } catch (err: any) {
       // Show the real exception message for debugging
