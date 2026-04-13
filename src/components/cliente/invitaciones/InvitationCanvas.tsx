@@ -15,6 +15,8 @@ interface InvitationCanvasProps {
   modoPropia?: boolean;
   onRSVPClick?: () => void;
 }
+import { useState, useEffect } from 'react';
+import { Gift, CreditCard, Copy, Check } from 'lucide-react';
 
 export default function InvitationCanvas({ 
   estilos, 
@@ -27,6 +29,14 @@ export default function InvitationCanvas({
   modoPropia = false,
   onRSVPClick
 }: InvitationCanvasProps) {
+  const [copiado, setCopiado] = useState(false);
+
+  const handleCopiar = (texto: string) => {
+    if (isEditing) return;
+    navigator.clipboard.writeText(texto);
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2000);
+  };
 
   const renderElement = (id: string, content: React.ReactNode, defaultStyles: any) => {
     // Si estilos es undefined por algún motivo de serialización fallida, usamos defaults
@@ -126,10 +136,38 @@ export default function InvitationCanvas({
 
           {renderElement('lugar', 
             <div className="flex flex-col items-center justify-center font-bold uppercase tracking-widest w-full text-center select-none" style={{ fontSize: `${estilos?.lugar?.fontSize || 12}px`, color: estilos?.lugar?.color, fontFamily: estilos?.lugar?.fuente || 'inherit' }}>
-               <div className="flex items-center justify-center gap-2 mb-1"><CalendarIcon size={estilos?.lugar?.fontSize}/> {evento?.fecha ? (typeof evento.fecha === 'string' ? formatearFechaCorta(new Date(evento.fecha)) : formatearFechaCorta(evento.fecha)) : 'Próximamente'}</div>
-               <div className="flex items-center justify-center gap-2"><MapPin size={estilos?.lugar?.fontSize}/> {texto.lugar}</div>
+               <div className="flex items-center justify-center gap-2"><CalendarIcon size={estilos?.lugar?.fontSize}/> {evento?.fecha ? (typeof evento.fecha === 'string' ? formatearFechaCorta(new Date(evento.fecha)) : formatearFechaCorta(evento.fecha)) : 'Próximamente'}</div>
+               <div className="flex items-center justify-center gap-2">
+                 <MapPin size={estilos?.lugar?.fontSize}/>
+                 {texto.lugar}
+               </div>
             </div>
           , {})}
+
+          {renderElement('mapPin', 
+             !isEditing && texto.direccion ? (
+               <a 
+                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(texto.direccion)}`}
+                 target="_blank"
+                 rel="noopener noreferrer"
+                 className="w-full h-full flex items-center justify-center transition-transform hover:scale-110 pointer-events-auto"
+                 onClick={(e) => e.stopPropagation()}
+                 title="Ver en Google Maps"
+               >
+                 <MapPin 
+                   size="100%" 
+                   style={{ width: '100%', height: '100%', color: estilos?.mapPin?.color || estilos?.titulo?.color }} 
+                 />
+               </a>
+             ) : (
+               <div className={cn("w-full h-full flex items-center justify-center", isEditing ? "pointer-events-none" : "opacity-30")}>
+                 <MapPin 
+                   size="100%" 
+                   style={{ width: '100%', height: '100%', color: estilos?.mapPin?.color || estilos?.titulo?.color }} 
+                 />
+               </div>
+             )
+          , { visible: true })}
 
           {renderElement('vestimenta', 
             <div className="flex flex-col items-center justify-center w-full text-center select-none" style={{ fontSize: `${estilos?.vestimenta?.fontSize || 14}px`, color: estilos?.vestimenta?.color, fontFamily: estilos?.vestimenta?.fuente || 'inherit' }}>
@@ -137,6 +175,50 @@ export default function InvitationCanvas({
                <p className="font-bold uppercase whitespace-pre-wrap m-0 mt-1">{texto.vestimenta}</p>
             </div>
           , {})}
+
+          {renderElement('regalos', 
+            <div className="w-full h-full flex flex-col items-center justify-center gap-2 select-none" style={{ color: estilos?.regalos?.color || estilos?.titulo?.color, fontFamily: estilos?.regalos?.fuente || 'inherit' }}>
+               {texto.regaloTipo === 'MESA' ? (
+                 <a 
+                   href={texto.regaloMesaUrl?.startsWith('http') ? texto.regaloMesaUrl : `https://${texto.regaloMesaUrl}`}
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all border border-white/10 pointer-events-auto shadow-sm"
+                   onClick={(e) => e.stopPropagation()}
+                   style={{ fontSize: `${estilos?.regalos?.fontSize || 12}px` }}
+                 >
+                   <Gift size={16} />
+                   <span className="font-black uppercase tracking-widest">Mesa de Regalos</span>
+                 </a>
+               ) : (
+                 <div 
+                   onClick={() => handleCopiar(texto.regaloClabe)}
+                   className="flex flex-col items-center gap-1 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 cursor-pointer pointer-events-auto group/regalo relative min-w-[200px]"
+                   style={{ fontSize: `${estilos?.regalos?.fontSize || 12}px` }}
+                 >
+                    <div className="flex items-center gap-2 mb-1">
+                      <CreditCard size={14} className="opacity-60" />
+                      <span className="font-black uppercase tracking-[0.2em] opacity-60" style={{ fontSize: '0.7em' }}>Regalo Monetario</span>
+                    </div>
+                    <div className="flex items-center gap-3 w-full justify-center">
+                       <div className="text-center">
+                          <p className="font-black uppercase opacity-40 leading-none mb-1" style={{ fontSize: '0.8em' }}>{texto.regaloBanco || 'BANCO'}</p>
+                          <p className="font-mono font-bold tracking-wider leading-none" style={{ fontSize: '1.1em' }}>{texto.regaloClabe || '0000 0000 0000 0000 00'}</p>
+                       </div>
+                       <div className={cn(
+                         "w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0",
+                         copiado ? "bg-[var(--color-liquidado)] text-white" : "bg-white/10 group-hover/regalo:bg-white/20"
+                       )}>
+                          {copiado ? <Check size={14} /> : <Copy size={14} />}
+                       </div>
+                    </div>
+                    {copiado && (
+                      <p className="font-black uppercase tracking-widest text-[var(--color-liquidado)] absolute -top-8 left-1/2 -translate-x-1/2 animate-in fade-in slide-in-from-bottom-2 whitespace-nowrap" style={{ fontSize: '0.6em' }}>¡Copiado al portapapeles!</p>
+                    )}
+                 </div>
+               )}
+            </div>
+          , { visible: true })}
         </div>
       </div>
 

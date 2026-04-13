@@ -889,8 +889,8 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                   <thead>
                     <tr>
                       <th>Invitado</th>
-                      <th>Información</th>
-                      {evento.tipo === 'Boda' && <th>Lado</th>}
+                      <th className="hidden md:table-cell">Información</th>
+                      {evento.tipo === 'Boda' && <th className="hidden md:table-cell">Lado</th>}
                       <th>Categoría</th>
                       <th>Confirmación</th>
                       <th className="text-right">Acciones</th>
@@ -915,12 +915,12 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                               </div>
                            </div>
                         </td>
-                        <td>
+                        <td className="hidden md:table-cell">
                            <div className="text-[10px] text-[var(--color-texto-suave)] font-bold italic">{i.email || 'Sin email'}</div>
                            <div className="text-[10px] text-[var(--color-texto-muted)]">{i.telefono || ''}</div>
                         </td>
                         {evento.tipo === 'Boda' && (
-                          <td>
+                          <td className="hidden md:table-cell">
                             {i.lado ? (
                               <span className={cn(
                                 "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border",

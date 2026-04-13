@@ -18,7 +18,9 @@ import {
   MessageCircle,
   Mail,
   Copy,
-  Users
+  Users,
+  Gift,
+  CreditCard
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
@@ -53,7 +55,9 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
       mensaje: { color: defCol, fuente: '', fontSize: 14, x: 28, y: 260, width: 344, height: 80, visible: true },
       lugar: { color: defCol, fuente: '', fontSize: 12, x: 28, y: 400, width: 344, height: 60, visible: true },
       vestimenta: { color: defCol, fuente: '', fontSize: 14, x: 28, y: 490, width: 344, height: 60, visible: true },
-      boton: { color: defCol, visible: true }
+      boton: { color: defCol, visible: true },
+      mapPin: { color: defCol, x: 180, y: 450, width: 40, height: 40, visible: true },
+      regalos: { color: defCol, fuente: '', fontSize: 12, x: 28, y: 560, width: 344, height: 80, visible: true }
     };
 
     try {
@@ -86,7 +90,12 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
     nombres: evento?.nombre || 'Mi Evento Especial',
     mensaje: evento?.invitacion?.mensaje || 'Queremos compartir este día tan especial contigo. Tu presencia es nuestro mejor regalo.',
     vestimenta: evento?.invitacion?.vestimenta || 'Formal / Gala',
-    lugar: evento?.invitacion?.lugarTexto || 'Sin asignar'
+    lugar: evento?.invitacion?.lugarTexto || 'Sin asignar',
+    direccion: evento?.invitacion?.direccion || '',
+    regaloTipo: evento?.invitacion?.regaloTipo || 'MESA',
+    regaloMesaUrl: evento?.invitacion?.regaloMesaUrl || '',
+    regaloBanco: evento?.invitacion?.regaloBanco || '',
+    regaloClabe: evento?.invitacion?.regaloClabe || ''
   });
 
   const [saving, setSaving] = useState(false);
@@ -158,7 +167,12 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         titulo: texto.titulo,
         mensaje: texto.mensaje,
         lugarTexto: texto.lugar,
-        vestimenta: texto.vestimenta
+        vestimenta: texto.vestimenta,
+        direccion: texto.direccion,
+        regaloTipo: texto.regaloTipo,
+        regaloMesaUrl: texto.regaloMesaUrl,
+        regaloBanco: texto.regaloBanco,
+        regaloClabe: texto.regaloClabe
       };
 
       const res = await fetch('/api/invitaciones', {
@@ -178,64 +192,117 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
   };
 
   const toggleVisibility = (id: string) => {
+    const estiloActual = estilos[id] || { visible: true };
     setEstilos({
       ...estilos,
-      [id]: { ...estilos[id], visible: !estilos[id].visible }
+      [id]: { ...estiloActual, visible: !estiloActual.visible }
     });
   };
 
-  const renderCampo = (id: keyof typeof texto, label: string, isTextarea = false) => (
-    <div className={cn("space-y-1 relative mb-4 transition-opacity", !estilos[id]?.visible && "opacity-40")}>
-      <div className="flex justify-between items-center mb-1">
-        <div className="flex items-center gap-2">
-           <button 
-             onClick={() => toggleVisibility(id)}
-             className={cn("p-1 rounded hover:bg-white/10 transition-colors", estilos[id]?.visible ? "text-white/80" : "text-amber-500")}
-             title={estilos[id]?.visible ? "Ocultar campo" : "Mostrar campo"}
-           >
-             {estilos[id]?.visible ? <Eye size={14} /> : <EyeOff size={14} />}
-           </button>
-           <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] block truncate max-w-[120px]">{label}</label>
+  const renderCampo = (id: keyof typeof texto, label: string, isTextarea = false, parentStyleId?: string) => {
+    const styleId = parentStyleId || id;
+    const estilo = estilos[styleId] || { visible: true };
+
+    return (
+    <div className={cn(
+      "group relative bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-[var(--radio-xl)] p-6 transition-all duration-500 hover:border-[var(--color-borde)] hover:shadow-2xl hover:shadow-black/5 mb-8", 
+      !estilo.visible && "opacity-40 grayscale-[0.5]"
+    )}>
+      {/* Cabecera del Campo con Herramientas */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+        <div className="flex items-center gap-3">
+          <div className={cn(
+            "p-2.5 rounded-xl bg-[var(--color-fondo-input)] text-[var(--color-texto-muted)] transition-all duration-500 group-hover:bg-[var(--color-acento)]/10 group-hover:text-[var(--color-acento)]",
+            estilo.visible && "text-[var(--color-texto-suave)]"
+          )}>
+            {id === 'titulo' && <Type size={18} />}
+            {id === 'nombres' && <Users size={18} />}
+            {id === 'mensaje' && <MessageCircle size={18} />}
+            {id === 'lugar' && <MapPin size={18} />}
+            {id === 'vestimenta' && <Sparkles size={18} />}
+            {id === 'regaloMesaUrl' && <Gift size={18} />}
+            {id === 'regaloBanco' && <CreditCard size={18} />}
+            {id === 'regaloClabe' && <Copy size={18} />}
+          </div>
+          <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[var(--color-texto-suave)] group-hover:text-[var(--color-texto)] transition-colors">
+            {label}
+          </span>
         </div>
-        <div className="flex items-center gap-1.5">
-           <input 
-             type="color" 
-             value={estilos[id]?.color || '#ffffff'}
-             onChange={(e) => setEstilos({...estilos, [id]: {...estilos[id], color: e.target.value}})}
-             className="h-5 w-5 rounded cursor-pointer border-0 p-0 shadow-sm flex-shrink-0"
-           />
-           <input 
-             type="number"
-             value={estilos[id]?.fontSize || 16}
-             onChange={(e) => setEstilos({...estilos, [id]: {...estilos[id], fontSize: Number(e.target.value)}})}
-             className="w-10 text-[10px] bg-black/40 border border-white/10 rounded px-1 py-1 outline-none text-white/80"
-           />
-           <select
-             value={estilos[id]?.fuente || ''}
-             onChange={(e) => setEstilos({...estilos, [id]: {...estilos[id], fuente: e.target.value}})}
-             className="text-[10px] bg-black/40 border border-white/10 rounded px-1 py-1 outline-none text-white/80 max-w-[70px]"
+
+        {/* Toolbar de Formato (Dock de Alto Contraste) */}
+        <div className="flex items-center gap-1.5 bg-[var(--color-primario)] p-1.5 rounded-2xl border border-white/10 shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 scale-95 group-hover:scale-100 z-10">
+           <button 
+             onClick={() => toggleVisibility(styleId)}
+             className={cn(
+               "p-2 rounded-lg transition-all", 
+               estilo.visible ? "text-white/40 hover:text-white hover:bg-white/10" : "text-[var(--color-acento-claro)] bg-white/10"
+             )}
+             title={estilo.visible ? "Ocultar" : "Mostrar"}
            >
-             <option value="">Fuentes</option>
-             {fuentes.map(f => <option key={f.id} value={f.nombre}>{f.nombre}</option>)}
-           </select>
+             {estilo.visible ? <Eye size={15} /> : <EyeOff size={15} />}
+           </button>
+           
+           <div className="w-px h-4 bg-white/10 mx-1" />
+           
+           <div className="relative group/color">
+             <input 
+               type="color" 
+               value={estilo.color || '#ffffff'}
+               onChange={(e) => setEstilos({...estilos, [styleId]: {...estilo, color: e.target.value}})}
+               className="h-8 w-8 rounded-lg cursor-pointer border-0 p-0 shadow-lg bg-transparent overflow-hidden hover:scale-110 transition-transform"
+             />
+           </div>
+
+           <div className="flex items-center gap-1 bg-white/5 rounded-lg px-2 py-1.5 border border-white/5 focus-within:border-white/20 transition-all">
+              <span className="text-[8px] font-black text-white/40">PT</span>
+              <input 
+                type="number"
+                value={estilo.fontSize || 16}
+                onChange={(e) => setEstilos({...estilos, [styleId]: {...estilo, fontSize: Number(e.target.value)}})}
+                className="w-10 text-[11px] bg-transparent outline-none text-white font-black text-center"
+              />
+           </div>
+
+           <div className="relative">
+             <select
+               value={estilo.fuente || ''}
+               onChange={(e) => setEstilos({...estilos, [styleId]: {...estilo, fuente: e.target.value}})}
+               className="text-[10px] bg-white/5 border border-white/5 rounded-lg pl-3 pr-6 py-1.5 outline-none text-white/70 hover:text-white transition-colors max-w-[100px] font-bold appearance-none cursor-pointer"
+             >
+               <option value="" className="bg-[var(--color-primario)]">Fuente</option>
+               {fuentes.map(f => <option key={f.id} value={f.nombre} className="bg-[var(--color-primario)] text-white py-2">{f.nombre}</option>)}
+             </select>
+             <Palette size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+           </div>
         </div>
       </div>
-      {isTextarea ? (
-        <textarea 
-          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all text-sm min-h-[80px] resize-none" 
-          value={texto[id]}
-          onChange={(e) => setTexto({...texto, [id]: e.target.value})}
-        />
-      ) : (
-        <input 
-          type="text" 
-          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all text-sm" 
-          value={texto[id]} 
-          onChange={(e) => setTexto({...texto, [id]: e.target.value})}
-        />
-      )}
+
+      <div className="relative group/input">
+        {isTextarea ? (
+          <textarea 
+            className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] hover:border-[var(--color-borde)] rounded-2xl px-6 py-5 outline-none focus:border-[var(--color-acento)] focus:bg-[var(--color-fondo-card)] focus:ring-8 focus:ring-[var(--color-acento)]/5 transition-all duration-500 text-sm min-h-[120px] resize-none shadow-inner placeholder:text-[var(--color-texto-muted)]/70 leading-relaxed text-[var(--color-texto)]" 
+            value={texto[id]}
+            placeholder={`Escribe aquí ${label.toLowerCase()}...`}
+            onChange={(e) => setTexto({...texto, [id]: e.target.value})}
+          />
+        ) : (
+          <input 
+            type="text" 
+            className="w-full h-16 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] hover:border-[var(--color-borde)] rounded-2xl px-6 py-4 outline-none focus:border-[var(--color-acento)] focus:bg-[var(--color-fondo-card)] focus:ring-8 focus:ring-[var(--color-acento)]/5 transition-all duration-500 text-base shadow-inner placeholder:text-[var(--color-texto-muted)]/70 font-bold text-[var(--color-texto)]" 
+            value={texto[id]} 
+            placeholder={`Escribe aquí ${label.toLowerCase()}...`}
+            onChange={(e) => setTexto({...texto, [id]: e.target.value})}
+          />
+        )}
+        
+        {/* Indicador visual de edición */}
+        <div className="absolute top-1/2 -translate-y-1/2 right-6 opacity-0 group-focus-within/input:opacity-100 transition-opacity pointer-events-none">
+          <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-acento)] animate-pulse shadow-[0_0_15px_var(--color-acento)]" />
+        </div>
+      </div>
     </div>
-  );
+    );
+  };
 
   const handleShareWhatsApp = (invitado: any) => {
     const url = `${window.location.origin}/invitacion/${invitado.rsvpToken}`;
@@ -312,34 +379,43 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         <div className="lg:col-span-4 space-y-6">
           {tabActiva === 'EDITOR' ? (
             <>
-              <div className="flex bg-black/60 p-1.5 rounded-2xl w-full border border-white/5">
-                <button 
-                  onClick={() => setModoPropia(false)}
-                  className={cn(
-                    "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", 
-                    !modoPropia ? "bg-[var(--color-primario)] text-white shadow-lg" : "text-white/60 hover:text-white"
-                  )}
-                >
-                  <Sparkles size={16} /> Automático
-                </button>
-                <button 
-                  onClick={() => setModoPropia(true)}
-                  className={cn(
-                    "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2", 
-                    modoPropia ? "bg-[var(--color-acento)] text-white shadow-lg" : "text-white/60 hover:text-white"
-                  )}
-                >
-                  <Upload size={16} /> Mi Diseño
-                </button>
-              </div>
+                <div className="flex bg-[var(--color-fondo-input)] p-1.5 rounded-[var(--radio-xl)] w-full border border-[var(--color-borde-suave)] shadow-inner">
+                  <button 
+                    onClick={() => setModoPropia(false)}
+                    className={cn(
+                      "flex-1 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-3", 
+                      !modoPropia 
+                        ? "bg-[var(--color-primario)] text-white shadow-2xl scale-[1.02] z-10" 
+                        : "text-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
+                    )}
+                  >
+                    <Sparkles size={18} className={!modoPropia ? "text-[var(--color-acento)]" : "text-[var(--color-texto-muted)]/20"} /> Automático
+                  </button>
+                  <button 
+                    onClick={() => setModoPropia(true)}
+                    className={cn(
+                      "flex-1 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-3", 
+                      modoPropia 
+                        ? "bg-[var(--color-acento)] text-white shadow-2xl scale-[1.02] z-10" 
+                        : "text-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
+                    )}
+                  >
+                    <Upload size={18} className={modoPropia ? "text-white" : "text-[var(--color-texto-muted)]/20"} /> Mi Diseño
+                  </button>
+                </div>
 
               {!modoPropia ? (
                 <>
-                  <div className="card space-y-4">
-                    <h3 className="font-black flex items-center gap-2 uppercase text-[10px] tracking-widest text-white/30"><Palette size={14} className="text-[var(--color-primario-claro)]" /> Galería de Estilos</h3>
+                  <div className="bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-3xl p-6 space-y-5 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-black flex items-center gap-2 uppercase text-[10px] tracking-[0.2em] text-[var(--color-texto-muted)]">
+                        <Palette size={14} className="text-[var(--color-acento)]" /> Galería de Estilos
+                      </h3>
+                      <span className="text-[9px] font-bold text-[var(--color-texto-muted)] bg-[var(--color-fondo-input)] px-2 py-1 rounded-full">{fondosFiltrados.length} Diseños</span>
+                    </div>
                     <div>
                       <select 
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs outline-none focus:border-[var(--color-primario-claro)] mb-4" 
+                        className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl px-5 py-3 text-xs outline-none focus:border-[var(--color-acento)]/40 mb-6 transition-all appearance-none cursor-pointer font-bold text-[var(--color-texto)] shadow-inner" 
                         value={filtroCategoria}
                         onChange={(e) => setFiltroCategoria(e.target.value)}
                       >
@@ -348,103 +424,264 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                         <option value="XV_ANOS">XV Años</option>
                         <option value="BAUTIZO">Bautizo</option>
                       </select>
-                      <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                      <div className="grid grid-cols-3 gap-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar p-1">
                         {fondosFiltrados.map((f) => (
                           <button 
                             key={f.id}
                             onClick={() => setFondoUrlActivo(f.url)}
                             className={cn(
-                              "relative rounded-lg border transition-all overflow-hidden aspect-[9/16]",
-                              fondoUrlActivo === f.url ? "border-[var(--color-primario)] ring-2 ring-[var(--color-primario)] scale-95" : "border-white/5 hover:border-white/20"
+                              "relative rounded-xl border-2 transition-all duration-500 overflow-hidden aspect-[9/16] group/thumb shadow-md",
+                              fondoUrlActivo === f.url 
+                                ? "border-[var(--color-acento)] ring-4 ring-[var(--color-acento)]/10 scale-[0.98] shadow-2xl shadow-[var(--color-acento)]/20" 
+                                : "border-[var(--color-borde-suave)] hover:border-[var(--color-acento)]/30 hover:scale-105"
                             )}
                           >
-                            <img src={f.url} alt={f.nombre} className="w-full h-full object-cover" />
+                            <img src={f.url} alt={f.nombre} className="w-full h-full object-cover transition-transform duration-700 group-hover/thumb:scale-110" />
+                            {fondoUrlActivo === f.url && (
+                              <div className="absolute inset-0 bg-[var(--color-acento)]/20 flex items-center justify-center">
+                                <CheckCircle2 size={24} className="text-white drop-shadow-lg" />
+                              </div>
+                            )}
                           </button>
                         ))}
                       </div>
                     </div>
                   </div>
 
-                  <div className="card space-y-4">
-                    <h3 className="font-black flex items-center gap-2 uppercase text-[10px] tracking-widest text-white/30"><Type size={14} className="text-[var(--color-acento-claro)]" /> Tipografías y Textos</h3>
-                    <div className="space-y-1">
+                  <div className="bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-3xl p-6 space-y-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-black flex items-center gap-2 uppercase text-[10px] tracking-[0.2em] text-[var(--color-texto-muted)]">
+                        <Type size={14} className="text-[var(--color-acento)]" /> Tipografías y Textos
+                      </h3>
+                    </div>
+                    <div className="space-y-4">
                       {renderCampo('titulo', 'Frase inicial')}
                       {renderCampo('nombres', 'Protagonistas')}
                       {renderCampo('mensaje', 'Mensaje Invitación', true)}
                       {renderCampo('lugar', 'Ubicación')}
+                      {renderCampo('direccion', 'Dirección Google Maps')}
+                      
+                      {/* Control Independiente del PIN de Mapa */}
+                      <div className="pt-2 pb-6 border-b border-[var(--color-borde-suave)] mb-4">
+                        <div className="flex justify-between items-center bg-[var(--color-primario)] p-4 rounded-2xl border border-white/10 group/mappin hover:shadow-2xl hover:shadow-black/20 transition-all">
+                            <div className="flex items-center gap-4">
+                              <button 
+                                onClick={() => toggleVisibility('mapPin')}
+                                className={cn(
+                                  "p-2.5 rounded-xl transition-all shadow-inner", 
+                                  estilos.mapPin?.visible ? "bg-white/10 text-white/50 hover:text-white" : "bg-[var(--color-acento)]/20 text-[var(--color-acento-claro)]"
+                                )}
+                              >
+                                {estilos.mapPin?.visible ? <Eye size={18} /> : <EyeOff size={18} />}
+                              </button>
+                              <div className="space-y-0.5">
+                                <label className="text-[10px] font-black uppercase text-white/80 tracking-[0.1em]">Icono Map-Pin</label>
+                                <p className="text-[8px] text-white/30 font-bold uppercase">Movible y Redimensionable</p>
+                              </div>
+                            </div>
+                            <div className="relative group/picker">
+                              <input 
+                                type="color" 
+                                value={estilos.mapPin?.color || '#ffffff'}
+                                onChange={(e) => setEstilos({...estilos, mapPin: {...estilos.mapPin, color: e.target.value}})}
+                                className="h-10 w-10 rounded-xl cursor-pointer border-0 p-0 shadow-2xl bg-transparent overflow-hidden hover:scale-110 transition-transform"
+                              />
+                            </div>
+                        </div>
+                      </div>
+
+                      {/* SECCIÓN REGALOS (NEW) */}
+                      <div className="pt-2 pb-8 border-b border-[var(--color-borde-suave)] mb-6 space-y-6">
+                        <div className="flex items-center gap-3">
+                           <div className="w-8 h-8 rounded-lg bg-[var(--color-acento)]/20 flex items-center justify-center text-[var(--color-acento-claro)]">
+                              <Gift size={16} />
+                           </div>
+                           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Sugerencia de Regalos</h3>
+                        </div>
+
+                        <div className="flex bg-[var(--color-fondo-input)] p-1.5 rounded-[var(--radio-lg)] w-full border border-[var(--color-borde-suave)] shadow-inner">
+                           <button 
+                             onClick={() => setTexto({...texto, regaloTipo: 'MESA'})}
+                             className={cn(
+                               "flex-1 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-2",
+                               texto.regaloTipo === 'MESA' ? "bg-[var(--color-acento)] text-white shadow-lg scale-[1.02] z-10" : "text-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
+                             )}
+                           >
+                             <Gift size={14} className={texto.regaloTipo === 'MESA' ? "text-white" : "text-[var(--color-texto-muted)]/40"} /> Mesa Regalo
+                           </button>
+                           <button 
+                             onClick={() => setTexto({...texto, regaloTipo: 'EFECTIVO'})}
+                             className={cn(
+                               "flex-1 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-2",
+                               texto.regaloTipo === 'EFECTIVO' ? "bg-[var(--color-acento)] text-white shadow-lg scale-[1.02] z-10" : "text-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
+                             )}
+                           >
+                             <CreditCard size={14} className={texto.regaloTipo === 'EFECTIVO' ? "text-white" : "text-[var(--color-texto-muted)]/40"} /> Monetario
+                           </button>
+                        </div>
+
+                        {texto.regaloTipo === 'MESA' ? (
+                          <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                             {renderCampo('regaloMesaUrl', 'Link Mesa de Regalos (Liverpool, Amazon, etc)', false, 'regalos')}
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                             {renderCampo('regaloBanco', 'Nombre Banco', false, 'regalos')}
+                             {renderCampo('regaloClabe', 'CLABE (18 dígitos)', false, 'regalos')}
+                          </div>
+                        )}
+
+                        {/* Control Independiente del Bloque de Regalos */}
+                        <div className="flex justify-between items-center bg-[var(--color-primario)] p-4 rounded-2xl border border-white/10 group/regalos hover:shadow-2xl hover:shadow-black/20 transition-all">
+                            <div className="flex items-center gap-4">
+                              <button 
+                                onClick={() => toggleVisibility('regalos')}
+                                className={cn(
+                                  "p-2.5 rounded-xl transition-all shadow-inner", 
+                                  estilos.regalos?.visible ? "bg-white/10 text-white/50 hover:text-white" : "bg-[var(--color-acento)]/20 text-[var(--color-acento-claro)]"
+                                )}
+                              >
+                                {estilos.regalos?.visible ? <Eye size={18} /> : <EyeOff size={18} />}
+                              </button>
+                              <div className="space-y-0.5">
+                                <label className="text-[10px] font-black uppercase text-white/80 tracking-[0.1em]">Bloque Regalos</label>
+                                <p className="text-[8px] text-white/30 font-bold uppercase">Movible y Redimensionable</p>
+                              </div>
+                            </div>
+                            <div className="relative group/picker">
+                              <input 
+                                type="color" 
+                                value={estilos.regalos?.color || '#ffffff'}
+                                onChange={(e) => setEstilos({...estilos, regalos: {...estilos.regalos, color: e.target.value}})}
+                                className="h-10 w-10 rounded-xl cursor-pointer border-0 p-0 shadow-2xl bg-transparent overflow-hidden hover:scale-110 transition-transform"
+                              />
+                            </div>
+                        </div>
+                      </div>
+
                       {renderCampo('vestimenta', 'Vestimenta')}
                     </div>
-                    <div className="pt-4 border-t border-white/5">
-                       <div className="flex justify-between items-center bg-black/20 p-3 rounded-xl">
-                          <div className="flex items-center gap-3">
+                    
+                    {/* Sección RSVP Rediseñada */}
+                    <div className="pt-6 border-t border-[var(--color-borde-suave)]">
+                       <div className="flex justify-between items-center bg-[var(--color-primario)] p-4 rounded-2xl border border-white/10 group/rsvp hover:shadow-2xl hover:shadow-black/20 transition-all">
+                          <div className="flex items-center gap-4">
                             <button 
                               onClick={() => toggleVisibility('boton')}
-                              className={cn("p-1.5 rounded-lg transition-colors", estilos.boton?.visible ? "bg-white/5 text-white" : "bg-amber-500/10 text-amber-500")}
+                              className={cn(
+                                "p-2.5 rounded-xl transition-all shadow-inner", 
+                                estilos.boton?.visible ? "bg-white/10 text-white/50 hover:text-white" : "bg-[var(--color-acento)]/20 text-[var(--color-acento-claro)]"
+                              )}
                             >
-                              {estilos.boton?.visible ? <Eye size={16} /> : <EyeOff size={16} />}
+                              {estilos.boton?.visible ? <Eye size={18} /> : <EyeOff size={18} />}
                             </button>
-                            <label className="text-[10px] font-black uppercase text-white/50 tracking-widest">Botón RSVP</label>
+                            <div className="space-y-0.5">
+                              <label className="text-[10px] font-black uppercase text-white/80 tracking-[0.1em]">Botón RSVP</label>
+                              <p className="text-[8px] text-white/30 font-bold uppercase">Link de confirmación</p>
+                            </div>
                           </div>
-                          <input 
-                            type="color" 
-                            value={estilos.boton?.color || '#ffffff'}
-                            onChange={(e) => setEstilos({...estilos, boton: {...estilos.boton, color: e.target.value}})}
-                            className="h-8 w-8 rounded-lg cursor-pointer border-0 p-0 shadow-lg"
-                          />
+                          <div className="relative group/picker">
+                            <input 
+                              type="color" 
+                              value={estilos.boton?.color || '#ffffff'}
+                              onChange={(e) => setEstilos({...estilos, boton: {...estilos.boton, color: e.target.value}})}
+                              className="h-10 w-10 rounded-xl cursor-pointer border-0 p-0 shadow-2xl bg-transparent overflow-hidden hover:scale-110 transition-transform"
+                            />
+                            <div className="absolute -top-1 right-0 w-2 h-2 rounded-full bg-white border border-black shadow-[0_0_10px_white] animate-pulse pointer-events-none" />
+                          </div>
                        </div>
                     </div>
                   </div>
                 </>
               ) : (
-                <div className="card space-y-6">
-                   <h3 className="font-black flex items-center gap-2 uppercase text-[10px] tracking-widest text-white/30"><FileBox size={14} /> Tu Archivo Maestro</h3>
+                <div className="bg-white/[0.03] border border-white/5 rounded-3xl p-8 space-y-8 text-center">
+                   <div className="space-y-2">
+                     <h3 className="font-black flex items-center justify-center gap-2 uppercase text-[10px] tracking-[0.3em] text-white/30">
+                       <FileBox size={14} className="text-[var(--color-acento-claro)]" /> Mesa de Luces
+                     </h3>
+                     <p className="text-[9px] text-white/20 font-bold uppercase tracking-widest">Sube tu diseño final y lo proyectaremos</p>
+                   </div>
+                   
                    <div 
-                    className="border-2 border-dashed border-white/10 rounded-2xl p-10 flex flex-col items-center justify-center gap-4 hover:bg-white/5 hover:border-[var(--color-acento)] transition-all cursor-pointer text-center group"
+                    className="group relative border-2 border-dashed border-white/5 rounded-[var(--radio-xl)] p-12 flex flex-col items-center justify-center gap-6 hover:bg-white/[0.02] hover:border-[var(--color-acento)]/30 transition-all duration-700 cursor-pointer overflow-hidden"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    <Upload size={32} className="text-white/20 group-hover:text-[var(--color-acento)] transition-all" />
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-tighter">Arrastra tu diseño aquí</p>
-                      <p className="text-[10px] text-white/20 mt-1">Soporta PNG, JPG, WEBP (Max 5MB)</p>
+                    {/* Decoración de fondo en hover */}
+                    <div className="absolute inset-0 bg-[var(--color-acento)]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                    
+                    <div className="relative z-10 w-20 h-20 rounded-3xl bg-black/40 flex items-center justify-center text-white/20 group-hover:text-[var(--color-acento-claro)] group-hover:scale-110 transition-all duration-500 shadow-inner border border-white/5">
+                      <Upload size={32} />
                     </div>
+                    
+                    <div className="relative z-10 space-y-1">
+                      <p className="text-xs font-black uppercase tracking-widest text-white/60 group-hover:text-white transition-colors">Arrastra tu obra maestra</p>
+                      <p className="text-[9px] text-white/20 font-bold uppercase tracking-widest">PNG, JPG, WEBP • Máximo 5MB</p>
+                    </div>
+                    
                     <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
                   </div>
+
                   {archivoAdjuntoBase64 && (
-                    <div className="p-4 bg-green-500/5 border border-green-500/10 rounded-xl flex items-center gap-4">
-                       <div className="w-12 h-12 rounded bg-black overflow-hidden"><img src={archivoAdjuntoBase64} className="w-full h-full object-cover" /></div>
-                       <p className="text-[10px] font-black uppercase text-green-500">Diseño cargado con éxito</p>
+                    <div className="p-5 bg-[var(--color-liquidado)]/5 border border-[var(--color-liquidado)]/20 rounded-2xl flex items-center gap-5 animate-in slide-in-from-bottom-2">
+                       <div className="w-16 h-16 rounded-xl bg-black shadow-2xl overflow-hidden border border-white/10 ring-4 ring-[var(--color-liquidado)]/10">
+                         <img src={archivoAdjuntoBase64} className="w-full h-full object-cover" />
+                       </div>
+                        <div className="text-left">
+                          <p className="text-[10px] font-black uppercase text-[var(--color-liquidado)] tracking-widest">Diseño listo</p>
+                          <p className="text-[9px] text-[var(--color-texto-muted)] font-bold mt-0.5 italic">Sincronizado con éxito</p>
+                        </div>
                     </div>
                   )}
                 </div>
               )}
             </>
           ) : (
-            <div className="card space-y-6">
+            <div className="bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-3xl p-8 space-y-8 shadow-sm">
               <div className="flex items-center justify-between">
-                <h3 className="font-black flex items-center gap-2 uppercase text-xs tracking-widest"><Users size={16} /> Lista de Invitados</h3>
-                <span className="px-3 py-1 bg-white/5 border border-white/5 rounded-full text-[10px] font-black text-white/40">{evento.invitados?.length || 0}</span>
+                <div className="space-y-1">
+                  <h3 className="font-black flex items-center gap-3 uppercase text-xs tracking-[0.2em] text-[var(--color-texto)]">
+                    <Users size={20} className="text-[var(--color-acento)]" /> Lista de Invitados
+                  </h3>
+                  <p className="text-[9px] text-[var(--color-texto-muted)] font-bold uppercase tracking-widest pl-8">Gestión de envíos personalizados</p>
+                </div>
+                <span className="px-4 py-1.5 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-xl text-[10px] font-black text-[var(--color-texto-muted)] shadow-inner">
+                  {evento.invitados?.length || 0} Registrados
+                </span>
               </div>
-              <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-3 max-h-[700px] overflow-y-auto pr-3 custom-scrollbar p-1">
                 {evento.invitados?.map((invitado: any) => (
-                  <div key={invitado.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between group hover:border-[var(--color-primario)]/30 transition-all">
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold truncate">{invitado.nombre}</p>
-                      <p className="text-[10px] text-white/20 font-black uppercase tracking-wider">{invitado.telefono || 'Sin teléfono'}</p>
+                  <div key={invitado.id} className="p-5 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl flex items-center justify-between group hover:border-[var(--color-acento)]/30 transition-all duration-500 hover:shadow-2xl hover:bg-[var(--color-fondo-card)]">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="w-12 h-12 rounded-xl bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] flex items-center justify-center font-black text-[var(--color-texto-muted)] group-hover:bg-[var(--color-acento)]/10 group-hover:text-[var(--color-acento)] transition-all duration-500 shadow-inner">
+                        {invitado.nombre[0].toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-black text-[var(--color-texto)] group-hover:text-[var(--color-primario)] transition-colors truncate">{invitado.nombre}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className={cn(
+                            "w-1.5 h-1.5 rounded-full blur-[2px]",
+                            invitado.email ? "bg-[var(--color-liquidado)]" : "bg-amber-400"
+                          )} />
+                          <p className="text-[9px] text-[var(--color-texto-muted)] font-bold uppercase tracking-widest truncate">{invitado.telefono || 'Sin teléfono'}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2.5 opacity-40 group-hover:opacity-100 transition-all duration-500 scale-95 group-hover:scale-100">
                       {invitado.telefono && (
                         <button 
                           onClick={() => handleShareWhatsApp(invitado)}
-                          className="p-2.5 bg-green-500/10 text-green-500 rounded-xl hover:bg-green-500 hover:text-white transition-all shadow-lg"
+                          className="p-3 bg-green-500/10 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all shadow-xl hover:shadow-green-500/20 active:scale-90"
+                          title="Enviar por WhatsApp"
                         >
-                          <MessageCircle size={16} />
+                          <MessageCircle size={18} />
                         </button>
                       )}
                       <button 
                          onClick={() => copyToClipboard(invitado.rsvpToken)}
-                         className="p-2.5 bg-white/5 text-white/40 rounded-xl hover:bg-white/20 hover:text-white transition-all"
+                         className="p-3 bg-[var(--color-fondo-card)] text-[var(--color-texto-muted)] border border-[var(--color-borde-suave)] rounded-xl hover:bg-[var(--color-fondo-input)] hover:text-[var(--color-texto)] transition-all active:scale-90"
+                         title="Copiar Link RSVP"
                       >
-                         <Copy size={16} />
+                         <Copy size={18} />
                       </button>
                     </div>
                   </div>

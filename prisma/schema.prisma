@@ -343,6 +343,11 @@ model InvitacionDigital {
   fondoUrl         String?   @db.Text
   colorTexto       String?   @default("#ffffff")
   fuente           String?
+  direccion        String?   @db.Text
+  regaloTipo       String?
+  regaloMesaUrl    String?
+  regaloBanco      String?
+  regaloClabe      String?
   
   creadoEn         DateTime  @default(now())
   actualizadoEn    DateTime  @updatedAt

@@ -456,9 +456,9 @@ export default function SeatingPage() {
         </div>
       </nav>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Sidebar Herramientas (Claro) */}
-        <aside className="w-80 bg-white border-r border-slate-200 flex flex-col shrink-0">
+        <aside className="w-full lg:w-80 h-[40vh] lg:h-full bg-white border-b lg:border-r border-slate-200 flex flex-col shrink-0 z-20 shadow-xl lg:shadow-none">
           <div className="p-6 flex-1 overflow-y-auto no-scrollbar space-y-8">
             
             {/* Si no hay mesa seleccionada: Herramientas Generales */}
