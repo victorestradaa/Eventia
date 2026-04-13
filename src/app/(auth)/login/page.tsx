@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/cliente';
 import { useRouter } from 'next/navigation';
+import { getCurrentProfile } from '@/lib/actions/authActions';
 
 export default function LoginPage() {
   const [rol, setRol] = useState<'CLIENTE' | 'PROVEEDOR'>('CLIENTE');
@@ -44,9 +45,20 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        // Redirigimos a la raíz para que el Middleware de servidor evalúe
-        // su rol real (Admin/Cliente/Proveedor) en Prisma y lo enrute correcto.
-        window.location.href = '/';
+        // Obtenemos el perfil real desde el servidor para redirigir directamente
+        const profileRes = await getCurrentProfile();
+        
+        if (profileRes.success && profileRes.data) {
+          const rol = profileRes.data.rol;
+          if (rol === 'ADMIN') router.push('/admin/dashboard');
+          else if (rol === 'PROVEEDOR') router.push('/proveedor/dashboard');
+          else router.push('/cliente/dashboard');
+          
+          router.refresh(); // Forzar actualización de datos
+        } else {
+          // Fallback en caso de error al obtener perfil
+          window.location.href = '/';
+        }
       }
     } catch (err: any) {
       // Show the real exception message for debugging
