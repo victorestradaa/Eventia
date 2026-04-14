@@ -295,14 +295,18 @@ export default function SeatingPage() {
       
       const canvas = await html2canvas(canvasRef.current, {
         backgroundColor: '#f1f5f9',
-        scale: isMobile ? 1.5 : 2, // Ajustar escala para evitar cuelgues en móvil
+        scale: isMobile ? 1.2 : 2, 
         logging: true,
         useCORS: true,
         allowTaint: true,
         scrollX: 0,
         scrollY: 0,
         windowWidth: canvasRef.current.scrollWidth,
-        windowHeight: canvasRef.current.scrollHeight
+        windowHeight: canvasRef.current.scrollHeight,
+        onclone: (clonedDoc) => {
+          const el = clonedDoc.getElementById('seating-canvas-root');
+          if (el) el.style.visibility = 'visible';
+        }
       });
       
       const imgData = canvas.toDataURL('image/png');
@@ -314,9 +318,10 @@ export default function SeatingPage() {
       
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
       pdf.save(`Plano_Evento_${eventoId}.pdf`);
-    } catch (error) {
+      alert('Plano exportado exitosamente');
+    } catch (error: any) {
       console.error('Error generando PDF:', error);
-      alert('Hubo un error al generar el PDF. Intenta nuevamente.');
+      alert('Error al generar el PDF del plano: ' + (error.message || 'Error desconocido. Intenta nuevamente.'));
     } finally {
       setIsExporting(false);
     }
@@ -715,6 +720,7 @@ export default function SeatingPage() {
         {/* Canvas de Diseño (SKETCH / LIGHT THEME) */}
         <main 
           ref={canvasRef}
+          id="seating-canvas-root"
           className="flex-1 relative overflow-hidden bg-[#f1f5f9] select-none"
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}

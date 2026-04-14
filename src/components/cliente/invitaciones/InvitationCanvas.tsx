@@ -112,6 +112,7 @@ const InvitationCanvas = forwardRef<HTMLDivElement, InvitationCanvasProps>(({
   return (
     <div 
       ref={ref}
+      id="invitation-canvas-root"
       className="w-[400px] h-[700px] max-w-full rounded-[40px] shadow-2xl overflow-hidden border-[8px] border-zinc-900 relative transition-all duration-500"
       style={{
         backgroundImage: fondoUrlActivo ? `url(${fondoUrlActivo})` : 'none',

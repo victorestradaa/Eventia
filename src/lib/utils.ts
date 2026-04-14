@@ -14,7 +14,16 @@ export function formatearMoneda(monto: number | string): string {
 }
 
 export function formatearFecha(fecha: Date | string): string {
-  const d = typeof fecha === 'string' ? new Date(fecha) : fecha
+  if (!fecha) return '';
+  let d: Date;
+  if (typeof fecha === 'string') {
+    // Reemplazar guiones por diagonales si no tiene tiempo explícito (YYYY-MM-DD)
+    // o asegurar que se trate como local añadiendo T12:00:00
+    const normalized = fecha.includes('T') ? fecha : `${fecha.replace(/-/g, '/')}T12:00:00`;
+    d = new Date(normalized);
+  } else {
+    d = fecha;
+  }
   return new Intl.DateTimeFormat('es-MX', {
     day: 'numeric',
     month: 'long',
@@ -23,7 +32,14 @@ export function formatearFecha(fecha: Date | string): string {
 }
 
 export function formatearFechaCorta(fecha: Date | string): string {
-  const d = typeof fecha === 'string' ? new Date(fecha) : fecha
+  if (!fecha) return '';
+  let d: Date;
+  if (typeof fecha === 'string') {
+    const normalized = fecha.includes('T') ? fecha : `${fecha.replace(/-/g, '/')}T12:00:00`;
+    d = new Date(normalized);
+  } else {
+    d = fecha;
+  }
   return new Intl.DateTimeFormat('es-MX', {
     day: '2-digit',
     month: '2-digit',

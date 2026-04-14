@@ -203,10 +203,16 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
     try {
       const isMobile = window.innerWidth < 768;
       const canvas = await html2canvas(canvasRef.current, {
-        scale: isMobile ? 1.5 : 2,
+        scale: isMobile ? 1.2 : 2,
         useCORS: true,
-        logging: false,
-        backgroundColor: null
+        allowTaint: true,
+        logging: true,
+        backgroundColor: null,
+        onclone: (clonedDoc) => {
+          // Aseguramos que los elementos sean visibles en el clon
+          const el = clonedDoc.getElementById('invitation-canvas-root');
+          if (el) el.style.visibility = 'visible';
+        }
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -256,9 +262,10 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
       }
 
       pdf.save(`Invitacion_${evento.nombre.replace(/\s+/g, '_')}.pdf`);
-    } catch (error) {
+      alert('PDF generado exitosamente');
+    } catch (error: any) {
       console.error('Error exportando PDF:', error);
-      alert('Error al generar el PDF de la invitación');
+      alert('Error al generar el PDF: ' + (error.message || 'Error desconocido. Verifica que las imágenes de fondo tengan permisos CORS o intenta con un diseño diferente.'));
     } finally {
       setExporting(false);
     }
