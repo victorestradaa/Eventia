@@ -6,14 +6,17 @@ import {
   CheckCircle2, 
   XCircle, 
   Loader2, 
-  Heart,
-  ChevronDown
+  Heart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getInvitadoRSVPDetail, updateInvitadoRSVP } from '@/lib/actions/eventActions';
 import InvitationCanvas from '@/components/cliente/invitaciones/InvitationCanvas';
 
 type View = 'INVITATION' | 'RSVP';
+
+// Tamaño base del canvas
+const CANVAS_W = 400;
+const CANVAS_H = 700;
 
 export default function InvitacionPublica() {
   const params = useParams();
@@ -26,6 +29,20 @@ export default function InvitacionPublica() {
   const [status, setStatus] = useState<'IDLE' | 'SAVING' | 'SUCCESS' | 'ERROR'>('IDLE');
   const [response, setResponse] = useState<string | null>(null);
   const [view, setView] = useState<View>('INVITATION');
+  const [scale, setScale] = useState(1);
+
+  // Calcular escala para que el canvas llene la pantalla
+  useEffect(() => {
+    const updateScale = () => {
+      const scaleW = window.innerWidth / CANVAS_W;
+      const scaleH = window.innerHeight / CANVAS_H;
+      // "cover": el eje que más crece gana → el canvas llena toda la pantalla
+      setScale(Math.max(scaleW, scaleH));
+    };
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -38,7 +55,7 @@ export default function InvitacionPublica() {
         } else {
           setStatus('ERROR');
         }
-      } catch (err) {
+      } catch {
         setStatus('ERROR');
       } finally {
         setLoading(false);
@@ -62,29 +79,29 @@ export default function InvitacionPublica() {
         setStatus('SUCCESS');
         setResponse(estado);
       } else {
-        alert("Ocurrió un error al guardar tu respuesta.");
+        alert('Ocurrió un error al guardar tu respuesta.');
         setStatus('IDLE');
       }
-    } catch (err) {
-      alert("Error de conexión.");
+    } catch {
+      alert('Error de conexión.');
       setStatus('IDLE');
     }
   };
 
-  // ── Estados de carga / error / éxito ──────────────────────────────────────
-
+  // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#09090b] text-white">
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#09090b] text-white">
         <Loader2 className="animate-spin text-[var(--color-acento)] mb-4" size={48} />
         <p className="text-xs uppercase tracking-widest font-bold opacity-40">Cargando Invitación...</p>
       </div>
     );
   }
 
+  // ── Error ─────────────────────────────────────────────────────────────────
   if (status === 'ERROR' || !evento) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#09090b] p-6 text-center text-white">
+      <div className="fixed inset-0 flex items-center justify-center bg-[#09090b] p-6 text-center text-white">
         <div className="space-y-4 max-w-xs">
           <XCircle size={64} className="mx-auto text-red-500 opacity-50" />
           <h1 className="text-2xl font-bold uppercase tracking-tighter italic">Invitación no válida</h1>
@@ -94,9 +111,10 @@ export default function InvitacionPublica() {
     );
   }
 
+  // ── Éxito ─────────────────────────────────────────────────────────────────
   if (status === 'SUCCESS') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#09090b] p-6 text-center text-white">
+      <div className="fixed inset-0 flex items-center justify-center bg-[#09090b] p-6 text-center text-white">
         <div className="max-w-xs w-full animate-in zoom-in-95 duration-700 space-y-6">
           {response === 'CONFIRMADO' ? (
             <>
@@ -129,12 +147,9 @@ export default function InvitacionPublica() {
     );
   }
 
-  // ── Parsear estilos ────────────────────────────────────────────────────────
-
+  // ── Parsear datos ─────────────────────────────────────────────────────────
   let estilos: any = {};
-  try {
-    estilos = JSON.parse(evento.invitacion?.colorTexto || "{}");
-  } catch (e) {}
+  try { estilos = JSON.parse(evento.invitacion?.colorTexto || '{}'); } catch {}
 
   const texto = {
     titulo: evento.invitacion?.titulo || 'Invitación',
@@ -150,33 +165,24 @@ export default function InvitacionPublica() {
   };
 
   return (
-    <div className="bg-[#050508] text-white min-h-screen overflow-x-hidden">
+    <div className="bg-[#050508] text-white">
 
-      {/* ── Vista de la Invitación ── */}
-      <section className="min-h-screen flex flex-col items-center justify-center relative py-8 px-4">
+      {/* ── PANTALLA 1: Invitación a pantalla completa ── */}
+      <div className="relative" style={{ minHeight: '100dvh' }}>
 
-        {/* Fondo decorativo suave */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] bg-[var(--color-acento)]/5 blur-[160px] rounded-full" />
-          <div className="absolute bottom-[-20%] left-[-20%] w-[60%] h-[60%] bg-[var(--color-primario)]/10 blur-[160px] rounded-full" />
-        </div>
-
-        {/* Saludo pequeño y elegante encima */}
-        {!view.startsWith('RSVP') && (
-          <div className="relative z-10 mb-6 text-center animate-in fade-in slide-in-from-top-4 duration-700">
-            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-[var(--color-acento)] opacity-80 mb-1">Invitación Especial</p>
-            <h1 className="text-3xl font-black italic uppercase tracking-tighter text-white/90">
-              Hola, <span className="text-white">{invitado.nombre.split(' ')[0]}</span>
-            </h1>
-          </div>
-        )}
-
-        {/* Canvas en grande */}
-        <div className="relative z-10 animate-in fade-in zoom-in-95 duration-700 delay-200 w-full flex justify-center">
-          <div className="relative">
-            {/* Resplandor detrás de la invitación */}
-            <div className="absolute -inset-6 bg-gradient-radial from-white/5 to-transparent rounded-[60px] blur-xl" />
-            <InvitationCanvas 
+        {/* Canvas escalado para llenar toda la pantalla */}
+        <div
+          className="fixed inset-0 flex items-center justify-center overflow-hidden"
+          style={{ backgroundColor: '#050508' }}
+        >
+          <div
+            style={{
+              transform: `scale(${scale})`,
+              transformOrigin: 'center center',
+              // Sin border-radius forzado aquí, el canvas ya lo tiene
+            }}
+          >
+            <InvitationCanvas
               estilos={estilos}
               texto={texto}
               fondoUrlActivo={evento.invitacion?.fondoUrl}
@@ -188,25 +194,38 @@ export default function InvitacionPublica() {
           </div>
         </div>
 
-        {/* Indicador de scroll suave (si el RSVP no está aún visible) */}
+        {/* Overlay: Saludo encima de la invitación (top de la pantalla) */}
         {view === 'INVITATION' && (
-          <div className="relative z-10 mt-8 animate-bounce opacity-40">
-            <ChevronDown size={24} className="text-white" />
+          <div
+            className="fixed top-0 left-0 right-0 z-50 text-center px-4 pt-10 pb-6 pointer-events-none"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(5,5,8,0.85) 0%, rgba(5,5,8,0) 100%)',
+            }}
+          >
+            <p className="text-[9px] font-black uppercase tracking-[0.5em] text-[var(--color-acento)] mb-1">
+              Invitación Especial
+            </p>
+            <h1 className="text-2xl font-black italic uppercase tracking-tighter text-white leading-tight">
+              Hola, {invitado.nombre.split(' ')[0]}
+            </h1>
           </div>
         )}
-      </section>
 
-      {/* ── Vista RSVP (aparece al hacer clic en Confirmar) ── */}
+        {/* Spacer para hacer scroll hacia RSVP */}
+        <div style={{ height: '100dvh' }} />
+      </div>
+
+      {/* ── PANTALLA 2: RSVP (aparece al hacer scroll / clic en confirmar) ── */}
       {view === 'RSVP' && (
-        <section 
+        <div
           ref={rsvpRef}
-          className="min-h-screen flex items-center justify-center px-6 py-16 relative animate-in slide-in-from-bottom-8 duration-700"
+          className="relative z-50 min-h-dvh flex items-center justify-center px-6 py-16 bg-[#050508] animate-in slide-in-from-bottom-8 duration-700"
         >
           <div className="w-full max-w-sm mx-auto">
 
             {/* Cabecera */}
             <div className="text-center mb-10">
-              <div className="w-20 h-20 bg-[var(--color-acento)]/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-[var(--color-acento)]/20 shadow-[0_0_40px_var(--color-acento)]/10">
+              <div className="w-20 h-20 bg-[var(--color-acento)]/10 border border-[var(--color-acento)]/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_60px_rgba(189,155,101,0.15)]">
                 <Heart size={36} className="text-[var(--color-acento)]" fill="currentColor" />
               </div>
               <h2 className="text-4xl font-black italic uppercase tracking-tighter mb-3">¿Nos acompañas?</h2>
@@ -215,16 +234,16 @@ export default function InvitacionPublica() {
               </p>
             </div>
 
-            {/* Botones RSVP */}
+            {/* Botones */}
             <div className="flex flex-col gap-4">
               <button
                 onClick={() => handleRSVP('CONFIRMADO')}
                 disabled={status === 'SAVING'}
                 className={cn(
-                  "w-full py-6 rounded-3xl font-black uppercase tracking-widest text-sm transition-all active:scale-95 shadow-2xl",
-                  "bg-gradient-to-r from-[var(--color-acento)] to-[var(--color-acento-claro)] text-white",
-                  "hover:shadow-[0_10px_40px_rgba(189,155,101,0.4)] hover:scale-[1.02]",
-                  "disabled:opacity-50 disabled:scale-100 disabled:shadow-none"
+                  'w-full py-6 rounded-3xl font-black uppercase tracking-widest text-sm transition-all active:scale-95 shadow-2xl',
+                  'bg-gradient-to-r from-[var(--color-acento)] to-[var(--color-acento-claro)] text-white',
+                  'hover:shadow-[0_10px_40px_rgba(189,155,101,0.4)] hover:scale-[1.02]',
+                  'disabled:opacity-50 disabled:scale-100 disabled:shadow-none'
                 )}
               >
                 {status === 'SAVING' ? (
@@ -240,17 +259,17 @@ export default function InvitacionPublica() {
                 onClick={() => handleRSVP('RECHAZADO')}
                 disabled={status === 'SAVING'}
                 className={cn(
-                  "w-full py-6 rounded-3xl font-black uppercase tracking-widest text-sm transition-all active:scale-95",
-                  "bg-white/5 border border-white/10 text-white/50",
-                  "hover:bg-white/10 hover:text-white/70",
-                  "disabled:opacity-20"
+                  'w-full py-6 rounded-3xl font-black uppercase tracking-widest text-sm transition-all active:scale-95',
+                  'bg-white/5 border border-white/10 text-white/50',
+                  'hover:bg-white/10 hover:text-white/70',
+                  'disabled:opacity-20'
                 )}
               >
                 No podré asistir
               </button>
 
               <button
-                onClick={() => setView('INVITATION')}
+                onClick={() => { setView('INVITATION'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                 className="w-full py-3 text-[11px] uppercase font-bold text-white/20 hover:text-white/40 transition-colors tracking-widest"
               >
                 ← Volver a la invitación
@@ -261,9 +280,8 @@ export default function InvitacionPublica() {
               Eventia · 2026
             </p>
           </div>
-        </section>
+        </div>
       )}
-
     </div>
   );
 }
