@@ -137,7 +137,12 @@ export default function InvitacionPublica() {
     nombres: evento.nombre || '',
     mensaje: evento.invitacion?.mensaje || '',
     vestimenta: evento.invitacion?.vestimenta || '',
-    lugar: evento.invitacion?.lugarTexto || ''
+    lugar: evento.invitacion?.lugarTexto || '',
+    direccion: evento.invitacion?.direccion || '',
+    regaloTipo: evento.invitacion?.regaloTipo || 'MESA',
+    regaloMesaUrl: evento.invitacion?.regaloMesaUrl || '',
+    regaloBanco: evento.invitacion?.regaloBanco || '',
+    regaloClabe: evento.invitacion?.regaloClabe || ''
   };
 
   return (

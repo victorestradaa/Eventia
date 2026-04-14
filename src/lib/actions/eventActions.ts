@@ -247,7 +247,7 @@ export async function getPlanoMesas(eventoId: string) {
 export async function getInvitadoRSVPDetail(invitadoId: string) {
   try {
     const invitado = await prisma.invitado.findUnique({
-      where: { id: invitadoId },
+      where: { rsvpToken: invitadoId },
       include: {
         evento: {
           include: {
