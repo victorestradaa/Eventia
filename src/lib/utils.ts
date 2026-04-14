@@ -17,12 +17,13 @@ export function formatearFecha(fecha: Date | string): string {
   if (!fecha) return '';
   let d: Date;
   if (typeof fecha === 'string') {
-    // Reemplazar guiones por diagonales si no tiene tiempo explícito (YYYY-MM-DD)
-    // o asegurar que se trate como local añadiendo T12:00:00
-    const normalized = fecha.includes('T') ? fecha : `${fecha.replace(/-/g, '/')}T12:00:00`;
-    d = new Date(normalized);
+    // Extraer componentes del string YYYY-MM-DD
+    const [year, month, day] = fecha.split('T')[0].split(/[-/]/).map(Number);
+    d = new Date(year, month - 1, day, 12, 0, 0);
   } else {
-    d = fecha;
+    // Si ya es un objeto Date (ej. de Prisma), lo movemos al mediodía local
+    const date = new Date(fecha);
+    d = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 12, 0, 0);
   }
   return new Intl.DateTimeFormat('es-MX', {
     day: 'numeric',
@@ -35,10 +36,11 @@ export function formatearFechaCorta(fecha: Date | string): string {
   if (!fecha) return '';
   let d: Date;
   if (typeof fecha === 'string') {
-    const normalized = fecha.includes('T') ? fecha : `${fecha.replace(/-/g, '/')}T12:00:00`;
-    d = new Date(normalized);
+    const [year, month, day] = fecha.split('T')[0].split(/[-/]/).map(Number);
+    d = new Date(year, month - 1, day, 12, 0, 0);
   } else {
-    d = fecha;
+    const date = new Date(fecha);
+    d = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 12, 0, 0);
   }
   return new Intl.DateTimeFormat('es-MX', {
     day: '2-digit',

@@ -138,7 +138,7 @@ const InvitationCanvas = forwardRef<HTMLDivElement, InvitationCanvasProps>(({
 
           {renderElement('lugar', 
             <div className="flex flex-col items-center justify-center font-bold uppercase tracking-widest w-full text-center select-none" style={{ fontSize: `${estilos?.lugar?.fontSize || 12}px`, color: estilos?.lugar?.color, fontFamily: estilos?.lugar?.fuente || 'inherit' }}>
-               <div className="flex items-center justify-center gap-2"><CalendarIcon size={estilos?.lugar?.fontSize}/> {evento?.fecha ? (typeof evento.fecha === 'string' ? formatearFechaCorta(new Date(evento.fecha)) : formatearFechaCorta(evento.fecha)) : 'Próximamente'}</div>
+               <div className="flex items-center justify-center gap-2"><CalendarIcon size={estilos?.lugar?.fontSize}/> {evento?.fecha ? formatearFechaCorta(evento.fecha) : 'Próximamente'}</div>
                 <div className="flex items-center justify-center gap-2">
                   {texto.lugar}
                 </div>

@@ -341,7 +341,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         </div>
 
         {/* Toolbar de Formato (Dock de Alto Contraste) */}
-        <div className="flex items-center gap-1.5 bg-zinc-800 p-1.5 rounded-2xl border border-white/10 shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 scale-95 group-hover:scale-100 z-10">
+        <div className="flex items-center gap-1.5 bg-zinc-800 p-1.5 rounded-2xl border border-white/10 shadow-2xl opacity-100 translate-y-0 lg:opacity-0 lg:group-hover:opacity-100 lg:translate-y-2 lg:group-hover:translate-y-0 transition-all duration-300 scale-95 group-hover:scale-100 z-10">
            <button 
              onClick={() => toggleVisibility(styleId)}
              className={cn(
