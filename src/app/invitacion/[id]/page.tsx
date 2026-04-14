@@ -74,7 +74,8 @@ export default function InvitacionPublica() {
   const handleRSVP = async (estado: 'CONFIRMADO' | 'RECHAZADO') => {
     setStatus('SAVING');
     try {
-      const res = await updateInvitadoRSVP(id, estado);
+      // Usamos invitado.id (ID real en BD), no el token de la URL
+      const res = await updateInvitadoRSVP(invitado.id, estado);
       if (res.success) {
         setStatus('SUCCESS');
         setResponse(estado);
@@ -217,11 +218,22 @@ export default function InvitacionPublica() {
 
       {/* ── PANTALLA 2: RSVP (aparece al hacer scroll / clic en confirmar) ── */}
       {view === 'RSVP' && (
-        <div
+      <div
           ref={rsvpRef}
-          className="relative z-50 min-h-dvh flex items-center justify-center px-6 py-16 bg-[#050508] animate-in slide-in-from-bottom-8 duration-700"
+          className="relative z-50 min-h-dvh flex items-center justify-center px-6 py-16 animate-in slide-in-from-bottom-8 duration-700"
+          style={{
+            backgroundImage: evento.invitacion?.fondoUrl
+              ? `url(${evento.invitacion.fondoUrl})`
+              : 'none',
+            backgroundColor: evento.invitacion?.fondoUrl ? 'transparent' : '#050508',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
         >
-          <div className="w-full max-w-sm mx-auto">
+          {/* Overlay oscuro para legibilidad del RSVP */}
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+
+          <div className="relative z-10 w-full max-w-sm mx-auto">
 
             {/* Cabecera */}
             <div className="text-center mb-10">
