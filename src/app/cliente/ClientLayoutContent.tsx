@@ -61,7 +61,7 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
   const NAV_ITEMS = [
     { href: '/cliente/dashboard', label: 'Mis Eventos', icon: Calendar },
     { href: '/cliente/explorar', label: 'Explorar', icon: Search },
-    { href: activeEvent?.id ? `/cliente/evento/${activeEvent.id}` : '/cliente/dashboard', label: 'Presupuesto', icon: Wallet },
+    { href: activeEvent?.id ? `/cliente/evento/${activeEvent.id}` : '/cliente/dashboard', label: 'Administra tu Evento', icon: Wallet },
     { href: '/cliente/invitaciones', label: 'Invitaciones', icon: Mail },
     { href: '/cliente/planes', label: 'Mi Plan', icon: Star },
   ];
