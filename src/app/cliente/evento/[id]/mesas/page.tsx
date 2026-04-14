@@ -697,6 +697,11 @@ export default function SeatingPage() {
         <main 
           ref={canvasRef}
           className="flex-1 relative overflow-hidden bg-[#f1f5f9] select-none"
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
            {/* Grid de ayuda visual suave */}
            <div className={cn("absolute inset-0 opacity-[0.4]", isExporting && "hidden")} style={{ backgroundImage: 'radial-gradient(#94a3b8 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }} />
@@ -740,11 +745,6 @@ export default function SeatingPage() {
 
            <div 
              className="w-full h-full relative"
-             onMouseMove={handleMouseMove}
-             onMouseUp={handleMouseUp}
-             onMouseLeave={handleMouseUp}
-             onTouchMove={handleTouchMove}
-             onTouchEnd={handleTouchEnd}
              onDragOver={(e) => e.preventDefault()}
              onDrop={(e) => {
                const invId = e.dataTransfer.getData('invitadoId');
