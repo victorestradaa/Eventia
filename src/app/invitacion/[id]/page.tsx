@@ -11,6 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getInvitadoRSVPDetail, updateInvitadoRSVP } from '@/lib/actions/eventActions';
 import InvitationCanvas from '@/components/cliente/invitaciones/InvitationCanvas';
+import PremiumInvitationView from '@/components/cliente/invitaciones/PremiumInvitationView';
 
 type View = 'INVITATION' | 'RSVP';
 
@@ -165,12 +166,23 @@ export default function InvitacionPublica() {
     regaloClabe: evento.invitacion?.regaloClabe || ''
   };
 
+  const isPremium = evento.invitacion?.tipoInvitacion === 'PREMIUM';
+
+  if (isPremium) {
+    return (
+      <PremiumInvitationView 
+        evento={evento}
+        invitado={invitado}
+        status={status}
+        onRSVP={handleRSVP}
+      />
+    );
+  }
+
   return (
     <div className="bg-[#050508] text-white">
-
       {/* ── PANTALLA 1: Invitación a pantalla completa ── */}
       <div className="relative" style={{ minHeight: '100dvh' }}>
-
         {/* Canvas escalado para llenar toda la pantalla */}
         <div
           className="fixed inset-0 flex items-center justify-center overflow-hidden"
@@ -180,7 +192,6 @@ export default function InvitacionPublica() {
             style={{
               transform: `scale(${scale})`,
               transformOrigin: 'center center',
-              // Sin border-radius forzado aquí, el canvas ya lo tiene
             }}
           >
             <InvitationCanvas
@@ -195,7 +206,7 @@ export default function InvitacionPublica() {
           </div>
         </div>
 
-        {/* Overlay: Saludo encima de la invitación (top de la pantalla) */}
+        {/* Overlay: Saludo encima de la invitación */}
         {view === 'INVITATION' && (
           <div
             className="fixed top-0 left-0 right-0 z-50 text-center px-4 pt-10 pb-6 pointer-events-none"
@@ -216,81 +227,50 @@ export default function InvitacionPublica() {
         <div style={{ height: '100dvh' }} />
       </div>
 
-      {/* ── PANTALLA 2: RSVP (aparece al hacer scroll / clic en confirmar) ── */}
+      {/* ── PANTALLA 2: RSVP ── */}
       {view === 'RSVP' && (
-      <div
+        <div
           ref={rsvpRef}
           className="relative z-50 min-h-dvh flex items-center justify-center px-6 py-16 animate-in slide-in-from-bottom-8 duration-700"
           style={{
-            backgroundImage: evento.invitacion?.fondoUrl
-              ? `url(${evento.invitacion.fondoUrl})`
-              : 'none',
+            backgroundImage: evento.invitacion?.fondoUrl ? `url(${evento.invitacion.fondoUrl})` : 'none',
             backgroundColor: evento.invitacion?.fondoUrl ? 'transparent' : '#050508',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
         >
-          {/* Overlay oscuro para legibilidad del RSVP */}
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-
-          <div className="relative z-10 w-full max-w-sm mx-auto">
-
-            {/* Cabecera */}
-            <div className="text-center mb-10">
-              <div className="w-20 h-20 bg-[var(--color-acento)]/10 border border-[var(--color-acento)]/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_60px_rgba(189,155,101,0.15)]">
+          <div className="relative z-10 w-full max-w-sm mx-auto text-center">
+            <div className="mb-10">
+              <div className="w-20 h-20 bg-[var(--color-acento)]/10 border border-[var(--color-acento)]/20 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Heart size={36} className="text-[var(--color-acento)]" fill="currentColor" />
               </div>
               <h2 className="text-4xl font-black italic uppercase tracking-tighter mb-3">¿Nos acompañas?</h2>
-              <p className="text-white/40 text-sm leading-relaxed">
-                Confirma tu asistencia para ayudarnos a organizar este día tan especial.
-              </p>
+              <p className="text-white/40 text-sm">Confirma tu asistencia para este día tan especial.</p>
             </div>
 
-            {/* Botones */}
             <div className="flex flex-col gap-4">
               <button
                 onClick={() => handleRSVP('CONFIRMADO')}
                 disabled={status === 'SAVING'}
-                className={cn(
-                  'w-full py-6 rounded-3xl font-black uppercase tracking-widest text-sm transition-all active:scale-95 shadow-2xl',
-                  'bg-gradient-to-r from-[var(--color-acento)] to-[var(--color-acento-claro)] text-white',
-                  'hover:shadow-[0_10px_40px_rgba(189,155,101,0.4)] hover:scale-[1.02]',
-                  'disabled:opacity-50 disabled:scale-100 disabled:shadow-none'
-                )}
+                className="w-full py-6 rounded-3xl font-black uppercase tracking-widest text-xs bg-emerald-500 text-white shadow-xl hover:bg-emerald-400 disabled:opacity-50 transition-all font-black"
               >
-                {status === 'SAVING' ? (
-                  <Loader2 className="animate-spin mx-auto" size={20} />
-                ) : (
-                  <span className="flex items-center justify-center gap-3">
-                    <CheckCircle2 size={20} /> Sí, asistiré con gusto
-                  </span>
-                )}
+                {status === 'SAVING' ? <Loader2 className="animate-spin mx-auto" /> : 'Sí, asistiré con gusto'}
               </button>
-
               <button
                 onClick={() => handleRSVP('RECHAZADO')}
                 disabled={status === 'SAVING'}
-                className={cn(
-                  'w-full py-6 rounded-3xl font-black uppercase tracking-widest text-sm transition-all active:scale-95',
-                  'bg-white/5 border border-white/10 text-white/50',
-                  'hover:bg-white/10 hover:text-white/70',
-                  'disabled:opacity-20'
-                )}
+                className="w-full py-6 rounded-3xl font-black uppercase tracking-widest text-xs bg-white/5 border border-white/10 text-white/50 hover:bg-white/10 transition-all font-black"
               >
                 No podré asistir
               </button>
-
               <button
                 onClick={() => { setView('INVITATION'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                className="w-full py-3 text-[11px] uppercase font-bold text-white/20 hover:text-white/40 transition-colors tracking-widest"
+                className="text-[10px] uppercase font-bold text-white/20 tracking-widest mt-4"
               >
                 ← Volver a la invitación
               </button>
             </div>
-
-            <p className="text-center text-[10px] font-bold uppercase tracking-[0.5em] opacity-15 mt-12">
-              Eventia · 2026
-            </p>
           </div>
         </div>
       )}

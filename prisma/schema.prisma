@@ -349,6 +349,10 @@ model InvitacionDigital {
   regaloBanco      String?
   regaloClabe      String?
   
+  // Soporte para Invitaciones Web Premium
+  tipoInvitacion   String    @default("BASICA") // BASICA o PREMIUM
+  configWeb        Json?     // Almacena toggles, colores de tema, etc.
+  
   creadoEn         DateTime  @default(now())
   actualizadoEn    DateTime  @updatedAt
 }

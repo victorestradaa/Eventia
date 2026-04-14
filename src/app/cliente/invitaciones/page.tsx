@@ -4,12 +4,32 @@ import InvitationEditorClient from './InvitationEditorClient';
 import { redirect } from 'next/navigation';
 
 // Helper para sanitizar objetos Decimal y fechas para componentes cliente
-function sanitizeForClient(obj: any) {
-  return JSON.parse(JSON.stringify(obj, (key, value) => {
-    // Si es un objeto Decimal de Prisma o similar con toJSON
-    if (value && typeof value === 'object' && value.d) return Number(value);
-    return value;
-  }));
+function sanitizeForClient(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(sanitizeForClient);
+  
+  if (obj instanceof Date) return obj.toISOString();
+  
+  if (typeof obj === 'object') {
+    // Si es un objeto Decimal de Prisma
+    if (obj.constructor && obj.constructor.name === 'Decimal') {
+      return Number(obj);
+    }
+    // Si parece un objeto Decimal structurado (d, s, e)
+    if (obj.d && Array.isArray(obj.d) && obj.s !== undefined) {
+      return Number(obj);
+    }
+    
+    // Si es un objeto que ya viene como Date string o necesita ser convertido
+    // (aunque el check instanceof Date arriba es el principal)
+    
+    const newObj: any = {};
+    for (const key in obj) {
+      newObj[key] = sanitizeForClient(obj[key]);
+    }
+    return newObj;
+  }
+  return obj;
 }
 
 export default async function InvitationsPage() {

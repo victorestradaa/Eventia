@@ -12,6 +12,10 @@ export async function POST(req: Request) {
       );
     }
 
+    // LOG DE SEGURIDAD PARA DEPURACIÓN
+    console.log('--- INTENTO DE GUARDADO ---');
+    console.log('Tamaño del Payload:', JSON.stringify(data).length / 1024, 'KB');
+
     // Upsert (crear o actualizar) la invitación digital
     const invitacion = await prisma.invitacionDigital.upsert({
       where: { eventoId: data.eventoId },
@@ -23,13 +27,10 @@ export async function POST(req: Request) {
         mensaje: data.mensaje,
         lugarTexto: data.lugarTexto,
         vestimenta: data.vestimenta,
-        direccion: data.direccion,
-        regaloTipo: data.regaloTipo,
-        regaloMesaUrl: data.regaloMesaUrl,
-        regaloBanco: data.regaloBanco,
         regaloClabe: data.regaloClabe,
         isInvitacionPropia: data.isInvitacionPropia || false,
-        archivoAdjunto: data.archivoAdjunto, // Puede ser null o string (base64/url)
+        archivoAdjunto: data.archivoAdjunto, 
+        configWeb: data.configWeb || {},
       },
       create: {
         eventoId: data.eventoId,
@@ -40,19 +41,19 @@ export async function POST(req: Request) {
         mensaje: data.mensaje,
         lugarTexto: data.lugarTexto,
         vestimenta: data.vestimenta,
-        direccion: data.direccion,
-        regaloTipo: data.regaloTipo,
-        regaloMesaUrl: data.regaloMesaUrl,
-        regaloBanco: data.regaloBanco,
         regaloClabe: data.regaloClabe,
         isInvitacionPropia: data.isInvitacionPropia || false,
         archivoAdjunto: data.archivoAdjunto,
+        configWeb: data.configWeb || {},
       },
     });
 
     return NextResponse.json({ success: true, invitacion: JSON.parse(JSON.stringify(invitacion)) });
   } catch (error: any) {
-    console.error('Error en /api/invitaciones POST:', error);
+    console.error('--- ERROR EN /API/INVITACIONES ---');
+    console.error('Mensaje:', error.message);
+    if (error.code) console.error('Código Prisma:', error.code);
+    
     return NextResponse.json(
       { success: false, error: error.message || 'Error interno del servidor' },
       { status: 500 }

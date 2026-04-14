@@ -28,6 +28,8 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import InvitationCanvas from '@/components/cliente/invitaciones/InvitationCanvas';
+import PremiumEditorPanel from '@/components/cliente/invitaciones/PremiumEditorPanel';
+import PremiumInvitationView from '@/components/cliente/invitaciones/PremiumInvitationView';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -41,7 +43,38 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
   const router = useRouter();
   
   // Pestañas
-  const [tabActiva, setTabActiva] = useState<'EDITOR' | 'ENVIAR'>('EDITOR');
+  const [tabActiva, setTabActiva] = useState<'BASIC' | 'PREMIUM' | 'ENVIAR'>('BASIC');
+  
+  // Estado para la invitación Premium
+  const [configWeb, setConfigWeb] = useState<any>(evento?.invitacion?.configWeb || {
+    coverUrl: '',
+    tema: 'dark',
+    mostrarContador: true,
+    mostrarCeremonia: true,
+    mostrarDressCode: true,
+    mostrarCelebracion: true,
+    mostrarGaleria: true,
+    mostrarMapa: true,
+    mostrarRegalos: true,
+    mostrarRSVP: true,
+    mostrarAlbumQR: false,
+    fechaEventoExacta: evento.fecha || '',
+    ceremoniaNombre: '',
+    ceremoniaFecha: evento.fecha || '',
+    ceremoniaDireccion: '',
+    ceremoniaMapsUrl: '',
+    ceremoniaBgColor: '#fafafa',
+    ceremoniaTextColor: '#8b7355',
+    dressCodeTexto: 'Formal / Gala',
+    dressCodeColor: '#333333',
+    celebracionNombre: 'Recepción',
+    celebracionFecha: evento.fecha || '',
+    celebracionDireccion: '',
+    celebracionMapsUrl: '',
+    celebracionTextColor: '#8b7355',
+    galeriaFotos: [],
+    galeriaEfecto: 'slide',
+  });
   
   // Modos de editor
   const [modoPropia, setModoPropia] = useState(evento?.invitacion?.isInvitacionPropia || false);
@@ -177,11 +210,15 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         mensaje: texto.mensaje,
         lugarTexto: texto.lugar,
         vestimenta: texto.vestimenta,
-        direccion: texto.direccion,
-        regaloTipo: texto.regaloTipo,
-        regaloMesaUrl: texto.regaloMesaUrl,
-        regaloBanco: texto.regaloBanco,
-        regaloClabe: texto.regaloClabe
+        configWeb: {
+          ...configWeb,
+          tipoInvitacion: tabActiva === 'BASIC' ? 'BASICA' : 'PREMIUM',
+          direccion: texto.direccion,
+          regaloTipo: texto.regaloTipo,
+          regaloMesaUrl: texto.regaloMesaUrl,
+          regaloBanco: texto.regaloBanco,
+          regaloClabe: texto.regaloClabe,
+        }
       };
 
       const res = await fetch('/api/invitaciones', {
@@ -427,6 +464,25 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
     alert('¡Enlace copiado al portapapeles!');
   };
 
+  if (!evento) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-6 text-center space-y-8 animate-in fade-in duration-700">
+        <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center text-white/20">
+          <CalendarIcon size={48} />
+        </div>
+        <div className="max-w-xs space-y-3">
+          <h2 className="text-2xl font-black italic uppercase tracking-tighter">No hay eventos activos</h2>
+          <p className="text-xs text-[var(--color-texto-muted)] font-medium leading-relaxed">
+            Parece que aún no tienes eventos registrados. Crea tu primer evento para comenzar a diseñar tus invitaciones premium.
+          </p>
+        </div>
+        <Link href="/cliente" className="btn btn-primario px-8 py-4 gap-3">
+           <Sparkles size={18} /> Crear mi primer evento
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-8 pb-20">
       <style dangerouslySetInnerHTML={{__html: fuentes.map(f => `
@@ -439,7 +495,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
       {/* Header Fijo dentro del contenedor del cliente */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-white/5 pb-8">
         <div className="space-y-1">
-           <Link href={`/cliente/evento/${evento.id}`} className="flex items-center gap-2 text-xs text-[var(--color-texto-muted)] hover:text-white transition-colors mb-2">
+           <Link href={`/cliente/evento/${evento?.id}`} className="flex items-center gap-2 text-xs text-[var(--color-texto-muted)] hover:text-white transition-colors mb-2">
             <ArrowLeft size={14} /> Volver al evento
           </Link>
           <div className="flex items-center gap-3 flex-wrap">
@@ -452,16 +508,28 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex bg-zinc-900/80 p-1.5 rounded-2xl border border-white/10 shadow-inner">
             <button 
-              onClick={() => setTabActiva('EDITOR')}
+              onClick={() => setTabActiva('BASIC')}
               className={cn(
                 "px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] transition-all duration-300 flex items-center gap-2.5", 
-                tabActiva === 'EDITOR' 
+                tabActiva === 'BASIC' 
                   ? "bg-white text-black shadow-lg scale-105" 
                   : "text-white/40 hover:text-white/60"
               )}
             >
-              <Palette size={14} className={tabActiva === 'EDITOR' ? "text-black" : "text-white/40"} /> 
-              Diseñador
+              <ImageIcon size={14} className={tabActiva === 'BASIC' ? "text-black" : "text-white/40"} /> 
+              Básica (Imagen)
+            </button>
+            <button 
+              onClick={() => setTabActiva('PREMIUM')}
+              className={cn(
+                "px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] transition-all duration-300 flex items-center gap-2.5", 
+                tabActiva === 'PREMIUM' 
+                  ? "bg-[var(--color-acento)] text-white shadow-lg scale-105" 
+                  : "text-white/40 hover:text-white/60"
+              )}
+            >
+              <Sparkles size={14} className={tabActiva === 'PREMIUM' ? "text-white" : "text-[var(--color-acento-claro)]"} /> 
+              Premium (Web)
             </button>
             <button 
               onClick={() => setTabActiva('ENVIAR')}
@@ -476,17 +544,23 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
               Enviar ({evento.invitados?.length || 0})
             </button>
           </div>
-          {tabActiva === 'EDITOR' && (
+          {tabActiva !== 'ENVIAR' && (
             <div className="flex gap-3">
+              {tabActiva === 'BASIC' && (
+                <button 
+                  onClick={handleExportPDF} 
+                  className="btn btn-oro gap-2 px-6 shadow-xl disabled:opacity-50" 
+                  disabled={exporting}
+                >
+                  {exporting ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />} 
+                  {exporting ? 'Generando...' : 'Exportar PDF'}
+                </button>
+              )}
               <button 
-                onClick={handleExportPDF} 
-                className="btn btn-oro gap-2 px-6 shadow-xl disabled:opacity-50" 
-                disabled={exporting}
+                onClick={handleSave} 
+                className="btn btn-primario gap-2 px-6 shadow-xl" 
+                disabled={saving}
               >
-                {exporting ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />} 
-                {exporting ? 'Generando...' : 'Exportar PDF'}
-              </button>
-              <button onClick={handleSave} className="btn btn-primario gap-2 px-6 shadow-xl" disabled={saving}>
                 {saving ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />} 
                 {saving ? 'Guardando...' : 'Guardar Diseño'}
               </button>
@@ -495,12 +569,24 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      <div className={cn(
+        "grid grid-cols-1 gap-10 items-start transition-all duration-700",
+        tabActiva === 'PREMIUM' ? "lg:grid-cols-2" : "lg:grid-cols-12"
+      )}>
         {/* Panel Izquierdo: Controles */}
-        <div className="lg:col-span-4 space-y-6">
-          {tabActiva === 'EDITOR' ? (
+        <div className={cn(
+          "space-y-6",
+          tabActiva === 'PREMIUM' ? "lg:col-span-1" : "lg:col-span-4"
+        )}>
+          {tabActiva === 'PREMIUM' ? (
+            <PremiumEditorPanel 
+              config={configWeb} 
+              onChange={setConfigWeb}
+              evento={evento}
+            />
+          ) : tabActiva === 'BASIC' ? (
             <>
-                <div className="flex bg-[var(--color-fondo-input)] p-1.5 rounded-[var(--radio-xl)] w-full border border-[var(--color-borde-suave)] shadow-inner">
+              <div className="flex bg-[var(--color-fondo-input)] p-1.5 rounded-[var(--radio-xl)] w-full border border-[var(--color-borde-suave)] shadow-inner">
                   <button 
                     onClick={() => setModoPropia(false)}
                     className={cn(
@@ -822,24 +908,58 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
           )}
         </div>
 
-        {/* Panel Derecho: Simulador Fijo */}
-        <div className="lg:col-span-8 flex justify-center sticky top-10">
-           <div className="relative group">
-             {/* Glow decorativo detrás del canvas */}
-             <div className="absolute -inset-10 bg-[var(--color-primario)]/5 blur-[100px] rounded-full pointer-events-none group-hover:bg-[var(--color-primario)]/10 transition-all duration-1000" />
-             <InvitationCanvas 
-              ref={canvasRef}
-              estilos={estilos} 
-              texto={texto} 
-              fondoUrlActivo={fondoUrlActivo} 
-              isEditing={tabActiva === 'EDITOR'} 
-              onEstiloChange={(id, val) => setEstilos({...estilos, [id]: val})} 
-              evento={evento}
-              archivoAdjuntoPropio={archivoAdjuntoBase64}
-              modoPropia={modoPropia}
-              onRSVPClick={() => alert('Esto abrirá el formulario RSVP para tu invitado')}
-             />
-           </div>
+        {/* Panel Derecho: Previsualización */}
+        <div className={cn(
+          "relative",
+          tabActiva === 'PREMIUM' ? "lg:col-span-1" : "lg:col-span-8"
+        )}>
+          {tabActiva === 'PREMIUM' ? (
+            <div className="sticky top-8 flex justify-center">
+              {/* Mobile Phone Mockup */}
+              <div className="relative w-[320px] h-[640px] bg-zinc-900 rounded-[3rem] border-[8px] border-zinc-800 shadow-2xl overflow-hidden ring-1 ring-white/10">
+                {/* Notch */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-zinc-800 rounded-b-2xl z-20" />
+                
+                {/* Screen Content */}
+                <div className="h-full w-full overflow-y-auto no-scrollbar bg-black text-white">
+                   <div className="scale-[1] origin-top h-full w-full">
+                      <PremiumInvitationView 
+                        isPreview={true}
+                        evento={{
+                          ...evento,
+                          invitacion: {
+                            ...(evento.invitacion || {}),
+                            configWeb: configWeb
+                          }
+                        }}
+                        invitado={evento.invitados?.[0]}
+                        status="IDLE"
+                        onRSVP={() => {}}
+                      />
+                   </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="sticky top-8 flex justify-center">
+               <div className="relative group">
+                 <div className="absolute -inset-10 bg-[var(--color-primario)]/5 blur-[100px] rounded-full pointer-events-none group-hover:bg-[var(--color-primario)]/10 transition-all duration-1000" />
+                 <div ref={canvasRef} id="invitation-canvas-root" className="shadow-[0_0_100px_rgba(0,0,0,0.5)] rounded-2xl overflow-hidden transition-all duration-500 scale-95 hover:scale-100">
+                    <InvitationCanvas 
+                      estilos={estilos} 
+                      texto={texto} 
+                      fondoUrlActivo={fondoUrlActivo} 
+                      isEditing={tabActiva === 'BASIC'} 
+                      onEstiloChange={(id, val) => setEstilos({...estilos, [id]: val})} 
+                      evento={evento}
+                      archivoAdjuntoPropio={archivoAdjuntoBase64}
+                      modoPropia={modoPropia}
+                      onRSVPClick={() => alert('Esto abrirá el formulario RSVP para tu invitado')}
+                    />
+                 </div>
+               </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
