@@ -139,10 +139,23 @@ const InvitationCanvas = forwardRef<HTMLDivElement, InvitationCanvasProps>(({
           {renderElement('lugar', 
             <div className="flex flex-col items-center justify-center font-bold uppercase tracking-widest w-full text-center select-none" style={{ fontSize: `${estilos?.lugar?.fontSize || 12}px`, color: estilos?.lugar?.color, fontFamily: estilos?.lugar?.fuente || 'inherit' }}>
                <div className="flex items-center justify-center gap-2"><CalendarIcon size={estilos?.lugar?.fontSize}/> {evento?.fecha ? (typeof evento.fecha === 'string' ? formatearFechaCorta(new Date(evento.fecha)) : formatearFechaCorta(evento.fecha)) : 'Próximamente'}</div>
-               <div className="flex items-center justify-center gap-2">
-                 <MapPin size={estilos?.lugar?.fontSize}/>
-                 {texto.lugar}
-               </div>
+                <div className="flex items-center justify-center gap-2">
+                  {texto.lugar}
+                </div>
+              </div>
+          , {})}
+
+          {renderElement('horaCeremonia', 
+            <div className="flex flex-col items-center justify-center w-full text-center select-none" style={{ fontSize: `${estilos?.horaCeremonia?.fontSize || 16}px`, color: estilos?.horaCeremonia?.color || estilos?.lugar?.color, fontFamily: estilos?.horaCeremonia?.fuente || 'inherit' }}>
+               <p className="font-black uppercase tracking-[0.2em] opacity-40 m-0" style={{ fontSize: '0.6em' }}>Ceremonia Religiosa</p>
+               <p className="font-bold uppercase m-0 mt-1">{texto.horaCeremonia || '04:00 PM'}</p>
+            </div>
+          , {})}
+
+          {renderElement('horaCelebracion', 
+            <div className="flex flex-col items-center justify-center w-full text-center select-none" style={{ fontSize: `${estilos?.horaCelebracion?.fontSize || 16}px`, color: estilos?.horaCelebracion?.color || estilos?.lugar?.color, fontFamily: estilos?.horaCelebracion?.fuente || 'inherit' }}>
+               <p className="font-black uppercase tracking-[0.2em] opacity-40 m-0" style={{ fontSize: '0.6em' }}>Celebración</p>
+               <p className="font-bold uppercase m-0 mt-1">{texto.horaCelebracion || '06:00 PM'}</p>
             </div>
           , {})}
 

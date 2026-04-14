@@ -60,7 +60,9 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
       vestimenta: { color: defCol, fuente: '', fontSize: 14, x: 28, y: 490, width: 344, height: 60, visible: true },
       boton: { color: defCol, visible: true },
       mapPin: { color: defCol, x: 180, y: 450, width: 40, height: 40, visible: true },
-      regalos: { color: defCol, fuente: '', fontSize: 12, x: 28, y: 560, width: 344, height: 80, visible: true }
+      horaCeremonia: { color: defCol, fuente: '', fontSize: 16, x: 28, y: 480, width: 344, height: 40, visible: false },
+      horaCelebracion: { color: defCol, fuente: '', fontSize: 16, x: 28, y: 530, width: 344, height: 40, visible: false },
+      regalos: { color: defCol, fuente: '', fontSize: 12, x: 28, y: 600, width: 344, height: 80, visible: true }
     };
 
     try {
@@ -95,6 +97,8 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
     vestimenta: evento?.invitacion?.vestimenta || 'Formal / Gala',
     lugar: evento?.invitacion?.lugarTexto || 'Sin asignar',
     direccion: evento?.invitacion?.direccion || '',
+    horaCeremonia: '04:00 PM',
+    horaCelebracion: '06:00 PM',
     regaloTipo: evento?.invitacion?.regaloTipo || 'MESA',
     regaloMesaUrl: evento?.invitacion?.regaloMesaUrl || '',
     regaloBanco: evento?.invitacion?.regaloBanco || '',
@@ -209,9 +213,36 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         logging: true,
         backgroundColor: null,
         onclone: (clonedDoc) => {
-          // Aseguramos que los elementos sean visibles en el clon
+          // 1. Aseguramos visibilidad
           const el = clonedDoc.getElementById('invitation-canvas-root');
           if (el) el.style.visibility = 'visible';
+          
+          // 2. SANITIZADOR DE COLORES: Reemplazar oklch/lab por RGB compatibles
+          // html2canvas no soporta funciones de color modernas de CSS como oklch o lab
+          const allElements = clonedDoc.getElementsByTagName('*');
+          for (let i = 0; i < allElements.length; i++) {
+            const node = allElements[i] as HTMLElement;
+            if (!node.style) continue;
+            
+            const style = window.getComputedStyle(node);
+            
+            // Reemplazar fondos problemáticos
+            if (style.backgroundColor.includes('oklch') || style.backgroundColor.includes('lab')) {
+               node.style.backgroundColor = style.backgroundColor; // Forzar valor computado (que suele ser rgb)
+            }
+            // Reemplazar colores de texto
+            if (style.color.includes('oklch') || style.color.includes('lab')) {
+               node.style.color = style.color;
+            }
+            // Reemplazar bordes
+            if (style.borderColor.includes('oklch') || style.borderColor.includes('lab')) {
+               node.style.borderColor = style.borderColor;
+            }
+            // Eliminar sombras con oklch que rompen el parser
+            if (style.boxShadow.includes('oklch') || style.boxShadow.includes('lab')) {
+               node.style.boxShadow = 'none';
+            }
+          }
         }
       });
 
@@ -310,7 +341,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         </div>
 
         {/* Toolbar de Formato (Dock de Alto Contraste) */}
-        <div className="flex items-center gap-1.5 bg-[var(--color-primario)] p-1.5 rounded-2xl border border-white/10 shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 scale-95 group-hover:scale-100 z-10">
+        <div className="flex items-center gap-1.5 bg-zinc-800 p-1.5 rounded-2xl border border-white/10 shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 scale-95 group-hover:scale-100 z-10">
            <button 
              onClick={() => toggleVisibility(styleId)}
              className={cn(
@@ -449,7 +480,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
             <div className="flex gap-3">
               <button 
                 onClick={handleExportPDF} 
-                className="btn border border-white/20 bg-white/5 hover:bg-white/10 text-white gap-2 px-6 shadow-xl disabled:opacity-50" 
+                className="btn btn-oro gap-2 px-6 shadow-xl disabled:opacity-50" 
                 disabled={exporting}
               >
                 {exporting ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />} 
@@ -475,7 +506,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                     className={cn(
                       "flex-1 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-3", 
                       !modoPropia 
-                        ? "bg-[var(--color-primario)] text-white shadow-2xl scale-[1.02] z-10" 
+                        ? "bg-zinc-800 text-white shadow-2xl scale-[1.02] z-10" 
                         : "text-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
                     )}
                   >
@@ -551,9 +582,12 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                       {renderCampo('lugar', 'Ubicación')}
                       {renderCampo('direccion', 'Dirección Google Maps')}
                       
+                      {renderCampo('horaCeremonia', 'Hora de Ceremonia Religiosa')}
+                      {renderCampo('horaCelebracion', 'Hora de Celebración')}
+                      
                       {/* Control Independiente del PIN de Mapa */}
                       <div className="pt-2 pb-6 border-b border-[var(--color-borde-suave)] mb-4">
-                        <div className="flex justify-between items-center bg-[var(--color-primario)] p-4 rounded-2xl border border-white/10 group/mappin hover:shadow-2xl hover:shadow-black/20 transition-all">
+                        <div className="flex justify-between items-center bg-zinc-800 p-4 rounded-2xl border border-white/10 group/mappin hover:shadow-2xl hover:shadow-black/20 transition-all">
                             <div className="flex items-center gap-4">
                               <button 
                                 onClick={() => toggleVisibility('mapPin')}
@@ -586,7 +620,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                            <div className="w-8 h-8 rounded-lg bg-[var(--color-acento)]/20 flex items-center justify-center text-[var(--color-acento-claro)]">
                               <Gift size={16} />
                            </div>
-                           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Sugerencia de Regalos</h3>
+                           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Sugerencia de Regalos</h3>
                         </div>
 
                         <div className="flex bg-[var(--color-fondo-input)] p-1.5 rounded-[var(--radio-lg)] w-full border border-[var(--color-borde-suave)] shadow-inner">
