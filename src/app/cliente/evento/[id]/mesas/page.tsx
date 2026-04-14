@@ -205,6 +205,18 @@ export default function SeatingPage() {
     });
   };
 
+  const handleTouchStart = (e: React.TouchEvent, id: string, x: number, y: number) => {
+    const touch = e.touches[0];
+    const rect = e.currentTarget.parentElement?.getBoundingClientRect();
+    if (!rect) return;
+    
+    setDraggedMesa(id);
+    setDragOffset({
+      x: (touch.clientX - rect.left) - x,
+      y: (touch.clientY - rect.top) - y
+    });
+  };
+
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -233,6 +245,30 @@ export default function SeatingPage() {
       }
       return m;
     }));
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (draggedMesa === null && !draggedGuest) return;
+    
+    const touch = e.touches[0];
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    
+    setCursorPos({ x: touch.clientX, y: touch.clientY });
+
+    if (draggedMesa !== null) {
+      const newX = x - dragOffset.x;
+      const newY = y - dragOffset.y;
+
+      if (draggedMesa === 'pista') {
+        setPistaPos({ x: newX, y: newY });
+      } else if (draggedMesa === 'escenario') {
+        setEscenarioPos({ x: newX, y: newY });
+      } else {
+        setMesas(mesas.map(m => m.id === draggedMesa ? { ...m, x: newX, y: newY } : m));
+      }
+    }
   };
 
   const handleExportPDF = async () => {
@@ -269,27 +305,39 @@ export default function SeatingPage() {
 
   const handleMouseUp = (e: React.MouseEvent) => {
     if (draggedGuest) {
-      // Intentar soltar en el lugar actual
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      
-      // Si el mouse está sobre una mesa durante el mouseup, se asignará ahí
-      // Pero como estamos usando el mouseup global del canvas:
-      const targetMesa = mesas.find(m => {
-        const dx = x - m.x - 64; // centro aproximado
-        const dy = y - m.y - 64;
-        return Math.sqrt(dx*dx + dy*dy) < 80;
-      });
-
-      if (targetMesa) {
-        asignarInvitadoAMesa(draggedGuest.id, targetMesa.id);
-      } else {
-        asignarInvitadoAlSuelo(draggedGuest.id, x, y);
-      }
+      dropGuest(x, y);
     }
     setDraggedMesa(null);
     setDraggedGuest(null);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (draggedGuest) {
+      const touch = e.changedTouches[0];
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      dropGuest(x, y);
+    }
+    setDraggedMesa(null);
+    setDraggedGuest(null);
+  };
+
+  const dropGuest = (x: number, y: number) => {
+    const targetMesa = mesas.find(m => {
+      const dx = x - m.x - 64; // centro aproximado
+      const dy = y - m.y - 64;
+      return Math.sqrt(dx*dx + dy*dy) < 80;
+    });
+
+    if (targetMesa) {
+      asignarInvitadoAMesa(draggedGuest!.id, targetMesa.id);
+    } else {
+      asignarInvitadoAlSuelo(draggedGuest!.id, x, y);
+    }
   };
 
   const findAndRemoveInvitado = (id: string) => {
@@ -528,7 +576,12 @@ export default function SeatingPage() {
                           setDraggedGuest(i);
                           setCursorPos({ x: e.clientX, y: e.clientY });
                         }}
-                        className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm flex items-center gap-3 group hover:border-[#D4AF37] transition-all cursor-grab active:cursor-grabbing hover:shadow-md"
+                        onTouchStart={(e) => {
+                          const touch = e.touches[0];
+                          setDraggedGuest(i);
+                          setCursorPos({ x: touch.clientX, y: touch.clientY });
+                        }}
+                        className="p-3 bg-white border border-slate-100 rounded-xl shadow-sm flex items-center gap-3 group hover:border-[#D4AF37] transition-all cursor-grab active:cursor-grabbing hover:shadow-md touch-none"
                       >
                         <div className={cn(
                           "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ring-2 ring-offset-1 bg-white border border-slate-100",
@@ -652,9 +705,10 @@ export default function SeatingPage() {
            {showPista && (
              <div 
                onMouseDown={(e) => handleMouseDown(e, 'pista', pistaPos.x, pistaPos.y)}
+               onTouchStart={(e) => handleTouchStart(e, 'pista', pistaPos.x, pistaPos.y)}
                style={{ left: pistaPos.x, top: pistaPos.y }}
                className={cn(
-                 "absolute w-[400px] h-[150px] border-4 border-dashed border-[#D4AF37]/40 flex flex-col items-center justify-center text-[#D4AF37]/30 font-black uppercase tracking-[0.5em] rounded-xl bg-[#F5E6BE]/10 backdrop-blur-[1px] transition-all",
+                 "absolute w-[400px] h-[150px] border-4 border-dashed border-[#D4AF37]/40 flex flex-col items-center justify-center text-[#D4AF37]/30 font-black uppercase tracking-[0.5em] rounded-xl bg-[#F5E6BE]/10 backdrop-blur-[1px] transition-all touch-none",
                  draggedMesa === 'pista' ? "cursor-grabbing z-50 duration-0" : "cursor-grab z-10"
                )}
              >
@@ -669,9 +723,10 @@ export default function SeatingPage() {
            {showEscenario && (
              <div 
                onMouseDown={(e) => handleMouseDown(e, 'escenario', escenarioPos.x, escenarioPos.y)}
+               onTouchStart={(e) => handleTouchStart(e, 'escenario', escenarioPos.x, escenarioPos.y)}
                style={{ left: escenarioPos.x, top: escenarioPos.y }}
                className={cn(
-                 "absolute w-[300px] h-[80px] bg-slate-800 border-b-[6px] border-slate-900 rounded-lg flex flex-col items-center justify-center shadow-xl transition-all",
+                 "absolute w-[300px] h-[80px] bg-slate-800 border-b-[6px] border-slate-900 rounded-lg flex flex-col items-center justify-center shadow-xl transition-all touch-none",
                  draggedMesa === 'escenario' ? "cursor-grabbing z-50 duration-0" : "cursor-grab z-10"
                )}
              >
@@ -688,6 +743,8 @@ export default function SeatingPage() {
              onMouseMove={handleMouseMove}
              onMouseUp={handleMouseUp}
              onMouseLeave={handleMouseUp}
+             onTouchMove={handleTouchMove}
+             onTouchEnd={handleTouchEnd}
              onDragOver={(e) => e.preventDefault()}
              onDrop={(e) => {
                const invId = e.dataTransfer.getData('invitadoId');
@@ -736,10 +793,11 @@ export default function SeatingPage() {
                 <div
                   key={m.id}
                   onMouseDown={(e) => handleMouseDown(e, m.id, m.x, m.y)}
+                  onTouchStart={(e) => handleTouchStart(e, m.id, m.x, m.y)}
                   onClick={(e) => { e.stopPropagation(); setSelectedMesaId(m.id); }}
                   style={{ left: m.x, top: m.y, transform: `scale(${m.escala})` }}
                   className={cn(
-                    "absolute z-10",
+                    "absolute z-10 touch-none",
                     draggedMesa === m.id ? "z-50 cursor-grabbing" : "cursor-grab transition-all duration-300",
                     selectedMesaId === m.id && "z-40"
                   )}
