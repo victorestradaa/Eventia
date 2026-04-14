@@ -126,50 +126,62 @@ export default function SeatingPage() {
 
   useEffect(() => {
     async function loadData() {
-      // Cargar invitados
-      const resInv = await getInvitadosByEvento(eventoId);
-      
-      // Cargar layout guardado
-      const resPlano = await getPlanoMesas(eventoId);
-      
-      if (resPlano.success && resPlano.data) {
-        const layout = resPlano.data.layout as any;
-        if (layout.mesas) setMesas(layout.mesas);
-        if (layout.pista) setPistaPos(layout.pista);
-        if (layout.escenario) setEscenarioPos(layout.escenario);
-        if (layout.showPista !== undefined) setShowPista(layout.showPista);
-        if (layout.showEscenario !== undefined) setShowEscenario(layout.showEscenario);
+      try {
+        setLoading(true);
+        // Cargar invitados
+        const resInv = await getInvitadosByEvento(eventoId);
         
-        // Filtrar invitados que ya están en mesas
-        if (resInv.success) {
-          const todosLosInvitados = resInv.data || [];
-          const idsEnMesas = new Set();
-          layout.mesas.forEach((m: any) => {
-            m.invitados.forEach((inv: any) => {
-              if (inv) idsEnMesas.add(inv.id);
-            });
-          });
+        // Cargar layout guardado
+        const resPlano = await getPlanoMesas(eventoId);
+        
+        if (resPlano.success && resPlano.data) {
+          const layout = typeof resPlano.data.layout === 'string' 
+            ? JSON.parse(resPlano.data.layout) 
+            : resPlano.data.layout as any;
+            
+          if (layout.mesas && Array.isArray(layout.mesas)) setMesas(layout.mesas);
+          if (layout.pista) setPistaPos(layout.pista);
+          if (layout.escenario) setEscenarioPos(layout.escenario);
+          if (layout.showPista !== undefined) setShowPista(layout.showPista);
+          if (layout.showEscenario !== undefined) setShowEscenario(layout.showEscenario);
           
-          // Sincronizar invitados sin mesa (incluyendo posiciones en el suelo del layout)
-          const invitadosSuelo = layout.invitadosSuelo || [];
-          setInvitadosSinMesa(todosLosInvitados.map(inv => {
-            const guardado = invitadosSuelo.find((is: any) => is.id === inv.id);
-            if (guardado) return { ...inv, x: guardado.x, y: guardado.y };
-            if (idsEnMesas.has(inv.id)) return null;
-            return inv;
-          }).filter(Boolean) as Invitado[]);
+          // Filtrar invitados que ya están en mesas
+          if (resInv.success && resInv.data) {
+            const todosLosInvitados = resInv.data;
+            const idsEnMesas = new Set();
+            (layout.mesas || []).forEach((m: any) => {
+              (m.invitados || []).forEach((inv: any) => {
+                if (inv && inv.id) idsEnMesas.add(inv.id);
+              });
+            });
+            
+            // Sincronizar invitados sin mesa (incluyendo posiciones en el suelo del layout)
+            const invitadosSuelo = layout.invitadosSuelo || [];
+            setInvitadosSinMesa(todosLosInvitados.map(inv => {
+              const guardado = invitadosSuelo.find((is: any) => is.id === inv.id);
+              if (guardado) return { ...inv, x: guardado.x, y: guardado.y };
+              if (idsEnMesas.has(inv.id)) return null;
+              return inv;
+            }).filter(Boolean) as Invitado[]);
+          }
+        } else if (resInv.success) {
+          // Valores por defecto SOLO si el plano no existe (no si hay error)
+          if (!resPlano.data) {
+            setMesas([
+              { id: '1', nombre: 'Mesa Principal', capacidad: 10, tipo: 'circular', x: 450, y: 50, escala: 1.2, invitados: [] },
+            ]);
+            setInvitadosSinMesa(resInv.data || []);
+          } else {
+             // Hubo un error al cargar pero el plano existe
+             console.error("Error al cargar plano:", resPlano.error);
+             setInvitadosSinMesa(resInv.data || []);
+          }
         }
-      } else {
-        // Valores por defecto si no hay plano
-        setMesas([
-          { id: '1', nombre: 'Mesa Principal', capacidad: 10, tipo: 'circular', x: 450, y: 50, escala: 1.2, invitados: [] },
-        ]);
-        if (resInv.success) {
-          setInvitadosSinMesa(resInv.data || []);
-        }
+      } catch (err) {
+        console.error("Error cargando datos:", err);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     }
     loadData();
   }, [eventoId]);
@@ -276,14 +288,21 @@ export default function SeatingPage() {
     setIsExporting(true);
     
     // Esperar un poco para que el estado de isExporting oculte elementos si fuera necesario
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     try {
+      const isMobile = window.innerWidth < 768;
+      
       const canvas = await html2canvas(canvasRef.current, {
         backgroundColor: '#f1f5f9',
-        scale: 2, // Mejor calidad
-        logging: false,
-        useCORS: true
+        scale: isMobile ? 1.5 : 2, // Ajustar escala para evitar cuelgues en móvil
+        logging: true,
+        useCORS: true,
+        allowTaint: true,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: canvasRef.current.scrollWidth,
+        windowHeight: canvasRef.current.scrollHeight
       });
       
       const imgData = canvas.toDataURL('image/png');
@@ -297,7 +316,7 @@ export default function SeatingPage() {
       pdf.save(`Plano_Evento_${eventoId}.pdf`);
     } catch (error) {
       console.error('Error generando PDF:', error);
-      alert('Hubo un error al generar el PDF');
+      alert('Hubo un error al generar el PDF. Intenta nuevamente.');
     } finally {
       setIsExporting(false);
     }

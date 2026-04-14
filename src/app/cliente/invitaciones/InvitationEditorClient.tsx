@@ -20,13 +20,16 @@ import {
   Copy,
   Users,
   Gift,
-  CreditCard
+  CreditCard,
+  FileDown
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import InvitationCanvas from '@/components/cliente/invitaciones/InvitationCanvas';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface InvitationEditorClientProps {
   evento: any;
@@ -99,7 +102,9 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
   });
 
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   const getInitialCategoria = () => {
     const t = evento?.tipo?.toUpperCase() || '';
@@ -188,6 +193,74 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
       alert(error.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (!canvasRef.current) return;
+    setExporting(true);
+
+    try {
+      const isMobile = window.innerWidth < 768;
+      const canvas = await html2canvas(canvasRef.current, {
+        scale: isMobile ? 1.5 : 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: null
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+      // --- AGREGAR ENLACES ACTIVOS ---
+      // 1. Link de Google Maps (MapPin)
+      if (estilos.mapPin?.visible && texto.direccion) {
+        const x = estilos.mapPin.x || 0;
+        const y = estilos.mapPin.y || 0;
+        const w = estilos.mapPin.width || 40;
+        const h = estilos.mapPin.height || 40;
+        // Ajustar coordenadas si es necesario (el canvas tiene 400x700 por defecto)
+        pdf.link(x, y, w, h, { url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(texto.direccion)}` });
+      }
+
+      // 2. Link RSVP (Botón)
+      if (estilos.boton?.visible !== false) {
+        // El botón está centrado en la parte inferior (bottom-10, left-10, right-10)
+        // Dimensiones aproximadas del botón si no tiene estilos de posición propios
+        const x = 40; 
+        const y = 630; // 700 - 10 (bottom) - 60 (altura aprox)
+        const w = 320; // 400 - 80 
+        const h = 50;
+        
+        const rsvpUrl = `${window.location.origin}/invitacion/${evento.invitados?.[0]?.rsvpToken || evento.id}`;
+        pdf.link(x, y, w, h, { url: rsvpUrl });
+      }
+
+      // 3. Link Mesa de Regalos
+      if (estilos.regalos?.visible && texto.regaloTipo === 'MESA' && texto.regaloMesaUrl) {
+        const x = estilos.regalos.x || 0;
+        const y = estilos.regalos.y || 0;
+        const w = estilos.regalos.width || 344;
+        const h = estilos.regalos.height || 80;
+        const giftUrl = texto.regaloMesaUrl?.startsWith('http') ? texto.regaloMesaUrl : `https://${texto.regaloMesaUrl}`;
+        pdf.link(x, y, w, h, { url: giftUrl });
+      }
+
+      pdf.save(`Invitacion_${evento.nombre.replace(/\s+/g, '_')}.pdf`);
+    } catch (error) {
+      console.error('Error exportando PDF:', error);
+      alert('Error al generar el PDF de la invitación');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -366,10 +439,20 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
             </button>
           </div>
           {tabActiva === 'EDITOR' && (
-            <button onClick={handleSave} className="btn btn-primario gap-2 px-6 shadow-xl" disabled={saving}>
-              {saving ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />} 
-              {saving ? 'Guardando...' : 'Guardar Diseño'}
-            </button>
+            <div className="flex gap-3">
+              <button 
+                onClick={handleExportPDF} 
+                className="btn border border-white/20 bg-white/5 hover:bg-white/10 text-white gap-2 px-6 shadow-xl disabled:opacity-50" 
+                disabled={exporting}
+              >
+                {exporting ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />} 
+                {exporting ? 'Generando...' : 'Exportar PDF'}
+              </button>
+              <button onClick={handleSave} className="btn btn-primario gap-2 px-6 shadow-xl" disabled={saving}>
+                {saving ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />} 
+                {saving ? 'Guardando...' : 'Guardar Diseño'}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -704,6 +787,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
              {/* Glow decorativo detrás del canvas */}
              <div className="absolute -inset-10 bg-[var(--color-primario)]/5 blur-[100px] rounded-full pointer-events-none group-hover:bg-[var(--color-primario)]/10 transition-all duration-1000" />
              <InvitationCanvas 
+              ref={canvasRef}
               estilos={estilos} 
               texto={texto} 
               fondoUrlActivo={fondoUrlActivo} 

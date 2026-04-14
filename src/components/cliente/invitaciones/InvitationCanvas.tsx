@@ -15,10 +15,10 @@ interface InvitationCanvasProps {
   modoPropia?: boolean;
   onRSVPClick?: () => void;
 }
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { Gift, CreditCard, Copy, Check } from 'lucide-react';
 
-export default function InvitationCanvas({ 
+const InvitationCanvas = forwardRef<HTMLDivElement, InvitationCanvasProps>(({ 
   estilos, 
   texto, 
   fondoUrlActivo, 
@@ -28,7 +28,7 @@ export default function InvitationCanvas({
   archivoAdjuntoPropio,
   modoPropia = false,
   onRSVPClick
-}: InvitationCanvasProps) {
+}, ref) => {
   const [copiado, setCopiado] = useState(false);
 
   const handleCopiar = (texto: string) => {
@@ -85,7 +85,7 @@ export default function InvitationCanvas({
 
   if (modoPropia && archivoAdjuntoPropio) {
     return (
-      <div className="w-[400px] h-[700px] max-w-full rounded-[40px] shadow-2xl overflow-hidden border-[8px] border-zinc-900 relative transition-all duration-500 bg-black flex items-center justify-center group">
+      <div ref={ref} className="w-[400px] h-[700px] max-w-full rounded-[40px] shadow-2xl overflow-hidden border-[8px] border-zinc-900 relative transition-all duration-500 bg-black flex items-center justify-center group">
          <img src={archivoAdjuntoPropio} alt="Invitación Cargada" className="w-full h-full object-contain" />
          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
             <button 
@@ -111,6 +111,7 @@ export default function InvitationCanvas({
 
   return (
     <div 
+      ref={ref}
       className="w-[400px] h-[700px] max-w-full rounded-[40px] shadow-2xl overflow-hidden border-[8px] border-zinc-900 relative transition-all duration-500"
       style={{
         backgroundImage: fondoUrlActivo ? `url(${fondoUrlActivo})` : 'none',
@@ -244,4 +245,6 @@ export default function InvitationCanvas({
       <div className="absolute inset-0 bg-black/10 z-0"></div>
     </div>
   );
-}
+});
+
+export default InvitationCanvas;
