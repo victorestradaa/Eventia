@@ -73,16 +73,22 @@ export async function updateSession(request: NextRequest) {
     // 2. Role-based Redirection
     if (user) {
       // Query the public.Usuario table to get the true role using Supabase client
-      const { data: dbUser } = await supabase
+      const { data: dbUser, error: dbError } = await supabase
         .from('Usuario')
         .select('rol')
         .eq('email', user.email)
         .single()
+      
+      if (dbError) {
+        console.warn('⚠️ Middleware Debug | DB Error fetching role:', dbError.message)
+      }
 
-      const userRole = dbUser?.rol || user.app_metadata?.rol || user.user_metadata?.rol || 'CLIENTE'
+      // IMPORTANTE: Convertimos a mayúsculas para evitar errores de case-sensitivity (admin vs ADMIN)
+      const rawRole = dbUser?.rol || user.app_metadata?.rol || user.user_metadata?.rol || 'CLIENTE'
+      const userRole = String(rawRole).toUpperCase()
       const path = request.nextUrl.pathname
 
-      console.log(`👤 User logged in: ${user.email} | Role: ${userRole} | Path: ${path}`)
+      console.log(`👤 Middleware Debug | User: ${user.email} | Detected Role: ${userRole} | Path: ${path}`)
 
       // Redirect to respective dashboard if at root or login/registro
       if (path === '/' || path === '/login' || path === '/registro') {
@@ -91,12 +97,13 @@ export async function updateSession(request: NextRequest) {
         else if (userRole === 'PROVEEDOR') url.pathname = '/proveedor/dashboard'
         else url.pathname = '/cliente/dashboard'
         
-        console.log(`🚀 Redirecting to dashboard: ${url.pathname}`)
+        console.log(`🚀 Middleware Debug | Redirecting to: ${url.pathname}`)
         return NextResponse.redirect(url)
       }
 
-      // Role protection
+      // Role protection - CASE INSENSITIVE
       if (path.startsWith('/admin') && userRole !== 'ADMIN') {
+        console.warn(`🚫 Middleware Debug | Access Blocked: User ${user.email} with role ${userRole} tried to access /admin`)
         const url = request.nextUrl.clone()
         url.pathname = userRole === 'PROVEEDOR' ? '/proveedor/dashboard' : '/cliente/dashboard'
         return NextResponse.redirect(url)
