@@ -4,51 +4,44 @@
    VARIABLES DEL SISTEMA DE DISEÑO
    ============================================================ */
 :root {
+  /* Tipografía */
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-accent: var(--font-outfit), sans-serif;
+  --font-serif: var(--font-playfair), serif;
+
   /* Paleta principal: Azul Marino Profundo (Eventia) */
-  --color-primario: #1a1b35;
-  --color-primario-claro: #2c2e55;
-  --color-primario-oscuro: #0f1020;
+  --color-primario: #111827; /* Darker navy */
+  --color-primario-claro: #1F2937;
+  --color-primario-oscuro: #030712;
 
-  /* Acento: Dorado / Bronce */
-  --color-acento: #bd9b65;
-  --color-acento-claro: #d1b585;
+  /* Acento: Dorado Premium */
+  --color-acento: #BD9B65;
+  --color-acento-claro: #D4AF37;
+  --color-acento-oro: #B29762;
 
-  /* Fondos - Light Theme (Gris muy tenue) */
-  --color-fondo: #f4f5f7;
+  /* Fondos - Premium Ivory Theme */
+  --color-fondo: #FAF9F6;
   --color-fondo-card: #FFFFFF;
-  --color-fondo-input: #e9ecef;
-  --color-fondo-hover: #e2e8f0;
+  --color-fondo-input: #FFFFFF;
+  --color-fondo-hover: #F3F4F6;
 
   /* Bordes */
-  --color-borde: rgba(26, 27, 53, 0.15);
-  --color-borde-suave: rgba(0, 0, 0, 0.06);
+  --color-borde: rgba(189, 155, 101, 0.3);
+  --color-borde-suave: rgba(0, 0, 0, 0.04);
 
   /* Texto */
-  --color-texto: #1F2937;
+  --color-texto: #111827;
   --color-texto-suave: #4B5563;
   --color-texto-muted: #9CA3AF;
 
-  /* Estados reserva */
-  --color-temporal: #D97706;
-  --color-apartado: #EA580C;
-  --color-liquidado: #059669;
-  --color-cancelado: #4B5563;
+  /* Gradientes */
+  --gradiente-oro: linear-gradient(135deg, #A88955 0%, #D4AF37 50%, #A88955 100%);
+  --gradiente-oro-suave: linear-gradient(135deg, rgba(189, 155, 101, 0.1) 0%, rgba(212, 175, 55, 0.05) 100%);
 
-  /* Sombras Modernas (Soft) */
-  --sombra-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  --sombra-glow: 0 10px 15px -3px rgba(26, 27, 53, 0.1), 0 4px 6px -2px rgba(26, 27, 53, 0.05);
-  --sombra-glow-acento: 0 10px 15px -3px rgba(189, 155, 101, 0.15);
-
-  /* Radios */
-  --radio-sm: 8px;
-  --radio-md: 12px;
-  --radio-lg: 20px;
-  --radio-xl: 32px;
-  --radio-full: 9999px;
-  
-  /* Dorado Premium Eventia */
-  --gradiente-oro: linear-gradient(135deg, #bd9b65 0%, #d1b585 50%, #bd9b65 100%);
-  --sombra-oro: 0 10px 30px -10px rgba(189, 155, 101, 0.5);
+  /* Sombras Modernas */
+  --sombra-card: 0 4px 20px rgba(0, 0, 0, 0.03);
+  --sombra-glow-oro: 0 10px 40px -10px rgba(189, 155, 101, 0.4);
+  --sombra-premium: 0 20px 50px rgba(0, 0, 0, 0.04);
 }
 
 /* ============================================================
@@ -124,12 +117,24 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--color-borde);
 }
 
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-accent {
+  font-family: var(--font-accent);
+}
+
 /* --- Gradientes --- */
-.gradient-texto {
-  background: linear-gradient(135deg, var(--color-primario-claro), var(--color-acento));
+.gradient-texto-oro {
+  background: var(--gradiente-oro);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.shadow-glow-oro {
+  box-shadow: var(--sombra-glow-oro);
 }
 
 .gradient-fondo {
@@ -161,12 +166,12 @@ h1, h2, h3, h4, h5, h6 {
 .btn-primario {
   background: linear-gradient(135deg, var(--color-primario), var(--color-acento));
   color: white;
-  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+  box-shadow: 0 4px 15px rgba(26, 27, 53, 0.4);
 }
 
 .btn-primario:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
+  box-shadow: 0 6px 20px rgba(26, 27, 53, 0.6);
 }
 
 .btn-primario:active {
@@ -175,11 +180,16 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-oro {
   background: var(--gradiente-oro);
-  color: #1a1b35; /* Azul marino para contraste premium */
+  color: #111827; /* Dark navy for contrast */
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  box-shadow: var(--sombra-oro);
+  box-shadow: var(--sombra-glow-oro);
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
 }
 
 .btn-oro:hover {
