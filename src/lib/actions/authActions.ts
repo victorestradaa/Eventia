@@ -29,23 +29,14 @@ export async function getCurrentProfile() {
 
     if (!perfil) {
       // Recuperación Zombie: El usuario existe en Supabase pero no en Prisma (ocurre si falla la DB en el registro)
-      console.warn('⚠️ Perfil Zombie recuperado y creado automáticamente para:', user.email);
-      const emailName = user.email ? user.email.split('@')[0] : 'Usuario';
+      // IMPORTANTE: No asumimos que es CLIENTE — podría ser un PROVEEDOR cuyo registro DB falló.
+      // En este caso lo creamos como CLIENTE (rol por defecto), pero el re-registro lo corregirá.
+      // Este caso solo debería ocurrir si el paso 2 del registro falló por timeout.
+      console.warn('⚠️ Perfil Zombie detectado para:', user.email, '— Redirigiendo a reintento de registro.');
       
-      const usuarioRecuperado = await prisma.usuario.create({
-        data: {
-          email: user.email!,
-          nombre: emailName,
-          rol: 'CLIENTE',
-          cliente: { create: {} }
-        },
-        include: {
-          cliente: true,
-          proveedor: true
-        }
-      });
-      
-      return { success: true, data: usuarioRecuperado };
+      // En lugar de crear un perfil con rol incorrecto, devolvemos un error descriptivo
+      // para que el middleware redirija al usuario a completar su registro.
+      return { success: false, error: 'PROFILE_MISSING', zombie: true };
     }
 
     return { success: true, data: perfil };

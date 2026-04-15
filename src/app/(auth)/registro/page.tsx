@@ -53,6 +53,13 @@ export default function RegisterPage() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
+        options: {
+          data: {
+            rol,
+            nombre: nombre.trim(),
+            categoria: rol === 'PROVEEDOR' ? categoria : null,
+          }
+        }
       });
 
       if (authError) {

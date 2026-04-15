@@ -15,10 +15,7 @@ const sanitizePrismaUrl = (url?: string) => {
 };
 
 // Obtenemos la URL final
-const dbUrl = sanitizePrismaUrl(
-  process.env.DATABASE_URL || 
-  'postgresql://postgres.agdqreveheewmbujzlwe:*_N0viembre%3D%4012@aws-1-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true&sslaccept=accept_invalid_certs&connection_limit=1'
-);
+const dbUrl = sanitizePrismaUrl(process.env.DATABASE_URL);
 
 import { PrismaClient } from '@prisma/client';
 
