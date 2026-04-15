@@ -72,19 +72,37 @@ export async function updateSession(request: NextRequest) {
 
     // 2. Role-based Redirection
     if (user) {
-      // Query the public.Usuario table to get the true role using Supabase client
-      const { data: dbUser, error: dbError } = await supabase
-        .from('Usuario')
-        .select('rol')
-        .eq('email', user.email)
-        .single()
+      // Usamos el Service Role Key para bypassar RLS y siempre leer el rol real de la DB.
+      // El cliente anon falla silenciosamente por las políticas de RLS en la tabla Usuario.
+      let dbUserRole: string | null = null;
+      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
       
-      if (dbError) {
-        console.warn('⚠️ Middleware Debug | DB Error fetching role:', dbError.message)
+      if (serviceRoleKey) {
+        try {
+          const { createClient } = await import('@supabase/supabase-js');
+          const adminClient = createClient(supabaseUrl!, serviceRoleKey, {
+            auth: { persistSession: false }
+          });
+          const { data: dbUser, error: dbError } = await adminClient
+            .from('Usuario')
+            .select('rol')
+            .eq('email', user.email)
+            .single();
+          
+          if (dbError) {
+            console.warn('⚠️ Middleware (Service Role) | DB Error:', dbError.message);
+          } else {
+            dbUserRole = dbUser?.rol || null;
+          }
+        } catch (e) {
+          console.warn('⚠️ Middleware | Service role client error:', e);
+        }
+      } else {
+        console.warn('⚠️ Middleware | SUPABASE_SERVICE_ROLE_KEY not set. Falling back to user metadata.');
       }
 
       // IMPORTANTE: Convertimos a mayúsculas para evitar errores de case-sensitivity (admin vs ADMIN)
-      const rawRole = dbUser?.rol || user.app_metadata?.rol || user.user_metadata?.rol || 'CLIENTE'
+      const rawRole = dbUserRole || user.app_metadata?.rol || user.user_metadata?.rol || 'CLIENTE'
       const userRole = String(rawRole).toUpperCase()
       const path = request.nextUrl.pathname
 
