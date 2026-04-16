@@ -215,7 +215,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         const textColor = config.ceremoniaTextColor || '#8b7355';
         
         return (
-          <div className="w-[min(90vw,500px)] mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
+          <div className="w-[min(96vw,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <div className="animate-in slide-in-from-bottom-8 duration-700">
               <div className="flex flex-col items-center bg-white rounded-t-[2.5rem] pt-10 pb-4 px-6 overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-black/5 to-transparent pointer-events-none" />
@@ -265,7 +265,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                 </div>
 
                 <div className="space-y-4">
-                   <p className={cn("font-black italic leading-tight", isPreview ? "text-lg" : "text-xl")}>
+                   <p className={cn("font-black italic leading-tight", isPreview ? "text-lg" : "text-[clamp(1.2rem,6vw,2.5rem)]")}>
                       {nombreLugar}
                    </p>
                 </div>
@@ -290,7 +290,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         const textCel = config.celebracionTextColor || '#8b7355';
         
         return (
-          <div className="w-[min(90vw,500px)] mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
+          <div className="w-[min(96vw,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <div className="animate-in slide-in-from-bottom-8 duration-700">
               <div className="flex flex-col items-center bg-white rounded-t-[2.5rem] pt-10 pb-4 px-6 overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-black/5 to-transparent pointer-events-none" />
@@ -335,7 +335,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                 </div>
 
                 <div className="space-y-2 py-4">
-                   <p className={cn("font-black italic leading-tight", isPreview ? "text-lg" : "text-xl")}>
+                   <p className={cn("font-black italic leading-tight", isPreview ? "text-lg" : "text-[clamp(1.2rem,6vw,2.5rem)]")}>
                       {nombreCel}
                    </p>
                    {config.celebracionDireccion && (
@@ -360,7 +360,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
       case 'mostrarDressCode':
         return (
-          <div className="w-[min(90vw,500px)] mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
+          <div className="w-[min(96vw,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <section className={cn("card-premium px-8 py-12 rounded-[2.5rem] border text-center space-y-6 w-full shadow-2xl", themeStyles.card)}>
                 <div className="w-16 h-16 bg-[var(--color-acento)]/10 rounded-full flex items-center justify-center mx-auto">
                     <Shirt size={28} className={themeStyles.accent} />
@@ -369,7 +369,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     <h2 className="text-3xl font-black uppercase italic tracking-tighter text-[var(--color-acento)]">Código de Vestimenta</h2>
                     <p 
                       style={{ color: config.dressCodeColor || (tema === 'light' ? '#333' : '#fff') }}
-                      className={cn("font-black italic", isPreview ? "text-lg" : "text-2xl")}
+                      className={cn("font-black italic", isPreview ? "text-lg" : "text-[clamp(1.2rem,7vw,2.5rem)]")}
                     >
                       {config.dressCodeTexto || evento.invitacion?.vestimenta || 'Formal / Gala'}
                     </p>
@@ -427,14 +427,14 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
       case 'mostrarMapa':
         return (
-          <div className="w-full max-w-4xl mx-auto px-6 py-12 flex flex-col items-center justify-center h-full">
-            <section className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="w-[min(96vw,800px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
+            <section className="grid lg:grid-cols-2 gap-8 items-center w-full">
                <div className="space-y-8">
                   <div className="space-y-4 text-center lg:text-left">
                      <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mx-auto lg:mx-0", themeStyles.card)}>
                         <MapPin size={24} className={themeStyles.accent} />
                      </div>
-                     <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-3xl" : "text-5xl")}>Ubicación</h2>
+                     <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-3xl" : "text-[clamp(2rem,10vw,4rem)]")}>Ubicación</h2>
                      <p className="text-sm opacity-60 leading-relaxed max-w-sm mx-auto lg:mx-0">
                         Nos encantaría que nos acompañes en este lugar tan especial para nosotros.
                      </p>
@@ -461,7 +461,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                   </div>
                </div>
 
-               <div className={cn("aspect-square lg:aspect-video rounded-[2.5rem] overflow-hidden border shadow-2xl hidden md:block", themeStyles.card)}>
+               <div className={cn("aspect-square md:aspect-video rounded-[2.5rem] overflow-hidden border shadow-2xl w-full", themeStyles.card)}>
                   {config.mapsUrl ? (
                     <iframe 
                       src={config.mapsUrl}
@@ -481,7 +481,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
       case 'mostrarRegalos':
         return (
-          <div className="w-[min(90vw,550px)] mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
+          <div className="w-[min(96vw,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <section className={cn("card-premium p-10 rounded-[2.5rem] border text-center space-y-8", themeStyles.card)}>
                 <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto shadow-2xl">
                     <Gift size={28} className="text-emerald-400" />
@@ -521,7 +521,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
       case 'mostrarRSVP':
         return (
-          <div className="w-[min(90vw,550px)] mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
+          <div className="w-[min(96vw,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <section className="text-center space-y-8">
                <div className="space-y-4">
                   <div className="w-20 h-20 rounded-full border-4 border-[var(--color-acento)]/20 p-2 mx-auto">
