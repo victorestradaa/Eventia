@@ -265,169 +265,148 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
         </section>
       )}
 
-      {/* Hero / Countdown */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--color-primario-oscuro)] to-[var(--color-acento)] p-8 md:p-12 text-white shadow-2xl">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-xs font-bold uppercase tracking-widest">
-                Próximo Gran Evento
+      {/* Hero / Countdown Refinado */}
+      <section className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#8b7355] via-[#1c1917] to-[#8b7355] p-10 md:p-20 text-white shadow-gold-heavy border border-yellow-500/20 group">
+        {/* Geometric Pattern Overlay */}
+        <div className="absolute inset-0 bg-pattern-cubes opacity-20 group-hover:opacity-30 transition-opacity duration-1000" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/40" />
+        
+        <div className="relative z-10 flex flex-col items-center text-center space-y-10">
+          <div className="space-y-4">
+            <div className="flex flex-col items-center gap-3">
+              <span className="inline-block px-5 py-1.5 rounded-full bg-white/5 backdrop-blur-md text-[10px] font-black uppercase tracking-[0.4em] text-yellow-500/80 border border-yellow-500/10">
+                Próximo Gran Evento — Plan {usuario.plan}
               </span>
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest backdrop-blur-sm ${
-                isPlanner ? 'bg-amber-500/80' : isOro ? 'bg-yellow-400/80 text-black' : 'bg-gray-400/80'
-              }`}>
-                Plan {usuario.plan}
+              <div className="h-px w-20 bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent" />
+            </div>
+            <h1 className="text-6xl md:text-8xl font-serif tracking-tighter drop-shadow-2xl">
+              {proximoEvento.nombre}
+            </h1>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12">
+            {/* Fecha Elegante */}
+            <div className="flex flex-col items-center px-8 py-3 rounded-2xl bg-stone-950/40 backdrop-blur-xl border border-white/5">
+              <span className="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-1">Tu Gran Día</span>
+              <span className="text-2xl font-serif text-stone-100">
+                {fechaEvt ? (
+                  (() => {
+                    return new Date(fechaEvt.getTime() + fechaEvt.getTimezoneOffset() * 60000).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+                  })()
+                ) : 'Fecha por definir'}
               </span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold mb-4">{proximoEvento.nombre}</h1>
-            <div className="flex flex-col md:flex-row md:items-center gap-6">
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-black tracking-widest opacity-70 mb-1">Tu Gran Evento:</span>
-                <span className="text-3xl font-black italic tracking-tighter">
-                  {fechaEvt ? (
-                    (() => {
-                      // Bypass UTC shift
-                      return new Date(fechaEvt.getTime() + fechaEvt.getTimezoneOffset() * 60000).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-                    })()
-                  ) : 'Fecha por definir'}
-                </span>
-              </div>
-              <div className="hidden md:block w-px h-12 bg-white/20" />
-              <div className="flex items-center gap-4">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black">{diasRestantes}</span>
-                  <span className="text-[10px] uppercase font-black tracking-widest opacity-70">días para el evento</span>
-                </div>
-                <div className="w-px h-6 bg-white/20" />
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-black tracking-widest opacity-60">Vigencia gestión</span>
-                  <span className="text-xs font-bold opacity-60">
-                    {mesesVigencia === Infinity ? 'Ilimitado' : fechaExpiracion.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                  </span>
-                </div>
-              </div>
+
+            {/* Countdown Circular */}
+            <div className="relative w-28 h-28 flex flex-col items-center justify-center bg-yellow-500 rounded-full text-stone-950 shadow-[0_0_50px_rgba(234,179,8,0.3)] ring-4 ring-yellow-500/20">
+               <span className="text-4xl font-black leading-none">{diasRestantes}</span>
+               <span className="text-[8px] font-black uppercase tracking-tighter text-stone-900/60 mt-1 text-center">Días para<br/>el evento</span>
+            </div>
+
+            {/* Vigencia */}
+            <div className="flex flex-col items-center px-8 py-3 rounded-2xl bg-stone-950/40 backdrop-blur-xl border border-white/5">
+              <span className="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-1">Vigencia Gestión</span>
+              <span className="text-2xl font-serif text-stone-100">
+                {mesesVigencia === Infinity ? '∞' : fechaExpiracion.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }).replace('.', '')}
+              </span>
             </div>
           </div>
+
           <Link href={`/cliente/evento/${proximoEvento.id}`}>
-            <button className="btn bg-white text-[var(--color-primario-oscuro)] hover:bg-white/90 px-8 py-4 text-lg shadow-xl shadow-black/20">
+            <button className="gold-metallic text-stone-950 px-12 py-5 rounded-2xl text-sm font-black uppercase tracking-widest hover:scale-105 transition-all duration-500 shadow-2xl">
               Gestionar Mi Evento
             </button>
           </Link>
         </div>
         
-        {/* Abstract background blobs */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-fuchsia-500/20 rounded-full blur-3xl" />
+        {/* Luxury Light Effects */}
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-yellow-500/5 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-1/2 h-full bg-gradient-to-r from-yellow-500/5 to-transparent pointer-events-none" />
       </section>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="stat-card">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 rounded-2xl bg-violet-500/10 text-violet-400">
+      {/* Tarjetas de Resumen Refinadas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="relative group bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-[2rem] p-8 shadow-2xl shadow-stone-900/5 hover:-translate-y-1 transition-all duration-500 overflow-hidden">
+          <div className="absolute inset-0 bg-pattern-dots opacity-[0.03] pointer-events-none" />
+          <div className="flex justify-between items-start mb-6">
+            <div className="p-4 rounded-2xl bg-yellow-500 shadow-[inset_0_0_10px_rgba(255,255,255,0.4)] text-stone-950 gold-metallic">
               <Wallet size={24} />
             </div>
-            <Link href={`/cliente/evento/${proximoEvento.id}`} className="text-xs text-[var(--color-texto-muted)] hover:text-white">Ver más</Link>
+            <Link href={`/cliente/evento/${proximoEvento.id}`} className="text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-yellow-600 transition-colors border-b border-stone-200">Ver más</Link>
           </div>
-          <p className="text-sm font-medium text-[var(--color-texto-suave)]">Presupuesto Pagado</p>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-2xl font-bold">{formatearMoneda(totalPagadoReal)}</h3>
-            <span className="text-xs text-[var(--color-texto-muted)]">de {formatearMoneda(totalContratadoReal || proximoEvento.presupuestoTotal)}</span>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-stone-400 mb-2">Presupuesto Pagado</p>
+          <div className="flex items-baseline gap-2 mb-6">
+            <h3 className="text-3xl font-serif text-stone-900">{formatearMoneda(totalPagadoReal)}</h3>
+            <span className="text-[10px] font-bold text-stone-400 uppercase">de {formatearMoneda(totalContratadoReal || proximoEvento.presupuestoTotal)}</span>
           </div>
-          <div className="w-full h-1.5 bg-[var(--color-fondo-input)] rounded-full mt-4 overflow-hidden">
+          <div className="relative w-full h-2.5 bg-stone-100 rounded-full overflow-hidden shadow-inner ring-4 ring-stone-900/5">
             <div 
-              className="h-full bg-gradient-to-r from-[var(--color-primario)] to-[var(--color-acento)] transition-all duration-1000" 
+              className="h-full gold-metallic transition-all duration-1000 relative" 
               style={{ width: `${Math.min(100, porcentajePresupuesto)}%` }}
-            />
+            >
+               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer" />
+            </div>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 rounded-2xl bg-fuchsia-500/10 text-fuchsia-400">
+        <div className="relative group bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-[2rem] p-8 shadow-2xl shadow-stone-900/5 hover:-translate-y-1 transition-all duration-500 overflow-hidden">
+          <div className="absolute inset-0 bg-pattern-dots opacity-[0.03] pointer-events-none" />
+          <div className="flex justify-between items-start mb-6">
+            <div className="p-4 rounded-2xl bg-yellow-500 shadow-[inset_0_0_10px_rgba(255,255,255,0.4)] text-stone-950 gold-metallic">
               <Users size={24} />
             </div>
-            <Link href={`/cliente/evento/${proximoEvento.id}`} className="text-xs text-[var(--color-texto-muted)] hover:text-white">Lista completa</Link>
+            <Link href={`/cliente/evento/${proximoEvento.id}`} className="text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-yellow-600 transition-colors border-b border-stone-200">Lista completa</Link>
           </div>
-          <p className="text-sm font-medium text-[var(--color-texto-suave)]">Invitados</p>
-          <h3 className="text-2xl font-bold">{numInvitadosConfirmados} / {proximoEvento.numInvitados || 0}</h3>
-          <p className="text-xs text-[var(--color-texto-muted)] mt-1">Confirmados ({proximoEvento.numInvitados > 0 ? Math.round((numInvitadosConfirmados / proximoEvento.numInvitados) * 100) : 0}%)</p>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-stone-400 mb-2">Asistencia</p>
+          <div className="flex items-baseline gap-2">
+            <h3 className="text-3xl font-serif text-stone-900">{numInvitadosConfirmados} / {proximoEvento.numInvitados || 0}</h3>
+            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Confirmados</span>
+          </div>
+          <p className="text-[10px] text-yellow-600 font-black uppercase tracking-widest mt-2">{proximoEvento.numInvitados > 0 ? Math.round((numInvitadosConfirmados / proximoEvento.numInvitados) * 100) : 0}% de avance</p>
         </div>
 
-        <div className="stat-card">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-400">
+        <div className="relative group bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-[2rem] p-8 shadow-2xl shadow-stone-900/5 hover:-translate-y-1 transition-all duration-500 overflow-hidden">
+          <div className="absolute inset-0 bg-pattern-dots opacity-[0.03] pointer-events-none" />
+          <div className="flex justify-between items-start mb-6">
+            <div className="p-4 rounded-2xl bg-yellow-500 shadow-[inset_0_0_10px_rgba(255,255,255,0.4)] text-stone-950 gold-metallic">
               <Star size={24} />
             </div>
-            <Link href="/cliente/explorar" className="text-xs text-[var(--color-texto-muted)] hover:text-white">Buscar más</Link>
+            <Link href="/cliente/explorar" className="text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-yellow-600 transition-colors border-b border-stone-200">Buscar más</Link>
           </div>
-          <p className="text-sm font-medium text-[var(--color-texto-suave)]">Proveedores</p>
-          <h3 className="text-2xl font-bold">{numProveedoresContratados} Contratados</h3>
-          <p className="text-xs text-[var(--color-texto-muted)] mt-1">{numProveedoresContratados > 0 ? '¡Vas por buen camino!' : '¡Empieza a buscar!'}</p>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-stone-400 mb-2">Proveedores</p>
+          <h3 className="text-3xl font-serif text-stone-900 mb-2">{numProveedoresContratados} Contratados</h3>
+          <p className="text-[10px] text-yellow-600 font-black uppercase tracking-widest">{numProveedoresContratados > 0 ? '¡Experiencia Creciente!' : '¡Inicia tu búsqueda!'}</p>
         </div>
       </div>
 
-      {/* Recommended Providers */}
-      {proveedoresRecomendados.length > 0 && (
-        <section className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Proveedores Disponibles</h2>
-            <Link href="/cliente/explorar" className="text-[var(--color-primario-claro)] text-sm font-bold flex items-center gap-1 hover:underline">
-              Explorar todo <ChevronRight size={16} />
-            </Link>
-          </div>
+      {/* Cuerpo Central Refinado */}
+      <section className="pt-10 space-y-8">
+        <div className="flex items-center gap-4">
+           <div className="p-3 rounded-full bg-yellow-500/10 text-yellow-600 shadow-inner">
+             <Star size={28} fill="currentColor" strokeWidth={1} />
+           </div>
+           <h2 className="text-3xl font-serif text-stone-900">Mis Favoritos (0)</h2>
+           <div className="flex-1 h-px bg-stone-200" />
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {proveedoresRecomendados.map((prov) => (
-              <div key={prov.id} className="card group p-0 overflow-hidden">
-                <div className="relative aspect-video bg-[var(--color-fondo-input)]">
-                  {prov.imagenServicio ? (
-                    <img src={prov.imagenServicio} alt={prov.nombre} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                  ) : prov.logoUrl ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <img src={prov.logoUrl} alt={prov.nombre} className="w-20 h-20 rounded-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-[var(--color-texto-muted)]">
-                      <Star size={32} />
-                    </div>
-                  )}
-                  <div className="absolute bottom-4 left-4">
-                     <span className="badge badge-premium text-[10px]">{prov.categoria}</span>
-                  </div>
-                </div>
-                <div className="p-5 space-y-3">
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-bold text-lg">{prov.nombre}</h3>
-                    {prov.calificacion > 0 && (
-                      <div className="flex items-center gap-1 text-sm font-bold text-amber-400">
-                        <Star size={14} fill="currentColor" /> {prov.calificacion}
-                      </div>
-                    )}
-                  </div>
-                  {prov.precioDesde > 0 && (
-                    <p className="text-sm text-[var(--color-texto-suave)]">Desde {formatearMoneda(prov.precioDesde)}</p>
-                  )}
-                  <Link href={`/cliente/explorar`}>
-                    <button className="btn btn-fantasma w-full text-xs py-2 mt-2">Ver Detalles</button>
-                  </Link>
-                </div>
+        <div className="relative overflow-hidden bg-white border border-stone-200 rounded-[3rem] p-20 text-center shadow-2xl shadow-stone-900/5">
+           <div className="absolute inset-0 bg-marble opacity-[0.05] pointer-events-none" />
+           <div className="relative z-10 space-y-6">
+              <div className="w-24 h-24 mx-auto rounded-full bg-stone-50 flex items-center justify-center text-stone-300 border border-stone-100 shadow-inner">
+                <Star size={40} strokeWidth={1} />
               </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {proveedoresRecomendados.length === 0 && (
-        <section className="card p-8 text-center border-dashed border-2">
-          <Star size={32} className="mx-auto text-[var(--color-texto-muted)] mb-3" />
-          <p className="font-bold text-lg">Aún no hay proveedores registrados</p>
-          <p className="text-sm text-[var(--color-texto-muted)] mb-4">Próximamente encontrarás los mejores proveedores para tu evento.</p>
-          <Link href="/cliente/explorar">
-            <button className="btn btn-primario text-sm">Explorar</button>
-          </Link>
-        </section>
-      )}
+              <div className="space-y-2">
+                <p className="text-xl font-serif text-stone-900">Aún no hay proveedores registrados</p>
+                <p className="text-sm text-stone-400 max-w-sm mx-auto">Próximamente encontrarás los mejores proveedores premium seleccionados especialmente para tu gran día.</p>
+              </div>
+              <Link href="/cliente/explorar">
+                <button className="bg-gradient-to-r from-stone-950 via-stone-800 to-stone-950 text-white px-16 py-5 rounded-2xl text-xs font-black uppercase tracking-[0.3em] hover:scale-105 transition-all shadow-xl hover:shadow-stone-950/20">
+                  Explorar
+                </button>
+              </Link>
+           </div>
+        </div>
+      </section>
 
       {/* MODAL NUEVO EVENTO (Reutilizado) */}
       {isNewEventModalOpen && renderModal()}

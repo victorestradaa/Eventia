@@ -99,7 +99,7 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-fondo)]">
+    <div className="min-h-screen bg-stone-50 bg-marble transition-colors duration-500">
       {/* Top Navbar */}
       <header className="sticky top-0 z-50 bg-[var(--color-fondo-card)]/80 backdrop-blur-md border-b border-[var(--color-borde-suave)] px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -113,12 +113,12 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
               <div className="relative" ref={dropdownRef}>
                 <div 
                   onClick={() => setIsEventSelectorOpen(!isEventSelectorOpen)}
-                   className="hidden lg:flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[10px] font-bold cursor-pointer hover:border-[var(--color-primario-claro)]/40 transition-all group"
+                   className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full bg-yellow-500/5 border border-yellow-500/20 text-[10px] font-bold cursor-pointer hover:border-yellow-500/40 transition-all group shadow-sm hover:shadow-yellow-500/5"
                 >
-                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
-                   <span className="text-[var(--color-texto-muted)] uppercase tracking-wider">Gestionando:</span>
-                   <span className="text-[var(--color-texto)] font-black">{activeEvent?.nombre}</span>
-                   <ChevronDown size={14} className={cn("text-[var(--color-primario-claro)] transition-transform", isEventSelectorOpen && "rotate-180")} />
+                   <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)] animate-pulse" />
+                   <span className="text-stone-400 uppercase tracking-[0.2em]">Gestionando:</span>
+                   <span className="text-stone-900 font-black tracking-tight">{activeEvent?.nombre}</span>
+                   <ChevronDown size={14} className={cn("text-yellow-600 transition-transform", isEventSelectorOpen && "rotate-180")} />
                 </div>
 
                 {/* Dropdown Menu */}

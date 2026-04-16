@@ -42,6 +42,7 @@
   --sombra-card: 0 4px 20px rgba(0, 0, 0, 0.03);
   --sombra-glow-oro: 0 10px 40px -10px rgba(189, 155, 101, 0.4);
   --sombra-premium: 0 20px 50px rgba(0, 0, 0, 0.04);
+  --sombra-gold-deep: 0 25px 60px -15px rgba(189, 155, 101, 0.15);
 }
 
 /* ============================================================
@@ -228,7 +229,48 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 1rem;
 }
 
-/* --- Inputs --- */
+/* --- Texturas y Patrones de Élite --- */
+.bg-marble {
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(189, 155, 101, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(189, 155, 101, 0.02) 0%, transparent 50%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+.bg-pattern-cubes {
+  background-color: transparent;
+  background-image:  linear-gradient(30deg, #111 12%, transparent 12.5%, transparent 87%, #111 87.5%, #111),
+  linear-gradient(150deg, #111 12%, transparent 12.5%, transparent 87%, #111 87.5%, #111),
+  linear-gradient(30deg, #111 12%, transparent 12.5%, transparent 87%, #111 87.5%, #111),
+  linear-gradient(150deg, #111 12%, transparent 12.5%, transparent 87%, #111 87.5%, #111),
+  linear-gradient(60deg, #222 25%, transparent 25.5%, transparent 75%, #222 75%, #222),
+  linear-gradient(60deg, #222 25%, transparent 25.5%, transparent 75%, #222 75%, #222);
+  background-size: 40px 70px;
+  background-position: 0 0, 0 0, 20px 35px, 20px 35px, 0 0, 20px 35px;
+  opacity: 0.1;
+}
+
+.bg-pattern-dots {
+  background-image: radial-gradient(rgba(189, 155, 101, 0.2) 1px, transparent 0);
+  background-size: 20px 20px;
+}
+
+.gold-metallic {
+  background: linear-gradient(
+    135deg, 
+    #8f6b29 0%, 
+    #fde08d 25%, 
+    #df9f28 50%, 
+    #fde08d 75%, 
+    #8f6b29 100%
+  );
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.shadow-gold-heavy {
+  box-shadow: 0 20px 40px -15px rgba(189, 155, 101, 0.3);
+}
+
 .input {
   width: 100%;
   background: var(--color-fondo-input);
