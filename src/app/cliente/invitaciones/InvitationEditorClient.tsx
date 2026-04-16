@@ -216,8 +216,9 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
     }
   };
 
-  const handleSave = async (tipoOverride?: string) => {
-    const tInvitacion = tipoOverride || tipoInvitacion;
+  const handleSave = async (tipoOverride?: any) => {
+    // Si tipoOverride es un evento (de un onClick), lo ignoramos para evitar estructuras circulares en JSON
+    const finalTipo = (typeof tipoOverride === 'string') ? tipoOverride : tipoInvitacion;
     setSaving(true);
     try {
       let finalArchivoUrl = archivoAdjuntoBase64;
@@ -262,7 +263,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
           regaloBanco: configWeb.regaloBanco || texto.regaloBanco,
           regaloClabe: configWeb.regaloClabe || texto.regaloClabe,
         },
-        tipoInvitacion: tInvitacion,
+        tipoInvitacion: finalTipo,
       };
 
       const res = await fetch('/api/invitaciones', {
@@ -611,7 +612,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                 </button>
               )}
               <button 
-                onClick={handleSave} 
+                onClick={() => handleSave()} 
                 className="btn btn-primario gap-2 px-6 shadow-xl" 
                 disabled={saving}
               >
