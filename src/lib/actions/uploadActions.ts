@@ -82,3 +82,55 @@ export async function uploadServiceImage(formData: FormData): Promise<{ success:
     return { success: false, error: 'Fallo catastrófico al procesar el archivo' };
   }
 }
+
+/**
+ * Sube una imagen de invitación (diseño propio, portada, etc) a una carpeta específica por evento.
+ */
+export async function uploadInvitationAsset(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const file = formData.get('file') as File;
+    const eventoId = formData.get('eventoId') as string;
+
+    if (!file || !eventoId) {
+      return { success: false, error: 'Falta el archivo o el ID del evento' };
+    }
+
+    if (!file.type.startsWith('image/')) {
+      return { success: false, error: 'Solo se permiten imágenes' };
+    }
+
+    // Asegurarse de que el bucket exista
+    await asegurarBucket();
+
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const fileName = `invitaciones/${eventoId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const { data, error } = await supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Error uploading invitation asset:', error);
+      return { success: false, error: 'Error al subir la imagen al servidor' };
+    }
+
+    const { data: publicData } = supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(fileName);
+
+    return { 
+      success: true, 
+      url: publicData.publicUrl 
+    };
+
+  } catch (error) {
+    console.error('Invitation upload error:', error);
+    return { success: false, error: 'Fallo al procesar el activo de invitación' };
+  }
+}

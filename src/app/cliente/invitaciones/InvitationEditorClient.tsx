@@ -32,6 +32,7 @@ import PremiumEditorPanel from '@/components/cliente/invitaciones/PremiumEditorP
 import PremiumInvitationView from '@/components/cliente/invitaciones/PremiumInvitationView';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { uploadInvitationAsset } from '@/lib/actions/uploadActions';
 
 interface InvitationEditorClientProps {
   evento: any;
@@ -199,10 +200,32 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
   const handleSave = async () => {
     setSaving(true);
     try {
+      let finalArchivoUrl = archivoAdjuntoBase64;
+
+      // Si es una imagen nueva (Base64), subirla a Storage primero
+      if (modoPropia && archivoAdjuntoBase64 && archivoAdjuntoBase64.startsWith('data:image')) {
+        // Convertir Base64 a Blob/File
+        const resBlob = await fetch(archivoAdjuntoBase64);
+        const blob = await resBlob.blob();
+        const file = new File([blob], 'invitacion_propia.png', { type: blob.type });
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('eventoId', evento.id);
+
+        const uploadRes = await uploadInvitationAsset(formData);
+        if (uploadRes.success && uploadRes.url) {
+          finalArchivoUrl = uploadRes.url;
+          setArchivoAdjuntoBase64(uploadRes.url); // Actualizar estado local con URL
+        } else {
+          throw new Error(uploadRes.error || 'Error al subir la imagen personalizada');
+        }
+      }
+
       const payload = {
         eventoId: evento.id,
         isInvitacionPropia: modoPropia,
-        archivoAdjunto: modoPropia ? archivoAdjuntoBase64 : null,
+        archivoAdjunto: modoPropia ? finalArchivoUrl : null,
         plantilla: 'custom', 
         fondoUrl: fondoUrlActivo,
         colorTexto: JSON.stringify(estilos),
@@ -212,7 +235,9 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         vestimenta: texto.vestimenta,
         configWeb: {
           ...configWeb,
-          tipoInvitacion: tabActiva === 'BASIC' ? 'BASICA' : 'PREMIUM',
+          tipoInvitacion: tabActiva === 'ENVIAR' 
+            ? (evento.invitacion?.tipoInvitacion || (configWeb.tipoInvitacion || 'BASICA'))
+            : (tabActiva === 'BASIC' ? 'BASICA' : 'PREMIUM'),
           direccion: texto.direccion,
           regaloTipo: texto.regaloTipo,
           regaloMesaUrl: texto.regaloMesaUrl,
@@ -227,11 +252,16 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) throw new Error('Error al guardar la invitación');
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Error al guardar la invitación');
+      }
+
       alert('Invitación guardada exitosamente');
       router.refresh();
     } catch (error: any) {
-      alert(error.message);
+      console.error("Save error:", error);
+      alert(error.message || 'Error desconocido al guardar');
     } finally {
       setSaving(false);
     }
@@ -847,17 +877,35 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
             </>
           ) : (
             <div className="bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-3xl p-8 space-y-8 shadow-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                 <div className="space-y-1">
                   <h3 className="font-black flex items-center gap-3 uppercase text-xs tracking-[0.2em] text-[var(--color-texto)]">
                     <Users size={20} className="text-[var(--color-acento)]" /> Lista de Invitados
                   </h3>
-                  <p className="text-[9px] text-[var(--color-texto-muted)] font-bold uppercase tracking-widest pl-8">Gestión de envíos personalizados</p>
+                  <div className="flex items-center gap-2 pl-8">
+                     <p className="text-[9px] text-[var(--color-texto-muted)] font-bold uppercase tracking-widest">Enviando versión:</p>
+                     <span className={cn(
+                       "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
+                       (evento.invitacion?.tipoInvitacion === 'PREMIUM') 
+                        ? "bg-[var(--color-acento)]/10 text-[var(--color-acento-claro)] border-[var(--color-acento)]/20"
+                        : "bg-white/10 text-white/50 border-white/10"
+                     )}>
+                       {(evento.invitacion?.tipoInvitacion === 'PREMIUM') ? 'Premium (Web Interactiva)' : 'Básica (Imagen)'}
+                     </span>
+                  </div>
                 </div>
-                <span className="px-4 py-1.5 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-xl text-[10px] font-black text-[var(--color-texto-muted)] shadow-inner">
+                <span className="px-4 py-1.5 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-xl text-[10px] font-black text-[var(--color-texto-muted)] shadow-inner self-start sm:self-center">
                   {evento.invitados?.length || 0} Registrados
                 </span>
               </div>
+
+              {/* Tips de envío */}
+              <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl">
+                 <p className="text-[9px] text-amber-600/70 font-bold uppercase tracking-widest leading-relaxed">
+                   Tip: Si quieres cambiar el diseño que se envía, vuelve a las pestañas de edición, realiza tus cambios y dale a "Guardar Diseño".
+                 </p>
+              </div>
+
               <div className="space-y-3 max-h-[700px] overflow-y-auto pr-3 custom-scrollbar p-1">
                 {evento.invitados?.map((invitado: any) => (
                   <div key={invitado.id} className="p-5 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl flex items-center justify-between group hover:border-[var(--color-acento)]/30 transition-all duration-500 hover:shadow-2xl hover:bg-[var(--color-fondo-card)]">

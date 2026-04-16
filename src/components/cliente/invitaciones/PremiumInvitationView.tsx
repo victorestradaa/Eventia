@@ -190,7 +190,13 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                      "font-medium tracking-wide opacity-80 backdrop-blur-sm bg-black/10 inline-block px-4 py-2 rounded-full",
                      isPreview ? "text-[10px]" : "text-lg md:text-xl"
                    )}>
-                      {evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Próximamente'}
+                      {evento.fecha ? (
+                        (() => {
+                          const date = new Date(evento.fecha);
+                          // Bypass UTC shift by adding offset or using UTC methods
+                          return new Date(date.getTime() + date.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+                        })()
+                      ) : 'Próximamente'}
                    </p>
                 </div>
 
@@ -231,19 +237,27 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
               >
                 <div className="space-y-1">
                   <p className="text-xs font-black uppercase tracking-[0.4em] opacity-60">
-                     {fechaCer ? fechaCer.toLocaleDateString('es-MX', { month: 'long' }).toUpperCase() : 'MES'}
+                     {fechaCer ? (
+                       new Date(fechaCer.getTime() + fechaCer.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { month: 'long' }).toUpperCase()
+                     ) : 'MES'}
                   </p>
                   <div className="flex items-center justify-center gap-4">
                      <div className="flex-1 h-[1px] bg-current opacity-20" />
                      <div className="flex items-center gap-6">
                         <span className="text-[10px] font-black uppercase tracking-widest leading-none">
-                          {fechaCer ? fechaCer.toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase() : 'DÍA'}
+                          {fechaCer ? (
+                            new Date(fechaCer.getTime() + fechaCer.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase()
+                          ) : 'DÍA'}
                         </span>
                         <span className={cn("font-black leading-none -mt-1", isPreview ? "text-4xl" : "text-6xl")}>
-                          {fechaCer ? fechaCer.getDate() : '27'}
+                          {fechaCer ? (
+                             new Date(fechaCer.getTime() + fechaCer.getTimezoneOffset() * 60000).getDate()
+                          ) : '27'}
                         </span>
                         <span className="text-[10px] font-black uppercase tracking-widest leading-none">
-                          {fechaCer ? fechaCer.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true }) : 'Hora'}
+                          {fechaCer ? (
+                             fechaCer.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
+                          ) : 'Hora'}
                         </span>
                      </div>
                      <div className="flex-1 h-[1px] bg-current opacity-20" />
@@ -293,19 +307,27 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
               >
                 <div className="space-y-1">
                   <p className="text-xs font-black uppercase tracking-[0.4em] opacity-60">
-                     {fechaCel ? fechaCel.toLocaleDateString('es-MX', { month: 'long' }).toUpperCase() : 'MES'}
+                     {fechaCel ? (
+                       new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { month: 'long' }).toUpperCase()
+                     ) : 'MES'}
                   </p>
                   <div className="flex items-center justify-center gap-4">
                      <div className="flex-1 h-[1px] bg-current opacity-20" />
                      <div className="flex items-center gap-6">
                         <span className="text-[10px] font-black uppercase tracking-widest leading-none">
-                          {fechaCel ? fechaCel.toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase() : 'DÍA'}
+                          {fechaCel ? (
+                            new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase()
+                          ) : 'DÍA'}
                         </span>
                         <span className={cn("font-black leading-none -mt-1", isPreview ? "text-4xl" : "text-6xl")}>
-                          {fechaCel ? fechaCel.getDate() : '27'}
+                          {fechaCel ? (
+                            new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).getDate()
+                          ) : '27'}
                         </span>
                         <span className="text-[10px] font-black uppercase tracking-widest leading-none">
-                          {fechaCel ? fechaCel.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true }) : 'Hora'}
+                          {fechaCel ? (
+                             fechaCel.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
+                          ) : 'Hora'}
                         </span>
                      </div>
                      <div className="flex-1 h-[1px] bg-current opacity-20" />
