@@ -294,8 +294,16 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
             <div className="animate-in slide-in-from-bottom-8 duration-700">
               <div className="flex flex-col items-center bg-white rounded-t-[2.5rem] pt-10 pb-4 px-6 overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-black/5 to-transparent pointer-events-none" />
-                <div className="w-16 h-16 bg-[#bd9b65]/10 rounded-full flex items-center justify-center mb-6">
-                  <GlassWater size={32} className="text-[#bd9b65]" />
+                <div className="w-32 h-24 relative mb-4">
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="relative">
+                      <div className="w-16 h-16 rounded-full border-4 border-[#bd9b65] absolute -left-5 top-0 rotate-12" />
+                      <div className="w-16 h-16 rounded-full border-4 border-[#bd9b65] absolute -left-1 top-1 -rotate-12" />
+                      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center absolute -left-2 top-2 z-10">
+                         <GlassWater size={24} className="text-[#bd9b65]" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <h2 className={cn("font-black italic tracking-tighter uppercase text-[#bd9b65] mb-2", isPreview ? "text-[5vw]" : "text-[clamp(1.5rem,8vw,3rem)]")}>Recepción</h2>
                 <div className="w-full h-[1px] bg-zinc-200 mt-2" />
@@ -629,6 +637,14 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
               )}
             >
                {renderModulo(sectionId)}
+               
+               {/* --- INDICADOR DESLIZA GLOBAL --- */}
+               {idx < sections.length - 1 && (
+                 <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40 animate-bounce">
+                    <p className="text-[10px] font-black uppercase tracking-widest">Desliza</p>
+                    <div className="w-px h-8 bg-current" />
+                 </div>
+               )}
             </div>
           ))}
        </div>
