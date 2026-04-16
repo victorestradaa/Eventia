@@ -164,6 +164,24 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
       setFondoUrlActivo(fondosFiltrados[0].url);
     }
   }, [filtroCategoria, fondosFiltrados, fondoUrlActivo]);
+  
+  // Sincronizar datos Básico -> Premium (Soft sync)
+  useEffect(() => {
+    setConfigWeb(prev => {
+      const newConfig = { ...prev };
+      let changed = false;
+      
+      if (texto.direccion && !newConfig.direccion) { newConfig.direccion = texto.direccion; changed = true; }
+      if (texto.direccion && !newConfig.ceremoniaDireccion) { newConfig.ceremoniaDireccion = texto.direccion; changed = true; }
+      if (texto.lugar && !newConfig.ceremoniaNombre) { newConfig.ceremoniaNombre = texto.lugar; changed = true; }
+      if (texto.regaloTipo && !newConfig.regaloTipo) { newConfig.regaloTipo = texto.regaloTipo; changed = true; }
+      if (texto.regaloMesaUrl && !newConfig.regaloMesaUrl) { newConfig.regaloMesaUrl = texto.regaloMesaUrl; changed = true; }
+      if (texto.regaloBanco && !newConfig.regaloBanco) { newConfig.regaloBanco = texto.regaloBanco; changed = true; }
+      if (texto.regaloClabe && !newConfig.regaloClabe) { newConfig.regaloClabe = texto.regaloClabe; changed = true; }
+      
+      return changed ? newConfig : prev;
+    });
+  }, [texto]);
 
 
   if (!evento) {
@@ -237,11 +255,12 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         vestimenta: texto.vestimenta,
         configWeb: {
           ...configWeb,
-          direccion: texto.direccion,
-          regaloTipo: texto.regaloTipo,
-          regaloMesaUrl: texto.regaloMesaUrl,
-          regaloBanco: texto.regaloBanco,
-          regaloClabe: texto.regaloClabe,
+          // Solo sobrescribir si no pertenecen a la pestaña Premium o para asegurar consistencia mínima
+          direccion: configWeb.direccion || texto.direccion,
+          regaloTipo: configWeb.regaloTipo || texto.regaloTipo,
+          regaloMesaUrl: configWeb.regaloMesaUrl || texto.regaloMesaUrl,
+          regaloBanco: configWeb.regaloBanco || texto.regaloBanco,
+          regaloClabe: configWeb.regaloClabe || texto.regaloClabe,
         },
         tipoInvitacion: tInvitacion,
       };

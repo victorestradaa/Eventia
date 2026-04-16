@@ -209,8 +209,8 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         );
 
       case 'mostrarCeremonia':
-        const fechaCer = config.ceremoniaFecha ? new Date(config.ceremoniaFecha) : null;
-        const nombreLugar = config.ceremoniaNombre || 'Parroquia de Nuestra Señora';
+        const fechaCer = config.ceremoniaFecha ? new Date(config.ceremoniaFecha) : (evento.fecha ? new Date(evento.fecha) : null);
+        const nombreLugar = config.ceremoniaNombre || evento.invitacion?.lugarTexto || 'Lugar por asignar';
         const bgColor = config.ceremoniaBgColor || '#fafafa';
         const textColor = config.ceremoniaTextColor || '#8b7355';
         
@@ -284,8 +284,8 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         );
 
       case 'mostrarCelebracion':
-        const fechaCel = config.celebracionFecha ? new Date(config.celebracionFecha) : null;
-        const nombreCel = config.celebracionNombre || 'Hacienda del Sol';
+        const fechaCel = config.celebracionFecha ? new Date(config.celebracionFecha) : (evento.fecha ? new Date(evento.fecha) : null);
+        const nombreCel = config.celebracionNombre || evento.invitacion?.lugarTexto || 'Hacienda / Salón';
         const bgCel = config.ceremoniaBgColor || '#fafafa'; 
         const textCel = config.celebracionTextColor || '#8b7355';
         
@@ -371,7 +371,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                       style={{ color: config.dressCodeColor || (tema === 'light' ? '#333' : '#fff') }}
                       className={cn("font-black italic", isPreview ? "text-lg" : "text-2xl")}
                     >
-                      {config.dressCodeTexto || 'Formal / Gala'}
+                      {config.dressCodeTexto || evento.invitacion?.vestimenta || 'Formal / Gala'}
                     </p>
                 </div>
             </section>
