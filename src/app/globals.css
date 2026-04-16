@@ -232,13 +232,12 @@ h1, h2, h3, h4, h5, h6 {
 /* --- Texturas y Patrones de Élite --- */
 .bg-marble {
   background-image: 
-    radial-gradient(circle at 20% 30%, rgba(189, 155, 101, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(189, 155, 101, 0.02) 0%, transparent 50%),
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+    radial-gradient(circle at 0% 0%, rgba(189, 155, 101, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(189, 155, 101, 0.03) 0%, transparent 50%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
 }
 
 .bg-pattern-cubes {
-  background-color: transparent;
   background-image:  linear-gradient(30deg, #111 12%, transparent 12.5%, transparent 87%, #111 87.5%, #111),
   linear-gradient(150deg, #111 12%, transparent 12.5%, transparent 87%, #111 87.5%, #111),
   linear-gradient(30deg, #111 12%, transparent 12.5%, transparent 87%, #111 87.5%, #111),
@@ -251,24 +250,38 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .bg-pattern-dots {
-  background-image: radial-gradient(rgba(189, 155, 101, 0.2) 1px, transparent 0);
-  background-size: 20px 20px;
+  background-image: radial-gradient(rgba(189, 155, 101, 0.15) 1.5px, transparent 0);
+  background-size: 24px 24px;
 }
 
 .gold-metallic {
   background: linear-gradient(
     135deg, 
-    #8f6b29 0%, 
-    #fde08d 25%, 
-    #df9f28 50%, 
-    #fde08d 75%, 
-    #8f6b29 100%
+    #7d5d21 0%, 
+    #b29762 20%, 
+    #fde08d 45%, 
+    #d4af37 55%, 
+    #b29762 80%,
+    #7d5d21 100%
   );
-  box-shadow: inset 0 1px 1px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 8px rgba(0,0,0,0.15);
+  transition: all 0.3s ease;
 }
 
-.shadow-gold-heavy {
-  box-shadow: 0 20px 40px -15px rgba(189, 155, 101, 0.3);
+.gold-metallic:hover {
+  filter: brightness(1.1);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 8px 16px rgba(0,0,0,0.25);
+  transform: translateY(-2px);
+}
+
+.shadow-elite-gold {
+  box-shadow: 0 30px 60px -12px rgba(189, 155, 101, 0.15), 0 18px 36px -18px rgba(0, 0, 0, 0.2);
+}
+
+.glass-premium {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .input {

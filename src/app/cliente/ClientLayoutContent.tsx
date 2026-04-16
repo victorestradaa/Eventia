@@ -100,12 +100,19 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
 
   return (
     <div className="min-h-screen bg-stone-50 bg-marble transition-colors duration-500">
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-50 bg-[var(--color-fondo-card)]/80 backdrop-blur-md border-b border-[var(--color-borde-suave)] px-6 py-4">
+      {/* Top Navbar Refinado */}
+      <header className="sticky top-0 z-50 glass-premium border-b border-[var(--color-borde-suave)] px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2">
-              <Image src="/logo.png" alt="Eventia Logo" width={240} height={80} className="w-auto h-16 object-contain" priority />
+            <Link href="/" className="flex items-center gap-3 group transition-transform hover:scale-105">
+              <Image 
+                src="/logo.png" 
+                alt="Eventia Logo" 
+                width={180} 
+                height={60} 
+                className="w-auto h-12 object-contain" 
+                priority 
+              />
             </Link>
             
             {/* Context Indicator (Active Event Selector) */}
@@ -113,12 +120,12 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
               <div className="relative" ref={dropdownRef}>
                 <div 
                   onClick={() => setIsEventSelectorOpen(!isEventSelectorOpen)}
-                   className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full bg-yellow-500/5 border border-yellow-500/20 text-[10px] font-bold cursor-pointer hover:border-yellow-500/40 transition-all group shadow-sm hover:shadow-yellow-500/5"
+                   className="hidden lg:flex items-center gap-2 px-6 py-2 rounded-full bg-yellow-500/10 text-yellow-600 border border-yellow-500/30 text-[10px] font-bold cursor-pointer hover:bg-yellow-500/20 transition-all group shadow-sm"
                 >
                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)] animate-pulse" />
-                   <span className="text-stone-400 uppercase tracking-[0.2em]">Gestionando:</span>
-                   <span className="text-stone-900 font-black tracking-tight">{activeEvent?.nombre}</span>
-                   <ChevronDown size={14} className={cn("text-yellow-600 transition-transform", isEventSelectorOpen && "rotate-180")} />
+                   <span className="uppercase tracking-[0.2em] opacity-80">Gestionando:</span>
+                   <span className="font-serif text-stone-900 text-sm tracking-tight">{activeEvent?.nombre}</span>
+                   <ChevronDown size={14} className={cn("transition-transform", isEventSelectorOpen && "rotate-180")} />
                 </div>
 
                 {/* Dropdown Menu */}

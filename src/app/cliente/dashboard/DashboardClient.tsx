@@ -266,10 +266,10 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
       )}
 
       {/* Hero / Countdown Refinado */}
-      <section className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#8b7355] via-[#1c1917] to-[#8b7355] p-10 md:p-20 text-white shadow-gold-heavy border border-yellow-500/20 group">
-        {/* Geometric Pattern Overlay */}
-        <div className="absolute inset-0 bg-pattern-cubes opacity-20 group-hover:opacity-30 transition-opacity duration-1000" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/40" />
+      <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-[#8b7355] via-[#1c1917] to-[#8b7355] p-10 md:p-20 text-white shadow-gold-heavy border border-yellow-500/20 group">
+        {/* Geometric Pattern Overlay Refinado */}
+        <div className="absolute inset-0 bg-pattern-dots opacity-40 group-hover:opacity-60 transition-opacity duration-1000" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
         
         <div className="relative z-10 flex flex-col items-center text-center space-y-10">
           <div className="space-y-4">
@@ -279,7 +279,7 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
               </span>
               <div className="h-px w-20 bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent" />
             </div>
-            <h1 className="text-6xl md:text-8xl font-serif tracking-tighter drop-shadow-2xl">
+            <h1 className="text-7xl md:text-9xl font-serif tracking-tighter drop-shadow-2xl">
               {proximoEvento.nombre}
             </h1>
           </div>
@@ -325,33 +325,33 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
       </section>
 
       {/* Tarjetas de Resumen Refinadas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="relative group bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-[2rem] p-8 shadow-2xl shadow-stone-900/5 hover:-translate-y-1 transition-all duration-500 overflow-hidden">
-          <div className="absolute inset-0 bg-pattern-dots opacity-[0.03] pointer-events-none" />
-          <div className="flex justify-between items-start mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="relative group bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-[1.5rem] p-7 shadow-elite-gold hover:-translate-y-2 transition-all duration-700 overflow-hidden">
+          <div className="absolute inset-0 bg-marble opacity-[0.03] pointer-events-none" />
+          <div className="flex justify-between items-start mb-4">
             <div className="p-4 rounded-2xl bg-yellow-500 shadow-[inset_0_0_10px_rgba(255,255,255,0.4)] text-stone-950 gold-metallic">
               <Wallet size={24} />
             </div>
             <Link href={`/cliente/evento/${proximoEvento.id}`} className="text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-yellow-600 transition-colors border-b border-stone-200">Ver más</Link>
           </div>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-stone-400 mb-2">Presupuesto Pagado</p>
-          <div className="flex items-baseline gap-2 mb-6">
+          <div className="flex items-baseline gap-2 mb-4">
             <h3 className="text-3xl font-serif text-stone-900">{formatearMoneda(totalPagadoReal)}</h3>
             <span className="text-[10px] font-bold text-stone-400 uppercase">de {formatearMoneda(totalContratadoReal || proximoEvento.presupuestoTotal)}</span>
           </div>
-          <div className="relative w-full h-2.5 bg-stone-100 rounded-full overflow-hidden shadow-inner ring-4 ring-stone-900/5">
+          <div className="relative w-full h-3 bg-stone-100 rounded-full overflow-hidden shadow-inner ring-4 ring-yellow-500/5">
             <div 
               className="h-full gold-metallic transition-all duration-1000 relative" 
               style={{ width: `${Math.min(100, porcentajePresupuesto)}%` }}
             >
-               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer" />
+               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-pulse" />
             </div>
           </div>
         </div>
 
-        <div className="relative group bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-[2rem] p-8 shadow-2xl shadow-stone-900/5 hover:-translate-y-1 transition-all duration-500 overflow-hidden">
-          <div className="absolute inset-0 bg-pattern-dots opacity-[0.03] pointer-events-none" />
-          <div className="flex justify-between items-start mb-6">
+        <div className="relative group bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-[1.5rem] p-7 shadow-elite-gold hover:-translate-y-2 transition-all duration-700 overflow-hidden">
+          <div className="absolute inset-0 bg-marble opacity-[0.03] pointer-events-none" />
+          <div className="flex justify-between items-start mb-4">
             <div className="p-4 rounded-2xl bg-yellow-500 shadow-[inset_0_0_10px_rgba(255,255,255,0.4)] text-stone-950 gold-metallic">
               <Users size={24} />
             </div>
@@ -365,9 +365,9 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
           <p className="text-[10px] text-yellow-600 font-black uppercase tracking-widest mt-2">{proximoEvento.numInvitados > 0 ? Math.round((numInvitadosConfirmados / proximoEvento.numInvitados) * 100) : 0}% de avance</p>
         </div>
 
-        <div className="relative group bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-[2rem] p-8 shadow-2xl shadow-stone-900/5 hover:-translate-y-1 transition-all duration-500 overflow-hidden">
-          <div className="absolute inset-0 bg-pattern-dots opacity-[0.03] pointer-events-none" />
-          <div className="flex justify-between items-start mb-6">
+        <div className="relative group bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-[1.5rem] p-7 shadow-elite-gold hover:-translate-y-2 transition-all duration-700 overflow-hidden">
+          <div className="absolute inset-0 bg-marble opacity-[0.03] pointer-events-none" />
+          <div className="flex justify-between items-start mb-4">
             <div className="p-4 rounded-2xl bg-yellow-500 shadow-[inset_0_0_10px_rgba(255,255,255,0.4)] text-stone-950 gold-metallic">
               <Star size={24} />
             </div>
@@ -400,7 +400,7 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
                 <p className="text-sm text-stone-400 max-w-sm mx-auto">Próximamente encontrarás los mejores proveedores premium seleccionados especialmente para tu gran día.</p>
               </div>
               <Link href="/cliente/explorar">
-                <button className="bg-gradient-to-r from-stone-950 via-stone-800 to-stone-950 text-white px-16 py-5 rounded-2xl text-xs font-black uppercase tracking-[0.3em] hover:scale-105 transition-all shadow-xl hover:shadow-stone-950/20">
+                <button className="bg-gradient-to-r from-stone-950 via-yellow-700 to-stone-950 text-white px-16 py-5 rounded-2xl text-xs font-black uppercase tracking-[0.3em] hover:scale-105 transition-all shadow-2xl hover:shadow-yellow-500/20 border border-yellow-500/20">
                   Explorar
                 </button>
               </Link>
