@@ -215,7 +215,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         const textColor = config.ceremoniaTextColor || '#8b7355';
         
         return (
-          <div className="w-full max-w-lg mx-auto px-6 py-12 flex flex-col justify-center h-full">
+          <div className="w-full max-w-lg mx-auto px-6 py-12 flex flex-col items-center justify-center h-full">
             <div className="animate-in slide-in-from-bottom-8 duration-700">
               <div className="flex flex-col items-center bg-white rounded-t-[2.5rem] pt-10 pb-4 px-6 overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-black/5 to-transparent pointer-events-none" />
@@ -290,7 +290,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         const textCel = config.celebracionTextColor || '#8b7355';
         
         return (
-          <div className="w-full max-w-lg mx-auto px-6 py-12 flex flex-col justify-center h-full">
+          <div className="w-full max-w-lg mx-auto px-6 py-12 flex flex-col items-center justify-center h-full">
             <div className="animate-in slide-in-from-bottom-8 duration-700">
               <div className="flex flex-col items-center bg-white rounded-t-[2.5rem] pt-10 pb-4 px-6 overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-black/5 to-transparent pointer-events-none" />
@@ -360,7 +360,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
       case 'mostrarDressCode':
         return (
-          <div className="w-full max-w-lg mx-auto px-6 py-12 flex flex-col justify-center h-full">
+          <div className="w-full max-w-lg mx-auto px-6 py-12 flex flex-col items-center justify-center h-full">
             <section className={cn("card-premium px-8 py-16 rounded-[2.5rem] border text-center space-y-6", themeStyles.card)}>
                 <div className="w-16 h-16 bg-[var(--color-acento)]/10 rounded-full flex items-center justify-center mx-auto">
                     <Shirt size={28} className={themeStyles.accent} />
@@ -383,7 +383,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         if (fotosArr.length === 0) return null;
         
         return (
-          <div className="w-full h-full flex flex-col justify-center py-12">
+          <div className="w-full h-full flex flex-col items-center justify-center py-12">
             <section className="space-y-8">
                <div className="flex items-center justify-between px-8">
                   <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-2xl" : "text-4xl")}>Nuestra Galería</h2>
@@ -405,7 +405,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
       case 'mostrarContador':
         if (!timeLeft) return null;
         return (
-          <div className="w-full max-w-2xl mx-auto px-6 py-12 flex flex-col justify-center h-full">
+          <div className="w-full max-w-2xl mx-auto px-6 py-12 flex flex-col items-center justify-center h-full">
             <section className={cn("text-center animate-in slide-in-from-bottom-8 duration-700", isPreview ? "space-y-8" : "space-y-16")}>
                <div className="space-y-4">
                   <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-2xl" : "text-4xl")}>Cuenta Regresiva</h2>
@@ -427,7 +427,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
       case 'mostrarMapa':
         return (
-          <div className="w-full max-w-4xl mx-auto px-6 py-12 flex flex-col justify-center h-full">
+          <div className="w-full max-w-4xl mx-auto px-6 py-12 flex flex-col items-center justify-center h-full">
             <section className="grid lg:grid-cols-2 gap-12 items-center">
                <div className="space-y-8">
                   <div className="space-y-4 text-center lg:text-left">
@@ -481,7 +481,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
       case 'mostrarRegalos':
         return (
-          <div className="w-full max-w-xl mx-auto px-6 py-12 flex flex-col justify-center h-full">
+          <div className="w-full max-w-xl mx-auto px-6 py-12 flex flex-col items-center justify-center h-full">
             <section className={cn("card-premium p-10 rounded-[2.5rem] border text-center space-y-8", themeStyles.card)}>
                 <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto shadow-2xl">
                     <Gift size={28} className="text-emerald-400" />
@@ -521,7 +521,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
       case 'mostrarRSVP':
         return (
-          <div className="w-full max-w-xl mx-auto px-6 py-12 flex flex-col justify-center h-full">
+          <div className="w-full max-w-xl mx-auto px-6 py-12 flex flex-col items-center justify-center h-full">
             <section className="text-center space-y-8">
                <div className="space-y-4">
                   <div className="w-20 h-20 rounded-full border-4 border-[var(--color-acento)]/20 p-2 mx-auto">
@@ -564,7 +564,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
       case 'mostrarAlbumQR':
         return (
-          <div className="w-full max-w-lg mx-auto px-6 py-12 flex flex-col justify-center h-full">
+          <div className="w-full max-w-lg mx-auto px-6 py-12 flex flex-col items-center justify-center h-full">
             <section className={cn("card-premium p-12 rounded-[2.5rem] border text-center space-y-8 bg-zinc-900/20 border-dashed border-zinc-700", themeStyles.card)}>
                 <div className="w-20 h-20 bg-zinc-800 rounded-3xl flex items-center justify-center mx-auto rotate-12">
                     <QrCode size={40} className="text-white opacity-10" />
