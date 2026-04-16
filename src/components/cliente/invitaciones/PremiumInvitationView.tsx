@@ -405,18 +405,18 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
       case 'mostrarContador':
         if (!timeLeft) return null;
         return (
-          <div className="w-[min(92vw,700px)] mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
+          <div className="w-[min(96vw,800px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <section className={cn("text-center animate-in slide-in-from-bottom-8 duration-700", isPreview ? "space-y-8" : "space-y-16")}>
                <div className="space-y-4">
                   <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[6vw]" : "text-[clamp(2rem,10vw,4rem)]")}>Cuenta Regresiva</h2>
                   <p className={cn("font-bold uppercase tracking-widest opacity-60", isPreview ? "text-[8px]" : "text-xs")}>Solo falta un poco para encontrarnos</p>
                </div>
-               <div className={cn("grid grid-cols-2 md:grid-cols-4", isPreview ? "gap-4" : "gap-8")}>
+               <div className={cn("grid grid-cols-4", isPreview ? "gap-2" : "gap-[1.5vw]")}>
                   {Object.entries(timeLeft).map(([key, value]) => (
-                    <div key={key} className={cn("card-premium border transition-all hover:scale-105 flex flex-col items-center justify-center", themeStyles.card, isPreview ? "py-6 px-2 rounded-2xl" : "py-12 px-4 rounded-[2.5rem]")}>
-                       <span className={cn("font-black tabular-nums block mb-1", isPreview ? "text-[8vw]" : "text-[clamp(2rem,13vw,5rem)]")}>{value.toString().padStart(2, '0')}</span>
-                       <span className={cn("text-[8px] font-black uppercase tracking-widest opacity-40", isPreview && "text-[6px]")}>
-                          {key === 'd' ? 'Días' : key === 'h' ? 'Horas' : key === 'm' ? 'Minutos' : 'Segundos'}
+                    <div key={key} className={cn("card-premium border transition-all hover:scale-105 flex flex-col items-center justify-center", themeStyles.card, isPreview ? "py-4 px-1 rounded-xl" : "py-[5vw] px-[1vw] rounded-[1.5rem] md:rounded-[2.5rem]")}>
+                       <span className={cn("font-black tabular-nums block mb-1", isPreview ? "text-[6vw]" : "text-[clamp(1rem,9vw,4rem)]")}>{value.toString().padStart(2, '0')}</span>
+                       <span className={cn("text-[clamp(6px,2vw,10px)] font-black uppercase tracking-widest opacity-40")}>
+                          {key === 'd' ? 'Días' : key === 'h' ? 'Horas' : key === 'm' ? 'Minutos' : 'Segs'}
                        </span>
                     </div>
                   ))}
