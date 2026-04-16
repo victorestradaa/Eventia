@@ -186,8 +186,8 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert("El archivo es demasiado grande. Máximo 5MB.");
+      if (file.size > 10 * 1024 * 1024) {
+        alert("El archivo es demasiado grande. Máximo 10MB.");
         return;
       }
       const reader = new FileReader();

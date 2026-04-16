@@ -72,12 +72,14 @@ export async function updateSession(request: NextRequest) {
 
     // 2. Role-based Redirection
     if (user) {
-      // Usamos el Service Role Key para bypassar RLS y siempre leer el rol real de la DB.
-      // El cliente anon falla silenciosamente por las políticas de RLS en la tabla Usuario.
+      // Lista de administradores garantizados (Fallback de emergencia)
+      const ADMIN_EMAILS = ['admin@eventia.com', 'admin@gestor.com'];
+      const isHardcodedAdmin = user.email && ADMIN_EMAILS.includes(user.email.toLowerCase());
+
       let dbUserRole: string | null = null;
       const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
       
-      if (serviceRoleKey) {
+      if (serviceRoleKey && serviceRoleKey !== '') {
         try {
           const { createClient } = await import('@supabase/supabase-js');
           const adminClient = createClient(supabaseUrl!, serviceRoleKey, {
@@ -90,23 +92,33 @@ export async function updateSession(request: NextRequest) {
             .single();
           
           if (dbError) {
-            console.warn('⚠️ Middleware (Service Role) | DB Error:', dbError.message);
+            console.warn(`⚠️ Middleware | DB Query Error for ${user.email}:`, dbError.message);
           } else {
             dbUserRole = dbUser?.rol || null;
           }
         } catch (e) {
-          console.warn('⚠️ Middleware | Service role client error:', e);
+          console.warn('⚠️ Middleware | Service role execution error:', e);
         }
       } else {
-        console.warn('⚠️ Middleware | SUPABASE_SERVICE_ROLE_KEY not set. Falling back to user metadata.');
+        console.warn('⚠️ Middleware | SUPABASE_SERVICE_ROLE_KEY is missing/empty. DB check skipped.');
       }
 
-      // IMPORTANTE: Convertimos a mayúsculas para evitar errores de case-sensitivity (admin vs ADMIN)
-      const rawRole = dbUserRole || user.app_metadata?.rol || user.user_metadata?.rol || 'CLIENTE'
-      const userRole = String(rawRole).toUpperCase()
-      const path = request.nextUrl.pathname
+      // IMPORTANTE: Unimos todas las fuentes de rol posibles
+      const metadataRole = user.app_metadata?.rol || user.user_metadata?.rol;
+      
+      let userRole = 'CLIENTE'; // Default
+      
+      if (isHardcodedAdmin) {
+        userRole = 'ADMIN';
+        console.log(`⭐ Middleware | Emergency Admin detected by email: ${user.email}`);
+      } else if (dbUserRole) {
+        userRole = String(dbUserRole).toUpperCase();
+      } else if (metadataRole) {
+        userRole = String(metadataRole).toUpperCase();
+      }
 
-      console.log(`👤 Middleware Debug | User: ${user.email} | Detected Role: ${userRole} | Path: ${path}`)
+      const path = request.nextUrl.pathname
+      console.log(`👤 Middleware | User: ${user.email} | Detected Role: ${userRole} | Path: ${path} | Source: ${isHardcodedAdmin ? 'Hardcoded' : (dbUserRole ? 'Database' : (metadataRole ? 'Metadata' : 'Default'))}`);
 
       // Redirect to respective dashboard if at root or login/registro
       if (path === '/' || path === '/login' || path === '/registro') {
@@ -115,13 +127,13 @@ export async function updateSession(request: NextRequest) {
         else if (userRole === 'PROVEEDOR') url.pathname = '/proveedor/dashboard'
         else url.pathname = '/cliente/dashboard'
         
-        console.log(`🚀 Middleware Debug | Redirecting to: ${url.pathname}`)
+        console.log(`🚀 Middleware | Redirecting to: ${url.pathname}`)
         return NextResponse.redirect(url)
       }
 
       // Role protection - CASE INSENSITIVE
       if (path.startsWith('/admin') && userRole !== 'ADMIN') {
-        console.warn(`🚫 Middleware Debug | Access Blocked: User ${user.email} with role ${userRole} tried to access /admin`)
+        console.warn(`🚫 Middleware | Access Denied: User ${user.email} (Role: ${userRole}) tried to access /admin. Redirecting to safe dashboard.`)
         const url = request.nextUrl.clone()
         url.pathname = userRole === 'PROVEEDOR' ? '/proveedor/dashboard' : '/cliente/dashboard'
         return NextResponse.redirect(url)

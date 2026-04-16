@@ -208,8 +208,8 @@ export default function PremiumEditorPanel({ config, onChange, evento }: Premium
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 0.4 * 1024 * 1024) {
-        alert("La imagen es muy pesada. Máximo 400KB para asegurar el funcionamiento.");
+      if (file.size > 10 * 1024 * 1024) {
+        alert("La imagen es muy pesada. Máximo 10MB para asegurar el funcionamiento.");
         return;
       }
       const reader = new FileReader();
@@ -230,8 +230,8 @@ export default function PremiumEditorPanel({ config, onChange, evento }: Premium
     }
 
     files.forEach(file => {
-      if (file.size > 0.4 * 1024 * 1024) {
-        alert(`La foto "${file.name}" supera los 400KB. Optimizala antes de subir.`);
+      if (file.size > 10 * 1024 * 1024) {
+        alert(`La foto "${file.name}" supera los 10MB. Optimizala antes de subir.`);
         return;
       }
       const reader = new FileReader();
