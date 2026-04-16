@@ -31,6 +31,7 @@ export async function POST(req: Request) {
         isInvitacionPropia: data.isInvitacionPropia || false,
         archivoAdjunto: data.archivoAdjunto, 
         configWeb: data.configWeb || {},
+        tipoInvitacion: data.tipoInvitacion || 'BASICA',
       },
       create: {
         eventoId: data.eventoId,
@@ -45,6 +46,7 @@ export async function POST(req: Request) {
         isInvitacionPropia: data.isInvitacionPropia || false,
         archivoAdjunto: data.archivoAdjunto,
         configWeb: data.configWeb || {},
+        tipoInvitacion: data.tipoInvitacion || 'BASICA',
       },
     });
 

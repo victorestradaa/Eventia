@@ -76,6 +76,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
     galeriaFotos: [],
     galeriaEfecto: 'slide',
   });
+  const [tipoInvitacion, setTipoInvitacion] = useState(evento.invitacion?.tipoInvitacion || 'BASICA');
   
   // Modos de editor
   const [modoPropia, setModoPropia] = useState(evento?.invitacion?.isInvitacionPropia || false);
@@ -197,7 +198,8 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (tipoOverride?: string) => {
+    const tInvitacion = tipoOverride || tipoInvitacion;
     setSaving(true);
     try {
       let finalArchivoUrl = archivoAdjuntoBase64;
@@ -235,15 +237,13 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         vestimenta: texto.vestimenta,
         configWeb: {
           ...configWeb,
-          tipoInvitacion: tabActiva === 'ENVIAR' 
-            ? (evento.invitacion?.tipoInvitacion || (configWeb.tipoInvitacion || 'BASICA'))
-            : (tabActiva === 'BASIC' ? 'BASICA' : 'PREMIUM'),
           direccion: texto.direccion,
           regaloTipo: texto.regaloTipo,
           regaloMesaUrl: texto.regaloMesaUrl,
           regaloBanco: texto.regaloBanco,
           regaloClabe: texto.regaloClabe,
-        }
+        },
+        tipoInvitacion: tInvitacion,
       };
 
       const res = await fetch('/api/invitaciones', {
@@ -257,8 +257,13 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         throw new Error(errData.error || 'Error al guardar la invitación');
       }
 
-      alert('Invitación guardada exitosamente');
-      router.refresh();
+      if (res.ok) {
+        const resData = await res.json();
+        if (resData.success && resData.invitacion?.tipoInvitacion) {
+          setTipoInvitacion(resData.invitacion.tipoInvitacion);
+        }
+        router.refresh();
+      }
     } catch (error: any) {
       console.error("Save error:", error);
       alert(error.message || 'Error desconocido al guardar');
@@ -887,24 +892,23 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                      <div className="flex items-center gap-2">
                         <span className={cn(
                           "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
-                          (evento.invitacion?.tipoInvitacion === 'PREMIUM') 
+                          (tipoInvitacion === 'PREMIUM') 
                             ? "bg-[var(--color-acento)]/20 text-[var(--color-acento-claro)] border-[var(--color-acento)]/30"
                             : "bg-zinc-800 text-zinc-400 border-zinc-700"
                         )}>
-                          {(evento.invitacion?.tipoInvitacion === 'PREMIUM') ? 'Premium (Web)' : 'Básica (Imagen)'}
+                          {(tipoInvitacion === 'PREMIUM') ? 'Premium (Web)' : 'Básica (Imagen)'}
                         </span>
                         
                         <button 
                           onClick={() => {
-                            // Cambiar tipo y guardar
-                            const targetTab = evento.invitacion?.tipoInvitacion === 'PREMIUM' ? 'BASIC' : 'PREMIUM';
-                            setTabActiva(targetTab);
-                            setTimeout(() => handleSave(), 100);
+                            const targetTipo = tipoInvitacion === 'PREMIUM' ? 'BASICA' : 'PREMIUM';
+                            setTipoInvitacion(targetTipo);
+                            handleSave(targetTipo);
                           }}
                           className="text-[9px] font-black uppercase text-[var(--color-acento-claro)] hover:underline flex items-center gap-1 transition-all"
                           disabled={saving}
                         >
-                          <Sparkles size={10} /> {evento.invitacion?.tipoInvitacion === 'PREMIUM' ? 'Cambiar a Básica' : 'Activar Premium'}
+                          <Sparkles size={10} /> {tipoInvitacion === 'PREMIUM' ? 'Cambiar a Básica' : 'Activar Premium'}
                         </button>
                      </div>
                   </div>
