@@ -23,6 +23,16 @@ function sanitizeForClient(obj: any): any {
     // Si es un objeto que ya viene como Date string o necesita ser convertido
     // (aunque el check instanceof Date arriba es el principal)
     
+    // Limpieza de seguridad contra Base64 pesados que causan error 413
+    if (obj.galeriaFotos && Array.isArray(obj.galeriaFotos)) {
+      obj.galeriaFotos = obj.galeriaFotos.map((f: any) => 
+        (typeof f === 'string' && f.startsWith('data:image')) ? '' : f
+      );
+    }
+    if (obj.coverUrl && typeof obj.coverUrl === 'string' && obj.coverUrl.startsWith('data:image')) {
+      obj.coverUrl = '';
+    }
+
     const newObj: any = {};
     for (const key in obj) {
       newObj[key] = sanitizeForClient(obj[key]);
