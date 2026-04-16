@@ -996,10 +996,10 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
 
         {/* Panel Derecho: Previsualización */}
         <div className={cn(
-          "relative",
-          tabActiva === 'PREMIUM' ? "lg:col-span-1" : "lg:col-span-8"
+          "relative transition-all duration-700",
+          (tabActiva === 'PREMIUM' || (tabActiva === 'ENVIAR' && tipoInvitacion === 'PREMIUM')) ? "lg:col-span-1" : "lg:col-span-8"
         )}>
-          {tabActiva === 'PREMIUM' ? (
+          {(tabActiva === 'PREMIUM' || (tabActiva === 'ENVIAR' && tipoInvitacion === 'PREMIUM')) ? (
             <div className="sticky top-8 flex justify-center">
               {/* Mobile Phone Mockup */}
               <div className="relative w-[320px] h-[640px] bg-zinc-900 rounded-[3rem] border-[8px] border-zinc-800 shadow-2xl overflow-hidden ring-1 ring-white/10">
