@@ -199,11 +199,6 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                       ) : 'Próximamente'}
                    </p>
                 </div>
-
-                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40 animate-bounce">
-                   <p className="text-[10px] font-black uppercase tracking-widest">Desliza</p>
-                   <div className="w-px h-8 bg-current" />
-                </div>
              </div>
           </section>
         );
