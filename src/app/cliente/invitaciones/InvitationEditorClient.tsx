@@ -623,15 +623,9 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         </div>
       </div>
 
-      <div className={cn(
-        "grid grid-cols-1 gap-10 items-start transition-all duration-700",
-        tabActiva === 'PREMIUM' ? "lg:grid-cols-2" : "lg:grid-cols-12"
-      )}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start transition-all duration-700">
         {/* Panel Izquierdo: Controles */}
-        <div className={cn(
-          "space-y-6",
-          tabActiva === 'PREMIUM' ? "lg:col-span-1" : "lg:col-span-4"
-        )}>
+        <div className="space-y-6 lg:col-span-4">
           {tabActiva === 'PREMIUM' ? (
             <PremiumEditorPanel 
               config={configWeb} 
@@ -995,10 +989,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
         </div>
 
         {/* Panel Derecho: Previsualización */}
-        <div className={cn(
-          "relative transition-all duration-700",
-          (tabActiva === 'PREMIUM' || (tabActiva === 'ENVIAR' && tipoInvitacion === 'PREMIUM')) ? "lg:col-span-1" : "lg:col-span-8"
-        )}>
+        <div className="relative transition-all duration-700 lg:col-span-8">
           {(tabActiva === 'PREMIUM' || (tabActiva === 'ENVIAR' && tipoInvitacion === 'PREMIUM')) ? (
             <div className="sticky top-8 flex justify-center">
               {/* Mobile Phone Mockup */}
