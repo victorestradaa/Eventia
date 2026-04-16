@@ -9,7 +9,7 @@ const sanitizePrismaUrl = (url?: string) => {
   }
 
   if (clean && !clean.includes('connection_limit=')) {
-    clean += (clean.includes('?') ? '&' : '?') + 'connection_limit=1';
+    clean += (clean.includes('?') ? '&' : '?') + 'connection_limit=5';
   }
   return clean;
 };
