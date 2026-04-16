@@ -622,7 +622,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
             <div 
               key={sectionId}
               className={cn(
-                "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out flex flex-col",
+                "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out flex flex-col items-center justify-center",
                 currentPage === idx 
                   ? "opacity-100 z-10 scale-100 translate-y-0" 
                   : "opacity-0 z-0 scale-95 pointer-events-none"
