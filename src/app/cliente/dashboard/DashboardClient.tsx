@@ -284,7 +284,12 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase font-black tracking-widest opacity-70 mb-1">Tu Gran Evento:</span>
                 <span className="text-3xl font-black italic tracking-tighter">
-                  {fechaEvt ? fechaEvt.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Fecha por definir'}
+                  {fechaEvt ? (
+                    (() => {
+                      // Bypass UTC shift
+                      return new Date(fechaEvt.getTime() + fechaEvt.getTimezoneOffset() * 60000).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+                    })()
+                  ) : 'Fecha por definir'}
                 </span>
               </div>
               <div className="hidden md:block w-px h-12 bg-white/20" />

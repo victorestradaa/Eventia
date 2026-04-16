@@ -882,16 +882,31 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                   <h3 className="font-black flex items-center gap-3 uppercase text-xs tracking-[0.2em] text-[var(--color-texto)]">
                     <Users size={20} className="text-[var(--color-acento)]" /> Lista de Invitados
                   </h3>
-                  <div className="flex items-center gap-2 pl-8">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pl-8">
                      <p className="text-[9px] text-[var(--color-texto-muted)] font-bold uppercase tracking-widest">Enviando versión:</p>
-                     <span className={cn(
-                       "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
-                       (evento.invitacion?.tipoInvitacion === 'PREMIUM') 
-                        ? "bg-[var(--color-acento)]/10 text-[var(--color-acento-claro)] border-[var(--color-acento)]/20"
-                        : "bg-white/10 text-white/50 border-white/10"
-                     )}>
-                       {(evento.invitacion?.tipoInvitacion === 'PREMIUM') ? 'Premium (Web Interactiva)' : 'Básica (Imagen)'}
-                     </span>
+                     <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border",
+                          (evento.invitacion?.tipoInvitacion === 'PREMIUM') 
+                            ? "bg-[var(--color-acento)]/20 text-[var(--color-acento-claro)] border-[var(--color-acento)]/30"
+                            : "bg-zinc-800 text-zinc-400 border-zinc-700"
+                        )}>
+                          {(evento.invitacion?.tipoInvitacion === 'PREMIUM') ? 'Premium (Web)' : 'Básica (Imagen)'}
+                        </span>
+                        
+                        <button 
+                          onClick={() => {
+                            // Cambiar tipo y guardar
+                            const targetTab = evento.invitacion?.tipoInvitacion === 'PREMIUM' ? 'BASIC' : 'PREMIUM';
+                            setTabActiva(targetTab);
+                            setTimeout(() => handleSave(), 100);
+                          }}
+                          className="text-[9px] font-black uppercase text-[var(--color-acento-claro)] hover:underline flex items-center gap-1 transition-all"
+                          disabled={saving}
+                        >
+                          <Sparkles size={10} /> {evento.invitacion?.tipoInvitacion === 'PREMIUM' ? 'Cambiar a Básica' : 'Activar Premium'}
+                        </button>
+                     </div>
                   </div>
                 </div>
                 <span className="px-4 py-1.5 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-xl text-[10px] font-black text-[var(--color-texto-muted)] shadow-inner self-start sm:self-center">

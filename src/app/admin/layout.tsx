@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { ReactNode } from 'react';
+import { cerrarSesion } from '@/lib/actions/authActions';
+import { LogOut } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
@@ -40,10 +42,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="mt-auto p-4 border-t border-[var(--color-borde-suave)]">
-          <Link href="/logout" className="sidebar-item text-red-400 hover:bg-red-500/10">
-            <span className="text-lg">🚪</span>
-            Cerrar Sesión
-          </Link>
+          <form action={cerrarSesion}>
+            <button type="submit" className="sidebar-item w-full text-left text-red-400 hover:bg-red-500/10 transition-colors">
+              <span className="text-lg">🚪</span>
+              Cerrar Sesión
+            </button>
+          </form>
         </div>
       </aside>
 
