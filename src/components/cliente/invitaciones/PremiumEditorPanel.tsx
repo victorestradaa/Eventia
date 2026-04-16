@@ -21,8 +21,10 @@ import {
   Images,
   QrCode,
   Trash2,
-  Plus
+  Plus,
+  Loader2
 } from 'lucide-react';
+import { uploadInvitationAsset } from '@/lib/actions/uploadActions';
 import { cn } from '@/lib/utils';
 import { 
   APIProvider, 
@@ -194,6 +196,8 @@ const SortableModuleItem = ({
 export default function PremiumEditorPanel({ config, onChange, evento }: PremiumEditorPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
 
   // Sensores para DND
   const sensors = useSensors(
@@ -205,22 +209,38 @@ export default function PremiumEditorPanel({ config, onChange, evento }: Premium
     onChange({ ...config, [key]: value });
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        alert("La imagen es muy pesada. Máximo 10MB para asegurar el funcionamiento.");
+        alert("La imagen es muy pesada. Máximo 10MB.");
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        updateConfig('coverUrl', reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      
+      setIsUploading(true);
+      setUploadStatus('Subiendo portada...');
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('eventoId', evento.id);
+        
+        const res = await uploadInvitationAsset(formData);
+        if (res.success && res.url) {
+          updateConfig('coverUrl', res.url);
+        } else {
+          alert("Error al subir portada: " + res.error);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error de conexión al subir imagen.");
+      } finally {
+        setIsUploading(false);
+        setUploadStatus('');
+      }
     }
   };
 
-  const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const currentPhotos = config.galeriaFotos || [];
     
@@ -229,18 +249,38 @@ export default function PremiumEditorPanel({ config, onChange, evento }: Premium
       return;
     }
 
-    files.forEach(file => {
+    setIsUploading(true);
+    let uploadedUrls: string[] = [];
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setUploadStatus(`Subiendo foto ${i + 1} de ${files.length}...`);
+      
       if (file.size > 10 * 1024 * 1024) {
-        alert(`La foto "${file.name}" supera los 10MB. Optimizala antes de subir.`);
-        return;
+        alert(`La foto "${file.name}" supera los 10MB. Saltando...`);
+        continue;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        updateConfig('galeriaFotos', [...(config.galeriaFotos || []), result]);
-      };
-      reader.readAsDataURL(file);
-    });
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('eventoId', evento.id);
+        
+        const res = await uploadInvitationAsset(formData);
+        if (res.success && res.url) {
+          uploadedUrls.push(res.url);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    if (uploadedUrls.length > 0) {
+      updateConfig('galeriaFotos', [...currentPhotos, ...uploadedUrls]);
+    }
+    
+    setIsUploading(false);
+    setUploadStatus('');
   };
 
   const getLocalValue = (isoString?: string) => {
@@ -596,8 +636,11 @@ export default function PremiumEditorPanel({ config, onChange, evento }: Premium
             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--color-texto)]">Portada Principal</h3>
           </div>
           <div 
-            onClick={() => fileInputRef.current?.click()}
-            className="relative group cursor-pointer h-40 rounded-2xl bg-[var(--color-fondo-input)] border-2 border-dashed border-[var(--color-borde-suave)] flex flex-col items-center justify-center overflow-hidden hover:border-[var(--color-acento)]/30 transition-all"
+            onClick={() => !isUploading && fileInputRef.current?.click()}
+            className={cn(
+              "relative group cursor-pointer h-40 rounded-2xl bg-[var(--color-fondo-input)] border-2 border-dashed border-[var(--color-borde-suave)] flex flex-col items-center justify-center overflow-hidden hover:border-[var(--color-acento)]/30 transition-all",
+              isUploading && "cursor-wait opacity-70"
+            )}
           >
             <input 
               type="file" 
@@ -608,6 +651,11 @@ export default function PremiumEditorPanel({ config, onChange, evento }: Premium
             />
             {config.coverUrl ? (
               <img src={config.coverUrl} className="w-full h-full object-cover" />
+            ) : isUploading ? (
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 size={24} className="animate-spin text-[var(--color-acento)]" />
+                <p className="text-[10px] font-bold uppercase text-[var(--color-acento)]">{uploadStatus}</p>
+              </div>
             ) : (
               <>
                 <Camera size={32} className="text-[var(--color-texto-muted)]/30 group-hover:text-[var(--color-acento)] transition-colors" />
