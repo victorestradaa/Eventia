@@ -507,10 +507,20 @@ export default function PremiumEditorPanel({ config, onChange, evento }: Premium
 
       case 'mostrarAlbumQR':
         return (
-          <div className="p-4 bg-[var(--color-acento)]/5 border border-[var(--color-acento)]/20 rounded-2xl text-center space-y-2">
-             <QrCode size={32} className="mx-auto text-[var(--color-acento)] opacity-40" />
-             <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-texto)]">Módulo en Desarrollo</p>
-             <p className="text-[9px] text-[var(--color-texto-muted)] leading-relaxed">Este módulo permitirá a tus invitados subir fotos a un álbum compartido mediante un código QR. Estará disponible próximamente.</p>
+          <div className="p-5 bg-[var(--color-acento)]/10 border border-[var(--color-acento)]/30 rounded-3xl text-center space-y-4">
+             <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                <QrCode size={28} className="text-[var(--color-acento)]" />
+             </div>
+             <div className="space-y-1">
+                <p className="text-[11px] font-black uppercase tracking-widest text-[var(--color-texto)]">Álbum Digital Activo</p>
+                <p className="text-[9px] text-[var(--color-texto-muted)] leading-relaxed px-4">Tus invitados ya pueden escanear el QR en la invitación para compartir sus recuerdos.</p>
+             </div>
+             <Link 
+               href={`/cliente/evento/${evento.id}/album`}
+               className="btn-premium inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[9px] font-black uppercase"
+             >
+                <Settings2 size={14} /> Gestionar Álbum
+             </Link>
           </div>
         );
         return (

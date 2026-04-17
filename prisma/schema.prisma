@@ -1,10 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider      = "prisma-client-js"
-  engineType    = "library"
   binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
+  engineType    = "library"
 }
 
 datasource db {
@@ -12,9 +9,297 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
-// ============================================================
-// ENUMS
-// ============================================================
+
+model Usuario {
+  id              String     @id @default(cuid())
+  email           String     @unique
+  nombre          String
+  telefono        String?
+  rol             Rol
+  stripeClienteId String?    @unique
+  creadoEn        DateTime   @default(now())
+  actualizadoEn   DateTime   @updatedAt
+  cliente         Cliente?
+  proveedor       Proveedor?
+}
+
+model Proveedor {
+  id                      String            @id @default(cuid())
+  usuarioId               String            @unique
+  nombre                  String
+  descripcion             String?
+  categoria               CategoriaServicio
+  ciudad                  String
+  estado                  String
+  direccion               String?
+  latitud                 Float?
+  longitud                Float?
+  logoUrl                 String?
+  bannerUrl               String?
+  plan                    PlanProveedor     @default(GRATIS)
+  stripeSubId             String?           @unique
+  puntuacionExp           Int               @default(0)
+  activo                  Boolean           @default(true)
+  permiteReservasPorHora  Boolean           @default(false)
+  horarioApertura         String            @default("09:00")
+  horarioCierre           String            @default("23:00")
+  horasExpiracionTemporal Int               @default(24)
+  creadoEn                DateTime          @default(now())
+  actualizadoEn           DateTime          @updatedAt
+  complementos            Complemento[]
+  usuario                 Usuario           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  resenas                 Resena[]
+  reservas                Reserva[]
+  servicios               Servicio[]
+}
+
+model Servicio {
+  id                  String             @id @default(cuid())
+  proveedorId         String
+  nombre              String
+  descripcion         String?
+  precio              Decimal            @db.Decimal(10, 2)
+  capacidadMin        Int?
+  capacidadMax        Int?
+  diasDisponibles     Int[]
+  etiquetasEvento     TipoEvento[]
+  imagenes            String[]
+  videos              String[]
+  capacidadSimultanea Int                @default(1)
+  bloquesHorario      String[]
+  activo              Boolean            @default(true)
+  creadoEn            DateTime           @default(now())
+  actualizadoEn       DateTime           @updatedAt
+  lineasPresupuesto   LineaPresupuesto[]
+  reservas            Reserva[]
+  proveedor           Proveedor          @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+  variaciones         VariacionPrecio[]
+  complementos        Complemento[]      @relation("ComplementoToServicio")
+}
+
+model VariacionPrecio {
+  id             String   @id @default(cuid())
+  servicioId     String
+  mes            Int
+  precioOverride Decimal  @db.Decimal(10, 2)
+  servicio       Servicio @relation(fields: [servicioId], references: [id], onDelete: Cascade)
+
+  @@unique([servicioId, mes])
+}
+
+model Complemento {
+  id            String     @id @default(cuid())
+  proveedorId   String
+  nombre        String
+  descripcion   String?
+  precio        Decimal    @db.Decimal(10, 2)
+  activo        Boolean    @default(true)
+  creadoEn      DateTime   @default(now())
+  actualizadoEn DateTime   @updatedAt
+  proveedor     Proveedor  @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+  servicios     Servicio[] @relation("ComplementoToServicio")
+}
+
+model Cliente {
+  id            String      @id @default(cuid())
+  usuarioId     String      @unique
+  plan          PlanCliente @default(FREE)
+  stripeSubId   String?     @unique
+  trialExpira   DateTime?
+  creadoEn      DateTime    @default(now())
+  actualizadoEn DateTime    @updatedAt
+  usuario       Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  eventos       Evento[]
+  resenas       Resena[]
+  reservas      Reserva[]
+}
+
+model Evento {
+  id                String             @id @default(cuid())
+  clienteId         String
+  nombre            String
+  tipo              String
+  fecha             DateTime?
+  presupuestoTotal  Decimal            @default(0) @db.Decimal(10, 2)
+  numInvitados      Int?
+  descripcion       String?
+  creadoEn          DateTime           @default(now())
+  actualizadoEn     DateTime           @updatedAt
+  disposicionMesas  DisposicionMesa?
+  cliente           Cliente            @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  invitacion        InvitacionDigital?
+  invitados         Invitado[]
+  lineasPresupuesto LineaPresupuesto[]
+  reservas          Reserva[]
+  album             AlbumDigital?
+}
+
+model Invitado {
+  id           String     @id @default(cuid())
+  eventoId     String
+  nombre       String
+  email        String?
+  telefono     String?
+  mesaAsignada Int?
+  rsvpToken    String     @unique @default(cuid())
+  rsvpEstado   EstadoRSVP @default(PENDIENTE)
+  lado         String?
+  categoria    String?
+  tipoPersona  String?
+  creadoEn     DateTime   @default(now())
+  evento       Evento     @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+}
+
+model LineaPresupuesto {
+  id            String    @id @default(cuid())
+  eventoId      String
+  servicioId    String?
+  descripcion   String
+  montoTotal    Decimal   @db.Decimal(10, 2)
+  montoPagado   Decimal   @default(0) @db.Decimal(10, 2)
+  creadoEn      DateTime  @default(now())
+  actualizadoEn DateTime  @updatedAt
+  evento        Evento    @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  servicio      Servicio? @relation(fields: [servicioId], references: [id])
+  pagos         Pago[]
+}
+
+model Pago {
+  id      String           @id @default(cuid())
+  lineaId String
+  monto   Decimal          @db.Decimal(10, 2)
+  nota    String?
+  fecha   DateTime         @default(now())
+  linea   LineaPresupuesto @relation(fields: [lineaId], references: [id], onDelete: Cascade)
+}
+
+model Reserva {
+  id                     String        @id @default(cuid())
+  clienteId              String?
+  proveedorId            String
+  servicioId             String
+  eventoId               String?
+  fechaEvento            DateTime
+  tipoReserva            TipoReserva   @default(DIA_COMPLETO)
+  horaInicio             String?
+  horaFin                String?
+  estado                 EstadoReserva @default(TEMPORAL)
+  montoTotal             Decimal       @db.Decimal(10, 2)
+  montoAnticipo          Decimal       @default(0) @db.Decimal(10, 2)
+  montoComision          Decimal       @default(0) @db.Decimal(10, 2)
+  notas                  String?
+  stripePaymentId        String?
+  esManual               Boolean       @default(false)
+  nombreClienteExterno   String?
+  telefonoClienteExterno String?
+  fechaExpiracion        DateTime?
+  turnoConfirmadoEn      DateTime?
+  creadoEn               DateTime      @default(now())
+  actualizadoEn          DateTime      @updatedAt
+  cliente                Cliente?      @relation(fields: [clienteId], references: [id])
+  evento                 Evento?       @relation(fields: [eventoId], references: [id])
+  proveedor              Proveedor     @relation(fields: [proveedorId], references: [id])
+  servicio               Servicio      @relation(fields: [servicioId], references: [id])
+  transacciones          Transaccion[]
+}
+
+model Transaccion {
+  id               String    @id @default(cuid())
+  reservaId        String
+  monto            Decimal   @db.Decimal(10, 2)
+  comision         Decimal   @default(0) @db.Decimal(10, 2)
+  tipo             String    @default("ABONO")
+  metodoPago       String    @default("STRIPE")
+  estado           String    @default("PAGADO")
+  fechaVencimiento DateTime?
+  fechaPago        DateTime? @default(now())
+  stripePaymentId  String?
+  notas            String?
+  creadoEn         DateTime  @default(now())
+  reserva          Reserva   @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+}
+
+model Resena {
+  id           String    @id @default(cuid())
+  proveedorId  String
+  clienteId    String
+  calificacion Int
+  comentario   String?
+  creadoEn     DateTime  @default(now())
+  cliente      Cliente   @relation(fields: [clienteId], references: [id])
+  proveedor    Proveedor @relation(fields: [proveedorId], references: [id])
+}
+
+model DisposicionMesa {
+  id            String   @id @default(cuid())
+  eventoId      String   @unique
+  layout        Json
+  actualizadoEn DateTime @updatedAt
+  evento        Evento   @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+}
+
+model InvitacionDigital {
+  id                 String    @id @default(cuid())
+  eventoId           String    @unique
+  plantilla          String    @default("clasica")
+  titulo             String
+  mensaje            String?
+  lugarTexto         String?
+  vestimenta         String?
+  enviadaEn          DateTime?
+  rsvpFecha          DateTime?
+  isInvitacionPropia Boolean   @default(false)
+  archivoAdjunto     String?
+  fondoUrl           String?
+  colorTexto         String?   @default("#ffffff")
+  fuente             String?
+  direccion          String?
+  regaloTipo         String?
+  regaloMesaUrl      String?
+  regaloBanco        String?
+  regaloClabe        String?
+  tipoInvitacion     String    @default("BASICA")
+  configWeb          Json?
+  creadoEn           DateTime  @default(now())
+  actualizadoEn      DateTime  @updatedAt
+  evento             Evento    @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+}
+
+model CatalogoAsset {
+  id            String   @id @default(cuid())
+  tipo          String
+  categoria     String
+  nombre        String
+  url           String
+  etiquetas     String?
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+}
+
+model AlbumDigital {
+  id               String       @id @default(cuid())
+  eventoId         String       @unique
+  nombre           String?
+  slug             String       @unique
+  activo           Boolean      @default(true)
+  config           Json?        // { allowVideos: true, pin: "1234", etc. }
+  creadoEn         DateTime     @default(now())
+  actualizadoEn    DateTime     @updatedAt
+  evento           Evento       @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  media            AlbumMedia[]
+}
+
+model AlbumMedia {
+  id               String       @id @default(cuid())
+  albumId          String
+  url              String       @db.Text
+  tipo             String       // "IMAGE", "VIDEO"
+  nombreArchivo    String?
+  tamanio          Int?
+  creadoEn         DateTime     @default(now())
+  album            AlbumDigital @relation(fields: [albumId], references: [id], onDelete: Cascade)
+}
 
 enum Rol {
   PROVEEDOR
@@ -62,9 +347,9 @@ enum TipoReserva {
 }
 
 enum EstadoReserva {
-  TEMPORAL          // Sin anticipo
-  APARTADO          // Con anticipo
-  LIQUIDADO         // Pago completo
+  TEMPORAL
+  APARTADO
+  LIQUIDADO
   CANCELADO
 }
 
@@ -72,299 +357,4 @@ enum EstadoRSVP {
   PENDIENTE
   CONFIRMADO
   RECHAZADO
-}
-
-// ============================================================
-// MODELOS
-// ============================================================
-
-model Usuario {
-  id               String       @id @default(cuid())
-  email            String       @unique
-  nombre           String
-  telefono         String?
-  rol              Rol
-  stripeClienteId  String?      @unique
-  creadoEn         DateTime     @default(now())
-  actualizadoEn    DateTime     @updatedAt
-
-  proveedor        Proveedor?
-  cliente          Cliente?
-}
-
-model Proveedor {
-  id               String            @id @default(cuid())
-  usuarioId        String            @unique
-  usuario          Usuario           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  nombre           String
-  descripcion      String?
-  categoria        CategoriaServicio
-  ciudad           String
-  estado           String
-  direccion        String?
-  latitud          Float?
-  longitud         Float?
-  logoUrl          String?
-  bannerUrl        String?
-  plan             PlanProveedor     @default(GRATIS)
-  stripeSubId      String?           @unique
-  puntuacionExp    Int               @default(0)  // Para ordenar en búsquedas
-  activo           Boolean           @default(true)
-  
-  // Disponibilidad de Horarios
-  permiteReservasPorHora Boolean     @default(false)
-  horarioApertura  String            @default("09:00")
-  horarioCierre    String            @default("23:00")
-  horasExpiracionTemporal Int        @default(24) // 24-36 horas, configurable
-
-  creadoEn         DateTime          @default(now())
-  actualizadoEn    DateTime          @updatedAt
-
-  servicios        Servicio[]
-  reservas         Reserva[]
-  resenas          Resena[]
-  complementos     Complemento[]
-}
-
-model Servicio {
-  id               String            @id @default(cuid())
-  proveedorId      String
-  proveedor        Proveedor         @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
-  nombre           String
-  descripcion      String?
-  precio           Decimal           @db.Decimal(10, 2)
-  capacidadMin     Int?
-  capacidadMax     Int?
-  diasDisponibles  Int[]             // 0=Dom,1=Lun,...6=Sab. Vacío = todos los días
-  etiquetasEvento  TipoEvento[]
-  imagenes         String[]
-  videos           String[]
-  
-  // Capacidad Simultánea y Horarios
-  capacidadSimultanea Int            @default(1)
-  bloquesHorario      String[]       // Ej. ["09:00-14:00", "15:00-20:00"]
-  
-  activo           Boolean           @default(true)
-  creadoEn         DateTime          @default(now())
-  actualizadoEn    DateTime          @updatedAt
-
-  variaciones      VariacionPrecio[]
-  reservas         Reserva[]
-  lineasPresupuesto LineaPresupuesto[]
-  complementos     Complemento[]
-}
-
-model VariacionPrecio {
-  id               String    @id @default(cuid())
-  servicioId       String
-  servicio         Servicio  @relation(fields: [servicioId], references: [id], onDelete: Cascade)
-  mes              Int       // 1-12
-  precioOverride   Decimal   @db.Decimal(10, 2)
-
-  @@unique([servicioId, mes])
-}
-
-model Complemento {
-  id               String    @id @default(cuid())
-  proveedorId      String
-  proveedor        Proveedor @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
-  nombre           String
-  descripcion      String?
-  precio           Decimal   @db.Decimal(10, 2)
-  activo           Boolean   @default(true)
-  servicios        Servicio[]
-  creadoEn         DateTime  @default(now())
-  actualizadoEn    DateTime  @updatedAt
-}
-
-model Cliente {
-  id               String      @id @default(cuid())
-  usuarioId        String      @unique
-  usuario          Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  plan             PlanCliente @default(FREE)
-  stripeSubId      String?     @unique
-  trialExpira      DateTime?
-  creadoEn         DateTime    @default(now())
-  actualizadoEn    DateTime    @updatedAt
-
-  eventos          Evento[]
-  reservas         Reserva[]
-  resenas          Resena[]
-}
-
-model Evento {
-  id               String    @id @default(cuid())
-  clienteId        String
-  cliente          Cliente   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  nombre           String
-  tipo             String    // Boda, XV Años, etc.
-  fecha            DateTime?
-  presupuestoTotal Decimal   @db.Decimal(10, 2) @default(0)
-  numInvitados     Int?
-  descripcion      String?
-  creadoEn         DateTime  @default(now())
-  actualizadoEn    DateTime  @updatedAt
-
-  invitados        Invitado[]
-  lineasPresupuesto LineaPresupuesto[]
-  disposicionMesas  DisposicionMesa?
-  invitacion       InvitacionDigital?
-  reservas         Reserva[]
-}
-
-model Invitado {
-  id               String     @id @default(cuid())
-  eventoId         String
-  evento           Evento     @relation(fields: [eventoId], references: [id], onDelete: Cascade)
-  nombre           String
-  email            String?
-  telefono         String?
-  mesaAsignada     Int?
-  rsvpToken        String     @unique @default(cuid())
-  rsvpEstado       EstadoRSVP @default(PENDIENTE)
-  lado             String?    // NOVIO, NOVIA, o null para otros eventos
-  categoria        String?    // FAMILIA, AMIGOS, TRABAJO
-  tipoPersona      String?    // HOMBRE, MUJER, NINO, NINA
-  creadoEn         DateTime   @default(now())
-}
-
-model LineaPresupuesto {
-  id               String    @id @default(cuid())
-  eventoId         String
-  evento           Evento    @relation(fields: [eventoId], references: [id], onDelete: Cascade)
-  servicioId       String?
-  servicio         Servicio? @relation(fields: [servicioId], references: [id])
-  descripcion      String    // Por si es un servicio externo
-  montoTotal       Decimal   @db.Decimal(10, 2)
-  montoPagado      Decimal   @db.Decimal(10, 2) @default(0)
-  creadoEn         DateTime  @default(now())
-  actualizadoEn    DateTime  @updatedAt
-
-  pagos            Pago[]
-}
-
-model Pago {
-  id               String           @id @default(cuid())
-  lineaId          String
-  linea            LineaPresupuesto  @relation(fields: [lineaId], references: [id], onDelete: Cascade)
-  monto            Decimal          @db.Decimal(10, 2)
-  nota             String?
-  fecha            DateTime         @default(now())
-}
-
-model Reserva {
-  id                     String        @id @default(cuid())
-  clienteId              String?
-  cliente                Cliente?      @relation(fields: [clienteId], references: [id])
-  proveedorId            String
-  proveedor              Proveedor     @relation(fields: [proveedorId], references: [id])
-  servicioId             String
-  servicio               Servicio      @relation(fields: [servicioId], references: [id])
-  eventoId               String?
-  evento                 Evento?       @relation(fields: [eventoId], references: [id])
-  fechaEvento            DateTime
-  
-  // Soporte para reservas por hora
-  tipoReserva            TipoReserva   @default(DIA_COMPLETO)
-  horaInicio             String?       // "09:00"
-  horaFin                String?       // "14:00"
-
-  estado                 EstadoReserva @default(TEMPORAL)
-  montoTotal             Decimal       @db.Decimal(10, 2)
-  montoAnticipo          Decimal       @db.Decimal(10, 2) @default(0)
-  montoComision          Decimal       @db.Decimal(10, 2) @default(0)
-  notas                  String?
-  stripePaymentId        String?
-  // Campos para ventas manuales (clientes externos - Plan Elite)
-  esManual               Boolean       @default(false)
-  nombreClienteExterno   String?
-  telefonoClienteExterno String?
-  // Flujo de Confirmacion de Turno
-  fechaExpiracion        DateTime?     // Cuando vence el bloqueo TEMPORAL
-  turnoConfirmadoEn      DateTime?     // Cuando el proveedor confirmo el turno
-  creadoEn               DateTime      @default(now())
-  actualizadoEn          DateTime      @updatedAt
-
-  transacciones          Transaccion[]
-}
-
-model Transaccion {
-  id               String    @id @default(cuid())
-  reservaId        String
-  reserva          Reserva   @relation(fields: [reservaId], references: [id], onDelete: Cascade)
-  monto            Decimal   @db.Decimal(10, 2)
-  comision         Decimal   @db.Decimal(10, 2) @default(0)
-  tipo             String    @default("ABONO") // ANTICIPO, ABONO, PENALIZACION
-  metodoPago       String    @default("STRIPE") // EFECTIVO, TRANSFERENCIA, STRIPE, OTRO
-  estado           String    @default("PAGADO") // PAGADO, PENDIENTE
-  fechaVencimiento DateTime?
-  fechaPago        DateTime? @default(now())
-  stripePaymentId  String?
-  notas            String?
-  creadoEn         DateTime  @default(now())
-}
-
-model Resena {
-  id               String    @id @default(cuid())
-  proveedorId      String
-  proveedor        Proveedor @relation(fields: [proveedorId], references: [id])
-  clienteId        String
-  cliente          Cliente   @relation(fields: [clienteId], references: [id])
-  calificacion     Int       // 1-5
-  comentario       String?
-  creadoEn         DateTime  @default(now())
-}
-
-model DisposicionMesa {
-  id               String    @id @default(cuid())
-  eventoId         String    @unique
-  evento           Evento    @relation(fields: [eventoId], references: [id], onDelete: Cascade)
-  layout           Json      // Almacena el JSON de las mesas y sus posiciones
-  actualizadoEn    DateTime  @updatedAt
-}
-
-model InvitacionDigital {
-  id               String    @id @default(cuid())
-  eventoId         String    @unique
-  evento           Evento    @relation(fields: [eventoId], references: [id], onDelete: Cascade)
-  plantilla        String    @default("clasica")
-  titulo           String
-  mensaje          String?
-  lugarTexto       String?
-  vestimenta       String?
-  enviadaEn        DateTime?
-  rsvpFecha        DateTime?
-  
-  // Custom external invitation
-  isInvitacionPropia Boolean @default(false)
-  archivoAdjunto   String?   @db.Text
-  
-  // Configuracion Visual de la plantilla base
-  fondoUrl         String?   @db.Text
-  colorTexto       String?   @default("#ffffff")
-  fuente           String?
-  direccion        String?   @db.Text
-  regaloTipo       String?
-  regaloMesaUrl    String?
-  regaloBanco      String?
-  regaloClabe      String?
-  
-  // Soporte para Invitaciones Web Premium
-  tipoInvitacion   String    @default("BASICA") // BASICA o PREMIUM
-  configWeb        Json?     // Almacena toggles, colores de tema, etc.
-  
-  creadoEn         DateTime  @default(now())
-  actualizadoEn    DateTime  @updatedAt
-}
-
-model CatalogoAsset {
-  id               String       @id @default(cuid())
-  tipo             String       // "FONDO", "FUENTE", "ICONO"
-  categoria        String       // "BODA", "XV_ANOS", "BAUTIZO", etc.
-  nombre           String
-  url              String       @db.Text // String largo para Base64 o S3 URL
-  etiquetas        String?
-  activo           Boolean      @default(true)
-  creadoEn         DateTime     @default(now())
-  actualizadoEn    DateTime     @updatedAt
 }

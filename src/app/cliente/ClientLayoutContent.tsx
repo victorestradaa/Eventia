@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Search, Calendar, Wallet, Mail, User, Menu, X, ChevronDown, Check, Star, LogOut } from 'lucide-react';
+import { Search, Calendar, Wallet, Mail, User, Menu, X, ChevronDown, Check, Star, LogOut, Images } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -63,6 +63,7 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
     { href: '/cliente/explorar', label: 'Explorar', icon: Search },
     { href: activeEvent?.id ? `/cliente/evento/${activeEvent.id}` : '/cliente/dashboard', label: 'Administra tu Evento', icon: Wallet },
     { href: '/cliente/invitaciones', label: 'Invitaciones', icon: Mail },
+    { href: activeEvent?.id ? `/cliente/evento/${activeEvent.id}/album` : '/cliente/dashboard', label: 'Álbum Digital', icon: Images },
     { href: '/cliente/planes', label: 'Mi Plan', icon: Star },
   ];
 
