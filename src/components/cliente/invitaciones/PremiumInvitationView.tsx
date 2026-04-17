@@ -300,7 +300,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     </div>
                   </div>
                 </div>
-                <h2 className={cn("font-black italic tracking-tighter uppercase text-[#bd9b65] mb-2", isPreview ? "text-[5vw]" : "text-[clamp(1.5rem,8vw,3rem)]")}>Recepción</h2>
+                <h2 className={cn("font-black italic tracking-tighter uppercase text-[#bd9b65] mb-2", isPreview ? "text-[8cqi]" : "text-[clamp(1.5rem,8vw,3rem)]")}>Recepción</h2>
                 <div className="w-full h-[1px] bg-zinc-200 mt-2" />
               </div>
 
@@ -369,10 +369,10 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     <Shirt size={28} className={themeStyles.accent} />
                 </div>
                 <div className="space-y-4">
-                    <h2 className="text-3xl font-black uppercase italic tracking-tighter text-[var(--color-acento)]">Código de Vestimenta</h2>
+                    <h2 className={cn("font-black uppercase italic tracking-tighter text-[var(--color-acento)]", isPreview ? "text-[8cqi]" : "text-3xl")}>Código de Vestimenta</h2>
                     <p 
                       style={{ color: config.dressCodeColor || (tema === 'light' ? '#333' : '#fff') }}
-                      className={cn("font-black italic", isPreview ? "text-lg" : "text-[clamp(1.2rem,7vw,2.5rem)]")}
+                      className={cn("font-black italic", isPreview ? "text-[6cqi]" : "text-[clamp(1.2rem,7vw,2.5rem)]")}
                     >
                       {config.dressCodeTexto || evento.invitacion?.vestimenta || 'Formal / Gala'}
                     </p>
@@ -389,7 +389,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
           <div className="w-full h-full flex flex-col items-center justify-center py-12">
             <section className="space-y-8">
                <div className="flex items-center justify-between px-8 w-[min(90vw,600px)] mx-auto">
-                  <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[6vw]" : "text-[clamp(1.5rem,8vw,3.5rem)]")}>Nuestra Galería</h2>
+                  <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-[clamp(1.5rem,8vw,3.5rem)]")}>Nuestra Galería</h2>
                   <Images size={20} className="opacity-20" />
                </div>
                
@@ -411,13 +411,13 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
           <div className="w-[min(96cqi,800px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <section className={cn("text-center animate-in slide-in-from-bottom-8 duration-700", isPreview ? "space-y-8" : "space-y-16")}>
                <div className="space-y-4">
-                  <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[6vw]" : "text-[clamp(2rem,10vw,4rem)]")}>Cuenta Regresiva</h2>
-                  <p className={cn("font-bold uppercase tracking-widest opacity-60", isPreview ? "text-[8px]" : "text-xs")}>Solo falta un poco para encontrarnos</p>
+                  <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-[clamp(2rem,10vw,4rem)]")}>Cuenta Regresiva</h2>
+                  <p className={cn("font-bold uppercase tracking-widest opacity-60", isPreview ? "text-[2.5cqi]" : "text-xs")}>Solo falta un poco para encontrarnos</p>
                </div>
                <div className={cn("grid grid-cols-4", isPreview ? "gap-2" : "gap-[1.5vw]")}>
                   {Object.entries(timeLeft).map(([key, value]) => (
                     <div key={key} className={cn("card-premium border transition-all hover:scale-105 flex flex-col items-center justify-center", themeStyles.card, isPreview ? "py-4 px-1 rounded-xl" : "py-[5vw] px-[1vw] rounded-[1.5rem] md:rounded-[2.5rem]")}>
-                       <span className={cn("font-black tabular-nums block mb-1", isPreview ? "text-[6vw]" : "text-[clamp(1rem,9vw,4rem)]")}>{value.toString().padStart(2, '0')}</span>
+                       <span className={cn("font-black tabular-nums block mb-1", isPreview ? "text-[10cqi]" : "text-[clamp(1rem,9vw,4rem)]")}>{value.toString().padStart(2, '0')}</span>
                        <span className={cn("text-[clamp(6px,2vw,10px)] font-black uppercase tracking-widest opacity-40")}>
                           {key === 'd' ? 'Días' : key === 'h' ? 'Horas' : key === 'm' ? 'Minutos' : 'Segs'}
                        </span>
@@ -437,7 +437,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                      <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mx-auto lg:mx-0", themeStyles.card)}>
                         <MapPin size={24} className={themeStyles.accent} />
                      </div>
-                     <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-3xl" : "text-[clamp(2rem,10vw,4rem)]")}>Ubicación</h2>
+                     <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-[clamp(2rem,10vw,4rem)]")}>Ubicación</h2>
                      <p className="text-sm opacity-60 leading-relaxed max-w-sm mx-auto lg:mx-0">
                         Nos encantaría que nos acompañes en este lugar tan especial para nosotros.
                      </p>
@@ -490,7 +490,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     <Gift size={28} className="text-emerald-400" />
                 </div>
                 <div className="space-y-4">
-                    <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-3xl" : "text-4xl")}>Mesa de Regalos</h2>
+                    <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-4xl")}>Mesa de Regalos</h2>
                     <p className="text-xs opacity-60 leading-relaxed max-w-sm mx-auto">
                       Su presencia es el mejor regalo, pero si desean obsequiarnos algo, aquí tienen nuestras sugerencias.
                     </p>
@@ -532,7 +532,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                         <Heart size={28} className="text-white" fill="white" />
                      </div>
                   </div>
-                  <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-3xl" : "text-5xl")}>¿Nos acompañas?</h2>
+                  <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-5xl")}>¿Nos acompañas?</h2>
                   <p className={cn("text-sm font-medium opacity-60 max-w-xs mx-auto")}>
                      Hola <span className="font-black">{invitado?.nombre}</span>, confirma tu asistencia para ayudarnos a organizar este día.
                   </p>
