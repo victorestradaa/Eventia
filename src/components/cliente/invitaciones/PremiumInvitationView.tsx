@@ -330,7 +330,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                           {nombreCel}
                        </p>
                         {config.celebracionDireccion && (
-                          <p className="text-[3cqi] font-bold uppercase tracking-widest opacity-60 max-w-[250px] mx-auto leading-relaxed">
+                          <p className="text-[3cqi] font-bold uppercase tracking-widest opacity-60 max-w-[250px] mx-auto leading-relaxed text-center">
                             {config.celebracionDireccion}
                           </p>
                         )}
@@ -538,30 +538,30 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                      </div>
                   </div>
                   <h2 className="font-black uppercase italic tracking-tighter text-[8cqi]">¿Nos acompañas?</h2>
-                  <p className="font-black uppercase tracking-widest opacity-60 max-w-xs mx-auto text-[3.5cqi]">
+                  <p className="font-black uppercase tracking-widest opacity-60 max-w-xs mx-auto text-[3.5cqi] text-center">
                      Hola <span className="text-[var(--color-acento)]">{invitado?.nombre}</span>, confirma tu asistencia para ayudarnos a organizar este día.
                   </p>
-                  <div className="flex flex-row justify-center gap-4 w-full max-w-[320px] mx-auto px-4">
+                <div className="flex flex-row justify-center gap-4 w-full max-w-[400px] mx-auto px-4">
                   <button
                     onClick={() => onRSVP('CONFIRMADO')}
                     disabled={status === 'SAVING'}
                     className={cn(
-                      'flex-1 py-10 rounded-2xl font-black uppercase tracking-[0.1em] transition-all active:scale-95 shadow-2xl flex flex-col items-center justify-center gap-3',
-                      'bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-50 text-[3cqi]'
+                      'flex-1 py-12 rounded-2xl font-black uppercase tracking-[0.1em] transition-all active:scale-95 shadow-2xl flex flex-col items-center justify-center gap-3',
+                      'bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-50 text-[4cqi]'
                     )}
                   >
-                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={32} /> Acepto</>}
+                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={36} /> Acepto</>}
                   </button>
 
                   <button
                     onClick={() => onRSVP('RECHAZADO')}
                     disabled={status === 'SAVING'}
                     className={cn(
-                      'flex-1 py-10 rounded-2xl font-black uppercase tracking-[0.1em] transition-all active:scale-95 flex flex-col items-center justify-center gap-3',
-                      'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60 disabled:opacity-20 text-[3cqi]'
+                      'flex-1 py-12 rounded-2xl font-black uppercase tracking-[0.1em] transition-all active:scale-95 flex flex-col items-center justify-center gap-3',
+                      'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60 disabled:opacity-20 text-[4cqi]'
                     )}
                   >
-                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><XCircle size={32} /> No podré</>}
+                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><XCircle size={36} /> No podré</>}
                   </button>
                </div>
                </div>
@@ -580,7 +580,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
             <section className={cn("card-premium p-8 md:p-12 rounded-[2.5rem] border text-center flex flex-col items-center bg-zinc-900/20 border-dashed border-zinc-700", themeStyles.card, "space-y-12")}>
                 <div className="space-y-4">
                     <h2 className="font-black uppercase italic tracking-tighter text-[8cqi]">Álbum Compartido</h2>
-                    <p className="opacity-60 leading-relaxed max-w-[250px] mx-auto text-[3.5cqi]">
+                    <p className="opacity-60 leading-relaxed max-w-[250px] mx-auto text-[3.5cqi] text-center">
                       Escanea este código para subir tus fotos y videos de nuestro gran día.
                     </p>
                 </div>
