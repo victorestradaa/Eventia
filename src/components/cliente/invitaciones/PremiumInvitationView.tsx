@@ -433,23 +433,23 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         return (
           <div className="w-[min(96cqi,800px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <section className="grid lg:grid-cols-2 gap-8 items-center w-full">
-               <div className="space-y-8">
-                  <div className="space-y-4 text-center lg:text-left">
-                     <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mx-auto lg:mx-0", themeStyles.card)}>
-                        <MapPin size={24} className={themeStyles.accent} />
+               <div className="space-y-8 flex flex-col items-center">
+                  <div className="space-y-4 text-center">
+                     <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mx-auto", themeStyles.card)}>
+                        <MapPin size={32} className={themeStyles.accent} />
                      </div>
-                     <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-[clamp(2rem,10vw,4rem)]")}>Ubicación</h2>
-                     <p className="text-sm opacity-60 leading-relaxed max-w-sm mx-auto lg:mx-0">
+                     <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-[clamp(2.5rem,10vw,4rem)]")}>Ubicación</h2>
+                     <p className={cn("opacity-60 leading-relaxed max-w-sm mx-auto", isPreview ? "text-[3.5cqi]" : "text-sm")}>
                         Nos encantaría que nos acompañes en este lugar tan especial para nosotros.
                      </p>
                   </div>
                   
-                  <div className="flex flex-col gap-4 max-w-xs mx-auto lg:mx-0">
+                  <div className="flex flex-col gap-4 w-full max-w-xs mx-auto">
                      <button 
                        onClick={handleAddToCalendar}
-                       className={cn("btn gap-3 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl transition-all active:scale-95", themeStyles.btn)}
+                       className={cn("btn gap-3 py-6 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl transition-all active:scale-95", themeStyles.btn)}
                      >
-                        <CalendarPlus size={16} /> Agregar al Calendario
+                        <CalendarPlus size={18} /> Agregar al Calendario
                      </button>
                      <a 
                        href={config.direccion 
@@ -458,9 +458,9 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(evento.invitacion.direccion)}` 
                            : '#'} 
                        target="_blank"
-                       className={cn("btn bg-white/5 border border-white/10 gap-3 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all text-center flex items-center justify-center", themeStyles.text)}
+                       className={cn("btn bg-white/5 border border-white/10 gap-3 py-6 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-white/10 transition-all text-center flex items-center justify-center", themeStyles.text)}
                      >
-                        Ver en Google Maps <ExternalLink size={12} />
+                        Ver en Google Maps <ExternalLink size={14} />
                      </a>
                   </div>
                </div>
@@ -491,33 +491,33 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     <Gift size={28} className="text-emerald-400" />
                 </div>
                 <div className="space-y-4">
-                    <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-4xl")}>Mesa de Regalos</h2>
-                    <p className="text-xs opacity-60 leading-relaxed max-w-sm mx-auto">
+                    <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-3xl")}>Mesa de Regalos</h2>
+                    <p className={cn("opacity-60 leading-relaxed max-w-sm mx-auto", isPreview ? "text-[3.5cqi]" : "text-sm")}>
                       Su presencia es el mejor regalo, pero si desean obsequiarnos algo, aquí tienen nuestras sugerencias.
                     </p>
                 </div>
-
-                <div className="flex justify-center gap-4">
+                <div className="flex flex-col sm:flex-row justify-center gap-4 w-full">
                     {config.regaloTipo === 'MESA' ? (
                       <a 
                         href={config.regaloMesaUrl} 
                         target="_blank"
-                        className={cn("px-8 py-4 rounded-2xl bg-white/5 border border-white/10 font-bold text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all", themeStyles.text)}
+                        className={cn("px-10 py-6 rounded-2xl bg-white/5 border border-white/10 font-bold uppercase tracking-widest hover:bg-white/10 transition-all text-center", themeStyles.text, isPreview ? "text-[3cqi]" : "text-xs")}
                       >
                         Ver Mesa de Regalos
                       </a>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                            <p className="text-[9px] font-black uppercase opacity-40 mb-1">Banco</p>
-                            <p className="text-xs font-bold">{config.regaloBanco}</p>
+                        <div className="bg-white/5 p-6 rounded-2xl border border-white/10 flex flex-col items-center">
+                            <p className={cn("font-black uppercase opacity-40 mb-2", isPreview ? "text-[2.5cqi]" : "text-[9px]")}>Banco</p>
+                            <p className={cn("font-black uppercase tracking-widest", isPreview ? "text-[4cqi]" : "text-sm")}>{config.regaloBanco}</p>
                         </div>
-                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10">
-                            <p className="text-[9px] font-black uppercase opacity-40 mb-1">CLABE</p>
-                            <p className="text-xs font-bold tracking-widest">{config.regaloClabe}</p>
+                        <div className="bg-white/5 p-6 rounded-2xl border border-white/10 flex flex-col items-center">
+                            <p className={cn("font-black uppercase opacity-40 mb-2", isPreview ? "text-[2.5cqi]" : "text-[9px]")}>CLABE</p>
+                            <p className={cn("font-black tracking-[0.2em]", isPreview ? "text-[4cqi]" : "text-sm")}>{config.regaloClabe}</p>
                         </div>
                       </div>
                     )}
+                </div>
                 </div>
             </section>
           </div>
@@ -534,32 +534,34 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                      </div>
                   </div>
                   <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-5xl")}>¿Nos acompañas?</h2>
-                  <p className={cn("text-sm font-medium opacity-60 max-w-xs mx-auto")}>
-                     Hola <span className="font-black">{invitado?.nombre}</span>, confirma tu asistencia para ayudarnos a organizar este día.
+                  <p className={cn("font-black uppercase tracking-widest opacity-60 max-w-xs mx-auto", isPreview ? "text-[3cqi]" : "text-xs")}>
+                     Hola <span className="text-[var(--color-acento)]">{invitado?.nombre}</span>, confirma tu asistencia para ayudarnos a organizar este día.
                   </p>
                </div>
 
-               <div className="flex flex-col gap-4 max-w-xs mx-auto">
+                <div className="flex flex-col gap-4 w-full max-w-[280px] mx-auto">
                   <button
                     onClick={() => onRSVP('CONFIRMADO')}
                     disabled={status === 'SAVING'}
                     className={cn(
-                      'py-6 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all active:scale-95 shadow-2xl flex flex-col items-center gap-2',
-                      'bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-50'
+                      'py-8 rounded-2xl font-black uppercase tracking-[0.2em] transition-all active:scale-95 shadow-2xl flex flex-col items-center gap-3',
+                      'bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-50',
+                      isPreview ? "text-[3.5cqi]" : "text-xs"
                     )}
                   >
-                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={24} /> Sí, estaré ahí</>}
+                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={32} /> Sí, estaré ahí</>}
                   </button>
 
                   <button
                     onClick={() => onRSVP('RECHAZADO')}
                     disabled={status === 'SAVING'}
                     className={cn(
-                      'py-6 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all active:scale-95 flex flex-col items-center gap-2',
-                      'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60 disabled:opacity-20'
+                      'py-8 rounded-2xl font-black uppercase tracking-[0.2em] transition-all active:scale-95 flex flex-col items-center gap-3',
+                      'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60 disabled:opacity-20',
+                      isPreview ? "text-[3.5cqi]" : "text-xs"
                     )}
                   >
-                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><XCircle size={24} /> No podré ir</>}
+                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><XCircle size={32} /> No podré ir</>}
                   </button>
                </div>
             </section>

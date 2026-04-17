@@ -251,7 +251,8 @@ export async function getInvitadoRSVPDetail(invitadoId: string) {
       include: {
         evento: {
           include: {
-            invitacion: true
+            invitacion: true,
+            album: true
           }
         }
       }
