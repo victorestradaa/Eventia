@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Calendar, 
   MapPin, 
@@ -36,7 +36,10 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
   // --- STATE NAVEGACIÓN ---
   const [currentPage, setCurrentPage] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
+  
+  // Refs para navegación tactil (evita re-renders innecesarios y permite detectar dirección)
+  const touchY = useRef<number | null>(null);
+  const touchX = useRef<number | null>(null);
 
   // Countdown Logic
   const [timeLeft, setTimeLeft] = useState<{d:number, h:number, m:number, s:number} | null>(null);
@@ -139,15 +142,32 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
     };
   }, [currentPage, sections.length, isTransitioning]);
 
-  const onTouchStart = (e: React.TouchEvent) => setTouchStart(e.targetTouches[0].clientY);
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchY.current = e.targetTouches[0].clientY;
+    touchX.current = e.targetTouches[0].clientX;
+  };
+
   const onTouchMove = (e: React.TouchEvent) => {
-    if (touchStart === null) return;
-    const touchEnd = e.targetTouches[0].clientY;
-    const diff = touchStart - touchEnd;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) navigateTo(currentPage + 1);
+    if (touchY.current === null || touchX.current === null || isTransitioning) return;
+    
+    const currentY = e.targetTouches[0].clientY;
+    const currentX = e.targetTouches[0].clientX;
+    
+    const diffY = touchY.current - currentY;
+    const diffX = touchX.current - currentX;
+    
+    // DETECCIÓN DE INTENCIÓN: 
+    // Si el movimiento es más horizontal que vertical, lo ignoramos para permitir scroll de galerías
+    if (Math.abs(diffX) > Math.abs(diffY)) return;
+
+    // Si el movimiento vertical es significativo
+    if (Math.abs(diffY) > 60) {
+      if (diffY > 0) navigateTo(currentPage + 1);
       else navigateTo(currentPage - 1);
-      setTouchStart(null);
+      
+      // Limpiamos los puntos para evitar disparos múltiples en el mismo gesto
+      touchY.current = null;
+      touchX.current = null;
     }
   };
 
