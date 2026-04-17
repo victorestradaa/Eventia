@@ -181,14 +181,14 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                    </p>
                     <h1 className={cn(
                       "font-black italic uppercase tracking-tighter leading-[1.1] drop-shadow-2xl",
-                      isPreview ? "text-[8vw]" : "text-[clamp(2.5rem,14vw,6rem)]"
+                      isPreview ? "text-[12cqi]" : "text-[clamp(2.5rem,14vw,6rem)]"
                     )}>
                       {evento.nombre}
                    </h1>
                    <div className="h-1 text-center w-24 bg-current mx-auto opacity-20" />
                    <p className={cn(
                      "font-medium tracking-wide opacity-80 backdrop-blur-sm bg-black/10 inline-block px-4 py-2 rounded-full",
-                     isPreview ? "text-[10px]" : "text-lg md:text-xl"
+                     isPreview ? "text-[3cqi]" : "text-lg md:text-xl"
                    )}>
                       {evento.fecha ? (
                         (() => {
@@ -210,7 +210,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         const textColor = config.ceremoniaTextColor || '#8b7355';
         
         return (
-          <div className="w-[min(96vw,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
+          <div className="w-[min(96cqi,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <div className="animate-in slide-in-from-bottom-8 duration-700">
               <div className="flex flex-col items-center bg-white rounded-t-[2.5rem] pt-10 pb-4 px-6 overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-black/5 to-transparent pointer-events-none" />
@@ -222,7 +222,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     </div>
                   </div>
                 </div>
-                <h2 className={cn("font-black italic tracking-tighter uppercase text-[#bd9b65] mb-2", isPreview ? "text-[5vw]" : "text-[clamp(1.5rem,8vw,3rem)]")}>Ceremonia</h2>
+                <h2 className={cn("font-black italic tracking-tighter uppercase text-[#bd9b65] mb-2", isPreview ? "text-[8cqi]" : "text-[clamp(1.5rem,8vw,3rem)]")}>Ceremonia</h2>
                 <div className="w-full h-[1px] bg-zinc-200 mt-2" />
               </div>
 
@@ -244,7 +244,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                             new Date(fechaCer.getTime() + fechaCer.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase()
                           ) : 'DÍA'}
                         </span>
-                        <span className={cn("font-black leading-none -mt-1", isPreview ? "text-[8vw]" : "text-[clamp(2.5rem,15vw,5rem)]")}>
+                        <span className={cn("font-black leading-none -mt-1", isPreview ? "text-[14cqi]" : "text-[clamp(2.5rem,15vw,5rem)]")}>
                           {fechaCer ? (
                              new Date(fechaCer.getTime() + fechaCer.getTimezoneOffset() * 60000).getDate()
                           ) : '27'}
@@ -285,7 +285,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         const textCel = config.celebracionTextColor || '#8b7355';
         
         return (
-          <div className="w-[min(96vw,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
+          <div className="w-[min(96cqi,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <div className="animate-in slide-in-from-bottom-8 duration-700">
               <div className="flex flex-col items-center bg-white rounded-t-[2.5rem] pt-10 pb-4 px-6 overflow-hidden relative">
                 <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-black/5 to-transparent pointer-events-none" />
@@ -322,7 +322,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                             new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase()
                           ) : 'DÍA'}
                         </span>
-                        <span className={cn("font-black leading-none -mt-1", isPreview ? "text-[8vw]" : "text-[clamp(2.5rem,15vw,5rem)]")}>
+                        <span className={cn("font-black leading-none -mt-1", isPreview ? "text-[14cqi]" : "text-[clamp(2.5rem,15vw,5rem)]")}>
                           {fechaCel ? (
                             new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).getDate()
                           ) : '27'}
@@ -363,7 +363,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
       case 'mostrarDressCode':
         return (
-          <div className="w-[min(96vw,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
+          <div className="w-[min(96cqi,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <section className={cn("card-premium px-8 py-12 rounded-[2.5rem] border text-center space-y-6 w-full shadow-2xl", themeStyles.card)}>
                 <div className="w-16 h-16 bg-[var(--color-acento)]/10 rounded-full flex items-center justify-center mx-auto">
                     <Shirt size={28} className={themeStyles.accent} />
@@ -408,7 +408,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
       case 'mostrarContador':
         if (!timeLeft) return null;
         return (
-          <div className="w-[min(96vw,800px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
+          <div className="w-[min(96cqi,800px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <section className={cn("text-center animate-in slide-in-from-bottom-8 duration-700", isPreview ? "space-y-8" : "space-y-16")}>
                <div className="space-y-4">
                   <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[6vw]" : "text-[clamp(2rem,10vw,4rem)]")}>Cuenta Regresiva</h2>
@@ -430,7 +430,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
       case 'mostrarMapa':
         return (
-          <div className="w-[min(96vw,800px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
+          <div className="w-[min(96cqi,800px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <section className="grid lg:grid-cols-2 gap-8 items-center w-full">
                <div className="space-y-8">
                   <div className="space-y-4 text-center lg:text-left">
@@ -484,7 +484,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
       case 'mostrarRegalos':
         return (
-          <div className="w-[min(96vw,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
+          <div className="w-[min(96cqi,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <section className={cn("card-premium p-10 rounded-[2.5rem] border text-center space-y-8", themeStyles.card)}>
                 <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto shadow-2xl">
                     <Gift size={28} className="text-emerald-400" />
@@ -524,7 +524,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
       case 'mostrarRSVP':
         return (
-          <div className="w-[min(96vw,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
+          <div className="w-[min(96cqi,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
             <section className="text-center space-y-8">
                <div className="space-y-4">
                   <div className="w-20 h-20 rounded-full border-4 border-[var(--color-acento)]/20 p-2 mx-auto">
