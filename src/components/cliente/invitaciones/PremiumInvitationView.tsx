@@ -518,7 +518,6 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                       </div>
                     )}
                 </div>
-                </div>
             </section>
           </div>
         );
