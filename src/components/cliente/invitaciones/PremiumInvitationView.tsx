@@ -211,71 +211,80 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         const textColor = config.ceremoniaTextColor || '#8b7355';
         
         return (
-          <div className="w-[min(96cqi,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
-            <div className="animate-in slide-in-from-bottom-8 duration-700">
-              <div className="flex flex-col items-center bg-white rounded-t-[2.5rem] pt-10 pb-4 px-6 overflow-hidden relative">
-                <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-black/5 to-transparent pointer-events-none" />
-                <div className="w-32 h-24 relative mb-4">
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="relative">
-                      <div className="w-16 h-16 rounded-full border-4 border-[#bd9b65] absolute -left-5 top-0 rotate-12" />
-                      <div className="w-16 h-16 rounded-full border-4 border-[#bd9b65] absolute -left-1 top-1 -rotate-12" />
+          <div className="w-[min(96cqi,500px)] mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
+            <section className={cn("card-premium p-8 md:p-12 rounded-[2.5rem] border text-center flex flex-col items-center bg-zinc-900/20 border-dashed border-zinc-700 w-full space-y-8", themeStyles.card)}>
+                 <div className="space-y-4">
+                    <div className="w-16 h-16 rounded-full border-2 border-[#bd9b65]/20 p-1 mx-auto">
+                      <div className="w-full h-full bg-[#bd9b65]/10 rounded-full flex items-center justify-center">
+                        <div className="relative">
+                          <div className="w-8 h-8 rounded-full border-2 border-[#bd9b65] absolute -left-3 top-0 rotate-12" />
+                          <div className="w-8 h-8 rounded-full border-2 border-[#bd9b65] absolute -left-1 top-1 -rotate-12" />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <h2 className={cn("font-black italic tracking-tighter uppercase text-[#bd9b65] mb-2", isPreview ? "text-[8cqi]" : "text-[clamp(1.5rem,8vw,3rem)]")}>Ceremonia</h2>
-                <div className="w-full h-[1px] bg-zinc-200 mt-2" />
-              </div>
+                    <h2 className="font-black italic tracking-tighter uppercase text-[#bd9b65] text-[8cqi]">Ceremonia</h2>
+                 </div>
 
-              <div 
-                style={{ backgroundColor: bgColor, color: textColor }}
-                className="p-8 text-center space-y-6 rounded-b-[2.5rem] shadow-xl border border-white/20"
-              >
-                <div className="space-y-1">
-                  <p className="text-xs font-black uppercase tracking-[0.4em] opacity-60">
-                     {fechaCer ? (
-                       new Date(fechaCer.getTime() + fechaCer.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { month: 'long' }).toUpperCase()
-                     ) : 'MES'}
-                  </p>
-                  <div className="flex items-center justify-center gap-4">
-                     <div className="flex-1 h-[1px] bg-current opacity-20" />
-                     <div className="flex items-center gap-6">
-                        <span className="text-[10px] font-black uppercase tracking-widest leading-none">
-                          {fechaCer ? (
-                            new Date(fechaCer.getTime() + fechaCer.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase()
-                          ) : 'DÍA'}
-                        </span>
-                        <span className={cn("font-black leading-none -mt-1", isPreview ? "text-[14cqi]" : "text-[clamp(2.5rem,15vw,5rem)]")}>
-                          {fechaCer ? (
-                             new Date(fechaCer.getTime() + fechaCer.getTimezoneOffset() * 60000).getDate()
-                          ) : '27'}
-                        </span>
-                        <span className="text-[10px] font-black uppercase tracking-widest leading-none">
-                          {fechaCer ? (
-                             fechaCer.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
-                          ) : 'Hora'}
-                        </span>
-                     </div>
-                     <div className="flex-1 h-[1px] bg-current opacity-20" />
-                  </div>
-                </div>
+                 <div className="space-y-4 w-full flex flex-col items-center">
+                    <div className="space-y-1 w-full flex flex-col items-center">
+                      <p 
+                        style={{ textAlign: 'center' }}
+                        className="text-[3cqi] font-black uppercase tracking-[0.4em] opacity-40 text-center !text-center"
+                      >
+                         {fechaCer ? (
+                           new Date(fechaCer.getTime() + fechaCer.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { month: 'long' }).toUpperCase()
+                         ) : 'MES'}
+                      </p>
+                      <div className="flex items-center justify-center gap-4 w-full">
+                         <div className="flex-1 h-[1px] bg-[#bd9b65]/20" />
+                         <div className="flex items-center gap-4">
+                            <span className="text-[3cqi] font-black uppercase tracking-widest leading-none opacity-40">
+                              {fechaCer ? (
+                                new Date(fechaCer.getTime() + fechaCer.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase()
+                              ) : 'SÁBADO'}
+                            </span>
+                            <span className="font-black leading-none text-[12cqi] text-[#bd9b65]">
+                              {fechaCer ? (
+                                new Date(fechaCer.getTime() + fechaCer.getTimezoneOffset() * 60000).getDate()
+                              ) : '27'}
+                            </span>
+                            <span className="text-[3cqi] font-black uppercase tracking-widest leading-none opacity-40">
+                              {fechaCer ? (
+                                 fechaCer.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
+                              ) : '5:00 P.M.'}
+                            </span>
+                         </div>
+                         <div className="flex-1 h-[1px] bg-[#bd9b65]/20" />
+                      </div>
+                    </div>
 
-                <div className="space-y-4">
-                   <p className={cn("font-black italic leading-tight", isPreview ? "text-lg" : "text-[clamp(1.2rem,6vw,2.5rem)]")}>
-                      {nombreLugar}
-                   </p>
-                </div>
+                    <div className="space-y-4 w-full flex flex-col items-center text-center">
+                       <p 
+                         style={{ textAlign: 'center' }}
+                         className="font-black italic leading-tight text-[6cqi] text-white !text-center w-full"
+                       >
+                          {nombreLugar}
+                       </p>
+                        {config.ceremoniaDireccion && (
+                          <p 
+                            style={{ textAlign: 'center' }}
+                            className="text-[3cqi] font-bold uppercase tracking-widest opacity-60 w-full max-w-[90%] mx-auto leading-relaxed !text-center"
+                          >
+                            {config.ceremoniaDireccion}
+                          </p>
+                        )}
+                    </div>
 
-                <a 
-                  href={config.ceremoniaMapsUrl ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.ceremoniaDireccion)}` : '#'}
-                  target="_blank"
-                  style={{ backgroundColor: textColor, color: bgColor }}
-                  className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:scale-105 transition-all"
-                >
-                   ¿Cómo llegar?
-                </a>
-              </div>
-            </div>
+                     <a 
+                       href={config.ceremoniaMapsUrl ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.ceremoniaDireccion)}` : '#'}
+                       target="_blank"
+                       style={{ backgroundColor: '#bd9b65', color: '#000' }}
+                       className="inline-flex items-center gap-2 px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-[3.5cqi] shadow-xl hover:scale-105 active:scale-95 transition-all w-full justify-center"
+                     >
+                        ¿Cómo llegar?
+                     </a>
+                 </div>
+            </section>
           </div>
         );
 
@@ -362,15 +371,15 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                 <div className="w-16 h-16 bg-[var(--color-acento)]/10 rounded-full flex items-center justify-center mx-auto">
                     <Shirt size={28} className={themeStyles.accent} />
                 </div>
-                <div className="space-y-4">
-                     <h2 className="font-black uppercase italic tracking-tighter text-[var(--color-acento)] text-[8cqi]">Código de Vestimenta</h2>
-                    <p 
-                      style={{ color: config.dressCodeColor || (tema === 'light' ? '#333' : '#fff') }}
-                      className="font-black italic text-[6cqi]"
-                    >
-                      {config.dressCodeTexto || evento.invitacion?.vestimenta || 'Formal / Gala'}
-                    </p>
-                </div>
+                 <div className="space-y-4 w-full flex flex-col items-center text-center">
+                      <h2 className="font-black uppercase italic tracking-tighter text-[var(--color-acento)] text-[8cqi]">Código de Vestimenta</h2>
+                     <p 
+                       style={{ color: '#ffffff', textAlign: 'center' }}
+                       className="font-black italic text-[6cqi] !text-white !text-center w-full"
+                     >
+                       {config.dressCodeTexto || evento.invitacion?.vestimenta || 'Formal / Gala'}
+                     </p>
+                 </div>
             </section>
           </div>
         );
@@ -538,15 +547,15 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
       case 'mostrarRSVP':
         return (
-          <div className="w-[min(96cqi,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
-            <section className="text-center space-y-8">
-               <div className="space-y-4">
+          <div className="w-full mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
+            <section className="w-full max-w-[550px] flex flex-col items-center text-center space-y-10">
+               <div className="space-y-6 w-full flex flex-col items-center">
                   <div className="w-20 h-20 rounded-full border-4 border-[var(--color-acento)]/20 p-2 mx-auto">
                      <div className="w-full h-full bg-gradient-to-br from-[var(--color-acento)] to-[var(--color-acento-claro)] rounded-full flex items-center justify-center shadow-xl">
                         <Heart size={28} className="text-white" fill="white" />
                      </div>
                   </div>
-                  <h2 className="font-black uppercase italic tracking-tighter text-[8cqi]">¿Nos acompañas?</h2>
+                  <h2 className="font-black uppercase italic tracking-tighter text-[8cqi] w-full text-center">¿Nos acompañas?</h2>
                    <p 
                      style={{ textAlign: 'center' }}
                      className="font-black uppercase tracking-widest opacity-60 w-full max-w-[90%] mx-auto text-[4.5cqi] !text-center leading-relaxed"
