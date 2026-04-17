@@ -574,7 +574,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
         return (
           <div className="w-[min(96cqi,500px)] mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
-            <section className={cn("card-premium p-8 md:p-12 rounded-[2.5rem] border text-center space-y-8 bg-zinc-900/20 border-dashed border-zinc-700", themeStyles.card)}>
+            <section className={cn("card-premium p-8 md:p-12 rounded-[2.5rem] border text-center flex flex-col items-center bg-zinc-900/20 border-dashed border-zinc-700", themeStyles.card, isPreview ? "space-y-12" : "space-y-12")}>
                 <div className="space-y-4">
                     <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-3xl")}>Álbum Compartido</h2>
                     <p className={cn("opacity-60 leading-relaxed max-w-[250px] mx-auto", isPreview ? "text-[3cqi]" : "text-xs")}>
@@ -582,7 +582,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     </p>
                 </div>
 
-                <div className={cn("bg-white p-4 rounded-3xl mx-auto shadow-2xl flex items-center justify-center", isPreview ? "w-[45cqi] h-[45cqi]" : "w-48 h-48")}>
+                <div className={cn("bg-white p-4 rounded-3xl shadow-2xl flex items-center justify-center", isPreview ? "w-[45cqi] h-[45cqi]" : "w-48 h-48")}>
                     {album ? (
                       <QRCodeSVG 
                         value={albumUrl}
@@ -599,7 +599,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     )}
                 </div>
 
-                <div className="inline-block px-6 py-2 rounded-full border border-[var(--color-acento)]/20 bg-[var(--color-acento)]/5">
+                <div className="inline-block px-6 py-3 rounded-full border border-[var(--color-acento)]/20 bg-[var(--color-acento)]/5 mt-4">
                    <span className={cn("font-black uppercase tracking-[0.3em] text-[var(--color-acento)]", isPreview ? "text-[2.5cqi]" : "text-[10px]")}>
                       ¡Comparte tus capturas!
                    </span>
