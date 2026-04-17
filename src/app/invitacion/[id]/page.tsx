@@ -170,12 +170,14 @@ export default function InvitacionPublica() {
 
   if (isPremium) {
     return (
-      <PremiumInvitationView 
-        evento={evento}
-        invitado={invitado}
-        status={status}
-        onRSVP={handleRSVP}
-      />
+      <div className="w-full h-full min-h-screen [container-type:inline-size]">
+        <PremiumInvitationView 
+          evento={evento}
+          invitado={invitado}
+          status={status}
+          onRSVP={handleRSVP}
+        />
+      </div>
     );
   }
 

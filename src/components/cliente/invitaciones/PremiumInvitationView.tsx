@@ -342,21 +342,21 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                    <p className={cn("font-black italic leading-tight", isPreview ? "text-lg" : "text-[clamp(1.2rem,6vw,2.5rem)]")}>
                       {nombreCel}
                    </p>
-                   {config.celebracionDireccion && (
-                     <p className="text-[9px] font-bold uppercase tracking-widest opacity-60 max-w-[200px] mx-auto">
+                    {config.celebracionDireccion && (
+                      <p className="text-[3cqi] font-bold uppercase tracking-widest opacity-60 max-w-[200px] mx-auto">
                         {config.celebracionDireccion}
-                     </p>
-                   )}
+                      </p>
+                    )}
                 </div>
 
-                <a 
-                  href={config.celebracionMapsUrl ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.celebracionDireccion)}` : '#'}
-                  target="_blank"
-                  style={{ backgroundColor: textCel, color: bgCel }}
-                  className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg hover:scale-105 transition-all"
-                >
-                   ¿Cómo llegar?
-                </a>
+                 <a 
+                   href={config.celebracionMapsUrl ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.celebracionDireccion)}` : '#'}
+                   target="_blank"
+                   style={{ backgroundColor: textCel, color: bgCel }}
+                   className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-black uppercase tracking-widest text-[3cqi] shadow-lg hover:scale-105 transition-all"
+                 >
+                    ¿Cómo llegar?
+                 </a>
               </div>
             </div>
           </div>
@@ -370,10 +370,10 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     <Shirt size={28} className={themeStyles.accent} />
                 </div>
                 <div className="space-y-4">
-                    <h2 className={cn("font-black uppercase italic tracking-tighter text-[var(--color-acento)]", isPreview ? "text-[8cqi]" : "text-3xl")}>Código de Vestimenta</h2>
+                     <h2 className="font-black uppercase italic tracking-tighter text-[var(--color-acento)] text-[8cqi]">Código de Vestimenta</h2>
                     <p 
                       style={{ color: config.dressCodeColor || (tema === 'light' ? '#333' : '#fff') }}
-                      className={cn("font-black italic", isPreview ? "text-[6cqi]" : "text-[clamp(1.2rem,7vw,2.5rem)]")}
+                      className="font-black italic text-[6cqi]"
                     >
                       {config.dressCodeTexto || evento.invitacion?.vestimenta || 'Formal / Gala'}
                     </p>
@@ -390,7 +390,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
           <div className="w-full h-full flex flex-col items-center justify-center py-12">
             <section className="space-y-8">
                <div className="flex items-center justify-between px-8 w-[min(90vw,600px)] mx-auto">
-                  <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-[clamp(1.5rem,8vw,3.5rem)]")}>Nuestra Galería</h2>
+                  <h2 className="font-black uppercase italic tracking-tighter text-[8cqi]">Nuestra Galería</h2>
                   <Images size={20} className="opacity-20" />
                </div>
                
@@ -401,7 +401,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     </div>
                   ))}
                </div>
-               <p className="text-[10px] font-black uppercase tracking-widest opacity-20 text-center">Desliza para ver más</p>
+               <p className="text-[3cqi] font-black uppercase tracking-widest opacity-20 text-center">Desliza para ver más</p>
             </section>
           </div>
         );
@@ -410,15 +410,15 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         if (!timeLeft) return null;
         return (
           <div className="w-[min(96cqi,800px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
-            <section className={cn("text-center animate-in slide-in-from-bottom-8 duration-700", isPreview ? "space-y-8" : "space-y-16")}>
+            <section className="text-center animate-in slide-in-from-bottom-8 duration-700 space-y-12">
                <div className="space-y-4">
-                  <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-[clamp(2rem,10vw,4rem)]")}>Cuenta Regresiva</h2>
-                  <p className={cn("font-bold uppercase tracking-widest opacity-60", isPreview ? "text-[2.5cqi]" : "text-xs")}>Solo falta un poco para encontrarnos</p>
+                  <h2 className="font-black uppercase italic tracking-tighter text-[8cqi]">Cuenta Regresiva</h2>
+                  <p className="font-bold uppercase tracking-widest opacity-60 text-[3cqi]">Solo falta un poco para encontrarnos</p>
                </div>
-               <div className={cn("grid grid-cols-4", isPreview ? "gap-2" : "gap-[1.5vw]")}>
+               <div className="grid grid-cols-4 gap-2">
                   {Object.entries(timeLeft).map(([key, value]) => (
-                    <div key={key} className={cn("card-premium border transition-all hover:scale-105 flex flex-col items-center justify-center", themeStyles.card, isPreview ? "py-4 px-1 rounded-xl" : "py-[5vw] px-[1vw] rounded-[1.5rem] md:rounded-[2.5rem]")}>
-                       <span className={cn("font-black tabular-nums block mb-1", isPreview ? "text-[10cqi]" : "text-[clamp(1rem,9vw,4rem)]")}>{value.toString().padStart(2, '0')}</span>
+                    <div key={key} className={cn("card-premium border transition-all hover:scale-105 flex flex-col items-center justify-center py-4 px-1 rounded-xl", themeStyles.card)}>
+                       <span className="font-black tabular-nums block mb-1 text-[10cqi]">{value.toString().padStart(2, '0')}</span>
                        <span className={cn("text-[clamp(6px,2vw,10px)] font-black uppercase tracking-widest opacity-40")}>
                           {key === 'd' ? 'Días' : key === 'h' ? 'Horas' : key === 'm' ? 'Minutos' : 'Segs'}
                        </span>
@@ -438,8 +438,8 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                      <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mx-auto", themeStyles.card)}>
                         <MapPin size={32} className={themeStyles.accent} />
                      </div>
-                     <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-[clamp(2.5rem,10vw,4rem)]")}>Ubicación</h2>
-                     <p className={cn("opacity-60 leading-relaxed max-w-sm mx-auto", isPreview ? "text-[3.5cqi]" : "text-sm")}>
+                     <h2 className="font-black uppercase italic tracking-tighter text-[8cqi]">Ubicación</h2>
+                     <p className="opacity-60 leading-relaxed max-w-sm mx-auto text-[3.5cqi]">
                         Nos encantaría que nos acompañes en este lugar tan especial para nosotros.
                      </p>
                   </div>
@@ -447,7 +447,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                   <div className="flex flex-col gap-4 w-full max-w-xs mx-auto">
                      <button 
                        onClick={handleAddToCalendar}
-                       className={cn("btn gap-3 py-6 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl transition-all active:scale-95", themeStyles.btn)}
+                       className={cn("btn gap-3 py-6 rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 text-[3cqi]", themeStyles.btn)}
                      >
                         <CalendarPlus size={18} /> Agregar al Calendario
                      </button>
@@ -458,7 +458,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(evento.invitacion.direccion)}` 
                            : '#'} 
                        target="_blank"
-                       className={cn("btn bg-white/5 border border-white/10 gap-3 py-6 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-white/10 transition-all text-center flex items-center justify-center", themeStyles.text)}
+                       className={cn("btn bg-white/5 border border-white/10 gap-3 py-6 rounded-2xl font-black uppercase tracking-widest hover:bg-white/10 transition-all text-center flex items-center justify-center text-[3cqi]", themeStyles.text)}
                      >
                         Ver en Google Maps <ExternalLink size={14} />
                      </a>
@@ -491,8 +491,8 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     <Gift size={28} className="text-emerald-400" />
                 </div>
                 <div className="space-y-4">
-                    <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-3xl")}>Mesa de Regalos</h2>
-                    <p className={cn("opacity-60 leading-relaxed max-w-sm mx-auto", isPreview ? "text-[3.5cqi]" : "text-sm")}>
+                    <h2 className="font-black uppercase italic tracking-tighter text-[8cqi]">Mesa de Regalos</h2>
+                    <p className="opacity-60 leading-relaxed max-w-sm mx-auto text-[3.5cqi]">
                       Su presencia es el mejor regalo, pero si desean obsequiarnos algo, aquí tienen nuestras sugerencias.
                     </p>
                 </div>
@@ -501,19 +501,19 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                       <a 
                         href={config.regaloMesaUrl} 
                         target="_blank"
-                        className={cn("px-10 py-6 rounded-2xl bg-white/5 border border-white/10 font-bold uppercase tracking-widest hover:bg-white/10 transition-all text-center", themeStyles.text, isPreview ? "text-[3cqi]" : "text-xs")}
+                        className={cn("px-10 py-6 rounded-2xl bg-white/5 border border-white/10 font-bold uppercase tracking-widest hover:bg-white/10 transition-all text-center text-[3.5cqi]", themeStyles.text)}
                       >
                         Ver Mesa de Regalos
                       </a>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                         <div className="bg-white/5 p-6 rounded-2xl border border-white/10 flex flex-col items-center">
-                            <p className={cn("font-black uppercase opacity-40 mb-2", isPreview ? "text-[2.5cqi]" : "text-[9px]")}>Banco</p>
-                            <p className={cn("font-black uppercase tracking-widest", isPreview ? "text-[4cqi]" : "text-sm")}>{config.regaloBanco}</p>
+                            <p className="font-black uppercase opacity-40 mb-2 text-[2.5cqi]">Banco</p>
+                            <p className="font-black uppercase tracking-widest text-[4cqi]">{config.regaloBanco}</p>
                         </div>
                         <div className="bg-white/5 p-6 rounded-2xl border border-white/10 flex flex-col items-center">
-                            <p className={cn("font-black uppercase opacity-40 mb-2", isPreview ? "text-[2.5cqi]" : "text-[9px]")}>CLABE</p>
-                            <p className={cn("font-black tracking-[0.2em]", isPreview ? "text-[4cqi]" : "text-sm")}>{config.regaloClabe}</p>
+                            <p className="font-black uppercase opacity-40 mb-2 text-[2.5cqi]">CLABE</p>
+                            <p className="font-black tracking-[0.2em] text-[4cqi]">{config.regaloClabe}</p>
                         </div>
                       </div>
                     )}
@@ -532,8 +532,8 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                         <Heart size={28} className="text-white" fill="white" />
                      </div>
                   </div>
-                  <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-5xl")}>¿Nos acompañas?</h2>
-                  <p className={cn("font-black uppercase tracking-widest opacity-60 max-w-xs mx-auto", isPreview ? "text-[3cqi]" : "text-xs")}>
+                  <h2 className="font-black uppercase italic tracking-tighter text-[8cqi]">¿Nos acompañas?</h2>
+                  <p className="font-black uppercase tracking-widest opacity-60 max-w-xs mx-auto text-[3.5cqi]">
                      Hola <span className="text-[var(--color-acento)]">{invitado?.nombre}</span>, confirma tu asistencia para ayudarnos a organizar este día.
                   </p>
                </div>
@@ -544,8 +544,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     disabled={status === 'SAVING'}
                     className={cn(
                       'py-8 rounded-2xl font-black uppercase tracking-[0.2em] transition-all active:scale-95 shadow-2xl flex flex-col items-center gap-3',
-                      'bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-50',
-                      isPreview ? "text-[3.5cqi]" : "text-xs"
+                      'bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-50 text-[3.5cqi]'
                     )}
                   >
                     {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={32} /> Sí, estaré ahí</>}
@@ -556,8 +555,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     disabled={status === 'SAVING'}
                     className={cn(
                       'py-8 rounded-2xl font-black uppercase tracking-[0.2em] transition-all active:scale-95 flex flex-col items-center gap-3',
-                      'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60 disabled:opacity-20',
-                      isPreview ? "text-[3.5cqi]" : "text-xs"
+                      'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60 disabled:opacity-20 text-[3.5cqi]'
                     )}
                   >
                     {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><XCircle size={32} /> No podré ir</>}
@@ -575,19 +573,19 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
         return (
           <div className="w-[min(96cqi,500px)] mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
-            <section className={cn("card-premium p-8 md:p-12 rounded-[2.5rem] border text-center flex flex-col items-center bg-zinc-900/20 border-dashed border-zinc-700", themeStyles.card, isPreview ? "space-y-12" : "space-y-12")}>
+            <section className={cn("card-premium p-8 md:p-12 rounded-[2.5rem] border text-center flex flex-col items-center bg-zinc-900/20 border-dashed border-zinc-700", themeStyles.card, "space-y-12")}>
                 <div className="space-y-4">
-                    <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-3xl")}>Álbum Compartido</h2>
-                    <p className={cn("opacity-60 leading-relaxed max-w-[250px] mx-auto", isPreview ? "text-[3cqi]" : "text-xs")}>
+                    <h2 className="font-black uppercase italic tracking-tighter text-[8cqi]">Álbum Compartido</h2>
+                    <p className="opacity-60 leading-relaxed max-w-[250px] mx-auto text-[3.5cqi]">
                       Escanea este código para subir tus fotos y videos de nuestro gran día.
                     </p>
                 </div>
 
-                <div className={cn("bg-white p-4 rounded-3xl shadow-2xl flex items-center justify-center", isPreview ? "w-[45cqi] h-[45cqi]" : "w-48 h-48")}>
+                <div className="bg-white p-4 rounded-3xl shadow-2xl flex items-center justify-center w-[50cqi] h-[50cqi]">
                     {album ? (
                       <QRCodeSVG 
                         value={albumUrl}
-                        size={isPreview ? 256 : 180}
+                        size={256}
                         style={{ width: '100%', height: '100%' }}
                         level="H"
                         includeMargin={false}
@@ -601,7 +599,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                 </div>
 
                 <div className="inline-block px-6 py-3 rounded-full border border-[var(--color-acento)]/20 bg-[var(--color-acento)]/5 mt-4">
-                   <span className={cn("font-black uppercase tracking-[0.3em] text-[var(--color-acento)]", isPreview ? "text-[2.5cqi]" : "text-[10px]")}>
+                   <span className={cn("font-black uppercase tracking-[0.3em] text-[var(--color-acento)] text-[3cqi]")}>
                       ¡Comparte tus capturas!
                    </span>
                 </div>
