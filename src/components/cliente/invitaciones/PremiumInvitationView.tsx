@@ -15,7 +15,8 @@ import {
   Shirt,
   GlassWater,
   Images,
-  QrCode
+  QrCode,
+  ChevronDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QRCodeSVG } from 'qrcode.react';
@@ -688,10 +689,10 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                
                {/* --- INDICADOR DESLIZA GLOBAL --- */}
                {idx < sections.length - 1 && (
-                 <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40 animate-bounce">
-                    <p className="text-[10px] font-black uppercase tracking-widest">Desliza</p>
-                    <div className="w-px h-8 bg-current" />
-                 </div>
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-90 animate-bounce cursor-pointer z-50" onClick={() => navigateTo(idx + 1)}>
+                     <p className="text-[12px] font-black uppercase tracking-[0.3em] text-[var(--color-acento)] drop-shadow-lg">Desliza</p>
+                     <ChevronDown size={24} className="text-[var(--color-acento)] -mt-1" strokeWidth={3} />
+                  </div>
                )}
             </div>
           ))}
