@@ -270,7 +270,8 @@ export async function getInvitadoRSVPDetail(invitadoId: string) {
         nombre: invitado.evento.nombre, 
         fecha: invitado.evento.fecha,
         tipo: invitado.evento.tipo,
-        invitacion: invitado.evento.invitacion
+        invitacion: invitado.evento.invitacion,
+        album: invitado.evento.album
       }
     };
   } catch (error) {

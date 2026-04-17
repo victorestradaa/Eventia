@@ -282,83 +282,70 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
       case 'mostrarCelebracion':
         const fechaCel = config.celebracionFecha ? new Date(config.celebracionFecha) : (evento.fecha ? new Date(evento.fecha) : null);
         const nombreCel = config.celebracionNombre || evento.invitacion?.lugarTexto || 'Hacienda / Salón';
-        const bgCel = config.ceremoniaBgColor || '#fafafa'; 
-        const textCel = config.celebracionTextColor || '#8b7355';
         
         return (
-          <div className="w-[min(96cqi,650px)] mx-auto px-2 py-8 flex flex-col items-center justify-center h-full">
-            <div className="animate-in slide-in-from-bottom-8 duration-700">
-              <div className="flex flex-col items-center bg-white rounded-t-[2.5rem] pt-10 pb-4 px-6 overflow-hidden relative">
-                <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-black/5 to-transparent pointer-events-none" />
-                <div className="w-32 h-24 relative mb-4">
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="relative">
-                      <div className="w-16 h-16 rounded-full border-4 border-[#bd9b65] absolute -left-5 top-0 rotate-12" />
-                      <div className="w-16 h-16 rounded-full border-4 border-[#bd9b65] absolute -left-1 top-1 -rotate-12" />
-                      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center absolute -left-2 top-2 z-10">
-                         <GlassWater size={24} className="text-[#bd9b65]" />
+          <div className="w-[min(96cqi,500px)] mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
+            <section className={cn("card-premium p-8 md:p-12 rounded-[2.5rem] border text-center flex flex-col items-center bg-zinc-900/20 border-dashed border-zinc-700 w-full space-y-8", themeStyles.card)}>
+                 <div className="space-y-4">
+                    <div className="w-16 h-16 rounded-full border-2 border-[#bd9b65]/20 p-1 mx-auto">
+                      <div className="w-full h-full bg-[#bd9b65]/10 rounded-full flex items-center justify-center">
+                        <Calendar size={28} className="text-[#bd9b65]" />
                       </div>
                     </div>
-                  </div>
-                </div>
-                <h2 className={cn("font-black italic tracking-tighter uppercase text-[#bd9b65] mb-2", isPreview ? "text-[8cqi]" : "text-[clamp(1.5rem,8vw,3rem)]")}>Recepción</h2>
-                <div className="w-full h-[1px] bg-zinc-200 mt-2" />
-              </div>
+                    <h2 className="font-black italic tracking-tighter uppercase text-[#bd9b65] text-[8cqi]">Recepción</h2>
+                 </div>
 
-              <div 
-                style={{ backgroundColor: bgCel, color: textCel }}
-                className="p-8 text-center space-y-6 rounded-b-[2.5rem] shadow-xl border border-white/20"
-              >
-                <div className="space-y-1">
-                  <p className="text-xs font-black uppercase tracking-[0.4em] opacity-60">
-                     {fechaCel ? (
-                       new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { month: 'long' }).toUpperCase()
-                     ) : 'MES'}
-                  </p>
-                  <div className="flex items-center justify-center gap-4">
-                     <div className="flex-1 h-[1px] bg-current opacity-20" />
-                     <div className="flex items-center gap-6">
-                        <span className="text-[10px] font-black uppercase tracking-widest leading-none">
-                          {fechaCel ? (
-                            new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase()
-                          ) : 'DÍA'}
-                        </span>
-                        <span className={cn("font-black leading-none -mt-1", isPreview ? "text-[14cqi]" : "text-[clamp(2.5rem,15vw,5rem)]")}>
-                          {fechaCel ? (
-                            new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).getDate()
-                          ) : '27'}
-                        </span>
-                        <span className="text-[10px] font-black uppercase tracking-widest leading-none">
-                          {fechaCel ? (
-                             fechaCel.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
-                          ) : 'Hora'}
-                        </span>
-                     </div>
-                     <div className="flex-1 h-[1px] bg-current opacity-20" />
-                  </div>
-                </div>
-
-                <div className="space-y-2 py-4">
-                   <p className={cn("font-black italic leading-tight", isPreview ? "text-lg" : "text-[clamp(1.2rem,6vw,2.5rem)]")}>
-                      {nombreCel}
-                   </p>
-                    {config.celebracionDireccion && (
-                      <p className="text-[3cqi] font-bold uppercase tracking-widest opacity-60 max-w-[200px] mx-auto">
-                        {config.celebracionDireccion}
+                 <div className="space-y-6 w-full">
+                    <div className="space-y-1">
+                      <p className="text-[3cqi] font-black uppercase tracking-[0.4em] opacity-40">
+                         {fechaCel ? (
+                           new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { month: 'long' }).toUpperCase()
+                         ) : 'MES'}
                       </p>
-                    )}
-                </div>
+                      <div className="flex items-center justify-center gap-4">
+                         <div className="flex-1 h-[1px] bg-[#bd9b65]/20" />
+                         <div className="flex items-center gap-4">
+                            <span className="text-[3cqi] font-black uppercase tracking-widest leading-none opacity-40">
+                              {fechaCel ? (
+                                new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase()
+                              ) : 'SÁBADO'}
+                            </span>
+                            <span className="font-black leading-none text-[12cqi] text-[#bd9b65]">
+                              {fechaCel ? (
+                                new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).getDate()
+                              ) : '27'}
+                            </span>
+                            <span className="text-[3cqi] font-black uppercase tracking-widest leading-none opacity-40">
+                              {fechaCel ? (
+                                 fechaCel.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
+                              ) : '8:00 P.M.'}
+                            </span>
+                         </div>
+                         <div className="flex-1 h-[1px] bg-[#bd9b65]/20" />
+                      </div>
+                    </div>
 
-                 <a 
-                   href={config.celebracionMapsUrl ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.celebracionDireccion)}` : '#'}
-                   target="_blank"
-                   style={{ backgroundColor: textCel, color: bgCel }}
-                   className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-black uppercase tracking-widest text-[3cqi] shadow-lg hover:scale-105 transition-all"
-                 >
-                    ¿Cómo llegar?
-                 </a>
-              </div>
-            </div>
+                    <div className="space-y-2">
+                       <p className="font-black italic leading-tight text-[6cqi] text-white">
+                          {nombreCel}
+                       </p>
+                        {config.celebracionDireccion && (
+                          <p className="text-[3cqi] font-bold uppercase tracking-widest opacity-60 max-w-[250px] mx-auto leading-relaxed">
+                            {config.celebracionDireccion}
+                          </p>
+                        )}
+                    </div>
+
+                     <a 
+                       href={config.celebracionMapsUrl ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.celebracionDireccion)}` : '#'}
+                       target="_blank"
+                       style={{ backgroundColor: '#bd9b65', color: '#000' }}
+                       className="inline-flex items-center gap-2 px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-[3.5cqi] shadow-xl hover:scale-105 active:scale-95 transition-all w-full justify-center"
+                     >
+                        ¿Cómo llegar?
+                     </a>
+                 </div>
+            </section>
           </div>
         );
 
@@ -495,8 +482,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     <p className="opacity-60 leading-relaxed max-w-sm mx-auto text-[3.5cqi]">
                       Su presencia es el mejor regalo, pero si desean obsequiarnos algo, aquí tienen nuestras sugerencias.
                     </p>
-                </div>
-                <div className="flex flex-col sm:flex-row justify-center gap-4 w-full">
+                 <div className="grid grid-cols-1 gap-4 w-full">
                     {config.regaloTipo === 'MESA' ? (
                       <a 
                         href={config.regaloMesaUrl} 
@@ -506,17 +492,36 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                         Ver Mesa de Regalos
                       </a>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                        <div className="bg-white/5 p-6 rounded-2xl border border-white/10 flex flex-col items-center">
+                      <div className="grid grid-cols-1 gap-4 w-full">
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(config.regaloBanco);
+                            alert('Banco copiado: ' + config.regaloBanco);
+                          }}
+                          className="bg-white/5 p-6 rounded-2xl border border-white/10 flex flex-col items-center hover:bg-white/10 transition-all active:scale-95 group relative"
+                        >
+                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-40 transition-opacity">
+                              <ExternalLink size={14} />
+                            </div>
                             <p className="font-black uppercase opacity-40 mb-2 text-[2.5cqi]">Banco</p>
-                            <p className="font-black uppercase tracking-widest text-[4cqi]">{config.regaloBanco}</p>
-                        </div>
-                        <div className="bg-white/5 p-6 rounded-2xl border border-white/10 flex flex-col items-center">
-                            <p className="font-black uppercase opacity-40 mb-2 text-[2.5cqi]">CLABE</p>
-                            <p className="font-black tracking-[0.2em] text-[4cqi]">{config.regaloClabe}</p>
-                        </div>
+                            <p className="font-black uppercase tracking-widest text-[5cqi]">{config.regaloBanco}</p>
+                        </button>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(config.regaloClabe);
+                            alert('CLABE copiada: ' + config.regaloClabe);
+                          }}
+                          className="bg-white/5 p-8 rounded-2xl border border-white/10 flex flex-col items-center hover:bg-white/10 transition-all active:scale-95 group relative"
+                        >
+                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-40 transition-opacity">
+                              <ExternalLink size={14} />
+                            </div>
+                            <p className="font-black uppercase opacity-40 mb-2 text-[2.5cqi]">CLABE Interbancaria</p>
+                            <p className="font-black tracking-[0.1em] text-[5cqi] break-all max-w-[280px]">{config.regaloClabe}</p>
+                        </button>
                       </div>
                     )}
+                </div>
                 </div>
             </section>
           </div>
@@ -536,30 +541,29 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                   <p className="font-black uppercase tracking-widest opacity-60 max-w-xs mx-auto text-[3.5cqi]">
                      Hola <span className="text-[var(--color-acento)]">{invitado?.nombre}</span>, confirma tu asistencia para ayudarnos a organizar este día.
                   </p>
-               </div>
-
-                <div className="flex flex-col gap-4 w-full max-w-[280px] mx-auto">
+                  <div className="flex flex-row justify-center gap-4 w-full max-w-[320px] mx-auto px-4">
                   <button
                     onClick={() => onRSVP('CONFIRMADO')}
                     disabled={status === 'SAVING'}
                     className={cn(
-                      'py-8 rounded-2xl font-black uppercase tracking-[0.2em] transition-all active:scale-95 shadow-2xl flex flex-col items-center gap-3',
-                      'bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-50 text-[3.5cqi]'
+                      'flex-1 py-10 rounded-2xl font-black uppercase tracking-[0.1em] transition-all active:scale-95 shadow-2xl flex flex-col items-center justify-center gap-3',
+                      'bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-50 text-[3cqi]'
                     )}
                   >
-                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={32} /> Sí, estaré ahí</>}
+                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={32} /> Acepto</>}
                   </button>
 
                   <button
                     onClick={() => onRSVP('RECHAZADO')}
                     disabled={status === 'SAVING'}
                     className={cn(
-                      'py-8 rounded-2xl font-black uppercase tracking-[0.2em] transition-all active:scale-95 flex flex-col items-center gap-3',
-                      'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60 disabled:opacity-20 text-[3.5cqi]'
+                      'flex-1 py-10 rounded-2xl font-black uppercase tracking-[0.1em] transition-all active:scale-95 flex flex-col items-center justify-center gap-3',
+                      'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60 disabled:opacity-20 text-[3cqi]'
                     )}
                   >
-                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><XCircle size={32} /> No podré ir</>}
+                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><XCircle size={32} /> No podré</>}
                   </button>
+               </div>
                </div>
             </section>
           </div>
