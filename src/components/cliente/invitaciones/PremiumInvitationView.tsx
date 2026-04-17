@@ -326,11 +326,17 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     </div>
 
                     <div className="space-y-4 w-full flex flex-col items-center text-center">
-                       <p className="font-black italic leading-tight text-[6cqi] text-white text-center w-full">
+                       <p 
+                         style={{ textAlign: 'center' }}
+                         className="font-black italic leading-tight text-[6cqi] text-white !text-center w-full"
+                       >
                           {nombreCel}
                        </p>
                         {config.celebracionDireccion && (
-                          <p className="text-[3cqi] font-bold uppercase tracking-widest opacity-60 w-full max-w-[90%] mx-auto leading-relaxed text-center">
+                          <p 
+                            style={{ textAlign: 'center' }}
+                            className="text-[3cqi] font-bold uppercase tracking-widest opacity-60 w-full max-w-[90%] mx-auto leading-relaxed !text-center"
+                          >
                             {config.celebracionDireccion}
                           </p>
                         )}
@@ -477,9 +483,12 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                 <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto shadow-2xl">
                     <Gift size={28} className="text-emerald-400" />
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-4 w-full flex flex-col items-center text-center">
                     <h2 className="font-black uppercase italic tracking-tighter text-[8cqi]">Mesa de Regalos</h2>
-                    <p className="opacity-60 leading-relaxed max-w-sm mx-auto text-[3.5cqi]">
+                    <p 
+                      style={{ textAlign: 'center' }}
+                      className="opacity-60 leading-relaxed max-w-sm mx-auto text-[3.5cqi] !text-center"
+                    >
                       Su presencia es el mejor regalo, pero si desean obsequiarnos algo, aquí tienen nuestras sugerencias.
                     </p>
                  <div className="grid grid-cols-1 gap-4 w-full">
@@ -538,8 +547,11 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                      </div>
                   </div>
                   <h2 className="font-black uppercase italic tracking-tighter text-[8cqi]">¿Nos acompañas?</h2>
-                   <p className="font-black uppercase tracking-widest opacity-60 w-full max-w-[90%] mx-auto text-[4.5cqi] text-center leading-relaxed">
-                     Hola <span className="text-[var(--color-acento)]">{invitado?.nombre}</span>, confirma tu asistencia para ayudarnos a organizar este día.
+                   <p 
+                     style={{ textAlign: 'center' }}
+                     className="font-black uppercase tracking-widest opacity-60 w-full max-w-[90%] mx-auto text-[4.5cqi] !text-center leading-relaxed"
+                   >
+                     Hola <span className="text-[var(--color-acento)]" style={{ textAlign: 'center' }}>{invitado?.nombre}</span>, confirma tu asistencia para ayudarnos a organizar este día.
                   </p>
                 <div className="flex flex-row justify-center gap-4 w-full max-w-[500px] mx-auto px-4">
                   <button
@@ -578,9 +590,12 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         return (
           <div className="w-[min(96cqi,500px)] mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
             <section className={cn("card-premium p-8 md:p-12 rounded-[2.5rem] border text-center flex flex-col items-center bg-zinc-900/20 border-dashed border-zinc-700", themeStyles.card, "space-y-12")}>
-                 <div className="space-y-4 w-full flex flex-col items-center">
+                 <div className="space-y-4 w-full flex flex-col items-center text-center">
                     <h2 className="font-black uppercase italic tracking-tighter text-[8cqi]">Álbum Compartido</h2>
-                    <p className="opacity-60 leading-relaxed w-full max-w-[90%] mx-auto text-[4.5cqi] text-center">
+                    <p 
+                      style={{ textAlign: 'center' }}
+                      className="opacity-60 leading-relaxed w-full max-w-[90%] mx-auto text-[4.5cqi] !text-center"
+                    >
                       Escanea este código para subir tus fotos y videos de nuestro gran día.
                     </p>
                 </div>
