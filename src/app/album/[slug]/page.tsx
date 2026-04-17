@@ -158,9 +158,9 @@ export default function GuestAlbumPage() {
             {album.activo && isAuthenticated && (
                <button 
                  onClick={() => !isUploading && fileInputRef.current?.click()}
-                 className="bg-zinc-100 hover:bg-white text-black h-10 px-6 rounded-full font-black text-[10px] uppercase tracking-widest transition-all shadow-lg active:scale-95 flex items-center gap-2"
+                 className="bg-amber-500 hover:bg-amber-400 text-black h-12 px-6 rounded-full font-black text-[11px] uppercase tracking-widest transition-all shadow-lg active:scale-90 flex items-center gap-2"
                >
-                  {isUploading ? <Loader2 className="animate-spin" size={14} /> : <><Plus size={16} /> Subir</>}
+                  {isUploading ? <Loader2 className="animate-spin" size={16} /> : <><Camera size={18} /> <span className="hidden sm:inline">Subir Recuerdo</span><span className="sm:hidden">Subir</span></>}
                </button>
             )}
          </div>
@@ -209,11 +209,22 @@ export default function GuestAlbumPage() {
            <>
               {/* Grid de Galería */}
               {album.media.length === 0 ? (
-                <div className="flex flex-col items-center justify-center pt-32 text-center opacity-30 gap-6">
-                   <div className="w-24 h-24 rounded-full border-2 border-dashed border-white flex items-center justify-center">
-                      <Camera size={40} />
+                <div className="flex flex-col items-center justify-center pt-24 text-center gap-8 animate-pulse-slow">
+                   <button 
+                     onClick={() => fileInputRef.current?.click()}
+                     className="w-32 h-32 rounded-full border-2 border-dashed border-amber-500/50 flex items-center justify-center text-amber-500 hover:bg-amber-500/10 hover:border-amber-500 transition-all active:scale-90"
+                   >
+                      <Camera size={48} />
+                   </button>
+                   <div className="space-y-4">
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-white/60">¡Sé el primero en subir un recuerdo!</p>
+                      <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="btn-premium px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em]"
+                      >
+                         Tocar para subir
+                      </button>
                    </div>
-                   <p className="text-xs font-black uppercase tracking-[0.2em]">¡Sé el primero en subir un recuerdo!</p>
                 </div>
               ) : (
                 <div className="columns-2 md:columns-3 gap-4 space-y-4">
@@ -265,9 +276,10 @@ export default function GuestAlbumPage() {
       {album.activo && isAuthenticated && !isUploading && (
         <button 
           onClick={() => fileInputRef.current?.click()}
-          className="fixed bottom-8 right-8 md:hidden w-16 h-16 rounded-full bg-amber-500 text-black shadow-[0_10px_40px_rgba(245,158,11,0.5)] flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-[60]"
+          className="fixed bottom-12 right-6 md:hidden w-20 h-20 rounded-full bg-amber-500 text-black shadow-[0_15px_50px_rgba(245,158,11,0.6)] flex flex-col items-center justify-center hover:scale-110 active:scale-90 transition-all z-[60] border-4 border-black box-content"
         >
-           <Camera size={28} />
+           <Camera size={32} />
+           <span className="text-[8px] font-black uppercase tracking-tighter mt-1">Subir</span>
         </button>
       )}
 
@@ -309,6 +321,13 @@ export default function GuestAlbumPage() {
         }
         .stroke-round {
           stroke-linecap: round;
+        }
+        @keyframes pulse-slow {
+          0%, 100% { transform: scale(1); opacity: 0.6; }
+          50% { transform: scale(1.05); opacity: 1; }
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 3s ease-in-out infinite;
         }
       `}</style>
 
