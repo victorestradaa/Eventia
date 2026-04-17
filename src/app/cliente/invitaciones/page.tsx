@@ -66,7 +66,8 @@ export default async function InvitationsPage() {
     orderBy: { creadoEn: 'desc' },
     include: {
       invitacion: true,
-      invitados: true // Fundamental para la nueva pestaña de envío
+      invitados: true, // Fundamental para la nueva pestaña de envío
+      album: true
     }
   });
 

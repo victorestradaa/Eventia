@@ -18,6 +18,7 @@ import {
   QrCode
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface PremiumInvitationViewProps {
   evento: any;
@@ -566,17 +567,42 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         );
 
       case 'mostrarAlbumQR':
+        const album = evento.album;
+        const albumUrl = typeof window !== 'undefined' 
+          ? `${window.location.origin}/album/${album?.slug || ''}`
+          : '';
+
         return (
-          <div className="w-[min(90vw,500px)] mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
-            <section className={cn("card-premium p-12 rounded-[2.5rem] border text-center space-y-8 bg-zinc-900/20 border-dashed border-zinc-700", themeStyles.card)}>
-                <div className="w-20 h-20 bg-zinc-800 rounded-3xl flex items-center justify-center mx-auto rotate-12">
-                    <QrCode size={40} className="text-white opacity-10" />
-                </div>
+          <div className="w-[min(96cqi,500px)] mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
+            <section className={cn("card-premium p-8 md:p-12 rounded-[2.5rem] border text-center space-y-8 bg-zinc-900/20 border-dashed border-zinc-700", themeStyles.card)}>
                 <div className="space-y-4">
-                    <h2 className="text-2xl font-black uppercase italic tracking-tighter opacity-20">Álbum Compartido</h2>
-                    <div className="inline-block px-6 py-2 rounded-full border border-white/10 bg-white/5">
-                       <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Próximamente</span>
-                    </div>
+                    <h2 className={cn("font-black uppercase italic tracking-tighter", isPreview ? "text-[8cqi]" : "text-3xl")}>Álbum Compartido</h2>
+                    <p className={cn("opacity-60 leading-relaxed max-w-[250px] mx-auto", isPreview ? "text-[3cqi]" : "text-xs")}>
+                      Escanea este código para subir tus fotos y videos de nuestro gran día.
+                    </p>
+                </div>
+
+                <div className={cn("bg-white p-4 rounded-3xl mx-auto shadow-2xl flex items-center justify-center", isPreview ? "w-[45cqi] h-[45cqi]" : "w-48 h-48")}>
+                    {album ? (
+                      <QRCodeSVG 
+                        value={albumUrl}
+                        size={isPreview ? 256 : 180}
+                        style={{ width: '100%', height: '100%' }}
+                        level="H"
+                        includeMargin={false}
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 text-zinc-400">
+                         <QrCode size={40} className="opacity-20" />
+                         <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">Álbum no configurado</span>
+                      </div>
+                    )}
+                </div>
+
+                <div className="inline-block px-6 py-2 rounded-full border border-[var(--color-acento)]/20 bg-[var(--color-acento)]/5">
+                   <span className={cn("font-black uppercase tracking-[0.3em] text-[var(--color-acento)]", isPreview ? "text-[2.5cqi]" : "text-[10px]")}>
+                      ¡Comparte tus capturas!
+                   </span>
                 </div>
             </section>
           </div>

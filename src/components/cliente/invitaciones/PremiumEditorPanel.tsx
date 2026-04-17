@@ -711,7 +711,7 @@ export default function PremiumEditorPanel({ config, onChange, evento }: Premium
                     { id: 'mostrarMapa', label: 'Mapa de Ubicación', icon: MapPin },
                     { id: 'mostrarRegalos', label: 'Mesa de Regalos', icon: Gift },
                     { id: 'mostrarRSVP', label: 'Formulario Asistencia', icon: Calendar },
-                    { id: 'mostrarAlbumQR', label: 'Álbum QR (Pronto)', icon: QrCode },
+                    { id: 'mostrarAlbumQR', label: 'Álbum QR', icon: QrCode },
                   ].find(m => m.id === id);
                   
                   if (!item) return null;
