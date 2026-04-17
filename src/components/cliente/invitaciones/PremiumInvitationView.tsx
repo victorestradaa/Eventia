@@ -295,14 +295,14 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     <h2 className="font-black italic tracking-tighter uppercase text-[#bd9b65] text-[8cqi]">Recepción</h2>
                  </div>
 
-                 <div className="space-y-6 w-full">
-                    <div className="space-y-1">
-                      <p className="text-[3cqi] font-black uppercase tracking-[0.4em] opacity-40">
+                 <div className="space-y-4 w-full flex flex-col items-center">
+                    <div className="space-y-1 w-full flex flex-col items-center">
+                      <p className="text-[3cqi] font-black uppercase tracking-[0.4em] opacity-40 text-center">
                          {fechaCel ? (
                            new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { month: 'long' }).toUpperCase()
                          ) : 'MES'}
                       </p>
-                      <div className="flex items-center justify-center gap-4">
+                      <div className="flex items-center justify-center gap-4 w-full">
                          <div className="flex-1 h-[1px] bg-[#bd9b65]/20" />
                          <div className="flex items-center gap-4">
                             <span className="text-[3cqi] font-black uppercase tracking-widest leading-none opacity-40">
@@ -325,12 +325,12 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                       <p className="font-black italic leading-tight text-[6cqi] text-white">
+                    <div className="space-y-4 w-full flex flex-col items-center text-center">
+                       <p className="font-black italic leading-tight text-[6cqi] text-white text-center w-full">
                           {nombreCel}
                        </p>
                         {config.celebracionDireccion && (
-                          <p className="text-[3cqi] font-bold uppercase tracking-widest opacity-60 max-w-[250px] mx-auto leading-relaxed text-center">
+                          <p className="text-[3cqi] font-bold uppercase tracking-widest opacity-60 w-full max-w-[90%] mx-auto leading-relaxed text-center">
                             {config.celebracionDireccion}
                           </p>
                         )}
@@ -538,30 +538,30 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                      </div>
                   </div>
                   <h2 className="font-black uppercase italic tracking-tighter text-[8cqi]">¿Nos acompañas?</h2>
-                  <p className="font-black uppercase tracking-widest opacity-60 max-w-xs mx-auto text-[3.5cqi] text-center">
+                   <p className="font-black uppercase tracking-widest opacity-60 w-full max-w-[90%] mx-auto text-[4.5cqi] text-center leading-relaxed">
                      Hola <span className="text-[var(--color-acento)]">{invitado?.nombre}</span>, confirma tu asistencia para ayudarnos a organizar este día.
                   </p>
-                <div className="flex flex-row justify-center gap-4 w-full max-w-[400px] mx-auto px-4">
+                <div className="flex flex-row justify-center gap-4 w-full max-w-[500px] mx-auto px-4">
                   <button
                     onClick={() => onRSVP('CONFIRMADO')}
                     disabled={status === 'SAVING'}
                     className={cn(
-                      'flex-1 py-12 rounded-2xl font-black uppercase tracking-[0.1em] transition-all active:scale-95 shadow-2xl flex flex-col items-center justify-center gap-3',
-                      'bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-50 text-[4cqi]'
+                      'flex-1 py-16 rounded-3xl font-black uppercase tracking-[0.15em] transition-all active:scale-95 shadow-2xl flex flex-col items-center justify-center gap-3',
+                      'bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-50 text-[6cqi]'
                     )}
                   >
-                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={36} /> Acepto</>}
+                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={48} /> Acepto</>}
                   </button>
 
                   <button
                     onClick={() => onRSVP('RECHAZADO')}
                     disabled={status === 'SAVING'}
                     className={cn(
-                      'flex-1 py-12 rounded-2xl font-black uppercase tracking-[0.1em] transition-all active:scale-95 flex flex-col items-center justify-center gap-3',
-                      'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60 disabled:opacity-20 text-[4cqi]'
+                      'flex-1 py-16 rounded-3xl font-black uppercase tracking-[0.15em] transition-all active:scale-95 flex flex-col items-center justify-center gap-3',
+                      'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60 disabled:opacity-20 text-[6cqi]'
                     )}
                   >
-                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><XCircle size={36} /> No podré</>}
+                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><XCircle size={48} /> No podré</>}
                   </button>
                </div>
                </div>
@@ -578,9 +578,9 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         return (
           <div className="w-[min(96cqi,500px)] mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
             <section className={cn("card-premium p-8 md:p-12 rounded-[2.5rem] border text-center flex flex-col items-center bg-zinc-900/20 border-dashed border-zinc-700", themeStyles.card, "space-y-12")}>
-                <div className="space-y-4">
+                 <div className="space-y-4 w-full flex flex-col items-center">
                     <h2 className="font-black uppercase italic tracking-tighter text-[8cqi]">Álbum Compartido</h2>
-                    <p className="opacity-60 leading-relaxed max-w-[250px] mx-auto text-[3.5cqi] text-center">
+                    <p className="opacity-60 leading-relaxed w-full max-w-[90%] mx-auto text-[4.5cqi] text-center">
                       Escanea este código para subir tus fotos y videos de nuestro gran día.
                     </p>
                 </div>
