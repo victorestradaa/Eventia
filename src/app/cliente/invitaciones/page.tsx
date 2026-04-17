@@ -4,41 +4,50 @@ import InvitationEditorClient from './InvitationEditorClient';
 import { redirect } from 'next/navigation';
 
 // Helper para sanitizar objetos Decimal y fechas para componentes cliente
+// Helper para sanitizar objetos Decimal y fechas para componentes cliente
+// Previene el Error 413 limitando el tamaño de strings Base64/DataURIs
 function sanitizeForClient(obj: any): any {
   if (obj === null || obj === undefined) return obj;
-  if (Array.isArray(obj)) return obj.map(sanitizeForClient);
   
+  // Manejo de Arrays
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeForClient(item));
+  }
+  
+  // Manejo de Fechas
   if (obj instanceof Date) return obj.toISOString();
   
+  // Manejo de Strings (Validación de tamaño crítico para evitar Error 413)
+  if (typeof obj === 'string') {
+    // Si es un Base64/DataURI muy pesado (> 200KB), lo bloqueamos
+    if (obj.length > 204800 && (obj.startsWith('data:') || obj.startsWith('base64'))) {
+      console.warn(`[Sanitizer] Bloqueando asset pesado (${Math.round(obj.length/1024)}KB)`);
+      return '';
+    }
+    return obj;
+  }
+
+  // Manejo de Objetos
   if (typeof obj === 'object') {
     // Si es un objeto Decimal de Prisma
     if (obj.constructor && obj.constructor.name === 'Decimal') {
       return Number(obj);
     }
-    // Si parece un objeto Decimal structurado (d, s, e)
+    // Si parece un objeto Decimal structurado (d, s, e) de Prisma Client
     if (obj.d && Array.isArray(obj.d) && obj.s !== undefined) {
       return Number(obj);
-    }
-    
-    // Si es un objeto que ya viene como Date string o necesita ser convertido
-    // (aunque el check instanceof Date arriba es el principal)
-    
-    // Limpieza de seguridad contra Base64 pesados que causan error 413
-    if (obj.galeriaFotos && Array.isArray(obj.galeriaFotos)) {
-      obj.galeriaFotos = obj.galeriaFotos.map((f: any) => 
-        (typeof f === 'string' && f.startsWith('data:image')) ? '' : f
-      );
-    }
-    if (obj.coverUrl && typeof obj.coverUrl === 'string' && obj.coverUrl.startsWith('data:image')) {
-      obj.coverUrl = '';
     }
 
     const newObj: any = {};
     for (const key in obj) {
-      newObj[key] = sanitizeForClient(obj[key]);
+      // Evitar recursión infinita o propiedades de sistema si las hubiera
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        newObj[key] = sanitizeForClient(obj[key]);
+      }
     }
     return newObj;
   }
+
   return obj;
 }
 
