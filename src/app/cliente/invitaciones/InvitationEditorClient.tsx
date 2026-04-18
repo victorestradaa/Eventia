@@ -692,7 +692,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                                 : "border-[var(--color-borde-suave)] hover:border-[var(--color-acento)]/30 hover:scale-105"
                             )}
                           >
-                            <img src={f.url} alt={f.nombre} className="w-full h-full object-cover transition-transform duration-700 group-hover/thumb:scale-110" />
+                            <img src={f.url || null} alt={f.nombre} className="w-full h-full object-cover transition-transform duration-700 group-hover/thumb:scale-110" />
                             {fondoUrlActivo === f.url && (
                               <div className="absolute inset-0 bg-[var(--color-acento)]/20 flex items-center justify-center">
                                 <CheckCircle2 size={24} className="text-white drop-shadow-lg" />

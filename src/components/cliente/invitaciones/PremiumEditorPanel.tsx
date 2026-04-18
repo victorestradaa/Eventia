@@ -475,7 +475,7 @@ export default function PremiumEditorPanel({ config, onChange, evento }: Premium
              <div className="grid grid-cols-3 gap-2">
                 {(config.galeriaFotos || []).map((foto: string, idx: number) => (
                   <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group">
-                     <img src={foto} className="w-full h-full object-cover" />
+                     <img src={foto || null} className="w-full h-full object-cover" />
                      <button 
                        onClick={() => {
                           const newPhotos = [...config.galeriaFotos];

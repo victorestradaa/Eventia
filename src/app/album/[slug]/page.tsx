@@ -7,6 +7,7 @@ import {
   Upload, 
   Plus, 
   ChevronLeft, 
+  ChevronRight,
   Images, 
   Play, 
   X, 
@@ -31,6 +32,10 @@ export default function GuestAlbumPage() {
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Lightbox State
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
     loadAlbum();
@@ -117,11 +122,40 @@ export default function GuestAlbumPage() {
     }
   };
 
+  // Lightbox Handlers
+  const handleNext = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (selectedIndex === null || !album?.media) return;
+    setSelectedIndex((selectedIndex + 1) % album.media.length);
+  };
+
+  const handlePrev = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (selectedIndex === null || !album?.media) return;
+    setSelectedIndex((selectedIndex - 1 + album.media.length) % album.media.length);
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const currentX = e.targetTouches[0].clientX;
+    const diffX = touchStartX.current - currentX;
+    
+    if (Math.abs(diffX) > 50) {
+      if (diffX > 0) handleNext();
+      else handlePrev();
+      touchStartX.current = null;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#faf9f6] text-stone-900 gap-4">
         <Loader2 className="animate-spin text-[#bd9b65]" size={40} />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Acceding al Álbum...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Accediedo al Álbum...</p>
       </div>
     );
   }
@@ -139,14 +173,14 @@ export default function GuestAlbumPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f6] text-stone-900 selection:bg-[#bd9b65] selection:text-white relative">
+    <div className="min-h-screen bg-[#faf9f6]/50 text-stone-900 selection:bg-[#bd9b65] selection:text-white relative overflow-x-hidden">
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
       
       {/* Textura de fondo sutil */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/natural-paper.png")' }} />
 
       {/* Header Fijo Estilo Galería */}
-      <header className="sticky top-0 z-50 bg-[#faf9f6]/80 backdrop-blur-xl border-b border-stone-200/60 p-4 md:p-6 mb-8">
+      <header className="sticky top-0 z-40 bg-[#faf9f6]/80 backdrop-blur-xl border-b border-stone-200/60 p-4 md:p-6 mb-8">
          <div className="max-w-5xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-4">
                <div className="w-12 h-12 rounded-full border border-[#bd9b65]/30 flex items-center justify-center bg-white shadow-sm">
@@ -170,7 +204,7 @@ export default function GuestAlbumPage() {
          </div>
       </header>
 
-      <main className="max-w-5xl mx-auto p-4 md:p-8 space-y-12 pb-32">
+      <main className="max-w-5xl mx-auto p-3 sm:p-6 md:p-8 space-y-12 pb-32">
          
          {!isAuthenticated ? (
            <div className="flex flex-col items-center justify-center pt-20 text-center space-y-8 animate-in fade-in zoom-in duration-500">
@@ -218,7 +252,7 @@ export default function GuestAlbumPage() {
                   <p className="text-xs uppercase tracking-[0.3em] font-black opacity-30">Capturando cada momento especial</p>
               </div>
 
-              {/* Grid de Galería Minimalista */}
+              {/* Grid de Galería Fija (No Masonry) */}
               {album.media.length === 0 ? (
                 <div className="flex flex-col items-center justify-center pt-24 text-center gap-10 animate-fade-in">
                    <div className="relative">
@@ -241,48 +275,35 @@ export default function GuestAlbumPage() {
                    </div>
                 </div>
               ) : (
-                <div className="columns-1 sm:columns-2 md:columns-3 gap-6 space-y-6">
-                   {album.media.map((item: any) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+                   {album.media.map((item: any, idx: number) => (
                      <div 
                        key={item.id} 
-                       className="relative group bg-white p-3 md:p-4 rounded-[2rem] shadow-xl border border-stone-200/40 break-inside-avoid hover:shadow-2xl transition-all duration-500 hover:-translate-y-1"
-                       style={{ rotate: `${(Math.random() * 2 - 1).toFixed(1)}deg` }}
+                       onClick={() => setSelectedIndex(idx)}
+                       className="relative group bg-white p-2 md:p-3 rounded-2xl shadow-lg border-[0.5px] border-[#bd9b65]/30 cursor-pointer overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 active:scale-95"
                      >
-                        {/* Marco elegante (Polaroid look) */}
-                        <div className="rounded-2xl overflow-hidden bg-stone-50 border border-stone-100 flex items-center justify-center min-h-[150px]">
+                        <div className="aspect-square rounded-xl overflow-hidden bg-stone-50 flex items-center justify-center">
                             {item.tipo === 'IMAGE' ? (
                               <img 
                                 src={item.url} 
                                 alt="Recuerdo" 
-                                loading="lazy"
-                                className="w-full h-auto block transform group-hover:scale-105 transition-transform duration-1000 ease-out"
+                                className="w-full h-full object-cover block transform group-hover:scale-110 transition-transform duration-1000 ease-out"
                               />
                             ) : (
-                              <div className="relative w-full">
+                              <div className="relative w-full h-full">
                                  <video 
                                    src={item.url} 
-                                   className="w-full h-auto block"
-                                   controls={false}
+                                   className="w-full h-full object-cover block"
                                    muted
-                                   loop
                                    playsInline
                                  />
-                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-14 h-14 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-xl group-hover:scale-110 transition-transform">
-                                       <Play className="text-stone-900 fill-stone-900 translate-x-0.5" size={20} />
+                                 <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                                    <div className="w-10 h-10 rounded-full bg-white/40 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-xl group-hover:scale-110 transition-transform">
+                                       <Play className="text-stone-900 fill-stone-900 translate-x-0.5" size={16} />
                                     </div>
                                  </div>
                               </div>
                             )}
-                        </div>
-                        
-                        {/* Pequeño detalle inferior del marco */}
-                        <div className="mt-4 flex items-center justify-between px-1">
-                           <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-[#bd9b65]/30" />
-                              <span className="text-[9px] font-black uppercase tracking-widest opacity-20">Recuerdo · {new Date(item.createdAt).toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit' })}</span>
-                           </div>
-                           <CheckCircle2 size={12} className="text-[#bd9b65]/20" />
                         </div>
                      </div>
                    ))}
@@ -291,6 +312,85 @@ export default function GuestAlbumPage() {
            </>
          )}
       </main>
+
+      {/* Lightbox / Visualizador Premium */}
+      {selectedIndex !== null && album?.media[selectedIndex] && (
+        <div 
+          className="fixed inset-0 z-[100] bg-stone-50/95 backdrop-blur-2xl flex items-center justify-center p-4 sm:p-8 md:p-12 animate-in fade-in duration-500 overflow-hidden"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onClick={() => setSelectedIndex(null)}
+        >
+           {/* Botón cerrar */}
+           <button 
+             className="absolute top-6 right-6 w-12 h-12 rounded-full bg-stone-900 text-white flex items-center justify-center z-[110] active:scale-90 transition-all shadow-xl"
+             onClick={() => setSelectedIndex(null)}
+           >
+              <X size={24} />
+           </button>
+
+           {/* Botones Navegación (Desktop) */}
+           <button 
+             className="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white border border-stone-200 text-stone-900 items-center justify-center z-[110] active:scale-90 transition-all shadow-xl hover:bg-stone-50 group"
+             onClick={handlePrev}
+           >
+              <ChevronLeft size={32} className="group-hover:-translate-x-1 transition-transform" />
+           </button>
+           <button 
+             className="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-white border border-stone-200 text-stone-900 items-center justify-center z-[110] active:scale-90 transition-all shadow-xl hover:bg-stone-50 group"
+             onClick={handleNext}
+           >
+              <ChevronRight size={32} className="group-hover:translate-x-1 transition-transform" />
+           </button>
+
+           {/* Imagen / Video Expandido */}
+           <div 
+             className="relative max-w-5xl max-h-[85vh] w-full flex items-center justify-center animate-out fade-out zoom-out"
+             onClick={(e) => e.stopPropagation()}
+           >
+              <div 
+                key={album.media[selectedIndex].id}
+                className="relative bg-white p-2 sm:p-4 rounded-[1.5rem] sm:rounded-[3rem] shadow-[0_0_60px_rgba(189,155,101,0.2)] border border-[#bd9b65]/20 animate-fade-in group shadow-amber-500/10"
+              >
+                  {/* El Brillo/Glow solicitado */}
+                  <div className="absolute inset-0 bg-[#bd9b65]/5 blur-3xl rounded-full opacity-50 group-hover:opacity-80 transition-opacity" />
+
+                  {album.media[selectedIndex].tipo === 'IMAGE' ? (
+                    <img 
+                      src={album.media[selectedIndex].url} 
+                      alt="Recuerdo expandido" 
+                      className="relative z-10 max-w-full max-h-[75vh] object-contain rounded-[1rem] sm:rounded-[2.5rem] drop-shadow-2xl"
+                    />
+                  ) : (
+                    <video 
+                      src={album.media[selectedIndex].url} 
+                      className="relative z-10 max-w-full max-h-[75vh] object-contain rounded-[1rem] sm:rounded-[2.5rem] drop-shadow-2xl"
+                      controls
+                      autoPlay
+                      playsInline
+                    />
+                  )}
+
+                  {/* Detalle elegante al pie de la imagen */}
+                  <div className="absolute -bottom-10 left-0 w-full flex justify-center">
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40 text-stone-900">
+                      Recuerdo {selectedIndex + 1} de {album.media.length}
+                    </p>
+                  </div>
+              </div>
+           </div>
+
+           {/* Indicador de Swipe (Móvil) */}
+           <div className="md:hidden absolute bottom-10 left-0 w-full text-center flex flex-col items-center gap-2 opacity-20">
+              <div className="flex gap-1.5">
+                 {album.media.map((_: any, i: number) => (
+                   <div key={i} className={cn("w-1.5 h-1.5 rounded-full transition-all", i === selectedIndex ? "w-6 bg-[#bd9b65] opacity-80" : "bg-stone-900")} />
+                 ))}
+              </div>
+              <p className="text-[8px] font-black uppercase tracking-widest mt-2">Desliza para navegar</p>
+           </div>
+        </div>
+      )}
 
       {/* Input Oculto */}
       <input 
@@ -303,7 +403,7 @@ export default function GuestAlbumPage() {
       />
 
       {/* Botón Flotante Subir (Movil) */}
-      {album.activo && isAuthenticated && !isUploading && (
+      {album.activo && isAuthenticated && !isUploading && selectedIndex === null && (
         <button 
           onClick={() => fileInputRef.current?.click()}
           className="fixed bottom-10 right-6 md:hidden w-20 h-20 rounded-full bg-[#bd9b65] text-white shadow-[0_15px_50px_rgba(189,155,101,0.5)] flex flex-col items-center justify-center hover:scale-110 active:scale-90 transition-all z-[60] border-4 border-[#faf9f6]"
@@ -315,7 +415,7 @@ export default function GuestAlbumPage() {
 
       {/* Overlay de Subida Premium */}
       {isUploading && (
-        <div className="fixed inset-0 z-[100] bg-[#faf9f6]/95 backdrop-blur-2xl flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[120] bg-[#faf9f6]/95 backdrop-blur-2xl flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
            <div className="relative w-40 h-40 mb-10">
               <svg className="w-full h-full -rotate-90">
                  <circle 
@@ -357,6 +457,13 @@ export default function GuestAlbumPage() {
         }
         .font-serif {
           font-family: 'Playfair Display', serif;
+        }
+        @keyframes fade-in {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out forwards;
         }
       `}</style>
 
