@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { serializePrisma } from '@/lib/utils';
 
 /**
  * Obtiene las métricas globales de la plataforma para el administrador.
@@ -20,12 +21,12 @@ export async function getPlatformStats() {
     // Calcular crecimiento (simulado o basado en fechas si tuviéramos histórico mensual)
     return {
       success: true,
-      data: {
+      data: serializePrisma({
         totalUsuarios,
         totalEventos,
         totalProveedores,
         totalIngresos: totalIngresos._sum.montoTotal || 0,
-      }
+      })
     };
   } catch (error) {
     console.error('Error al obtener stats de plataforma:', error);
@@ -46,7 +47,7 @@ export async function getGlobalEventos() {
       orderBy: { creadoEn: 'desc' },
       take: 50
     });
-    return { success: true, data: eventos };
+    return { success: true, data: serializePrisma(eventos) };
   } catch (error) {
     console.error('Error al obtener eventos globales:', error);
     return { success: false, error: 'Error del servidor' };

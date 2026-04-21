@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { serializePrisma } from '@/lib/utils';
 
 /**
  * Obtiene el resumen de actividad de un proveedor.
@@ -119,7 +120,7 @@ export async function confirmarTurnoReserva(data: {
     revalidatePath('/proveedor/calendario');
     revalidatePath('/proveedor/ventas');
     revalidatePath('/proveedor/dashboard');
-    return { success: true, data: JSON.parse(JSON.stringify(updated)) };
+    return { success: true, data: serializePrisma(updated) };
   } catch (error) {
     console.error('Error al confirmar turno:', error);
     return { success: false, error: 'No se pudo confirmar el turno.' };
@@ -281,7 +282,7 @@ export async function createComplemento(data: {
     });
 
     revalidatePath('/proveedor/catalogo');
-    return { success: true, data: JSON.parse(JSON.stringify(complemento)) };
+    return { success: true, data: serializePrisma(complemento) };
   } catch (error) {
     console.error('Error al crear complemento:', error);
     return { success: false, error: 'No se pudo crear el complemento.' };
@@ -311,7 +312,7 @@ export async function updateComplemento(complementoId: string, data: {
     });
 
     revalidatePath('/proveedor/catalogo');
-    return { success: true, data: JSON.parse(JSON.stringify(updated)) };
+    return { success: true, data: serializePrisma(updated) };
   } catch (error) {
     console.error('Error al actualizar complemento:', error);
     return { success: false, error: 'No se pudo actualizar el complemento.' };
@@ -381,7 +382,7 @@ export async function createBloqueoRapido(data: {
     revalidatePath('/proveedor/calendario');
     revalidatePath('/proveedor/ventas');
     revalidatePath('/proveedor/dashboard');
-    return { success: true, data: JSON.parse(JSON.stringify(bloqueo)) };
+    return { success: true, data: serializePrisma(bloqueo) };
   } catch (error) {
     console.error('Error al crear bloqueo rápido:', error);
     return { success: false, error: 'No se pudo bloquear la fecha.' };
@@ -681,13 +682,8 @@ export async function solicitarReserva(data: {
       return reserva;
     });
 
-    revalidatePath('/proveedor/dashboard');
-    revalidatePath('/proveedor/calendario');
-    revalidatePath('/proveedor/ventas');
-    revalidatePath(`/cliente/evento/${data.eventoId}`);
     revalidatePath(`/cliente/proveedor/${data.proveedorId}`);
-
-    return { success: true, data: JSON.parse(JSON.stringify(result)) };
+    return { success: true, data: serializePrisma(result) };
   } catch (error) {
     console.error('Error al solicitar reserva:', error);
     return { success: false, error: 'Hubo un error al procesar tu solicitud.' };

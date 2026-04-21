@@ -29,17 +29,21 @@ export async function POST(req: Request) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
 
-    // 3. Validar que el evento le pertenece a este usuario (Prevenir Vulnerabilidad IDOR)
-    const evento = await prisma.evento.findUnique({ where: { id: data.eventoId } });
-    if (!evento || evento.propietarioId !== user.id) {
-      return NextResponse.json({ success: false, error: 'Acceso denegado' }, { status: 403 });
-    }
-
     if (!data.eventoId) {
       return NextResponse.json(
         { success: false, error: 'eventoId es requerido' },
         { status: 400 }
       );
+    }
+
+    // 3. Validar que el evento le pertenece a este usuario (Prevenir Vulnerabilidad IDOR)
+    const evento = await prisma.evento.findUnique({ 
+      where: { id: data.eventoId },
+      include: { cliente: true }
+    });
+    
+    if (!evento || evento.cliente.usuarioId !== user.id) {
+      return NextResponse.json({ success: false, error: 'Acceso denegado' }, { status: 403 });
     }
 
     // LOG DE SEGURIDAD PARA DEPURACIÓN

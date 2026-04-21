@@ -102,7 +102,7 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
   return (
     <div className="min-h-screen bg-[var(--color-fondo)] bg-marble transition-colors duration-500">
       {/* Top Navbar Refinado */}
-      <header className="sticky top-0 z-50 glass-premium border-b border-[var(--color-borde-suave)] px-6 py-4">
+      <header className="sticky top-0 z-[100] glass-premium border-b border-[var(--color-borde-suave)] px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-3 group transition-transform hover:scale-105">
@@ -207,7 +207,7 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
 
             
             <button 
-              className="md:hidden text-[var(--color-texto)]"
+              className="md:hidden text-[var(--color-texto)] p-2 -mr-2 relative z-10 pointer-events-auto"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}

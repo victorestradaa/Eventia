@@ -135,19 +135,31 @@ model Evento {
 }
 
 model Invitado {
-  id           String     @id @default(cuid())
-  eventoId     String
-  nombre       String
-  email        String?
-  telefono     String?
-  mesaAsignada Int?
-  rsvpToken    String     @unique @default(cuid())
-  rsvpEstado   EstadoRSVP @default(PENDIENTE)
-  lado         String?
-  categoria    String?
-  tipoPersona  String?
-  creadoEn     DateTime   @default(now())
-  evento       Evento     @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  id              String     @id @default(cuid())
+  eventoId        String
+  nombre          String
+  email           String?
+  telefono        String?
+  mesaAsignada    Int?
+  rsvpToken       String     @unique @default(cuid())
+  rsvpEstado      EstadoRSVP @default(PENDIENTE)
+  lado            String?
+  categoria       String?
+  tipoPersona     String?
+
+  // ── Grupos Familiares ──────────────────────────────────────────────────────
+  // grupoTitularId: null = invitado individual o es el mismo titular del grupo
+  // grupoTitularId: <id> = este invitado es MIEMBRO del grupo de ese titular
+  grupoTitularId  String?    // FK al titular del grupo
+  esGrupoTitular  Boolean    @default(false) // true = recibe el link de invitación
+  // ──────────────────────────────────────────────────────────────────────────
+
+  creadoEn        DateTime   @default(now())
+  evento          Evento     @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+
+  // Auto-relación para grupos familiares
+  grupoTitular    Invitado?  @relation("GrupoFamiliar", fields: [grupoTitularId], references: [id], onDelete: SetNull)
+  grupoMiembros   Invitado[] @relation("GrupoFamiliar")
 }
 
 model LineaPresupuesto {

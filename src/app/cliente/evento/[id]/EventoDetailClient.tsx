@@ -26,7 +26,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { formatearMoneda, formatearFechaCorta, cn } from '@/lib/utils';
+import { formatearMoneda, formatearFechaCorta, cn, parseFechaLocal } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
@@ -101,7 +101,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   
   const [tempEvento, setTempEvento] = useState({
     nombre: initialEvento.nombre,
-    fecha: initialEvento.fecha ? new Date(initialEvento.fecha).toISOString().split('T')[0] : '',
+    fecha: initialEvento.fecha ? parseFechaLocal(initialEvento.fecha).toISOString().split('T')[0] : '',
     tipo: initialEvento.tipo,
     numInvitados: initialEvento.numInvitados || 0,
     presupuestoTotal: Number(initialEvento.presupuestoTotal) || 0,
@@ -113,8 +113,13 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
     telefono: '',
     lado: '',
     categoria: 'AMIGOS',
-    tipoPersona: 'HOMBRE'
+    tipoPersona: 'HOMBRE',
+    grupoTitularId: '',   // ID del titular al que se une (empty = individual o nuevo titular)
+    esGrupoTitular: false // true = este invitado es el jefe del grupo
   });
+
+  const [acompanantes, setAcompanantes] = useState<{nombre: string, tipoPersona: string}[]>([]);
+
 
   // UI Pagos
   const [showPagoModal, setShowPagoModal] = useState<any | null>(null);
@@ -156,7 +161,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
     }
     setTempEvento({
       nombre: initialEvento.nombre,
-      fecha: initialEvento.fecha ? new Date(initialEvento.fecha).toISOString().split('T')[0] : '',
+      fecha: initialEvento.fecha ? parseFechaLocal(initialEvento.fecha).toISOString().split('T')[0] : '',
       tipo: initialEvento.tipo,
       numInvitados: initialEvento.numInvitados || 0,
       presupuestoTotal: Number(initialEvento.presupuestoTotal) || 0,
@@ -257,9 +262,16 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           eventoId: evento.id,
-          ...newGuest,
-          // Si no es boda, el lado es null
-          lado: evento.tipo === 'Boda' ? newGuest.lado : undefined
+          nombre: newGuest.nombre,
+          email: newGuest.email || undefined,
+          telefono: newGuest.telefono || undefined,
+          categoria: newGuest.categoria,
+          tipoPersona: newGuest.tipoPersona,
+          lado: evento.tipo === 'Boda' ? (newGuest.lado || undefined) : undefined,
+          // Grupo familiar
+          grupoTitularId: newGuest.grupoTitularId || undefined,
+          esGrupoTitular: newGuest.esGrupoTitular,
+          acompanantes: newGuest.esGrupoTitular ? acompanantes : undefined,
         })
       });
 
@@ -267,7 +279,8 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
 
       if (res.success) {
         setIsAddGuestModalOpen(false);
-        setNewGuest({ nombre: '', email: '', telefono: '', lado: '', categoria: 'AMIGOS', tipoPersona: 'HOMBRE' });
+        setNewGuest({ nombre: '', email: '', telefono: '', lado: '', categoria: 'AMIGOS', tipoPersona: 'HOMBRE', grupoTitularId: '', esGrupoTitular: false });
+        setAcompanantes([]);
         router.refresh();
       } else {
         alert(res.error || 'Error desconocido al agregar invitado');
@@ -910,7 +923,19 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                                 <PersonIcon tipo={i.tipoPersona} className="w-6 h-6" />
                               </div>
                               <div>
-                                <p className="font-bold text-sm uppercase tracking-tight">{i.nombre}</p>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="font-bold text-sm uppercase tracking-tight">{i.nombre}</p>
+                                  {i.esGrupoTitular && (
+                                    <span className="px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-violet-500/20 border border-violet-500/30 text-violet-300 flex items-center gap-1">
+                                      <Users size={8} /> Titular
+                                    </span>
+                                  )}
+                                  {i.grupoTitularId && (
+                                    <span className="px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider bg-violet-500/10 border border-violet-500/20 text-violet-400/70">
+                                      ↳ Grupo
+                                    </span>
+                                  )}
+                                </div>
                                 <span className="text-[9px] font-black text-[var(--color-texto-muted)] uppercase tracking-widest">{i.tipoPersona || 'Asistente'}</span>
                               </div>
                            </div>
@@ -1088,8 +1113,8 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
       )}
       {/* MODAL AGREGAR INVITADO */}
       {isAddGuestModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="card max-w-xl w-full p-8 space-y-8 animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="card max-w-xl w-full p-8 space-y-6 animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
              <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
                    <div className="p-2 rounded-xl bg-[var(--color-primario)]/10 text-[var(--color-primario-claro)]">
@@ -1168,6 +1193,119 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                      </select>
                   </div>
                 )}
+
+                {/* ── GRUPO FAMILIAR ─────────────────────────────────────── */}
+                <div className="md:col-span-2 space-y-3 pt-2 border-t border-white/5">
+                  <div className="flex items-center gap-2">
+                    <Users size={14} className="text-violet-400" />
+                    <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest">Grupo Familiar (Opcional)</label>
+                  </div>
+                  <p className="text-[10px] text-white/30 leading-relaxed">
+                    Agrupa invitados que comparten una sola invitación. El <strong className="text-white/50">Titular</strong> recibe el link y confirma por todo el grupo.
+                  </p>
+
+                  {/* Option A: Este es el titular (nuevo grupo) */}
+                  <button
+                    onClick={() => {
+                      setNewGuest(prev => ({ ...prev, esGrupoTitular: !prev.esGrupoTitular, grupoTitularId: '' }));
+                      if (newGuest.esGrupoTitular) setAcompanantes([]); // clear on uncheck
+                    }}
+                    className={cn(
+                      'w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left',
+                      newGuest.esGrupoTitular
+                        ? 'border-violet-500/50 bg-violet-500/10 text-white'
+                        : 'border-white/5 bg-white/5 text-white/40 hover:border-white/10'
+                    )}
+                  >
+                    <div className={cn(
+                      'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
+                      newGuest.esGrupoTitular ? 'border-violet-400 bg-violet-500' : 'border-white/20'
+                    )}>
+                      {newGuest.esGrupoTitular && <div className="w-2 h-2 rounded-full bg-white" />}
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-wider">Es Titular del grupo</p>
+                      <p className="text-[10px] opacity-60 mt-0.5">Este invitado recibe el link de invitación y confirma por su grupo.</p>
+                    </div>
+                  </button>
+
+                  {/* UI Acompañantes Dinámico */}
+                  {newGuest.esGrupoTitular && (
+                    <div className="mt-4 p-4 rounded-xl bg-black/20 border border-[var(--color-borde-suave)] space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-black uppercase text-violet-300">Acompañantes del Titular</label>
+                        <span className="text-[10px] font-bold text-white/40">{acompanantes.length} Agregados</span>
+                      </div>
+                      
+                      {acompanantes.map((acomp, idx) => (
+                        <div key={idx} className="flex gap-2 items-center">
+                          <input 
+                            type="text" 
+                            value={acomp.nombre} 
+                            onChange={(e) => {
+                              const newAcomp = [...acompanantes];
+                              newAcomp[idx].nombre = e.target.value;
+                              setAcompanantes(newAcomp);
+                            }}
+                            className="flex-1 bg-[var(--color-fondo-input)] border border-white/10 text-white rounded-lg px-3 py-2 outline-none focus:border-violet-400 text-xs transition-all" 
+                            placeholder="Nombre del acompañante (ej. Esposa)" 
+                          />
+                          <select 
+                            value={acomp.tipoPersona} 
+                            onChange={(e) => {
+                              const newAcomp = [...acompanantes];
+                              newAcomp[idx].tipoPersona = e.target.value;
+                              setAcompanantes(newAcomp);
+                            }}
+                            className="bg-[var(--color-fondo-input)] border border-white/10 text-white rounded-lg px-2 py-2 outline-none focus:border-violet-400 text-xs transition-all uppercase font-bold"
+                          >
+                            <option value="HOMBRE">Hombre</option>
+                            <option value="MUJER">Mujer</option>
+                            <option value="NINO">Niño</option>
+                            <option value="NINA">Niña</option>
+                          </select>
+                          <button 
+                            onClick={() => setAcompanantes(acompanantes.filter((_, i) => i !== idx))} 
+                            className="text-red-400 hover:text-red-300 p-2 hover:bg-white/5 rounded-full transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+
+                      <button 
+                        onClick={() => setAcompanantes([...acompanantes, { nombre: '', tipoPersona: 'MUJER' }])}
+                        className="w-full py-3 rounded-lg border border-dashed border-violet-500/40 text-violet-400 hover:bg-violet-500/10 font-bold text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                      >
+                        <Plus size={14} /> Añadir otro acompañante
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Option B: Es miembro de un grupo existente */}
+
+                  {!newGuest.esGrupoTitular && (
+                    (() => {
+                      const titulares = invitados.filter((i: any) => i.esGrupoTitular);
+                      if (titulares.length === 0) return null;
+                      return (
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black uppercase text-white/30">Agregar al grupo de:</label>
+                          <select
+                            value={newGuest.grupoTitularId}
+                            onChange={(e) => setNewGuest({ ...newGuest, grupoTitularId: e.target.value })}
+                            className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-violet-400 transition-all text-xs font-bold"
+                          >
+                            <option value="">— Invitado individual —</option>
+                            {titulares.map((t: any) => (
+                              <option key={t.id} value={t.id}>{t.nombre}</option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })()
+                  )}
+                </div>
              </div>
 
              <div className="flex gap-4 pt-4">

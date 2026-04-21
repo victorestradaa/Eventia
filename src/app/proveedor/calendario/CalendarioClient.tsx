@@ -13,6 +13,7 @@ import {
 import { es } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
 import { createBloqueoRapido, confirmarTurnoReserva } from '@/lib/actions/providerActions';
+import { parseFechaLocal } from '@/lib/utils';
 
 interface CalendarioClientProps {
   reservas: any[];
@@ -68,7 +69,7 @@ export default function CalendarioClient({ reservas: initialReservas, proveedor,
     const capacidad = servicio?.capacidadSimultanea || 1;
 
     const reservasDelDia = reservas.filter(r => 
-      isSameDay(new Date(r.fechaEvento), fecha) &&
+      isSameDay(parseFechaLocal(r.fechaEvento), fecha) &&
       r.servicioId === servicioId &&
       r.estado !== 'CANCELADO'
     );
@@ -98,7 +99,7 @@ export default function CalendarioClient({ reservas: initialReservas, proveedor,
   // ── Lógica de clic en día ──
   const handleDayClick = (day: Date) => {
     const reservasHoy = reservas.filter(r => {
-      const rDate = new Date(r.fechaEvento);
+      const rDate = parseFechaLocal(r.fechaEvento);
       return isSameDay(rDate, day);
     });
 
@@ -171,7 +172,7 @@ export default function CalendarioClient({ reservas: initialReservas, proveedor,
 
   // ── Indicador visual del estado del día ──
   const getDayStatus = (day: Date) => {
-    const reservasHoy = reservas.filter(r => isSameDay(new Date(r.fechaEvento), day));
+    const reservasHoy = reservas.filter(r => isSameDay(parseFechaLocal(r.fechaEvento), day));
     const temporales = reservasHoy.filter(r => r.estado === 'TEMPORAL');
     const confirmadas = reservasHoy.filter(r => r.estado === 'APARTADO' || r.estado === 'LIQUIDADO');
     const hayDiaCompleto = reservasHoy.some(r => r.tipoReserva === 'DIA_COMPLETO' && r.estado !== 'CANCELADO');
@@ -179,7 +180,7 @@ export default function CalendarioClient({ reservas: initialReservas, proveedor,
     return { reservasHoy, temporales, confirmadas, hayDiaCompleto };
   };
 
-  const ventasEsteMes = reservas.filter(r => isSameMonth(new Date(r.fechaEvento), currentDate));
+  const ventasEsteMes = reservas.filter(r => isSameMonth(parseFechaLocal(r.fechaEvento), currentDate));
   const totalMontoMes = ventasEsteMes.reduce((acc, curr) => acc + (curr.montoTotal || 0), 0);
   const pendientesConfirmacion = reservas.filter(r => r.estado === 'TEMPORAL' && !r.esManual && !r.turnoConfirmadoEn);
 

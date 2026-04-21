@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { serializePrisma } from '@/lib/utils';
 
 /**
  * Registra un abono a una reserva y sincroniza con el presupuesto del evento.
@@ -150,14 +151,14 @@ export async function registrarAbono(data: {
     };
 
     console.log(`[registrarAbono] Enviando respuesta exitosa:`, responsePayload);
-    return JSON.parse(JSON.stringify(responsePayload));
+    return serializePrisma(responsePayload);
 
   } catch (error: any) {
     console.error('[registrarAbono] ERROR:', error);
     // Asegurar que el error también sea un objeto plano simple
-    return JSON.parse(JSON.stringify({ 
+    return serializePrisma({ 
       success: false, 
       error: error?.message || 'Error interno al procesar el abono.' 
-    }));
+    });
   }
 }

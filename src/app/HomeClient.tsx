@@ -25,7 +25,7 @@ export default function HomeClient() {
     <div className="flex flex-col min-h-screen font-sans bg-[var(--color-fondo)] text-[var(--color-texto)]">
       
       {/* ──────────── Header ──────────── */}
-      <header className="sticky top-0 z-50 py-4 px-8 bg-[var(--color-fondo)]/80 backdrop-blur-md">
+      <header className="sticky top-0 z-[100] py-4 px-8 bg-[var(--color-fondo)]/80 backdrop-blur-md">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between">
           <Link href="/" className="shrink-0">
             <Image src="/logo.png" alt="Eventia Logo" width={140} height={45} className="w-auto h-11 object-contain" priority />
@@ -46,7 +46,7 @@ export default function HomeClient() {
             </div>
             
             <button 
-              className="lg:hidden p-2 text-[var(--color-texto)]"
+              className="lg:hidden p-2 text-[var(--color-texto)] relative z-10 pointer-events-auto"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}

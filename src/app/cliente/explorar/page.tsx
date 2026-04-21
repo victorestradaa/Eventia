@@ -101,7 +101,7 @@ export default function ExplorarPage() {
                   type="date" 
                   value={filtros.fecha}
                   onChange={(e) => setFiltros({...filtros, fecha: e.target.value})}
-                  className="bg-transparent border-none outline-none text-[11px] font-black uppercase text-[#1a1b35] cursor-pointer"
+                  className="bg-transparent border-none outline-none text-[11px] font-black uppercase text-[var(--color-texto)] cursor-pointer"
                   style={{ colorScheme: 'light' }}
                 />
               </div>
@@ -127,7 +127,7 @@ export default function ExplorarPage() {
             "btn h-16 px-12 transition-all font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-2xl",
             showAdvanced 
               ? "btn-oro shadow-oro scale-[1.02]" 
-              : "bg-[var(--color-fondo-card)] border border-white/10 text-[#1a1b35] hover:border-[var(--color-acento)]/50"
+              : "bg-[var(--color-fondo-card)] border border-white/10 text-[var(--color-texto-suave)] hover:border-[var(--color-acento)]/50"
           )}
         >
           <Settings2 size={18} className={cn("mr-2", showAdvanced ? "text-[#1a1b35]" : "text-[var(--color-acento)]")} />
@@ -181,7 +181,7 @@ export default function ExplorarPage() {
                 </div>
 
                 <div className="space-y-4">
-                   <label className="text-[10px] font-black uppercase tracking-widest text-[#1a1b35]">Ubicación (Ciudad)</label>
+                   <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)]">Ubicación (Ciudad)</label>
                    <div className="relative">
                       <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-acento)]" />
                       <input 
@@ -201,7 +201,7 @@ export default function ExplorarPage() {
                         setCatActiva('Todos');
                         setSearchQuery('');
                      }}
-                     className="btn btn-fantasma w-full text-[10px] font-black uppercase tracking-widest h-11 border-[#1a1b35]/20 text-[#1a1b35]"
+                     className="btn btn-fantasma w-full text-[10px] font-black uppercase tracking-widest h-11 border-[var(--color-borde-suave)] text-[var(--color-texto-suave)]"
                    >
                      Restablecer todo
                    </button>
@@ -222,15 +222,15 @@ export default function ExplorarPage() {
               key={cat}
               onClick={() => setCatActiva(cat)}
               className={cn(
-                "px-8 py-2.5 rounded-xl whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all border duration-300",
+                "px-10 py-4 rounded-xl whitespace-nowrap text-[13px] font-black uppercase tracking-[0.1em] transition-all border duration-300 shadow-md",
                 isActive 
-                  ? "text-white shadow-lg scale-105" 
-                  : "bg-white/5 border-white/5 text-[var(--color-texto-muted)] hover:border-white/20 hover:text-white"
+                  ? "text-white shadow-xl scale-105 active:scale-95" 
+                  : "bg-[var(--color-fondo-card)] border-[var(--color-borde-suave)] text-[var(--color-texto-muted)] hover:border-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
               )}
               style={isActive ? {
                 backgroundColor: catColor,
                 borderColor: catColor,
-                boxShadow: `0 8px 20px ${catColor}40`
+                boxShadow: `0 8px 25px ${catColor}50`
               } : {}}
             >
               {cat}

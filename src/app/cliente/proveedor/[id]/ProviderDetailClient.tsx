@@ -19,7 +19,7 @@ import {
   ShoppingBag
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { cn, formatearMoneda } from '@/lib/utils';
+import { cn, formatearMoneda, parseFechaLocal } from '@/lib/utils';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
@@ -60,6 +60,8 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(data?.servicios?.[0]?.id || null);
   const [solicitando, setSolicitando] = useState(false);
   const [errorSolicitud, setErrorSolicitud] = useState<string | null>(null);
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [calendarView, setCalendarView] = useState<any>('month');
 
   useEffect(() => {
     if (mostrarCalendario) {
@@ -88,8 +90,8 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
   // Convertir reservas a eventos de calendario
   const calendarEvents = reservas.map(r => ({
     title: r.esManual ? 'No disponible' : 'Reservado',
-    start: new Date(r.fechaEvento),
-    end: new Date(r.fechaEvento),
+    start: parseFechaLocal(r.fechaEvento),
+    end: parseFechaLocal(r.fechaEvento),
     allDay: r.tipoReserva === 'DIA_COMPLETO',
   }));
 
@@ -280,10 +282,8 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
                             return;
                          }
 
-                         // Robust day calculation: ensure we get the local day of the week for the event date
-                         const fechaString = typeof activeEvent.fecha === 'string' ? activeEvent.fecha.split('T')[0] : new Date(activeEvent.fecha).toISOString().split('T')[0];
-                         const [year, month, day] = fechaString.split('-').map(Number);
-                         const fechaLocal = new Date(year, month - 1, day);
+                         // Robust day calculation: ensure we get the local day of the week for the event date without shifting
+                         const fechaLocal = parseFechaLocal(activeEvent.fecha);
                          const diaEvento = fechaLocal.getDay(); 
                          
                          if (diasPermitidos.length > 0 && !diasPermitidos.includes(diaEvento)) {
@@ -491,13 +491,18 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
                           startAccessor="start"
                           endAccessor="end"
                           culture="es"
+                           date={calendarDate}
+                           view={calendarView}
+                           onNavigate={(date) => setCalendarDate(date)}
+                           onView={(view) => setCalendarView(view)}
                           messages={{
                             next: "Siguiente",
                             previous: "Anterior",
                             today: "Hoy",
                             month: "Mes",
                             week: "Semana",
-                            day: "Día",
+                            agenda: "Agenda",
+                             day: "Día",
                             showMore: (total: number) => `+ Ver ${total} más`
                           }}
                        />

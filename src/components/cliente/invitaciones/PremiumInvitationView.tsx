@@ -16,22 +16,45 @@ import {
   GlassWater,
   Images,
   QrCode,
-  ChevronDown
+  ChevronDown,
+  Users,
+  Check,
+  User as UserIcon
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, parseFechaLocal } from '@/lib/utils';
 import { QRCodeSVG } from 'qrcode.react';
 
 interface PremiumInvitationViewProps {
   evento: any;
   invitado: any;
   status: 'IDLE' | 'SAVING' | 'SUCCESS' | 'ERROR';
-  onRSVP: (estado: 'CONFIRMADO' | 'RECHAZADO') => void;
+  onRSVP: (estado: 'CONFIRMADO' | 'RECHAZADO', confirmadosIds?: string[]) => void;
   isPreview?: boolean;
 }
 
 export default function PremiumInvitationView({ evento, invitado, status, onRSVP, isPreview = false }: PremiumInvitationViewProps) {
   const config = evento.invitacion?.configWeb || {};
   const tema = config.tema || 'dark';
+
+  // Group RSVP state
+  const isGrupo = invitado?.grupoMiembros && invitado.grupoMiembros.length > 0;
+  const grupoCompleto = isGrupo
+    ? [{ id: invitado.id, nombre: invitado.nombre, tipoPersona: invitado.tipoPersona }, ...invitado.grupoMiembros]
+    : [];
+  const [grupoSeleccionados, setGrupoSeleccionados] = useState<Set<string>>(() => {
+    const all = new Set<string>();
+    if (invitado?.id) all.add(invitado.id);
+    (invitado?.grupoMiembros || []).forEach((m: any) => all.add(m.id));
+    return all;
+  });
+
+  const toggleMiembro = (id: string) => {
+    setGrupoSeleccionados(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   // --- STATE NAVEGACIÓN ---
   const [currentPage, setCurrentPage] = useState(0);
@@ -213,11 +236,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                      isPreview ? "text-[3cqi]" : "text-lg md:text-xl"
                    )}>
                       {evento.fecha ? (
-                        (() => {
-                          const date = new Date(evento.fecha);
-                          // Bypass UTC shift by adding offset or using UTC methods
-                          return new Date(date.getTime() + date.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
-                        })()
+                        parseFechaLocal(evento.fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
                       ) : 'Próximamente'}
                    </p>
                 </div>
@@ -226,7 +245,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         );
 
       case 'mostrarCeremonia':
-        const fechaCer = config.ceremoniaFecha ? new Date(config.ceremoniaFecha) : (evento.fecha ? new Date(evento.fecha) : null);
+        const fechaCer = config.ceremoniaFecha ? parseFechaLocal(config.ceremoniaFecha) : (evento.fecha ? parseFechaLocal(evento.fecha) : null);
         const nombreLugar = config.ceremoniaNombre || evento.invitacion?.lugarTexto || 'Lugar por asignar';
         const bgColor = config.ceremoniaBgColor || '#fafafa';
         const textColor = config.ceremoniaTextColor || '#8b7355';
@@ -253,7 +272,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                         className="text-[3cqi] font-black uppercase tracking-[0.4em] opacity-40 text-center !text-center"
                       >
                          {fechaCer ? (
-                           new Date(fechaCer.getTime() + fechaCer.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { month: 'long' }).toUpperCase()
+                           fechaCer.toLocaleDateString('es-MX', { month: 'long' }).toUpperCase()
                          ) : 'MES'}
                       </p>
                       <div className="flex items-center justify-center gap-4 w-full">
@@ -261,12 +280,12 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                          <div className="flex items-center gap-4">
                             <span className="text-[3cqi] font-black uppercase tracking-widest leading-none opacity-40">
                               {fechaCer ? (
-                                new Date(fechaCer.getTime() + fechaCer.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase()
+                                fechaCer.toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase()
                               ) : 'SÁBADO'}
                             </span>
                             <span className="font-black leading-none text-[12cqi] text-[#bd9b65]">
                               {fechaCer ? (
-                                new Date(fechaCer.getTime() + fechaCer.getTimezoneOffset() * 60000).getDate()
+                                fechaCer.getDate()
                               ) : '27'}
                             </span>
                             <span className="text-[3cqi] font-black uppercase tracking-widest leading-none opacity-40">
@@ -310,7 +329,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
         );
 
       case 'mostrarCelebracion':
-        const fechaCel = config.celebracionFecha ? new Date(config.celebracionFecha) : (evento.fecha ? new Date(evento.fecha) : null);
+        const fechaCel = config.celebracionFecha ? parseFechaLocal(config.celebracionFecha) : (evento.fecha ? parseFechaLocal(evento.fecha) : null);
         const nombreCel = config.celebracionNombre || evento.invitacion?.lugarTexto || 'Hacienda / Salón';
         
         return (
@@ -329,7 +348,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                     <div className="space-y-1 w-full flex flex-col items-center">
                       <p className="text-[3cqi] font-black uppercase tracking-[0.4em] opacity-40 text-center">
                          {fechaCel ? (
-                           new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { month: 'long' }).toUpperCase()
+                           fechaCel.toLocaleDateString('es-MX', { month: 'long' }).toUpperCase()
                          ) : 'MES'}
                       </p>
                       <div className="flex items-center justify-center gap-4 w-full">
@@ -337,12 +356,12 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                          <div className="flex items-center gap-4">
                             <span className="text-[3cqi] font-black uppercase tracking-widest leading-none opacity-40">
                               {fechaCel ? (
-                                new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase()
+                                fechaCel.toLocaleDateString('es-MX', { weekday: 'long' }).toUpperCase()
                               ) : 'SÁBADO'}
                             </span>
                             <span className="font-black leading-none text-[12cqi] text-[#bd9b65]">
                               {fechaCel ? (
-                                new Date(fechaCel.getTime() + fechaCel.getTimezoneOffset() * 60000).getDate()
+                                fechaCel.getDate()
                               ) : '27'}
                             </span>
                             <span className="text-[3cqi] font-black uppercase tracking-widest leading-none opacity-40">
@@ -569,11 +588,11 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
       case 'mostrarRSVP':
         return (
           <div className="w-full mx-auto px-4 py-8 flex flex-col items-center justify-center h-full">
-            <section className="w-full max-w-[550px] flex flex-col items-center text-center space-y-10">
-               <div className="space-y-6 w-full flex flex-col items-center">
+            <section className="w-full max-w-[550px] flex flex-col items-center text-center space-y-8">
+               <div className="space-y-4 w-full flex flex-col items-center">
                   <div className="w-20 h-20 rounded-full border-4 border-[var(--color-acento)]/20 p-2 mx-auto">
                      <div className="w-full h-full bg-gradient-to-br from-[var(--color-acento)] to-[var(--color-acento-claro)] rounded-full flex items-center justify-center shadow-xl">
-                        <Heart size={28} className="text-white" fill="white" />
+                        {isGrupo ? <Users size={28} className="text-white" /> : <Heart size={28} className="text-white" fill="white" />}
                      </div>
                   </div>
                   <h2 className="font-black uppercase italic tracking-tighter text-[8cqi] w-full text-center">¿Nos acompañas?</h2>
@@ -581,30 +600,105 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
                      style={{ textAlign: 'center' }}
                      className="font-black uppercase tracking-widest opacity-60 w-full max-w-[90%] mx-auto text-[4.5cqi] !text-center leading-relaxed"
                    >
-                     Hola <span className="text-[var(--color-acento)]" style={{ textAlign: 'center' }}>{invitado?.nombre}</span>, confirma tu asistencia para ayudarnos a organizar este día.
+                     {isGrupo
+                       ? <>Hola <span className="text-[var(--color-acento)]">{invitado?.nombre}</span>, selecciona quiénes de tu grupo asistirán.</>
+                       : <>Hola <span className="text-[var(--color-acento)]" style={{ textAlign: 'center' }}>{invitado?.nombre}</span>, confirma tu asistencia para ayudarnos a organizar este día.</>
+                     }
                   </p>
-                <div className="flex flex-row justify-center gap-4 w-full max-w-[500px] mx-auto px-4">
-                  <button
-                    onClick={() => onRSVP('CONFIRMADO')}
-                    disabled={status === 'SAVING'}
-                    className={cn(
-                      'flex-1 py-16 rounded-3xl font-black uppercase tracking-[0.15em] transition-all active:scale-95 shadow-2xl flex flex-col items-center justify-center gap-3',
-                      'bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-50 text-[6cqi]'
-                    )}
-                  >
-                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={48} /> Acepto</>}
-                  </button>
 
-                  <button
-                    onClick={() => onRSVP('RECHAZADO')}
-                    disabled={status === 'SAVING'}
-                    className={cn(
-                      'flex-1 py-16 rounded-3xl font-black uppercase tracking-[0.15em] transition-all active:scale-95 flex flex-col items-center justify-center gap-3',
-                      'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60 disabled:opacity-20 text-[6cqi]'
-                    )}
-                  >
-                    {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><XCircle size={48} /> No podré</>}
-                  </button>
+                  {/* ── GRUPO: checklist de miembros ── */}
+                  {isGrupo && (
+                    <div className="w-full max-w-[460px] space-y-2 text-left">
+                      <p className="text-[3.5cqi] font-black uppercase tracking-widest opacity-40 mb-3">
+                        Tu grupo ({grupoCompleto.length} personas)
+                      </p>
+                      {grupoCompleto.map((miembro: any) => {
+                        const checked = grupoSeleccionados.has(miembro.id);
+                        return (
+                          <button
+                            key={miembro.id}
+                            onClick={() => toggleMiembro(miembro.id)}
+                            className={cn(
+                              'w-full flex items-center gap-4 p-4 rounded-2xl border transition-all active:scale-[0.98]',
+                              checked
+                                ? 'bg-emerald-500/10 border-emerald-500/40 text-white'
+                                : 'bg-white/5 border-white/10 text-white/40'
+                            )}
+                          >
+                            <div className={cn(
+                              'w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all',
+                              checked ? 'bg-emerald-500 border-emerald-500' : 'border-white/20'
+                            )}>
+                              {checked && <Check size={14} className="text-white" strokeWidth={3} />}
+                            </div>
+                            <div className={cn(
+                              'w-9 h-9 rounded-full border flex items-center justify-center shrink-0',
+                              checked ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-white/10 bg-white/5'
+                            )}>
+                              <UserIcon size={18} className={checked ? 'text-emerald-400' : 'text-white/20'} />
+                            </div>
+                            <span className="text-[4cqi] font-bold truncate flex-1 text-left">{miembro.nombre}</span>
+                          </button>
+                        );
+                      })}
+                      {/* Quick select all/none */}
+                      <div className="flex gap-3 pt-1">
+                        <button onClick={() => setGrupoSeleccionados(new Set(grupoCompleto.map((m: any) => m.id)))} className="flex-1 text-[3.5cqi] font-black uppercase tracking-widest text-emerald-400 hover:text-emerald-300 py-2 transition-colors">Todos</button>
+                        <div className="w-px bg-white/10" />
+                        <button onClick={() => setGrupoSeleccionados(new Set())} className="flex-1 text-[3.5cqi] font-black uppercase tracking-widest opacity-40 hover:opacity-70 py-2 transition-colors">Ninguno</button>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Buttons */}
+                <div className="flex flex-row justify-center gap-4 w-full max-w-[500px] mx-auto px-4">
+                  {isGrupo ? (
+                    <>
+                      <button
+                        onClick={() => onRSVP('CONFIRMADO', Array.from(grupoSeleccionados))}
+                        disabled={status === 'SAVING' || grupoSeleccionados.size === 0}
+                        className={cn(
+                          'flex-1 py-12 rounded-3xl font-black uppercase tracking-[0.15em] transition-all active:scale-95 shadow-2xl flex flex-col items-center justify-center gap-2',
+                          'bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-50 text-[5cqi]'
+                        )}
+                      >
+                        {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={36} /> Confirmar {grupoSeleccionados.size > 0 ? `(${grupoSeleccionados.size})` : ''}</>}
+                      </button>
+                      <button
+                        onClick={() => onRSVP('RECHAZADO', [])}
+                        disabled={status === 'SAVING'}
+                        className={cn(
+                          'flex-1 py-12 rounded-3xl font-black uppercase tracking-[0.15em] transition-all active:scale-95 flex flex-col items-center justify-center gap-2',
+                          'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60 disabled:opacity-20 text-[5cqi]'
+                        )}
+                      >
+                        {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><XCircle size={36} /> No podremos</>}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => onRSVP('CONFIRMADO')}
+                        disabled={status === 'SAVING'}
+                        className={cn(
+                          'flex-1 py-16 rounded-3xl font-black uppercase tracking-[0.15em] transition-all active:scale-95 shadow-2xl flex flex-col items-center justify-center gap-3',
+                          'bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-50 text-[6cqi]'
+                        )}
+                      >
+                        {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={48} /> Acepto</>}
+                      </button>
+                      <button
+                        onClick={() => onRSVP('RECHAZADO')}
+                        disabled={status === 'SAVING'}
+                        className={cn(
+                          'flex-1 py-16 rounded-3xl font-black uppercase tracking-[0.15em] transition-all active:scale-95 flex flex-col items-center justify-center gap-3',
+                          'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60 disabled:opacity-20 text-[6cqi]'
+                        )}
+                      >
+                        {status === 'SAVING' ? <Loader2 className="animate-spin" /> : <><XCircle size={48} /> No podré</>}
+                      </button>
+                    </>
+                  )}
                </div>
                </div>
             </section>

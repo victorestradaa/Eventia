@@ -5,6 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Helper to serialize Prisma objects (converts Decimals to numbers)
+ */
+export function serializePrisma<T>(data: T): any {
+  if (!data) return data;
+  return JSON.parse(JSON.stringify(data, (key, value) => 
+    typeof value === 'object' && value !== null && value.constructor && value.constructor.name === 'Decimal' 
+      ? Number(value) 
+      : value
+  ));
+}
+
 export function formatearMoneda(monto: number | string): string {
   const numero = typeof monto === 'string' ? parseFloat(monto) : monto
   return new Intl.NumberFormat('es-MX', {
@@ -13,18 +25,27 @@ export function formatearMoneda(monto: number | string): string {
   }).format(numero)
 }
 
+/**
+ * Helper to parse a date or string into a Date object at midday local time
+ * to prevent day shifts due to timezone offsets.
+ */
+export function parseFechaLocal(fecha: Date | string): Date {
+  if (!fecha) return new Date();
+  if (typeof fecha === 'string') {
+    // Extraer componentes del string YYYY-MM-DD o ISO
+    const soloFecha = fecha.split('T')[0];
+    const [year, month, day] = soloFecha.split(/[-/]/).map(Number);
+    return new Date(year, month - 1, day, 12, 0, 0);
+  } else {
+    // Si ya es un objeto Date, lo movemos al mediodía local basándonos en sus valores UTC
+    const date = new Date(fecha);
+    return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 12, 0, 0);
+  }
+}
+
 export function formatearFecha(fecha: Date | string): string {
   if (!fecha) return '';
-  let d: Date;
-  if (typeof fecha === 'string') {
-    // Extraer componentes del string YYYY-MM-DD
-    const [year, month, day] = fecha.split('T')[0].split(/[-/]/).map(Number);
-    d = new Date(year, month - 1, day, 12, 0, 0);
-  } else {
-    // Si ya es un objeto Date (ej. de Prisma), lo movemos al mediodía local
-    const date = new Date(fecha);
-    d = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 12, 0, 0);
-  }
+  const d = parseFechaLocal(fecha);
   return new Intl.DateTimeFormat('es-MX', {
     day: 'numeric',
     month: 'long',
@@ -34,14 +55,7 @@ export function formatearFecha(fecha: Date | string): string {
 
 export function formatearFechaCorta(fecha: Date | string): string {
   if (!fecha) return '';
-  let d: Date;
-  if (typeof fecha === 'string') {
-    const [year, month, day] = fecha.split('T')[0].split(/[-/]/).map(Number);
-    d = new Date(year, month - 1, day, 12, 0, 0);
-  } else {
-    const date = new Date(fecha);
-    d = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 12, 0, 0);
-  }
+  const d = parseFechaLocal(fecha);
   return new Intl.DateTimeFormat('es-MX', {
     day: '2-digit',
     month: '2-digit',

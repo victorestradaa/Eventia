@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { serializePrisma } from '@/lib/utils';
 
 /**
  * Obtiene los eventos de un cliente específico.
@@ -30,7 +31,7 @@ export async function getEventosCliente(clienteId: string) {
       }
     });
 
-    return { success: true, data: eventos };
+    return { success: true, data: serializePrisma(eventos) };
   } catch (error) {
     console.error('Error al obtener eventos:', error);
     return { success: false, error: 'No se pudieron cargar los eventos.' };
@@ -61,7 +62,7 @@ export async function createEvento(formData: {
     });
 
     revalidatePath('/cliente/dashboard');
-    return { success: true, data: nuevoEvento };
+    return { success: true, data: serializePrisma(nuevoEvento) };
   } catch (error) {
     console.error('Error al crear evento:', error);
     return { success: false, error: 'Hubo un error al crear el evento.' };
@@ -83,7 +84,7 @@ export async function updateEvento(id: string, data: any) {
 
     revalidatePath(`/cliente/dashboard`);
     revalidatePath(`/cliente/evento/${id}`);
-    return { success: true, data: eventoActualizado };
+    return { success: true, data: serializePrisma(eventoActualizado) };
   } catch (error) {
     console.error('Error al actualizar evento:', error);
     return { success: false, error: 'No se pudo actualizar el evento.' };
@@ -100,6 +101,8 @@ export async function addInvitado(data: {
   lado?: string;
   categoria?: string;
   tipoPersona?: string;
+  grupoTitularId?: string;  // ID del titular al que pertenece (si es miembro)
+  esGrupoTitular?: boolean; // true = este invitado recibe el link de invitación
 }) {
   try {
     const nuevoInvitado = await prisma.invitado.create({
@@ -112,6 +115,8 @@ export async function addInvitado(data: {
         categoria: data.categoria || null,
         // @ts-ignore
         tipoPersona: data.tipoPersona || null,
+        grupoTitularId: data.grupoTitularId || null,
+        esGrupoTitular: data.esGrupoTitular ?? false,
       }
     });
 
@@ -124,7 +129,7 @@ export async function addInvitado(data: {
 }
 
 /**
- * Actualiza el estado RSVP de un invitado.
+ * Actualiza el estado RSVP de un invitado individual.
  */
 export async function updateInvitadoRSVP(id: string, rsvpEstado: 'CONFIRMADO' | 'PENDIENTE' | 'RECHAZADO') {
   try {
@@ -138,6 +143,40 @@ export async function updateInvitadoRSVP(id: string, rsvpEstado: 'CONFIRMADO' | 
   } catch (error) {
     console.error('Error al actualizar RSVP:', error);
     return { success: false, error: 'No se pudo actualizar el RSVP.' };
+  }
+}
+
+/**
+ * Actualiza el RSVP de un grupo familiar completo.
+ * El titular decide quiénes de su grupo asisten (confirmadosIds) y quiénes no.
+ * Los IDs en confirmadosIds se marcan CONFIRMADO, el resto RECHAZADO.
+ */
+export async function updateGrupoRSVP(titularId: string, confirmadosIds: string[]) {
+  try {
+    // Obtener el titular y todos sus miembros
+    const titular = await prisma.invitado.findUnique({
+      where: { id: titularId },
+      include: { grupoMiembros: true }
+    });
+
+    if (!titular) return { success: false, error: 'Invitado no encontrado.' };
+
+    // Todos los IDs del grupo (titular + miembros)
+    const todosIds = [titularId, ...titular.grupoMiembros.map((m: any) => m.id)];
+
+    // Actualizar cada uno individualmente
+    await Promise.all(todosIds.map((id: string) =>
+      prisma.invitado.update({
+        where: { id },
+        data: { rsvpEstado: confirmadosIds.includes(id) ? 'CONFIRMADO' : 'RECHAZADO' }
+      })
+    ));
+
+    revalidatePath(`/cliente/evento/${titular.eventoId}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Error al actualizar RSVP de grupo:', error);
+    return { success: false, error: 'No se pudo actualizar el RSVP del grupo.' };
   }
 }
 
@@ -219,7 +258,7 @@ export async function savePlanoMesas(eventoId: string, layout: any) {
       create: { eventoId, layout }
     });
     revalidatePath(`/cliente/evento/${eventoId}/mesas`);
-    return { success: true, data: upserted };
+    return { success: true, data: serializePrisma(upserted) };
   } catch (error) {
     console.error('Error al guardar plano de mesas:', error);
     return { success: false, error: 'No se pudo guardar el diseño del plano.' };
@@ -234,7 +273,7 @@ export async function getPlanoMesas(eventoId: string) {
     const plano = await prisma.disposicionMesa.findUnique({
       where: { eventoId }
     });
-    return { success: true, data: plano };
+    return { success: true, data: serializePrisma(plano) };
   } catch (error) {
     console.error('Error al obtener plano de mesas:', error);
     return { success: false, error: 'No se pudo cargar el diseño del plano.' };
@@ -243,12 +282,22 @@ export async function getPlanoMesas(eventoId: string) {
 
 /**
  * Obtiene los detalles de un invitado y su evento para la página de RSVP pública.
+ * Si el token corresponde a un titular de grupo, incluye a todos los miembros.
  */
 export async function getInvitadoRSVPDetail(invitadoId: string) {
   try {
-    const invitado = await prisma.invitado.findUnique({
-      where: { rsvpToken: invitadoId },
+    const invitado = await prisma.invitado.findFirst({
+      where: { 
+        OR: [
+          { rsvpToken: invitadoId },
+          { id: invitadoId }
+        ]
+      },
       include: {
+        // Incluir miembros del grupo si es titular
+        grupoMiembros: {
+          select: { id: true, nombre: true, tipoPersona: true, rsvpEstado: true }
+        },
         evento: {
           include: {
             invitacion: true,
@@ -264,7 +313,15 @@ export async function getInvitadoRSVPDetail(invitadoId: string) {
 
     return { 
       success: true, 
-      invitado: { id: invitado.id, nombre: invitado.nombre },
+      invitado: {
+        id: invitado.id,
+        nombre: invitado.nombre,
+        tipoPersona: (invitado as any).tipoPersona,
+        esGrupoTitular: (invitado as any).esGrupoTitular,
+        rsvpEstado: invitado.rsvpEstado,
+        // Los miembros del grupo (sin el titular, que se añade en el frontend)
+        grupoMiembros: (invitado as any).grupoMiembros || []
+      },
       evento: { 
         id: invitado.evento.id, 
         nombre: invitado.evento.nombre, 
