@@ -100,7 +100,7 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 bg-marble transition-colors duration-500">
+    <div className="min-h-screen bg-[var(--color-fondo)] bg-marble transition-colors duration-500">
       {/* Top Navbar Refinado */}
       <header className="sticky top-0 z-50 glass-premium border-b border-[var(--color-borde-suave)] px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">

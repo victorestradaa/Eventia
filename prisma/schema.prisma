@@ -125,13 +125,13 @@ model Evento {
   descripcion       String?
   creadoEn          DateTime           @default(now())
   actualizadoEn     DateTime           @updatedAt
+  album             AlbumDigital?
   disposicionMesas  DisposicionMesa?
   cliente           Cliente            @relation(fields: [clienteId], references: [id], onDelete: Cascade)
   invitacion        InvitacionDigital?
   invitados         Invitado[]
   lineasPresupuesto LineaPresupuesto[]
   reservas          Reserva[]
-  album             AlbumDigital?
 }
 
 model Invitado {
@@ -278,27 +278,27 @@ model CatalogoAsset {
 }
 
 model AlbumDigital {
-  id               String       @id @default(cuid())
-  eventoId         String       @unique
-  nombre           String?
-  slug             String       @unique
-  activo           Boolean      @default(true)
-  config           Json?        // { allowVideos: true, pin: "1234", etc. }
-  creadoEn         DateTime     @default(now())
-  actualizadoEn    DateTime     @updatedAt
-  evento           Evento       @relation(fields: [eventoId], references: [id], onDelete: Cascade)
-  media            AlbumMedia[]
+  id            String       @id @default(cuid())
+  eventoId      String       @unique
+  nombre        String?
+  slug          String       @unique
+  activo        Boolean      @default(true)
+  config        Json?
+  creadoEn      DateTime     @default(now())
+  actualizadoEn DateTime     @updatedAt
+  evento        Evento       @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  media         AlbumMedia[]
 }
 
 model AlbumMedia {
-  id               String       @id @default(cuid())
-  albumId          String
-  url              String       @db.Text
-  tipo             String       // "IMAGE", "VIDEO"
-  nombreArchivo    String?
-  tamanio          Int?
-  creadoEn         DateTime     @default(now())
-  album            AlbumDigital @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  id            String       @id @default(cuid())
+  albumId       String
+  url           String
+  tipo          String
+  nombreArchivo String?
+  tamanio       Int?
+  creadoEn      DateTime     @default(now())
+  album         AlbumDigital @relation(fields: [albumId], references: [id], onDelete: Cascade)
 }
 
 enum Rol {

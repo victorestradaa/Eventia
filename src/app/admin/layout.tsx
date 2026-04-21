@@ -1,9 +1,14 @@
 import Link from 'next/link';
 import { ReactNode } from 'react';
-import { cerrarSesion } from '@/lib/actions/authActions';
+import { cerrarSesion, getCurrentProfile } from '@/lib/actions/authActions';
 import { LogOut } from 'lucide-react';
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default async function AdminLayout({ children }: { children: ReactNode }) {
+  const profileRes = await getCurrentProfile();
+  const userName = profileRes.success && profileRes.data ? profileRes.data.nombre : 'Administrador';
+  const userEmail = profileRes.success && profileRes.data ? profileRes.data.email : 'admin@eventia.com';
+  const initial = userName.charAt(0).toUpperCase();
+
   return (
     <div className="flex bg-[var(--color-fondo)] min-h-screen">
       {/* Sidebar */}
@@ -64,11 +69,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-sm font-bold">Administrador</p>
-              <p className="text-xs text-[var(--color-texto-muted)]">admin@gestor.com</p>
+              <p className="text-sm font-bold">{userName}</p>
+              <p className="text-xs text-[var(--color-texto-muted)]">{userEmail}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-primario)] to-[var(--color-acento)] flex items-center justify-center font-bold">
-              A
+              {initial}
             </div>
           </div>
         </header>

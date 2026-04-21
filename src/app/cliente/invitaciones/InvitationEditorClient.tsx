@@ -46,7 +46,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
   // Pestañas
   const [tabActiva, setTabActiva] = useState<'BASIC' | 'PREMIUM' | 'ENVIAR'>('BASIC');
   
-  // Estado para la invitación Premium
+  // Estado para la invitación Premium - Asegurar seguridad ante evento nulo
   const [configWeb, setConfigWeb] = useState<any>(evento?.invitacion?.configWeb || {
     coverUrl: '',
     tema: 'dark',
@@ -59,9 +59,9 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
     mostrarRegalos: true,
     mostrarRSVP: true,
     mostrarAlbumQR: false,
-    fechaEventoExacta: evento.fecha || '',
+    fechaEventoExacta: evento?.fecha || '',
     ceremoniaNombre: '',
-    ceremoniaFecha: evento.fecha || '',
+    ceremoniaFecha: evento?.fecha || '',
     ceremoniaDireccion: '',
     ceremoniaMapsUrl: '',
     ceremoniaBgColor: '#fafafa',
@@ -69,14 +69,14 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
     dressCodeTexto: 'Formal / Gala',
     dressCodeColor: '#333333',
     celebracionNombre: 'Recepción',
-    celebracionFecha: evento.fecha || '',
+    celebracionFecha: evento?.fecha || '',
     celebracionDireccion: '',
     celebracionMapsUrl: '',
     celebracionTextColor: '#8b7355',
     galeriaFotos: [],
     galeriaEfecto: 'slide',
   });
-  const [tipoInvitacion, setTipoInvitacion] = useState(evento.invitacion?.tipoInvitacion || 'BASICA');
+  const [tipoInvitacion, setTipoInvitacion] = useState(evento?.invitacion?.tipoInvitacion || 'BASICA');
   
   // Modos de editor
   const [modoPropia, setModoPropia] = useState(evento?.invitacion?.isInvitacionPropia || false);
@@ -84,7 +84,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
   const [fondoUrlActivo, setFondoUrlActivo] = useState(evento?.invitacion?.fondoUrl || '');
 
   const getInitialEstilos = () => {
-    const defCol = evento?.invitacion?.colorTexto && !evento.invitacion.colorTexto.startsWith('{') 
+    const defCol = evento?.invitacion?.colorTexto && typeof evento.invitacion.colorTexto === 'string' && !evento.invitacion.colorTexto.startsWith('{') 
       ? evento.invitacion.colorTexto : '#ffffff';
       
     const defaults: any = {
@@ -186,19 +186,31 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
 
   if (!evento) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
-        <div className="p-6 rounded-full bg-amber-500/10 text-amber-500">
-          <CalendarIcon size={64} />
+      <div className="flex flex-col items-center justify-center py-24 px-6 text-center space-y-10 animate-in fade-in zoom-in-95 duration-700 min-h-[60vh] bg-[var(--color-fondo-card)]/30 rounded-[3rem] border border-dashed border-white/5 mx-auto max-w-4xl">
+        <div className="relative">
+          <div className="absolute -inset-8 bg-[var(--color-acento)]/10 blur-3xl rounded-full animate-pulse" />
+          <div className="relative w-28 h-28 bg-gradient-to-br from-zinc-800 to-black rounded-[2.5rem] flex items-center justify-center text-[var(--color-acento-claro)] shadow-2xl border border-white/10 ring-1 ring-white/5">
+            <CalendarIcon size={56} className="drop-shadow-[0_0_15px_var(--color-acento)]" />
+          </div>
         </div>
-        <div className="max-w-md">
-          <h2 className="text-2xl font-bold">No tienes eventos activos</h2>
-          <p className="text-[var(--color-texto-suave)] mt-2">
-            Primero debes crear un evento antes de poder diseñar tu invitación digital.
+        
+        <div className="max-w-md space-y-4">
+          <h2 className="text-4xl font-black italic uppercase tracking-tighter leading-none">
+            ¡Vaya! No hay eventos <span className="text-[var(--color-acento-claro)]">activos</span>
+          </h2>
+          <p className="text-sm text-[var(--color-texto-muted)] font-medium leading-relaxed">
+            Para poder diseñar tu invitación digital premium, primero necesitamos saber qué estamos celebrando. Crea tu primer evento y vuelve aquí para desatar tu creatividad.
           </p>
         </div>
-        <Link href="/cliente/dashboard">
-          <button className="btn btn-primario">Ir al Dashboard</button>
-        </Link>
+
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Link href="/cliente/dashboard" className="btn btn-primario px-10 py-5 gap-3 shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:-translate-y-1 transition-all">
+             <Sparkles size={20} /> Crear mi primer evento
+          </Link>
+          <Link href="/explorar" className="px-10 py-5 rounded-2xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all">
+             Ver Inspiración
+          </Link>
+        </div>
       </div>
     );
   }
@@ -519,24 +531,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
     alert('¡Enlace copiado al portapapeles!');
   };
 
-  if (!evento) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 px-6 text-center space-y-8 animate-in fade-in duration-700">
-        <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center text-white/20">
-          <CalendarIcon size={48} />
-        </div>
-        <div className="max-w-xs space-y-3">
-          <h2 className="text-2xl font-black italic uppercase tracking-tighter">No hay eventos activos</h2>
-          <p className="text-xs text-[var(--color-texto-muted)] font-medium leading-relaxed">
-            Parece que aún no tienes eventos registrados. Crea tu primer evento para comenzar a diseñar tus invitaciones premium.
-          </p>
-        </div>
-        <Link href="/cliente" className="btn btn-primario px-8 py-4 gap-3">
-           <Sparkles size={18} /> Crear mi primer evento
-        </Link>
-      </div>
-    );
-  }
+  if (!evento) return null; // Fallback de seguridad adicional, aunque ya se maneja arriba
 
   return (
     <div className="flex flex-col gap-8 pb-20">

@@ -91,6 +91,7 @@ export default function ClientPlanesClient({ planActual }: ClientPlanesClientPro
         </p>
       </div>
 
+      <div className="max-w-5xl mx-auto">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
         {PLANES_CLIENTE.map((plan) => {
           const isActual = planActual === plan.id;
@@ -178,6 +179,7 @@ export default function ClientPlanesClient({ planActual }: ClientPlanesClientPro
             </div>
           );
         })}
+      </div>
       </div>
 
       {/* Comparison or Trust Badge Section */}

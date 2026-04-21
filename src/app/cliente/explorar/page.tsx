@@ -18,7 +18,7 @@ import { getExplorarServicios } from '@/lib/actions/providerActions';
 import { CATEGORIAS_LABELS } from '@/lib/utils';
 
 const CATEGORIAS = [
-  'Todos', 'Salones', 'Música', 'Banquetes', 'Animación', 'Foto & Video', 'Decoración', 'Recuerdos', 'Inmobiliario'
+  'Todos', 'Salones', 'Música', 'Banquetes', 'Animación', 'Foto & Video', 'Decoración', 'Recuerdos', 'Mobiliario'
 ];
 
 const CATEGORIA_COLORS: Record<string, string> = {
@@ -29,7 +29,7 @@ const CATEGORIA_COLORS: Record<string, string> = {
   'Foto & Video': '#F43F5E',
   'Decoración': '#06B6D4',
   'Recuerdos': '#EC4899',
-  'Inmobiliario': '#64748B',
+  'Mobiliario': '#64748B',
   'Todos': '#6366f1' // Indigo base for "Todos"
 };
 
@@ -189,7 +189,7 @@ export default function ExplorarPage() {
                         placeholder="Ej. Guadalajara..." 
                         value={filtros.ubicacion}
                         onChange={(e) => setFiltros({...filtros, ubicacion: e.target.value})}
-                        className="input pl-10 h-11 bg-white dark:bg-black border-white/20 text-sm font-bold w-full" 
+                        className="input pl-10 h-11 bg-[var(--color-fondo-input)] border-white/20 text-sm font-bold w-full" 
                       />
                    </div>
                 </div>

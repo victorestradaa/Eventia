@@ -4,11 +4,11 @@ const { createClient } = require('@supabase/supabase-js');
 
 // --- 1. CONFIGURACIÓN ---
 // Sustituye con tu SERVICE_ROLE_KEY de la consola de Supabase (Project Settings -> API)
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnZHFyZXZlaGVld21idWp6bHdlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDU3NTMyMCwiZXhwIjoyMDkwMTUxMzIwfQ.chF7ZcsoflgmoGHx1mDAAtI1n9MA0fIfihcoXwQgTwo';
-const SUPABASE_URL = 'https://agdqreveheewmbujzlwe.supabase.co';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90aXZ5anhoZGRwenlpdWRrYnVyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjU0ODQzNCwiZXhwIjoyMDkyMTI0NDM0fQ.uGEvE92JX8XOQab598lY94-5RdU6PVcaGbRH6EeydGk';
+const SUPABASE_URL = 'https://otivyjxhddpzyiudkbur.supabase.co';
 
 // URL de Prisma
-const DATABASE_URL = 'postgresql://postgres.agdqreveheewmbujzlwe:*_N0viembre%3D%4012@aws-1-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true&sslaccept=accept_invalid_certs&connection_limit=1';
+const DATABASE_URL = 'postgresql://postgres.otivyjxhddpzyiudkbur:*_N0viembre%3D%4012@aws-1-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true&sslaccept=accept_invalid_certs';
 
 const prisma = new PrismaClient({
     datasources: { db: { url: DATABASE_URL } }

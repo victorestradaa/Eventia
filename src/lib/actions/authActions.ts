@@ -33,7 +33,7 @@ export async function getCurrentProfile() {
       // En este caso lo creamos como CLIENTE (rol por defecto), pero el re-registro lo corregirá.
       // Este caso solo debería ocurrir si el paso 2 del registro falló por timeout.
       console.warn('⚠️ Perfil Zombie detectado para:', user.email, '— Redirigiendo a reintento de registro.');
-      
+
       // En lugar de crear un perfil con rol incorrecto, devolvemos un error descriptivo
       // para que el middleware redirija al usuario a completar su registro.
       return { success: false, error: 'PROFILE_MISSING', zombie: true };
@@ -42,22 +42,21 @@ export async function getCurrentProfile() {
     return { success: true, data: perfil };
   } catch (error) {
     console.error('Error al obtener perfil:', error);
-    const msg = error instanceof Error ? error.message : String(error);
-    return { success: false, error: `Error Prisma: ${msg}` };
+    return { success: false, error: 'Ocurrió un error inesperado al obtener el perfil.' };
   }
 }
 
 export async function cerrarSesion() {
   const supabase = await createClient();
-  
+
   try {
     // 1. Sign out strictly from Supabase
     await supabase.auth.signOut();
-    
+
     // 2. Manual cookie cleanup for extra safety (handles persistent sessions on some browsers)
     const { cookies } = await import('next/headers');
     const cookieStore = await cookies();
-    
+
     // Supabase standard cookies
     const supabaseCookies = cookieStore.getAll().filter(c => c.name.startsWith('sb-') || c.name.includes('supabase'));
     supabaseCookies.forEach(c => {
@@ -77,9 +76,9 @@ import { CategoriaServicio } from '@prisma/client';
 /**
  * Registra un nuevo usuario en la base de datos de Prisma
  */
-export async function registrarUsuario(data: { 
-  email: string; 
-  nombre: string; 
+export async function registrarUsuario(data: {
+  email: string;
+  nombre: string;
   rol: 'CLIENTE' | 'PROVEEDOR';
   categoria?: CategoriaServicio;
 }) {
@@ -107,13 +106,12 @@ export async function registrarUsuario(data: {
     return { success: true, data: usuario };
   } catch (error: any) {
     console.error('Error en registrarUsuario:', error);
-    
+
     // P2002 es el error de Prisma para violaciones de campos UNIQUE
     if (error?.code === 'P2002') {
       return { success: false, error: 'El correo electrónico ya está registrado en la base de datos.' };
     }
-    
-    const mensajeError = error instanceof Error ? error.message : String(error);
-    return { success: false, error: `Error DB: ${mensajeError}` };
+
+    return { success: false, error: 'No se pudo registrar el usuario debido a un error interno.' };
   }
 }

@@ -75,7 +75,7 @@ export const CATEGORIAS_LABELS: Record<string, string> = {
   FOTOGRAFIA: 'Foto & Video',
   DECORACION: 'Decoración',
   RECUERDOS: 'Recuerdos',
-  MOBILIARIO: 'Inmobiliario',
+  MOBILIARIO: 'Mobiliario',
 }
 
 export const TIPO_EVENTO_LABELS: Record<string, string> = {

@@ -4,6 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
+import { Menu, X } from 'lucide-react';
+import { useState } from 'react';
 
 const CATEGORIAS = [
   { id: 'SALON',      label: 'Salones',      img: '/cat_salones.png' },
@@ -13,10 +15,12 @@ const CATEGORIAS = [
   { id: 'FOTOGRAFIA', label: 'Foto & Video', img: '/cat_fotografia.png' },
   { id: 'DECORACION', label: 'Decoración',   img: '/cat_decoracion.png' },
   { id: 'RECUERDOS',  label: 'Recuerdos',    img: '/cat_recuerdos.png' },
-  { id: 'MOBILIARIO', label: 'Inmobiliario', img: '/cat_inmobiliario.png' },
+  { id: 'MOBILIARIO', label: 'Mobiliario',   img: '/cat_inmobiliario.png' },
 ];
 
 export default function HomeClient() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <div className="flex flex-col min-h-screen font-sans bg-[var(--color-fondo)] text-[var(--color-texto)]">
       
@@ -27,30 +31,44 @@ export default function HomeClient() {
             <Image src="/logo.png" alt="Eventia Logo" width={140} height={45} className="w-auto h-11 object-contain" priority />
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-8 ml-12">
-            <Link href="#" className="text-sm font-medium hover:text-[var(--color-acento)] transition-colors">Mis Eventos</Link>
-            <Link href="/explorar" className="text-sm font-medium hover:text-[var(--color-acento)] transition-colors">Explorar</Link>
-            <Link href="#" className="text-sm font-medium hover:text-[var(--color-acento)] transition-colors">Presupuesto</Link>
-            <Link href="#" className="text-sm font-medium hover:text-[var(--color-acento)] transition-colors">Invitaciones</Link>
-            <Link href="#" className="text-sm font-medium hover:text-[var(--color-acento)] transition-colors">Mi Plan</Link>
-          </nav>
+          {/* Menú Superior removido para usuarios no autenticados */}
+          <div className="hidden lg:flex flex-1"></div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 lg:gap-6">
             <ThemeToggle />
-            <Link href="/login" className="text-sm font-semibold hover:text-[var(--color-acento)] transition-colors">
-              Iniciar sesión
-            </Link>
-            <Link href="/registro" className="btn-oro px-6 py-2.5 rounded-full text-xs">
-              EMPEZAR
-            </Link>
+            <div className="hidden lg:flex items-center gap-6">
+              <Link href="/login" className="text-sm font-semibold hover:text-[var(--color-acento)] transition-colors">
+                Iniciar sesión
+              </Link>
+              <Link href="/registro" className="btn-oro px-6 py-2.5 rounded-full text-xs">
+                REGISTRARSE
+              </Link>
+            </div>
+            
+            <button 
+              className="lg:hidden p-2 text-[var(--color-texto)]"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Nav */}
+        {isMobileMenuOpen && (
+          <nav className="lg:hidden absolute top-full left-0 right-0 bg-[var(--color-fondo)] border-b border-[var(--color-borde-suave)] shadow-lg flex flex-col p-6 gap-4 animate-in slide-in-from-top">
+            <div className="flex flex-col gap-3">
+               <Link href="/login" className="btn btn-fantasma w-full justify-center">Iniciar sesión</Link>
+               <Link href="/registro" className="btn-oro w-full justify-center py-3">REGISTRARSE</Link>
+            </div>
+          </nav>
+        )}
       </header>
 
       {/* ──────────── Hero Section ──────────── */}
       <main className="relative flex flex-col items-center justify-center pt-24 pb-32 px-6 overflow-hidden">
         {/* Background Particles Decoration */}
-        <div className="absolute inset-0 -z-10 pointer-events-none opacity-60">
+         <div className="absolute inset-0 -z-10 pointer-events-none opacity-60">
            <Image 
              src="/hero_wave.png" 
              alt="Luxury gold background" 
@@ -58,15 +76,15 @@ export default function HomeClient() {
              className="object-cover object-center scale-110"
              priority
            />
-           <div className="absolute inset-0 bg-gradient-to-b from-[var(--color-fondo)]/40 via-transparent to-white" />
+           <div className="absolute inset-0 bg-gradient-to-b from-[var(--color-fondo)]/40 via-[var(--color-fondo)]/20 to-[var(--color-fondo)]" />
         </div>
 
-        <div className="max-w-4xl w-full text-center space-y-10">
-          <h1 className="flex flex-col gap-2">
-            <span className="text-5xl md:text-8xl font-accent tracking-tight text-[var(--color-primario)]">
+        <div className="max-w-4xl w-full text-center space-y-10 z-10 relative flex flex-col items-center">
+          <h1 className="flex flex-col items-center gap-2">
+            <span className="text-5xl md:text-7xl lg:text-8xl font-accent tracking-tight text-[var(--color-texto)] drop-shadow-md">
               Crea momentos
             </span>
-            <span className="text-6xl md:text-9xl font-serif italic text-[var(--color-acento)] leading-tight">
+            <span className="text-6xl md:text-8xl lg:text-9xl font-serif italic text-[var(--color-acento)] leading-tight drop-shadow-lg">
               inolvidables
             </span>
           </h1>
@@ -75,11 +93,11 @@ export default function HomeClient() {
             La plataforma definitiva para organizar los eventos más importantes de tu vida con los mejores proveedores de México.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link href="/registro" className="btn-oro px-10 py-5 rounded-2xl text-xs tracking-[0.1em]">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 w-full px-4">
+            <Link href="/registro" className="btn-oro px-8 py-4 sm:px-10 sm:py-5 rounded-2xl text-xs tracking-[0.1em] w-full sm:w-auto text-center">
               EMPEZAR MI EVENTO
             </Link>
-            <Link href="/login" className="px-10 py-5 rounded-2xl text-xs tracking-[0.1em] font-bold border-2 border-[var(--color-primario)] text-[var(--color-primario)] hover:bg-[var(--color-primario)] hover:text-white transition-all">
+            <Link href="/login" className="px-8 py-4 sm:px-10 sm:py-5 rounded-2xl text-xs tracking-[0.1em] font-bold border-2 border-[var(--color-texto)] text-[var(--color-texto)] hover:bg-[var(--color-texto)] hover:text-[var(--color-fondo)] transition-all w-full sm:w-auto text-center">
               SOY UN PROVEEDOR
             </Link>
           </div>
@@ -87,18 +105,18 @@ export default function HomeClient() {
       </main>
 
       {/* ──────────── Categories Section ──────────── */}
-      <section className="py-24 px-6 bg-white">
-        <div className="max-w-[1400px] mx-auto">
-          <h2 className="text-4xl font-serif text-center mb-16 text-[var(--color-primario)]">
+      <section className="py-24 px-6 bg-[var(--color-fondo-card)] border-y border-[var(--color-borde-suave)]">
+        <div className="max-w-[1450px] mx-auto flex flex-col items-center">
+          <h2 className="text-3xl md:text-4xl font-serif text-center mb-16 text-[var(--color-texto)]">
             Todo en un solo lugar
           </h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+          <div className="flex flex-wrap lg:flex-nowrap justify-center items-center gap-4 w-full overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0 no-scrollbar">
             {CATEGORIAS.map((cat) => (
               <Link 
                 key={cat.id} 
-                href={`/explorar?categoria=${cat.id}`}
-                className="group relative aspect-[4/5] overflow-hidden rounded-2xl border border-[var(--color-borde)] transition-all hover:scale-[1.02] hover:shadow-glow-oro"
+                href={`/cliente/explorar?categoria=${cat.id}`}
+                className="group relative aspect-[3/4] w-[140px] md:w-[160px] overflow-hidden rounded-2xl border border-[var(--color-borde)] transition-all hover:scale-[1.03] hover:shadow-glow-oro shrink-0"
               >
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10" />
                 <Image 
