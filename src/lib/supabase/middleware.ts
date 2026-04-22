@@ -129,7 +129,12 @@ export async function updateSession(request: NextRequest) {
         else url.pathname = '/cliente/dashboard'
         
         console.log(`🚀 Middleware | Redirecting to: ${url.pathname}`)
-        return NextResponse.redirect(url)
+        // IMPORTANTE: Al redireccionar debemos pasar las cookies del objeto original
+        const redirectResponse = NextResponse.redirect(url)
+        supabaseResponse.cookies.getAll().forEach(cookie => {
+          redirectResponse.cookies.set(cookie.name, cookie.value)
+        })
+        return redirectResponse
       }
 
       // Role protection - CASE INSENSITIVE
@@ -137,19 +142,34 @@ export async function updateSession(request: NextRequest) {
         console.warn(`🚫 Middleware | Access Denied: User ${user.email} (Role: ${userRole}) tried to access /admin. Redirecting to safe dashboard.`)
         const url = request.nextUrl.clone()
         url.pathname = userRole === 'PROVEEDOR' ? '/proveedor/dashboard' : '/cliente/dashboard'
-        return NextResponse.redirect(url)
+        const redirectResponse = NextResponse.redirect(url)
+        supabaseResponse.cookies.getAll().forEach(cookie => {
+          redirectResponse.cookies.set(cookie.name, cookie.value)
+        })
+        return redirectResponse
       }
 
-      if (path.startsWith('/proveedor') && userRole !== 'PROVEEDOR' && userRole !== 'ADMIN') {
+      const isProveedorPath = path.startsWith('/proveedor')
+      const isClientePath = path.startsWith('/cliente')
+
+      if (isProveedorPath && userRole !== 'PROVEEDOR' && userRole !== 'ADMIN') {
         const url = request.nextUrl.clone()
         url.pathname = '/cliente/dashboard'
-        return NextResponse.redirect(url)
+        const redirectResponse = NextResponse.redirect(url)
+        supabaseResponse.cookies.getAll().forEach(cookie => {
+          redirectResponse.cookies.set(cookie.name, cookie.value)
+        })
+        return redirectResponse
       }
 
-      if (path.startsWith('/cliente') && userRole !== 'CLIENTE' && userRole !== 'ADMIN') {
+      if (isClientePath && userRole !== 'CLIENTE' && userRole !== 'ADMIN') {
         const url = request.nextUrl.clone()
         url.pathname = '/proveedor/dashboard'
-        return NextResponse.redirect(url)
+        const redirectResponse = NextResponse.redirect(url)
+        supabaseResponse.cookies.getAll().forEach(cookie => {
+          redirectResponse.cookies.set(cookie.name, cookie.value)
+        })
+        return redirectResponse
       }
     }
   } catch (err) {
