@@ -269,10 +269,31 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
       <section className="relative overflow-hidden rounded-[1rem] bg-[#111] shadow-[0_4px_20px_rgba(212,175,55,0.15)] flex flex-col md:flex-row min-h-[180px] p-[1.5px] group">
         <div className="absolute inset-0 bg-gradient-to-r from-[#eadeba] via-[#d4af37] to-[#111] rounded-[1rem] opacity-30"></div>
         <div className="relative w-full h-full bg-[#111] rounded-[15px] flex flex-col md:flex-row overflow-hidden border border-[#D4AF37]/20">
-          {/* Background Image Right Side */}
-          <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 before:absolute before:inset-0 before:bg-gradient-to-r before:from-[#111] before:via-[#111]/80 before:to-transparent z-0">
-            <img src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80" alt="Wedding" className="w-full h-full object-cover opacity-90" />
-          </div>
+          {/* Background Image Right Side - dinámico por tipo de evento */}
+          {(() => {
+            // Picsum photos con seed fijo por tipo, imágenes siempre disponibles
+            const bgImages: Record<string, string> = {
+              'Boda':          'https://picsum.photos/seed/wedding/800/600',
+              'XV Años':       'https://picsum.photos/seed/quinceanera/800/600',
+              'Fiesta Infantil':'https://picsum.photos/seed/kids-party/800/600',
+              'Graduación':    'https://picsum.photos/seed/graduation/800/600',
+              'Fiesta':        'https://picsum.photos/seed/party/800/600',
+              'Bautizo':       'https://picsum.photos/seed/baptism/800/600',
+            };
+            const bgImg = bgImages[proximoEvento.tipo] || bgImages['Fiesta'];
+
+            return (
+              <div
+                className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 before:absolute before:inset-0 before:bg-gradient-to-r before:from-[#111] before:via-[#111]/80 before:to-transparent z-0"
+                style={{
+                  backgroundImage: `url(${bgImg})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  opacity: 0.9,
+                }}
+              />
+            );
+          })()}
           
           {/* Hexagon Pattern */}
           <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'100\' viewBox=\'0 0 60 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg stroke=\'%23D4AF37\' stroke-width=\'1\' fill=\'none\'%3E%3Cpath d=\'M30 0l30 17v33L30 67 0 50V17z\'/%3E%3Cpath d=\'M30 100l30-17V50L30 33 0 50v33z\'/%3E%3C/g%3E%3C/svg%3E")' }} />

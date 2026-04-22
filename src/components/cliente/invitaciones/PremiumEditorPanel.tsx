@@ -23,7 +23,9 @@ import {
   QrCode,
   Trash2,
   Plus,
-  Loader2
+  Loader2,
+  Move,
+  ZoomIn
 } from 'lucide-react';
 import { uploadInvitationAsset } from '@/lib/actions/uploadActions';
 import { cn } from '@/lib/utils';
@@ -661,7 +663,14 @@ export default function PremiumEditorPanel({ config, onChange, evento }: Premium
               onChange={handleFileUpload}
             />
             {config.coverUrl ? (
-              <img src={config.coverUrl} className="w-full h-full object-cover" />
+              <img 
+                 src={config.coverUrl} 
+                 className="w-full h-full object-cover" 
+                 style={{
+                   objectPosition: `${config.coverAlignX || 50}% ${config.coverAlignY || 50}%`,
+                   transform: `scale(${config.coverZoom || 1})`
+                 }}
+              />
             ) : isUploading ? (
               <div className="flex flex-col items-center gap-2">
                 <Loader2 size={24} className="animate-spin text-[var(--color-acento)]" />
@@ -682,6 +691,65 @@ export default function PremiumEditorPanel({ config, onChange, evento }: Premium
               onChange={(e) => updateConfig('coverUrl', e.target.value)}
             />
           </div>
+
+          {/* Ajustes de Portada (Encuadre) */}
+          {config.coverUrl && (
+            <div className="pt-4 border-t border-[var(--color-borde-suave)] space-y-4">
+               <div className="flex items-center gap-2 mb-2">
+                  <Move size={14} className="text-[var(--color-texto-muted)]" />
+                  <span className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest">Ajuste Manual</span>
+               </div>
+               
+               <div className="space-y-4">
+                  {/* Zoom */}
+                  <div className="space-y-2">
+                     <div className="flex justify-between items-center text-[9px] font-bold uppercase text-[var(--color-texto-suave)]">
+                        <span><ZoomIn size={10} className="inline mr-1"/> Zoom</span>
+                        <span className="font-mono bg-black/5 px-1.5 rounded">{Number(config.coverZoom || 1).toFixed(1)}x</span>
+                     </div>
+                     <input 
+                       type="range" 
+                       min="1" max="3" step="0.1"
+                       value={config.coverZoom || 1}
+                       onChange={e => updateConfig('coverZoom', parseFloat(e.target.value))}
+                       className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-[var(--color-acento)]"
+                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                      {/* Eje X */}
+                      <div className="space-y-2">
+                         <div className="flex justify-between items-center text-[9px] font-bold uppercase text-[var(--color-texto-suave)]">
+                            <span>Eje X (↔)</span>
+                            <span className="font-mono bg-black/5 px-1.5 rounded">{config.coverAlignX || 50}%</span>
+                         </div>
+                         <input 
+                           type="range" 
+                           min="0" max="100" step="1"
+                           value={config.coverAlignX || 50}
+                           onChange={e => updateConfig('coverAlignX', parseInt(e.target.value))}
+                           className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-[var(--color-acento)]"
+                         />
+                      </div>
+
+                      {/* Eje Y */}
+                      <div className="space-y-2">
+                         <div className="flex justify-between items-center text-[9px] font-bold uppercase text-[var(--color-texto-suave)]">
+                            <span>Eje Y (↕)</span>
+                            <span className="font-mono bg-black/5 px-1.5 rounded">{config.coverAlignY || 50}%</span>
+                         </div>
+                         <input 
+                           type="range" 
+                           min="0" max="100" step="1"
+                           value={config.coverAlignY || 50}
+                           onChange={e => updateConfig('coverAlignY', parseInt(e.target.value))}
+                           className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-[var(--color-acento)]"
+                         />
+                      </div>
+                  </div>
+               </div>
+            </div>
+          )}
         </div>
 
         {/* Módulos Sortables */}

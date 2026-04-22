@@ -21,7 +21,8 @@ import {
   Users,
   Gift,
   CreditCard,
-  FileDown
+  FileDown,
+  Settings2
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
@@ -49,6 +50,9 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
   // Estado para la invitación Premium - Asegurar seguridad ante evento nulo
   const [configWeb, setConfigWeb] = useState<any>(evento?.invitacion?.configWeb || {
     coverUrl: '',
+    coverZoom: 1,
+    coverAlignX: 50,
+    coverAlignY: 50,
     tema: 'dark',
     mostrarContador: true,
     mostrarCeremonia: true,
@@ -58,7 +62,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
     mostrarMapa: true,
     mostrarRegalos: true,
     mostrarRSVP: true,
-    mostrarAlbumQR: false,
+    mostrarAlbumQR: true,
     fechaEventoExacta: evento?.fecha || '',
     ceremoniaNombre: '',
     ceremoniaFecha: evento?.fecha || '',
@@ -77,6 +81,18 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
     galeriaEfecto: 'slide',
   });
   const [tipoInvitacion, setTipoInvitacion] = useState(evento?.invitacion?.tipoInvitacion || 'BASICA');
+  
+  // Estado para campos básicos expandidos
+  const [expandedFields, setExpandedFields] = useState<Set<string>>(new Set(['titulo']));
+
+  const toggleFieldExpand = (id: string) => {
+    setExpandedFields(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
   
   // Modos de editor
   const [modoPropia, setModoPropia] = useState(evento?.invitacion?.isInvitacionPropia || false);
@@ -151,6 +167,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
     if (t.includes('XV')) return 'XV_ANOS';
     if (t.includes('BAUTIZO')) return 'BAUTIZO';
     if (t.includes('INFANTIL')) return 'FIESTA_INFANTIL';
+    if (t.includes('GENERAL')) return 'FIESTA_GENERAL';
     return 'TODAS';
   };
 
@@ -274,6 +291,9 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
           regaloMesaUrl: configWeb.regaloMesaUrl || texto.regaloMesaUrl,
           regaloBanco: configWeb.regaloBanco || texto.regaloBanco,
           regaloClabe: configWeb.regaloClabe || texto.regaloClabe,
+          coverZoom: configWeb.coverZoom || 1,
+          coverAlignX: configWeb.coverAlignX || 50,
+          coverAlignY: configWeb.coverAlignY || 50,
         },
         tipoInvitacion: finalTipo,
       };
@@ -415,107 +435,137 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
   };
 
   const renderCampo = (id: keyof typeof texto, label: string, isTextarea = false, parentStyleId?: string) => {
-    const styleId = parentStyleId || id;
+    const styleId = (parentStyleId || id) as string;
     const estilo = estilos[styleId] || { visible: true };
+    const isExpanded = expandedFields.has(styleId);
+
+    const IconMap: Record<string, any> = {
+      titulo: Type,
+      nombres: Users,
+      mensaje: MessageCircle,
+      lugar: MapPin,
+      vestimenta: Sparkles,
+      regaloMesaUrl: Gift,
+      regaloBanco: CreditCard,
+      regaloClabe: Copy
+    };
+
+    const Icon = IconMap[id] || Type;
 
     return (
-    <div className={cn(
-      "group relative bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-[var(--radio-xl)] p-6 transition-all duration-500 hover:border-[var(--color-borde)] hover:shadow-2xl hover:shadow-black/5 mb-8", 
-      !estilo.visible && "opacity-40 grayscale-[0.5]"
-    )}>
-      {/* Cabecera del Campo con Herramientas */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-        <div className="flex items-center gap-3">
-          <div className={cn(
-            "p-2.5 rounded-xl bg-[var(--color-fondo-input)] text-[var(--color-texto-muted)] transition-all duration-500 group-hover:bg-[var(--color-acento)]/10 group-hover:text-[var(--color-acento)]",
-            estilo.visible && "text-[var(--color-texto-suave)]"
-          )}>
-            {id === 'titulo' && <Type size={18} />}
-            {id === 'nombres' && <Users size={18} />}
-            {id === 'mensaje' && <MessageCircle size={18} />}
-            {id === 'lugar' && <MapPin size={18} />}
-            {id === 'vestimenta' && <Sparkles size={18} />}
-            {id === 'regaloMesaUrl' && <Gift size={18} />}
-            {id === 'regaloBanco' && <CreditCard size={18} />}
-            {id === 'regaloClabe' && <Copy size={18} />}
+      <div className={cn(
+        "group bg-[var(--color-fondo-input)] rounded-3xl border overflow-hidden transition-all duration-300 shadow-sm mb-4",
+        estilo.visible ? "border-[var(--color-borde-suave)]" : "opacity-70 bg-zinc-100/50 border-[var(--color-borde-suave)]"
+      )}>
+        <div className="flex items-center justify-between p-4 gap-2">
+          <div className="flex items-center gap-3 flex-1">
+            <div className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+              estilo.visible ? "bg-[var(--color-acento)] text-white shadow-lg" : "bg-[var(--color-fondo-card)] text-[var(--color-texto-muted)] shadow-inner"
+            )}>
+              <Icon size={18} />
+            </div>
+            <span className={cn(
+              "text-[11px] font-black uppercase tracking-widest transition-colors",
+              estilo.visible ? "text-[var(--color-texto)]" : "text-[var(--color-texto-muted)]"
+            )}>
+              {label}
+            </span>
           </div>
-          <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[var(--color-texto-suave)] group-hover:text-[var(--color-texto)] transition-colors">
-            {label}
-          </span>
+
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => toggleFieldExpand(styleId)}
+              className={cn(
+                "p-3 rounded-xl transition-all duration-300",
+                isExpanded ? "bg-[var(--color-acento)]/10 text-[var(--color-acento)] rotate-180" : "text-[var(--color-texto-muted)] hover:bg-black/5"
+              )}
+            >
+              <Settings2 size={18} />
+            </button>
+            <button 
+              onClick={() => toggleVisibility(styleId)}
+              className={cn(
+                "w-12 h-6 rounded-full relative transition-all duration-500",
+                estilo.visible ? "bg-[var(--color-acento)] shadow-[0_4px_10px_var(--color-acento)]/30" : "bg-zinc-300"
+              )}
+            >
+              <div className={cn(
+                "absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-500 shadow-sm",
+                estilo.visible ? "right-1" : "left-1"
+              )} />
+            </button>
+          </div>
         </div>
 
-        {/* Toolbar de Formato (Dock de Alto Contraste) */}
-        <div className="flex items-center gap-1.5 bg-zinc-800 p-1.5 rounded-2xl border border-white/10 shadow-2xl opacity-100 translate-y-0 lg:opacity-0 lg:group-hover:opacity-100 lg:translate-y-2 lg:group-hover:translate-y-0 transition-all duration-300 scale-95 group-hover:scale-100 z-10">
-           <button 
-             onClick={() => toggleVisibility(styleId)}
-             className={cn(
-               "p-2 rounded-lg transition-all", 
-               estilo.visible ? "text-white/40 hover:text-white hover:bg-white/10" : "text-[var(--color-acento-claro)] bg-white/10"
-             )}
-             title={estilo.visible ? "Ocultar" : "Mostrar"}
-           >
-             {estilo.visible ? <Eye size={15} /> : <EyeOff size={15} />}
-           </button>
-           
-           <div className="w-px h-4 bg-white/10 mx-1" />
-           
-           <div className="relative group/color">
-             <input 
-               type="color" 
-               value={estilo.color || '#ffffff'}
-               onChange={(e) => setEstilos({...estilos, [styleId]: {...estilo, color: e.target.value}})}
-               className="h-8 w-8 rounded-lg cursor-pointer border-0 p-0 shadow-lg bg-transparent overflow-hidden hover:scale-110 transition-transform"
-             />
-           </div>
+        {isExpanded && (
+          <div className="px-6 pb-6 pt-2 animate-in slide-in-from-top-4 duration-300 space-y-4 border-t border-[var(--color-borde-suave)] bg-white/50">
+          <div className="flex items-center gap-1.5 flex-wrap bg-[var(--color-fondo-input)] p-1.5 rounded-2xl border border-[var(--color-borde-suave)] shadow-sm">
+             <div className="relative group/color">
+               <input 
+                 type="color" 
+                 value={estilo.color || '#ffffff'}
+                 onChange={(e) => setEstilos({...estilos, [styleId]: {...estilo, color: e.target.value}})}
+                 className="h-8 w-8 rounded-lg cursor-pointer border-0 p-0 shadow-lg bg-transparent overflow-hidden hover:scale-110 transition-transform"
+               />
+             </div>
+             
+             <div className="w-px h-4 bg-[var(--color-borde-suave)] mx-1" />
+             
+             <div className="flex items-center gap-1 bg-[var(--color-fondo-card)] rounded-lg px-2 py-1.5 border border-[var(--color-borde-suave)]">
+                <span className="text-[8px] font-black text-[var(--color-texto-muted)]">PT</span>
+                <input 
+                  type="number"
+                  value={estilo.fontSize || 16}
+                  onChange={(e) => setEstilos({...estilos, [styleId]: {...estilo, fontSize: Number(e.target.value)}})}
+                  className="w-10 text-[11px] bg-transparent outline-none text-[var(--color-texto)] font-black text-center"
+                />
+             </div>
 
-           <div className="flex items-center gap-1 bg-white/5 rounded-lg px-2 py-1.5 border border-white/5 focus-within:border-white/20 transition-all">
-              <span className="text-[8px] font-black text-white/40">PT</span>
-              <input 
-                type="number"
-                value={estilo.fontSize || 16}
-                onChange={(e) => setEstilos({...estilos, [styleId]: {...estilo, fontSize: Number(e.target.value)}})}
-                className="w-10 text-[11px] bg-transparent outline-none text-white font-black text-center"
+             <div className="relative flex-1 min-w-[120px]">
+               <select
+                 value={estilo.fuente || ''}
+                 onChange={(e) => setEstilos({...estilos, [styleId]: {...estilo, fuente: e.target.value}})}
+                 className="w-full text-[10px] bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-lg pl-3 pr-6 py-1.5 outline-none text-[var(--color-texto)] font-bold appearance-none cursor-pointer"
+                 style={{ fontFamily: estilo.fuente || 'inherit' }}
+               >
+                 <option value="">Fuente</option>
+                 {fuentes.map(f => (
+                   <option 
+                     key={f.id} 
+                     value={f.nombre} 
+                     style={{ fontFamily: f.nombre }}
+                   >
+                     {f.nombre}
+                   </option>
+                 ))}
+               </select>
+               <Palette size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)] pointer-events-none" />
+             </div>
+          </div>
+
+          {/* Input Principal */}
+          <div className="relative group/input">
+            {isTextarea ? (
+              <textarea 
+                className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] hover:border-[var(--color-acento)]/50 rounded-2xl px-6 py-5 outline-none focus:border-[var(--color-acento)] focus:bg-[var(--color-fondo-card)] focus:ring-8 focus:ring-[var(--color-acento)]/5 transition-all duration-500 text-sm min-h-[100px] resize-none shadow-inner placeholder:text-[var(--color-texto-muted)]/70 text-[var(--color-texto)] font-medium" 
+                value={texto[id]}
+                placeholder={`Escribe aquí ${label.toLowerCase()}...`}
+                onChange={(e) => setTexto({...texto, [id]: e.target.value})}
               />
-           </div>
-
-           <div className="relative">
-             <select
-               value={estilo.fuente || ''}
-               onChange={(e) => setEstilos({...estilos, [styleId]: {...estilo, fuente: e.target.value}})}
-               className="text-[10px] bg-white/5 border border-white/5 rounded-lg pl-3 pr-6 py-1.5 outline-none text-white/70 hover:text-white transition-colors max-w-[100px] font-bold appearance-none cursor-pointer"
-             >
-               <option value="" className="bg-[var(--color-primario)]">Fuente</option>
-               {fuentes.map(f => <option key={f.id} value={f.nombre} className="bg-[var(--color-primario)] text-white py-2">{f.nombre}</option>)}
-             </select>
-             <Palette size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
-           </div>
-        </div>
-      </div>
-
-      <div className="relative group/input">
-        {isTextarea ? (
-          <textarea 
-            className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] hover:border-[var(--color-borde)] rounded-2xl px-6 py-5 outline-none focus:border-[var(--color-acento)] focus:bg-[var(--color-fondo-card)] focus:ring-8 focus:ring-[var(--color-acento)]/5 transition-all duration-500 text-sm min-h-[120px] resize-none shadow-inner placeholder:text-[var(--color-texto-muted)]/70 leading-relaxed text-[var(--color-texto)]" 
-            value={texto[id]}
-            placeholder={`Escribe aquí ${label.toLowerCase()}...`}
-            onChange={(e) => setTexto({...texto, [id]: e.target.value})}
-          />
-        ) : (
-          <input 
-            type="text" 
-            className="w-full h-16 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] hover:border-[var(--color-borde)] rounded-2xl px-6 py-4 outline-none focus:border-[var(--color-acento)] focus:bg-[var(--color-fondo-card)] focus:ring-8 focus:ring-[var(--color-acento)]/5 transition-all duration-500 text-base shadow-inner placeholder:text-[var(--color-texto-muted)]/70 font-bold text-[var(--color-texto)]" 
-            value={texto[id]} 
-            placeholder={`Escribe aquí ${label.toLowerCase()}...`}
-            onChange={(e) => setTexto({...texto, [id]: e.target.value})}
-          />
+            ) : (
+              <input 
+                type="text" 
+                className="w-full h-14 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] hover:border-[var(--color-acento)]/50 rounded-2xl px-6 py-2 outline-none focus:border-[var(--color-acento)] focus:bg-[var(--color-fondo-card)] focus:ring-8 focus:ring-[var(--color-acento)]/5 transition-all duration-500 text-base text-[var(--color-texto)] shadow-inner placeholder:text-[var(--color-texto-muted)]/70 font-bold" 
+                value={texto[id]} 
+                placeholder={`Escribe aquí ${label.toLowerCase()}...`}
+                onChange={(e) => setTexto({...texto, [id]: e.target.value})}
+              />
+            )}
+          </div>
+          </div>
         )}
-        
-        {/* Indicador visual de edición */}
-        <div className="absolute top-1/2 -translate-y-1/2 right-6 opacity-0 group-focus-within/input:opacity-100 transition-opacity pointer-events-none">
-          <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-acento)] animate-pulse shadow-[0_0_15px_var(--color-acento)]" />
-        </div>
       </div>
-    </div>
     );
   };
 
@@ -674,6 +724,8 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                         <option value="BODA">Boda</option>
                         <option value="XV_ANOS">XV Años</option>
                         <option value="BAUTIZO">Bautizo</option>
+                        <option value="FIESTA_INFANTIL">Fiesta Infantil</option>
+                        <option value="FIESTA_GENERAL">Fiesta General</option>
                       </select>
                       <div className="grid grid-cols-3 gap-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar p-1">
                         {fondosFiltrados.map((f) => (
@@ -717,20 +769,29 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                       
                       {/* Control Independiente del PIN de Mapa */}
                       <div className="pt-2 pb-6 border-b border-[var(--color-borde-suave)] mb-4">
-                        <div className="flex justify-between items-center bg-zinc-800 p-4 rounded-2xl border border-white/10 group/mappin hover:shadow-2xl hover:shadow-black/20 transition-all">
-                            <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "flex justify-between items-center group bg-[var(--color-fondo-input)] rounded-3xl border overflow-hidden transition-all duration-300 shadow-sm p-4",
+                          estilos.mapPin?.visible ? "border-[var(--color-borde-suave)]" : "opacity-70 bg-zinc-100/50 border-[var(--color-borde-suave)]"
+                        )}>
+                            <div className="flex items-center gap-3">
                               <button 
                                 onClick={() => toggleVisibility('mapPin')}
                                 className={cn(
-                                  "p-2.5 rounded-xl transition-all shadow-inner", 
-                                  estilos.mapPin?.visible ? "bg-white/10 text-white/50 hover:text-white" : "bg-[var(--color-acento)]/20 text-[var(--color-acento-claro)]"
+                                  "w-12 h-6 rounded-full relative transition-all duration-500 shrink-0",
+                                  estilos.mapPin?.visible ? "bg-[var(--color-acento)] shadow-[0_4px_10px_var(--color-acento)]/30" : "bg-zinc-300"
                                 )}
                               >
-                                {estilos.mapPin?.visible ? <Eye size={18} /> : <EyeOff size={18} />}
+                                <div className={cn(
+                                  "absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-500 shadow-sm",
+                                  estilos.mapPin?.visible ? "right-1" : "left-1"
+                                )} />
                               </button>
                               <div className="space-y-0.5">
-                                <label className="text-[10px] font-black uppercase text-white/80 tracking-[0.1em]">Icono Map-Pin</label>
-                                <p className="text-[8px] text-white/30 font-bold uppercase">Movible y Redimensionable</p>
+                                <label className={cn(
+                                  "text-[11px] font-black uppercase tracking-widest transition-colors",
+                                  estilos.mapPin?.visible ? "text-[var(--color-texto)]" : "text-[var(--color-texto-muted)]"
+                                )}>Icono Map-Pin</label>
+                                <p className="text-[9px] text-[var(--color-texto-muted)] font-bold uppercase tracking-widest">Movible y Redimensionable</p>
                               </div>
                             </div>
                             <div className="relative group/picker">
@@ -738,7 +799,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                                 type="color" 
                                 value={estilos.mapPin?.color || '#ffffff'}
                                 onChange={(e) => setEstilos({...estilos, mapPin: {...estilos.mapPin, color: e.target.value}})}
-                                className="h-10 w-10 rounded-xl cursor-pointer border-0 p-0 shadow-2xl bg-transparent overflow-hidden hover:scale-110 transition-transform"
+                                className="h-10 w-10 rounded-xl cursor-pointer border border-[var(--color-borde-suave)] p-0 shadow-sm bg-transparent overflow-hidden hover:scale-110 transition-transform"
                               />
                             </div>
                         </div>
@@ -786,20 +847,29 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                         )}
 
                         {/* Control Independiente del Bloque de Regalos */}
-                        <div className="flex justify-between items-center bg-[var(--color-primario)] p-4 rounded-2xl border border-white/10 group/regalos hover:shadow-2xl hover:shadow-black/20 transition-all">
-                            <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "flex justify-between items-center group bg-[var(--color-fondo-input)] rounded-3xl border overflow-hidden transition-all duration-300 shadow-sm mb-4 mb-4 p-4",
+                          estilos.regalos?.visible ? "border-[var(--color-borde-suave)]" : "opacity-70 bg-zinc-100/50 border-[var(--color-borde-suave)]"
+                        )}>
+                            <div className="flex items-center gap-3">
                               <button 
                                 onClick={() => toggleVisibility('regalos')}
                                 className={cn(
-                                  "p-2.5 rounded-xl transition-all shadow-inner", 
-                                  estilos.regalos?.visible ? "bg-white/10 text-white/50 hover:text-white" : "bg-[var(--color-acento)]/20 text-[var(--color-acento-claro)]"
+                                  "w-12 h-6 rounded-full relative transition-all duration-500 shrink-0",
+                                  estilos.regalos?.visible ? "bg-[var(--color-acento)] shadow-[0_4px_10px_var(--color-acento)]/30" : "bg-zinc-300"
                                 )}
                               >
-                                {estilos.regalos?.visible ? <Eye size={18} /> : <EyeOff size={18} />}
+                                <div className={cn(
+                                  "absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-500 shadow-sm",
+                                  estilos.regalos?.visible ? "right-1" : "left-1"
+                                )} />
                               </button>
                               <div className="space-y-0.5">
-                                <label className="text-[10px] font-black uppercase text-white/80 tracking-[0.1em]">Bloque Regalos</label>
-                                <p className="text-[8px] text-white/30 font-bold uppercase">Movible y Redimensionable</p>
+                                <label className={cn(
+                                  "text-[11px] font-black uppercase tracking-widest transition-colors",
+                                  estilos.regalos?.visible ? "text-[var(--color-texto)]" : "text-[var(--color-texto-muted)]"
+                                )}>Bloque Regalos</label>
+                                <p className="text-[9px] text-[var(--color-texto-muted)] font-bold uppercase tracking-widest">Movible y Redimensionable</p>
                               </div>
                             </div>
                             <div className="relative group/picker">
@@ -807,7 +877,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                                 type="color" 
                                 value={estilos.regalos?.color || '#ffffff'}
                                 onChange={(e) => setEstilos({...estilos, regalos: {...estilos.regalos, color: e.target.value}})}
-                                className="h-10 w-10 rounded-xl cursor-pointer border-0 p-0 shadow-2xl bg-transparent overflow-hidden hover:scale-110 transition-transform"
+                                className="h-10 w-10 rounded-xl cursor-pointer border border-[var(--color-borde-suave)] p-0 shadow-sm bg-transparent overflow-hidden hover:scale-110 transition-transform"
                               />
                             </div>
                         </div>
@@ -818,32 +888,40 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                     
                     {/* Sección RSVP Rediseñada */}
                     <div className="pt-6 border-t border-[var(--color-borde-suave)]">
-                       <div className="flex justify-between items-center bg-[var(--color-primario)] p-4 rounded-2xl border border-white/10 group/rsvp hover:shadow-2xl hover:shadow-black/20 transition-all">
-                          <div className="flex items-center gap-4">
-                            <button 
-                              onClick={() => toggleVisibility('boton')}
-                              className={cn(
-                                "p-2.5 rounded-xl transition-all shadow-inner", 
-                                estilos.boton?.visible ? "bg-white/10 text-white/50 hover:text-white" : "bg-[var(--color-acento)]/20 text-[var(--color-acento-claro)]"
-                              )}
-                            >
-                              {estilos.boton?.visible ? <Eye size={18} /> : <EyeOff size={18} />}
-                            </button>
-                            <div className="space-y-0.5">
-                              <label className="text-[10px] font-black uppercase text-white/80 tracking-[0.1em]">Botón RSVP</label>
-                              <p className="text-[8px] text-white/30 font-bold uppercase">Link de confirmación</p>
+                        <div className={cn(
+                          "flex justify-between items-center group bg-[var(--color-fondo-input)] rounded-3xl border overflow-hidden transition-all duration-300 shadow-sm mb-4 mb-4 p-4",
+                          estilos.boton?.visible ? "border-[var(--color-borde-suave)]" : "opacity-70 bg-zinc-100/50 border-[var(--color-borde-suave)]"
+                        )}>
+                            <div className="flex items-center gap-3">
+                              <button 
+                                onClick={() => toggleVisibility('boton')}
+                                className={cn(
+                                  "w-12 h-6 rounded-full relative transition-all duration-500 shrink-0",
+                                  estilos.boton?.visible ? "bg-[var(--color-acento)] shadow-[0_4px_10px_var(--color-acento)]/30" : "bg-zinc-300"
+                                )}
+                              >
+                                <div className={cn(
+                                  "absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-500 shadow-sm",
+                                  estilos.boton?.visible ? "right-1" : "left-1"
+                                )} />
+                              </button>
+                              <div className="space-y-0.5">
+                                <label className={cn(
+                                  "text-[11px] font-black uppercase tracking-widest transition-colors",
+                                  estilos.boton?.visible ? "text-[var(--color-texto)]" : "text-[var(--color-texto-muted)]"
+                                )}>Botón RSVP</label>
+                                <p className="text-[9px] text-[var(--color-texto-muted)] font-bold uppercase tracking-widest">Link de confirmación</p>
+                              </div>
                             </div>
-                          </div>
-                          <div className="relative group/picker">
-                            <input 
-                              type="color" 
-                              value={estilos.boton?.color || '#ffffff'}
-                              onChange={(e) => setEstilos({...estilos, boton: {...estilos.boton, color: e.target.value}})}
-                              className="h-10 w-10 rounded-xl cursor-pointer border-0 p-0 shadow-2xl bg-transparent overflow-hidden hover:scale-110 transition-transform"
-                            />
-                            <div className="absolute -top-1 right-0 w-2 h-2 rounded-full bg-white border border-black shadow-[0_0_10px_white] animate-pulse pointer-events-none" />
-                          </div>
-                       </div>
+                            <div className="relative group/picker">
+                              <input 
+                                type="color" 
+                                value={estilos.boton?.color || '#ffffff'}
+                                onChange={(e) => setEstilos({...estilos, boton: {...estilos.boton, color: e.target.value}})}
+                                className="h-10 w-10 rounded-xl cursor-pointer border border-[var(--color-borde-suave)] p-0 shadow-sm bg-transparent overflow-hidden hover:scale-110 transition-transform"
+                              />
+                            </div>
+                        </div>
                     </div>
                   </div>
                 </>
@@ -1027,6 +1105,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                       evento={evento}
                       archivoAdjuntoPropio={archivoAdjuntoBase64}
                       modoPropia={modoPropia}
+                      config={configWeb}
                       onRSVPClick={() => alert('Esto abrirá el formulario RSVP para tu invitado')}
                     />
                  </div>

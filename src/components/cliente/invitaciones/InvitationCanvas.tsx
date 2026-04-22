@@ -14,23 +14,25 @@ interface InvitationCanvasProps {
   archivoAdjuntoPropio?: string | null;
   modoPropia?: boolean;
   onRSVPClick?: () => void;
+  config?: any;
 }
-import { useState, useEffect, forwardRef } from 'react';
-import { Gift, CreditCard, Copy, Check } from 'lucide-react';
-
-const InvitationCanvas = forwardRef<HTMLDivElement, InvitationCanvasProps>(({ 
-  estilos, 
-  texto, 
-  fondoUrlActivo, 
-  isEditing = false,
-  onEstiloChange,
-  evento,
-  archivoAdjuntoPropio,
-  modoPropia = false,
-  onRSVPClick
-}, ref) => {
-  const [copiado, setCopiado] = useState(false);
-
+ import { useState, useEffect, forwardRef } from 'react';
+ import { Gift, CreditCard, Copy, Check } from 'lucide-react';
+ 
+ const InvitationCanvas = forwardRef<HTMLDivElement, InvitationCanvasProps>(({ 
+   estilos, 
+   texto, 
+   fondoUrlActivo, 
+   isEditing = false,
+   onEstiloChange,
+   evento,
+   archivoAdjuntoPropio,
+   modoPropia = false,
+   onRSVPClick,
+   config = {}
+ }, ref) => {
+   const [copiado, setCopiado] = useState(false);
+ 
   const handleCopiar = (texto: string) => {
     if (isEditing) return;
     navigator.clipboard.writeText(texto);
@@ -108,36 +110,51 @@ const InvitationCanvas = forwardRef<HTMLDivElement, InvitationCanvasProps>(({
       </div>
     );
   }
-
-  return (
-    <div 
-      ref={ref}
-      id="invitation-canvas-root"
-      className="w-[400px] h-[700px] max-w-full rounded-[40px] shadow-2xl overflow-hidden border-[8px] border-zinc-900 relative transition-all duration-500"
-      style={{
-        backgroundImage: fondoUrlActivo ? `url(${fondoUrlActivo})` : 'none',
-        backgroundColor: fondoUrlActivo ? 'transparent' : '#1a1a1a',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
-      }}
-    >
+ 
+   return (
+     <div 
+       ref={ref}
+       id="invitation-canvas-root"
+       className="w-[400px] h-[700px] max-w-full rounded-[40px] shadow-2xl overflow-hidden border-[8px] border-zinc-900 relative transition-all duration-500"
+       style={{
+         backgroundColor: fondoUrlActivo ? 'transparent' : '#1a1a1a',
+       }}
+     >
+       {/* Capa de Fondo (Aplica Encudre Manual) */}
+       {fondoUrlActivo && (
+         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+            <div 
+               className="absolute inset-0 w-full h-full"
+               style={{ 
+                 backgroundImage: `url(${fondoUrlActivo})`,
+                 backgroundSize: 'cover',
+                 backgroundPosition: 'center',
+                 transform: `
+                   scale(${(config.coverZoom || 1) * 1.15}) 
+                   translate(${(50 - (config.coverAlignX || 50))}%, ${(50 - (config.coverAlignY || 50))}%)
+                 `,
+                 transition: 'transform 0.5s cubic-bezier(0.2, 0, 0.2, 1)'
+               }}
+            />
+         </div>
+       )}
       <div className="absolute inset-0 z-10 overflow-hidden drop-shadow-md pointer-events-none">
         {/* Usamos un wrapper para asegurar que los elementos absolutos se ven */}
         <div className="relative w-full h-full pointer-events-auto">
           {renderElement('titulo', 
-            <p className="uppercase tracking-[0.3em] font-black opacity-80 w-full text-center whitespace-pre-wrap select-none" style={{ fontSize: `${estilos?.titulo?.fontSize || 10}px`, color: estilos?.titulo?.color, fontFamily: estilos?.titulo?.fuente || 'inherit' }}>{texto.titulo}</p>
+            <p className="tracking-[0.3em] font-black opacity-80 w-full text-center whitespace-pre-wrap select-none" style={{ fontSize: `${estilos?.titulo?.fontSize || 10}px`, color: estilos?.titulo?.color, fontFamily: estilos?.titulo?.fuente ? `'${estilos.titulo.fuente}'` : 'inherit' }}>{texto.titulo}</p>
           , {})}
 
           {renderElement('nombres', 
-            <h2 className="italic w-full text-center whitespace-pre-wrap select-none" style={{ fontSize: `${estilos?.nombres?.fontSize || 36}px`, color: estilos?.nombres?.color, fontFamily: estilos?.nombres?.fuente || 'serif' }}>{texto.nombres}</h2>
+            <h2 className="italic w-full text-center whitespace-pre-wrap select-none" style={{ fontSize: `${estilos?.nombres?.fontSize || 36}px`, color: estilos?.nombres?.color, fontFamily: estilos?.nombres?.fuente ? `'${estilos.nombres.fuente}'` : 'serif' }}>{texto.nombres}</h2>
           , {})}
 
           {renderElement('mensaje', 
-            <p className="leading-relaxed opacity-90 italic w-full text-center whitespace-pre-wrap select-none" style={{ fontSize: `${estilos?.mensaje?.fontSize || 14}px`, color: estilos?.mensaje?.color, fontFamily: estilos?.mensaje?.fuente || 'inherit' }}>"{texto.mensaje}"</p>
+            <p className="leading-relaxed opacity-90 italic w-full text-center whitespace-pre-wrap select-none" style={{ fontSize: `${estilos?.mensaje?.fontSize || 14}px`, color: estilos?.mensaje?.color, fontFamily: estilos?.mensaje?.fuente ? `'${estilos.mensaje.fuente}'` : 'inherit' }}>"{texto.mensaje}"</p>
           , {})}
 
           {renderElement('lugar', 
-            <div className="flex flex-col items-center justify-center font-bold uppercase tracking-widest w-full text-center select-none" style={{ fontSize: `${estilos?.lugar?.fontSize || 12}px`, color: estilos?.lugar?.color, fontFamily: estilos?.lugar?.fuente || 'inherit' }}>
+            <div className="flex flex-col items-center justify-center font-bold tracking-widest w-full text-center select-none" style={{ fontSize: `${estilos?.lugar?.fontSize || 12}px`, color: estilos?.lugar?.color, fontFamily: estilos?.lugar?.fuente ? `'${estilos.lugar.fuente}'` : 'inherit' }}>
                <div className="flex items-center justify-center gap-2"><CalendarIcon size={estilos?.lugar?.fontSize}/> {evento?.fecha ? formatearFechaCorta(evento.fecha) : 'Próximamente'}</div>
                 <div className="flex items-center justify-center gap-2">
                   {texto.lugar}
@@ -146,16 +163,16 @@ const InvitationCanvas = forwardRef<HTMLDivElement, InvitationCanvasProps>(({
           , {})}
 
           {renderElement('horaCeremonia', 
-            <div className="flex flex-col items-center justify-center w-full text-center select-none" style={{ fontSize: `${estilos?.horaCeremonia?.fontSize || 16}px`, color: estilos?.horaCeremonia?.color || estilos?.lugar?.color, fontFamily: estilos?.horaCeremonia?.fuente || 'inherit' }}>
+            <div className="flex flex-col items-center justify-center w-full text-center select-none" style={{ fontSize: `${estilos?.horaCeremonia?.fontSize || 16}px`, color: estilos?.horaCeremonia?.color || estilos?.lugar?.color, fontFamily: estilos?.horaCeremonia?.fuente ? `'${estilos.horaCeremonia.fuente}'` : 'inherit' }}>
                <p className="font-black uppercase tracking-[0.2em] opacity-40 m-0" style={{ fontSize: '0.6em' }}>Ceremonia Religiosa</p>
-               <p className="font-bold uppercase m-0 mt-1">{texto.horaCeremonia || '04:00 PM'}</p>
+               <p className="font-bold m-0 mt-1">{texto.horaCeremonia || '04:00 PM'}</p>
             </div>
           , {})}
 
           {renderElement('horaCelebracion', 
-            <div className="flex flex-col items-center justify-center w-full text-center select-none" style={{ fontSize: `${estilos?.horaCelebracion?.fontSize || 16}px`, color: estilos?.horaCelebracion?.color || estilos?.lugar?.color, fontFamily: estilos?.horaCelebracion?.fuente || 'inherit' }}>
+            <div className="flex flex-col items-center justify-center w-full text-center select-none" style={{ fontSize: `${estilos?.horaCelebracion?.fontSize || 16}px`, color: estilos?.horaCelebracion?.color || estilos?.lugar?.color, fontFamily: estilos?.horaCelebracion?.fuente ? `'${estilos.horaCelebracion.fuente}'` : 'inherit' }}>
                <p className="font-black uppercase tracking-[0.2em] opacity-40 m-0" style={{ fontSize: '0.6em' }}>Celebración</p>
-               <p className="font-bold uppercase m-0 mt-1">{texto.horaCelebracion || '06:00 PM'}</p>
+               <p className="font-bold m-0 mt-1">{texto.horaCelebracion || '06:00 PM'}</p>
             </div>
           , {})}
 
@@ -185,14 +202,14 @@ const InvitationCanvas = forwardRef<HTMLDivElement, InvitationCanvasProps>(({
           , { visible: true })}
 
           {renderElement('vestimenta', 
-            <div className="flex flex-col items-center justify-center w-full text-center select-none" style={{ fontSize: `${estilos?.vestimenta?.fontSize || 14}px`, color: estilos?.vestimenta?.color, fontFamily: estilos?.vestimenta?.fuente || 'inherit' }}>
+            <div className="flex flex-col items-center justify-center w-full text-center select-none" style={{ fontSize: `${estilos?.vestimenta?.fontSize || 14}px`, color: estilos?.vestimenta?.color, fontFamily: estilos?.vestimenta?.fuente ? `'${estilos.vestimenta.fuente}'` : 'inherit' }}>
                <p className="font-black uppercase tracking-[0.2em] opacity-60 m-0" style={{ fontSize: '0.6em' }}>Dress Code</p>
-               <p className="font-bold uppercase whitespace-pre-wrap m-0 mt-1">{texto.vestimenta}</p>
+               <p className="font-bold whitespace-pre-wrap m-0 mt-1">{texto.vestimenta}</p>
             </div>
           , {})}
 
           {renderElement('regalos', 
-            <div className="w-full h-full flex flex-col items-center justify-center gap-2 select-none" style={{ color: estilos?.regalos?.color || estilos?.titulo?.color, fontFamily: estilos?.regalos?.fuente || 'inherit' }}>
+            <div className="w-full h-full flex flex-col items-center justify-center gap-2 select-none" style={{ color: estilos?.regalos?.color || estilos?.titulo?.color, fontFamily: estilos?.regalos?.fuente ? `'${estilos.regalos.fuente}'` : 'inherit' }}>
                {texto.regaloTipo === 'MESA' ? (
                  <a 
                    href={texto.regaloMesaUrl?.startsWith('http') ? texto.regaloMesaUrl : `https://${texto.regaloMesaUrl}`}
@@ -217,7 +234,7 @@ const InvitationCanvas = forwardRef<HTMLDivElement, InvitationCanvasProps>(({
                     </div>
                     <div className="flex items-center gap-3 w-full justify-center">
                        <div className="text-center">
-                          <p className="font-black uppercase opacity-40 leading-none mb-1" style={{ fontSize: '0.8em' }}>{texto.regaloBanco || 'BANCO'}</p>
+                          <p className="font-black opacity-40 leading-none mb-1" style={{ fontSize: '0.8em' }}>{texto.regaloBanco || 'BANCO'}</p>
                           <p className="font-mono font-bold tracking-wider leading-none" style={{ fontSize: '1.1em' }}>{texto.regaloClabe || '0000 0000 0000 0000 00'}</p>
                        </div>
                        <div className={cn(

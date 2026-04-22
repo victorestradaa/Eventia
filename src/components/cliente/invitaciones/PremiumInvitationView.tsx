@@ -207,15 +207,22 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
       case 'hero':
         return (
           <section className="relative w-full h-full flex items-center justify-center overflow-hidden">
-             <div 
-               className="absolute inset-0 z-0 scale-110"
-               style={{ 
-                 backgroundImage: `url(${config.coverUrl || evento.invitacion?.fondoUrl})`,
-                 backgroundSize: 'cover',
-                 backgroundPosition: 'center',
-                 backgroundAttachment: 'fixed'
-               }}
-             >
+             <div className="absolute inset-0 z-0 overflow-hidden">
+                <div 
+                   className="absolute inset-0 w-full h-full"
+                   style={{ 
+                     backgroundImage: `url(${config.coverUrl || evento.invitacion?.fondoUrl || ''})`,
+                     backgroundSize: 'cover',
+                     backgroundPosition: 'center',
+                     // Sistema de traslación matemática para el encuadre
+                     // tx/ty desplazan el centro de la imagen escalada
+                     transform: `
+                       scale(${(config.coverZoom || 1) * 1.15}) 
+                       translate(${(50 - (config.coverAlignX || 50))}%, ${(50 - (config.coverAlignY || 50))}%)
+                     `,
+                     transition: 'transform 0.5s cubic-bezier(0.2, 0, 0.2, 1)'
+                   }}
+                />
                 <div className="absolute inset-0 bg-black/40 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
              </div>
 
