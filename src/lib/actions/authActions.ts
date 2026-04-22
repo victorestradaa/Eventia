@@ -28,6 +28,35 @@ export async function getCurrentProfile() {
     });
 
     if (!perfil) {
+      console.warn(`[Auto-Heal] Perfil zombie detectado para: ${user.email}. Intentando auto-reparación...`);
+      
+      // Attempt to self-heal the zombie account using the metadata stored in Supabase during sign_up
+      const metadata = user.user_metadata || {};
+      const intentRol = (metadata.rol || 'CLIENTE').toUpperCase();
+      const validRol = (intentRol === 'PROVEEDOR' || intentRol === 'ADMIN') ? intentRol : 'CLIENTE';
+      const fallbackName = user.email ? user.email.split('@')[0] : 'Usuario';
+      
+      try {
+        const nuevoPerfilRes = await registrarUsuario({
+          email: user.email!,
+          nombre: metadata.nombre || fallbackName,
+          rol: validRol as 'CLIENTE' | 'PROVEEDOR',
+          categoria: metadata.categoria || undefined
+        });
+
+        if (nuevoPerfilRes.success && nuevoPerfilRes.data) {
+          console.log(`[Auto-Heal] Reparación exitosa para ${user.email}`);
+          // Recargar el perfil desde la base de datos para asegurar todas las relaciones
+          const perfilReparado = await prisma.usuario.findUnique({
+            where: { email: user.email },
+            include: { cliente: true, proveedor: true }
+          });
+          return { success: true, data: perfilReparado };
+        }
+      } catch (healError) {
+        console.error('[Auto-Heal] Fallo catastrófico al intentar reparar:', healError);
+      }
+
       return { success: false, error: 'PROFILE_MISSING', zombie: true };
     }
 
