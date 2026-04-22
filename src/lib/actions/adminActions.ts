@@ -12,7 +12,7 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 const BUCKET_NAME = 'servicios';
-const FOLDER_NAME = 'albums/catalogo';
+const FOLDER_NAME = 'invitaciones/catalogo';
 
 /**
  * Obtiene las métricas globales de la plataforma para el administrador.
@@ -92,7 +92,10 @@ export async function createCatalogoAsset(formData: FormData) {
 
     if (!file || !tipo) return { success: false, error: 'Datos incompletos' };
 
-    // 1. Subir a Supabase Storage
+    // 1. Asegurar Bucket público (Fix para cuadros blancos)
+    await supabaseAdmin.storage.updateBucket(BUCKET_NAME, { public: true });
+
+    // 2. Subir a Supabase Storage
     const fileExt = file.name.split('.').pop() || 'png';
     const fileName = `${FOLDER_NAME}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
