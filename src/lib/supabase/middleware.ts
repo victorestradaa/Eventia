@@ -121,6 +121,19 @@ export async function updateSession(request: NextRequest) {
       const path = request.nextUrl.pathname
       console.log(`👤 Middleware | User: ${user.email} | Detected Role: ${userRole} | Path: ${path} | Source: ${isHardcodedAdmin ? 'Hardcoded' : (dbUserRole ? 'Database' : (metadataRole ? 'Metadata' : 'Default'))}`);
 
+      // Helper to clone response with cookies
+      const createRedirectResponse = (targetUrl: URL) => {
+        const redirectResponse = NextResponse.redirect(targetUrl)
+        supabaseResponse.cookies.getAll().forEach(cookie => {
+          redirectResponse.cookies.set({
+            name: cookie.name,
+            value: cookie.value,
+            ...cookie, // This spreads all options: path, secure, httpOnly, etc.
+          })
+        })
+        return redirectResponse
+      }
+
       // Redirect to respective dashboard if at root or login/registro
       if (path === '/' || path === '/login' || path === '/registro') {
         const url = request.nextUrl.clone()
@@ -129,12 +142,7 @@ export async function updateSession(request: NextRequest) {
         else url.pathname = '/cliente/dashboard'
         
         console.log(`🚀 Middleware | Redirecting to: ${url.pathname}`)
-        // IMPORTANTE: Al redireccionar debemos pasar las cookies del objeto original
-        const redirectResponse = NextResponse.redirect(url)
-        supabaseResponse.cookies.getAll().forEach(cookie => {
-          redirectResponse.cookies.set(cookie.name, cookie.value)
-        })
-        return redirectResponse
+        return createRedirectResponse(url)
       }
 
       // Role protection - CASE INSENSITIVE
@@ -142,11 +150,7 @@ export async function updateSession(request: NextRequest) {
         console.warn(`🚫 Middleware | Access Denied: User ${user.email} (Role: ${userRole}) tried to access /admin. Redirecting to safe dashboard.`)
         const url = request.nextUrl.clone()
         url.pathname = userRole === 'PROVEEDOR' ? '/proveedor/dashboard' : '/cliente/dashboard'
-        const redirectResponse = NextResponse.redirect(url)
-        supabaseResponse.cookies.getAll().forEach(cookie => {
-          redirectResponse.cookies.set(cookie.name, cookie.value)
-        })
-        return redirectResponse
+        return createRedirectResponse(url)
       }
 
       const isProveedorPath = path.startsWith('/proveedor')
@@ -155,21 +159,13 @@ export async function updateSession(request: NextRequest) {
       if (isProveedorPath && userRole !== 'PROVEEDOR' && userRole !== 'ADMIN') {
         const url = request.nextUrl.clone()
         url.pathname = '/cliente/dashboard'
-        const redirectResponse = NextResponse.redirect(url)
-        supabaseResponse.cookies.getAll().forEach(cookie => {
-          redirectResponse.cookies.set(cookie.name, cookie.value)
-        })
-        return redirectResponse
+        return createRedirectResponse(url)
       }
 
       if (isClientePath && userRole !== 'CLIENTE' && userRole !== 'ADMIN') {
         const url = request.nextUrl.clone()
         url.pathname = '/proveedor/dashboard'
-        const redirectResponse = NextResponse.redirect(url)
-        supabaseResponse.cookies.getAll().forEach(cookie => {
-          redirectResponse.cookies.set(cookie.name, cookie.value)
-        })
-        return redirectResponse
+        return createRedirectResponse(url)
       }
     }
   } catch (err) {

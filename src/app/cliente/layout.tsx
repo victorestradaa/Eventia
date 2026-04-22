@@ -20,8 +20,11 @@ export default async function ClientLayout({ children }: { children: React.React
     // Romper el bucle de middleware interceptando el fallo de autenticación de Lambda sin usar redirect() de servidor
     return (
       <div className="min-h-screen bg-black text-white p-10 flex flex-col items-center justify-center space-y-6">
-        <h2 className="text-3xl font-bold text-amber-500">Sesión Inválida</h2>
-        <p className="text-gray-400 text-center max-w-md">Tu sesión de seguridad caducó o hay un conflicto en las credenciales almacenadas en este dispositivo.</p>
+        <h2 className="text-3xl font-bold text-amber-500 uppercase tracking-tighter italic">Sesión Inválida</h2>
+        <div className="text-gray-400 text-center max-w-md space-y-2">
+          <p>Tu sesión de seguridad caducó o hay un conflicto en las credenciales almacenadas en este dispositivo.</p>
+          <p className="text-[10px] opacity-20 uppercase font-mono mt-4">Error: {profileRes.error || 'Autenticación fallida'}</p>
+        </div>
         <form action={async () => {
           'use server';
           const { cerrarSesion } = await import('@/lib/actions/authActions');
