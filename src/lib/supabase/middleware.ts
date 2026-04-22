@@ -121,16 +121,17 @@ export async function updateSession(request: NextRequest) {
       const path = request.nextUrl.pathname
       console.log(`👤 Middleware | User: ${user.email} | Detected Role: ${userRole} | Path: ${path} | Source: ${isHardcodedAdmin ? 'Hardcoded' : (dbUserRole ? 'Database' : (metadataRole ? 'Metadata' : 'Default'))}`);
 
-      // Helper to clone response with cookies
+      // Helper to clone response with cookies (Usa cabeceras directamente para máxima fidelidad)
       const createRedirectResponse = (targetUrl: URL) => {
         const redirectResponse = NextResponse.redirect(targetUrl)
-        supabaseResponse.cookies.getAll().forEach(cookie => {
-          redirectResponse.cookies.set({
-            name: cookie.name,
-            value: cookie.value,
-            ...cookie, // This spreads all options: path, secure, httpOnly, etc.
-          })
+        
+        // Copiar cabeceras set-cookie directamente del objeto original para no perder atributos (path, secure, etc)
+        supabaseResponse.headers.forEach((value, key) => {
+          if (key.toLowerCase() === 'set-cookie') {
+            redirectResponse.headers.append(key, value)
+          }
         })
+        
         return redirectResponse
       }
 

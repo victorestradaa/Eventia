@@ -16,7 +16,7 @@ export async function getCurrentProfile() {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return { success: false, error: 'No autenticado' };
+      return { success: false, error: `AUTH_LOST: ${authError?.message || 'No user session found'}` };
     }
 
     const perfil = await prisma.usuario.findUnique({
@@ -28,21 +28,16 @@ export async function getCurrentProfile() {
     });
 
     if (!perfil) {
-      // Recuperación Zombie: El usuario existe en Supabase pero no en Prisma (ocurre si falla la DB en el registro)
-      // IMPORTANTE: No asumimos que es CLIENTE — podría ser un PROVEEDOR cuyo registro DB falló.
-      // En este caso lo creamos como CLIENTE (rol por defecto), pero el re-registro lo corregirá.
-      // Este caso solo debería ocurrir si el paso 2 del registro falló por timeout.
-      console.warn('⚠️ Perfil Zombie detectado para:', user.email, '— Redirigiendo a reintento de registro.');
-
-      // En lugar de crear un perfil con rol incorrecto, devolvemos un error descriptivo
-      // para que el middleware redirija al usuario a completar su registro.
       return { success: false, error: 'PROFILE_MISSING', zombie: true };
     }
 
     return { success: true, data: perfil };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error al obtener perfil:', error);
-    return { success: false, error: 'Ocurrió un error inesperado al obtener el perfil.' };
+    return { 
+      success: false, 
+      error: `SYSTEM_ERROR: ${error.message || 'Unknown error during profile fetch'}` 
+    };
   }
 }
 
