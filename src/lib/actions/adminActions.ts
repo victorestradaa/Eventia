@@ -82,30 +82,31 @@ export async function getCatalogoAssets(tipo?: string, categoria?: string) {
   }
 }
 
-export async function createCatalogoAsset(formData: FormData) {
+export async function createCatalogoAsset(data: { base64: string; tipo: string; categoria: string; nombre: string; etiquetas?: string; ext?: string }) {
   try {
-    const tipo = formData.get('tipo') as string;
-    const categoria = formData.get('categoria') as string;
-    const nombre = formData.get('nombre') as string;
-    const labels = formData.get('etiquetas') as string;
-    const file = formData.get('file') as File;
+    const { tipo, categoria, nombre, base64, etiquetas, ext = 'png' } = data;
 
-    if (!file || !tipo) return { success: false, error: 'Datos incompletos' };
+    if (!base64 || !tipo) return { success: false, error: 'Datos incompletos' };
 
     // 1. Asegurar Bucket público (Fix para cuadros blancos)
     await supabaseAdmin.storage.updateBucket(BUCKET_NAME, { public: true });
 
-    // 2. Subir a Supabase Storage
-    const fileExt = file.name.split('.').pop() || 'png';
-    const fileName = `${FOLDER_NAME}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+    // 2. Extraer el buffer desde el Base64
+    const base64Data = base64.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    // Configurar mime type asumiendo el base64 o la extension
+    let contentType = 'image/png';
+    if (base64.startsWith('data:image/jpeg') || ext === 'jpg' || ext === 'jpeg') contentType = 'image/jpeg';
+    if (base64.startsWith('data:image/webp') || ext === 'webp') contentType = 'image/webp';
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const fileName = `${FOLDER_NAME}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
 
+    // 3. Subir a Supabase Storage
     const { error: uploadError } = await supabaseAdmin.storage
       .from(BUCKET_NAME)
       .upload(fileName, buffer, {
-        contentType: file.type,
+        contentType,
         upsert: false
       });
 
@@ -115,14 +116,14 @@ export async function createCatalogoAsset(formData: FormData) {
       .from(BUCKET_NAME)
       .getPublicUrl(fileName);
 
-    // 2. Guardar referencia en DB
+    // 4. Guardar referencia en DB
     const asset = await prisma.catalogoAsset.create({
       data: {
         tipo,
         categoria,
         nombre,
         url: publicData.publicUrl,
-        etiquetas: labels || ''
+        etiquetas: etiquetas || ''
       }
     });
 

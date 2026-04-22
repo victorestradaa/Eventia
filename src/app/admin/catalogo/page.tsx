@@ -99,13 +99,23 @@ export default function CatalogoAdminPage() {
         setUploadProgress({ current: i + 1, total: selectedFiles.length });
         
         try {
-          const formDataToUpload = new FormData();
-          formDataToUpload.append('file', file);
-          formDataToUpload.append('tipo', formData.tipo);
-          formDataToUpload.append('categoria', formData.categoria);
-          formDataToUpload.append('nombre', file.name.split('.')[0] || `Activo_${Date.now()}_${i}`);
+          const reader = new FileReader();
+          const base64: string = await new Promise((resolve, reject) => {
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+          });
 
-          const res = await createCatalogoAsset(formDataToUpload);
+          const ext = file.name.split('.').pop() || 'png';
+          const nombre = file.name.split('.')[0] || `Activo_${Date.now()}_${i}`;
+
+          const res = await createCatalogoAsset({
+              base64,
+              ext,
+              tipo: formData.tipo,
+              categoria: formData.categoria,
+              nombre
+          });
 
           if (res.success) successCount++;
         } catch (err) {
