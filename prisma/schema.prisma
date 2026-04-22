@@ -125,6 +125,7 @@ model Evento {
   descripcion       String?
   creadoEn          DateTime           @default(now())
   actualizadoEn     DateTime           @updatedAt
+  estado            EstadoEvento       @default(ACTIVO)
   album             AlbumDigital?
   disposicionMesas  DisposicionMesa?
   cliente           Cliente            @relation(fields: [clienteId], references: [id], onDelete: Cascade)
@@ -132,6 +133,12 @@ model Evento {
   invitados         Invitado[]
   lineasPresupuesto LineaPresupuesto[]
   reservas          Reserva[]
+}
+
+enum EstadoEvento {
+  ACTIVO
+  ARCHIVADO
+  COMPLETADO
 }
 
 model Invitado {

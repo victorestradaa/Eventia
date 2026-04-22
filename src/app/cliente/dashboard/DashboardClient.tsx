@@ -1,11 +1,12 @@
 'use client';
 
-import { Calendar, Users, Wallet, ChevronRight, Star, Clock, X, Loader2 } from 'lucide-react';
+import { Calendar, Users, Wallet, ChevronRight, Star, Clock, X, Loader2, Trash2, History } from 'lucide-react';
 import { formatearMoneda } from '@/lib/utils';
 import Link from 'next/link';
 import { useState } from 'react';
 import { createEvento } from '@/lib/actions/eventActions';
 import { useRouter } from 'next/navigation';
+import ArchiveEventModal from '@/components/cliente/dashboard/ArchiveEventModal';
 
 interface DashboardClientProps {
   initialEventos: any[];
@@ -28,6 +29,7 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
 
   const [eventoId, setEventoId] = useState(eventos.length > 0 ? eventos[0].id : null);
   const [isNewEventModalOpen, setIsNewEventModalOpen] = useState(false);
+  const [eventToArchive, setEventToArchive] = useState<{ id: string; nombre: string } | null>(null);
   
   // States para el nuevo evento
   const [nuevoEvento, setNuevoEvento] = useState({
@@ -82,14 +84,14 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
   if (eventos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center text-3xl">🎉</div>
+        <div className="w-20 h-20 rounded-full bg-[var(--color-fondo-hover)] flex items-center justify-center text-3xl">🎉</div>
         <div className="space-y-2">
           <h2 className="text-3xl font-bold">¡Bienvenido a Gestor de Eventos!</h2>
           <p className="text-[var(--color-texto-suave)] max-w-md">Empieza creando tu primer evento para organizar cada detalle de tu gran día.</p>
         </div>
         <button 
           onClick={() => setIsNewEventModalOpen(true)}
-          className="btn btn-primario px-8 py-4 font-bold shadow-lg shadow-violet-500/20"
+          className="btn-oro px-8 py-4 font-bold shadow-xl"
         >
           Crear mi primer evento
         </button>
@@ -102,11 +104,12 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
 
   function renderModal() {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-        <div className="card max-w-xl w-full p-8 space-y-8 animate-in zoom-in-95 duration-300">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[var(--color-fondo)]/80 backdrop-blur-md animate-in fade-in duration-300">
+        <div className="bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] max-w-xl w-full p-8 space-y-8 rounded-[2rem] shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden">
+           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent" />
            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold uppercase italic tracking-tighter decoration-[var(--color-primario-claro)] underline underline-offset-8">Nuevo Evento</h2>
-              <button onClick={() => setIsNewEventModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full" disabled={loading}><X size={20} /></button>
+              <h2 className="text-2xl font-serif italic text-[var(--color-texto)]">Nuevo Evento</h2>
+              <button onClick={() => setIsNewEventModalOpen(false)} className="p-2 hover:bg-[var(--color-fondo-hover)] rounded-full text-[var(--color-texto-muted)]" disabled={loading}><X size={20} /></button>
            </div>
            <form onSubmit={handleCrearEvento} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -117,7 +120,7 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
                     value={nuevoEvento.nombre}
                     onChange={(e) => setNuevoEvento({...nuevoEvento, nombre: e.target.value})}
                     placeholder="Ej: Boda de Laura y David"
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" 
+                    className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-xl px-4 py-3 outline-none focus:border-[#d4af37] transition-all text-sm" 
                     disabled={loading}
                   />
                 </div>
@@ -128,7 +131,7 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
                     required
                     value={nuevoEvento.tipo}
                     onChange={(e) => setNuevoEvento({...nuevoEvento, tipo: e.target.value})}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all"
+                    className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-xl px-4 py-3 outline-none focus:border-[#d4af37] transition-all text-sm"
                     disabled={loading}
                   >
                     {eventTypes.map(t => <option key={t} value={t} className="bg-[#1a1a1a]">{t}</option>)}
@@ -142,7 +145,7 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
                     value={nuevoEvento.invitados}
                     onChange={(e) => setNuevoEvento({...nuevoEvento, invitados: e.target.value})}
                     placeholder="Ej: 150"
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" 
+                    className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-xl px-4 py-3 outline-none focus:border-[#d4af37] transition-all text-sm" 
                     disabled={loading}
                   />
                 </div>
@@ -155,7 +158,7 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
                     type="date"
                     value={nuevoEvento.fecha}
                     onChange={(e) => setNuevoEvento({...nuevoEvento, fecha: e.target.value})}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" 
+                    className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-xl px-4 py-3 outline-none focus:border-[#d4af37] transition-all text-sm" 
                     disabled={loading}
                   />
                 </div>
@@ -169,15 +172,15 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
                     value={nuevoEvento.presupuesto}
                     onChange={(e) => setNuevoEvento({...nuevoEvento, presupuesto: e.target.value})}
                     placeholder="Ej: 50000"
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" 
+                    className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-xl px-4 py-3 outline-none focus:border-[#d4af37] transition-all text-sm" 
                     disabled={loading}
                   />
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-4 border-t border-white/5">
-                 <button type="button" onClick={() => setIsNewEventModalOpen(false)} className="btn btn-secundario flex-1 py-4" disabled={loading}>Cancelar</button>
-                 <button type="submit" className="btn btn-primario flex-1 py-4 font-bold shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2" disabled={loading}>
+              <div className="flex gap-4 pt-4 border-t border-[var(--color-borde-suave)]">
+                 <button type="button" onClick={() => setIsNewEventModalOpen(false)} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-[var(--color-texto-muted)] hover:text-[var(--color-texto)] transition-colors" disabled={loading}>Cancelar</button>
+                 <button type="submit" className="btn-oro flex-1 py-4 font-bold shadow-xl flex items-center justify-center gap-2" disabled={loading}>
                    {loading ? <Loader2 className="animate-spin" size={20} /> : 'Crear Evento'}
                  </button>
               </div>
@@ -240,9 +243,14 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
       {/* Event Selection (Solo para Planner) */}
       {isPlanner && (
         <section className="flex items-center gap-4 overflow-x-auto pb-4 -mx-2 px-2 scrollbar-style">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-[#7A5E1D] whitespace-nowrap mr-2">
-            Mis Eventos (Planner):
-          </h2>
+          <div className="flex items-center gap-2 mr-4">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-[#7A5E1D] whitespace-nowrap">
+              Mis Eventos:
+            </h2>
+            <Link href="/cliente/historial" className="flex items-center gap-1 text-[10px] bg-[var(--color-fondo-hover)] hover:bg-[var(--color-fondo-input)] px-2 py-1 rounded-md text-[var(--color-texto-muted)] transition-colors">
+              <History size={12} /> Historial
+            </Link>
+          </div>
           {eventos.map((evt) => (
             <button 
               key={evt.id}
@@ -262,6 +270,13 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
           >
             <span>+</span> Nuevo Evento
           </button>
+        </section>
+      )}
+      {!isPlanner && (
+        <section className="flex justify-end">
+           <Link href="/cliente/historial" className="flex items-center gap-1.5 text-xs font-bold text-[var(--color-texto-suave)] hover:text-[var(--color-texto)] transition-colors bg-[var(--color-fondo-card)] px-3 py-1.5 rounded-full border border-[var(--color-borde-suave)] shadow-sm">
+            <History size={14} /> Ver Historial
+          </Link>
         </section>
       )}
 
@@ -322,11 +337,20 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
                <span className="text-gray-400 text-[11px] sm:text-xs tracking-widest uppercase mb-2 sm:mb-0 flex items-center">
                  VIGENCIA GESTIÓN <span className="text-white font-medium ml-2">{mesesVigencia === Infinity ? '∞' : fechaExpiracion.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }).replace('.', '')}</span>
                </span>
-               <Link href={`/cliente/evento/${proximoEvento.id}`}>
-                 <button className="bg-gradient-to-b from-[#eadeba] to-[#c79a3b] text-black px-6 py-2 rounded-full text-sm font-bold shadow-lg shadow-[#c79a3b]/20 hover:brightness-110 transition-all border border-[#f5e3ba]">
-                   Gestionar Mi Evento
+               <div className="flex items-center gap-3">
+                 <button 
+                   onClick={() => setEventToArchive({ id: proximoEvento.id, nombre: proximoEvento.nombre })}
+                   className="p-2 text-white/40 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                   title="Quitar Evento"
+                 >
+                   <Trash2 size={20} />
                  </button>
-               </Link>
+                 <Link href={`/cliente/evento/${proximoEvento.id}`}>
+                   <button className="bg-gradient-to-b from-[#eadeba] to-[#c79a3b] text-black px-6 py-2 rounded-full text-sm font-bold shadow-lg shadow-[#c79a3b]/20 hover:brightness-110 transition-all border border-[#f5e3ba]">
+                     Gestionar Mi Evento
+                   </button>
+                 </Link>
+               </div>
             </div>
           </div>
         </div>
@@ -396,18 +420,18 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
            <h2 className="text-[18px] font-bold text-black tracking-tight">Mis Favoritos (0)</h2>
         </div>
 
-        <div className="relative bg-gradient-to-b from-[#FFFFFF] to-[#FDFCF9] border border-stone-200/80 rounded-[14px] p-10 md:p-12 shadow-[0_2px_15px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center text-center overflow-hidden">
+        <div className="relative bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-[14px] p-10 md:p-12 shadow-[0_2px_15px_rgba(0,0,0,0.03)] flex flex-col items-center justify-center text-center overflow-hidden">
            
            {/* Decoración: Estrellas en esquina inferior izquierda */}
-           <div className="absolute -bottom-4 -left-4 md:bottom-0 md:left-6 flex items-end drop-shadow-2xl opacity-90 pointer-events-none">
+           <div className="absolute -bottom-4 -left-4 md:bottom-0 md:left-6 flex items-end drop-shadow-2xl opacity-40 pointer-events-none grayscale">
               <Star size={70} className="text-[#D4AF37] fill-[#D4AF37] -mr-6 drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)] z-10 transform -rotate-12" />
               <Star size={110} className="text-[#E8C37D] fill-[#E8C37D] drop-shadow-[0_8px_16px_rgba(0,0,0,0.2)] z-20" />
               <Star size={60} className="text-[#B8860B] fill-[#B8860B] -ml-6 drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)] z-10 transform rotate-12" />
            </div>
 
-           <div className="relative z-30 max-w-md mx-auto space-y-2 text-stone-800 pt-2">
-             <p className="text-[15px] font-semibold text-black">Aún no hay proveedores registrados.</p>
-             <p className="text-[13px] font-medium mb-6 text-stone-600 leading-relaxed max-w-[280px] mx-auto">Próximamente encontrarás los mejores proveedores para tu evento.</p>
+           <div className="relative z-30 max-w-md mx-auto space-y-2 text-[var(--color-texto)] pt-2">
+             <p className="text-[15px] font-semibold">Aún no hay proveedores registrados.</p>
+             <p className="text-[13px] font-medium mb-6 text-[var(--color-texto-suave)] leading-relaxed max-w-[280px] mx-auto">Próximamente encontrarás los mejores proveedores para tu evento.</p>
              <div className="mt-8 pt-4">
                <Link href="/cliente/explorar">
                  <button className="bg-gradient-to-b from-[#222] to-[#000] text-white px-14 py-3 rounded-full text-sm font-semibold shadow-[0_8px_20px_rgba(0,0,0,0.2)] border border-[#333] hover:scale-105 transition-transform inline-flex">
@@ -421,6 +445,15 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
 
       {/* MODAL NUEVO EVENTO (Reutilizado) */}
       {isNewEventModalOpen && renderModal()}
+
+      {/* MODAL ARCHIVAR EVENTO */}
+      {eventToArchive && (
+        <ArchiveEventModal 
+          evento={eventToArchive} 
+          onClose={() => setEventToArchive(null)} 
+          onSuccess={() => router.refresh()} 
+        />
+      )}
     </div>
   );
 }

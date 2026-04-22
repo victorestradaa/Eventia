@@ -30,8 +30,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} ${playfair.variable}`}>
-      {/* Inline script prevents flash of wrong theme on first load */}
-      <head>
+      <body className="antialiased">
+        {/* Inline script prevents flash of wrong theme on first load */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -44,8 +44,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className="antialiased">
         <ThemeProvider>
           {children}
         </ThemeProvider>

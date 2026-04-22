@@ -10,8 +10,31 @@ import { serializePrisma } from '@/lib/utils';
  */
 export async function getEventosCliente(clienteId: string) {
   try {
+    // 1. Lógica JIT (Just-In-Time) para Auto-Completado
+    // Buscamos eventos activos que ya pasaron (fecha < ahora - 3 días)
+    const hace3Dias = new Date();
+    hace3Dias.setDate(hace3Dias.getDate() - 3);
+
+    await prisma.evento.updateMany({
+      where: {
+        clienteId,
+        estado: 'ACTIVO',
+        fecha: {
+          lt: hace3Dias,
+          not: null
+        }
+      },
+      data: {
+        estado: 'COMPLETADO'
+      }
+    });
+
+    // 2. Obtener solo los eventos ACTIVOS para el dashboard principal
     const eventos = await prisma.evento.findMany({
-      where: { clienteId },
+      where: { 
+        clienteId,
+        estado: 'ACTIVO'
+      },
       orderBy: { creadoEn: 'desc' },
       include: {
         _count: {
@@ -425,5 +448,115 @@ export async function updateInvitacionPlantilla(eventoId: string, plantillaRaw: 
       success: false, 
       error: `Error de base de datos: ${error.message || 'Desconocido'}. Por favor, contacta a soporte.`
     };
+  }
+}
+
+/**
+ * Obtiene el historial de eventos (ARCHIVADOS y COMPLETADOS).
+ */
+export async function getHistorialEventos(clienteId: string) {
+  try {
+    const eventos = await prisma.evento.findMany({
+      where: {
+        clienteId,
+        estado: { in: ['ARCHIVADO', 'COMPLETADO'] }
+      },
+      orderBy: { fecha: 'desc' },
+      include: {
+        reservas: {
+          where: { estado: { not: 'CANCELADO' } },
+          include: {
+            proveedor: true,
+            servicio: true
+          }
+        }
+      }
+    });
+
+    return { success: true, data: serializePrisma(eventos) };
+  } catch (error) {
+    console.error('Error al obtener historial:', error);
+    return { success: false, error: 'No se pudo cargar el historial.' };
+  }
+}
+
+/**
+ * Archiva o elimina un evento con opciones de limpieza de datos.
+ */
+export async function archiveEvento(id: string, options: { 
+  borrarDatos: boolean // true = borrar por completo (invitados, invitacion), false = solo archivar
+}) {
+  try {
+    // 1. Verificamos si tiene reservaciones activas para marcarlas como canceladas
+    await prisma.reserva.updateMany({
+      where: { eventoId: id, estado: { not: 'CANCELADO' } },
+      data: { estado: 'CANCELADO' }
+    });
+
+    if (options.borrarDatos) {
+      // Borrado físico de datos secundarios si el usuario lo pidió
+      await prisma.invitado.deleteMany({ where: { eventoId: id } });
+      await prisma.invitacionDigital.deleteMany({ where: { eventoId: id } });
+      await prisma.disposicionMesa.deleteMany({ where: { eventoId: id } });
+      
+      // El evento no se borra físicamente para preservar registros financieros, 
+      // pero se marca como ARCHIVADO (o podríamos añadir un estado ELIMINADO si se prefiere distinguir)
+      await prisma.evento.update({
+        where: { id },
+        data: { estado: 'ARCHIVADO' }
+      });
+    } else {
+      // Solo archivar preservando todo
+      await prisma.evento.update({
+        where: { id },
+        data: { estado: 'ARCHIVADO' }
+      });
+    }
+
+    revalidatePath('/cliente/dashboard');
+    revalidatePath('/cliente/historial');
+    return { success: true };
+  } catch (error) {
+    console.error('Error al archivar evento:', error);
+    return { success: false, error: 'Hubo un error al procesar el borrado del evento.' };
+  }
+}
+
+/**
+ * Restaura un evento de ARCHIVADO a ACTIVO.
+ */
+export async function restoreEvento(id: string) {
+  try {
+    await prisma.evento.update({
+      where: { id },
+      data: { estado: 'ACTIVO' }
+    });
+
+    revalidatePath('/cliente/dashboard');
+    revalidatePath('/cliente/historial');
+    return { success: true };
+  } catch (error) {
+    console.error('Error al restaurar evento:', error);
+    return { success: false, error: 'No se pudo reactivar el evento.' };
+  }
+}
+
+/**
+ * Elimina permanentemente un evento y todos sus datos relacionados.
+ */
+export async function deleteEventoPermanently(id: string) {
+  try {
+    // Prisma maneja el borrado en cascada según el esquema.
+    // Al eliminar el evento, se borran invitados, invitaciones, reservas, etc.
+    await prisma.evento.delete({
+      where: { id }
+    });
+
+    revalidatePath('/cliente/dashboard');
+    revalidatePath('/cliente/historial');
+    return { success: true };
+  } catch (error) {
+    console.error('Error al eliminar evento permanentemente:', error);
+    return { success: false, error: 'No se pudo eliminar el evento permanentemente.' };
   }
 }

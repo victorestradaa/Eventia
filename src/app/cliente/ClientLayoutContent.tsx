@@ -15,6 +15,8 @@ interface ClientLayoutContentProps {
   perfil: any;
 }
 
+import Logo from '@/components/common/Logo';
+
 export default function ClientLayoutContent({ children, initialEventos, perfil }: ClientLayoutContentProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -106,14 +108,7 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-3 group transition-transform hover:scale-105">
-              <Image 
-                src="/logo.png" 
-                alt="Eventia Logo" 
-                width={180} 
-                height={60} 
-                className="w-auto h-12 object-contain" 
-                priority 
-              />
+              <Logo width={180} height={60} className="w-auto h-12 object-contain" />
             </Link>
             
             {/* Context Indicator (Active Event Selector) */}

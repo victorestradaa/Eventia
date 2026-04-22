@@ -21,6 +21,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
 
 import { cerrarSesion } from '@/lib/actions/authActions';
+import Logo from '@/components/common/Logo';
 
 const MENU_ITEMS = [
   { href: '/proveedor/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -74,7 +75,7 @@ export default function ProviderSidebar({ isOpen, onClose }: ProviderSidebarProp
             <X size={20} />
           </button>
 
-          <Image src="/logo.png" alt="Eventia Logo" width={280} height={90} className="w-auto h-20 mx-auto object-contain" priority />
+          <Logo forceWhite={true} width={280} height={90} className="w-auto h-20 mx-auto object-contain" />
           <p className="text-[10px] text-[var(--color-texto-muted)] uppercase tracking-widest font-bold mt-2">
             Panel Proveedor
           </p>

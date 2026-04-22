@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
+import Logo from '@/components/common/Logo';
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/cliente';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/cliente';
 
 export default function LoginPage() {
   const [rol, setRol] = useState<'CLIENTE' | 'PROVEEDOR'>('CLIENTE');
@@ -61,7 +61,7 @@ export default function LoginPage() {
       <div className="card w-full max-w-md">
         <div className="flex flex-col items-center text-center mb-6">
           <div className="mb-4">
-            <Image src="/logo.png" alt="Eventia Logo" width={400} height={160} className="w-auto h-28 object-contain" priority />
+            <Logo />
           </div>
           <h1 className="text-3xl font-bold mb-2">Iniciar Sesión</h1>
           <p className="text-[var(--color-texto-suave)]">Bienvenido de vuelta</p>

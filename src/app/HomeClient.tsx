@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import Logo from '@/components/common/Logo';
+import { useState } from 'react';
 import Image from 'next/image';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { cn } from '@/lib/utils';
 import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { MarketingSection } from '@/components/common/MarketingSection';
 
 const CATEGORIAS = [
   { id: 'SALON',      label: 'Salones',      img: '/cat_salones.png' },
@@ -28,7 +29,7 @@ export default function HomeClient() {
       <header className="sticky top-0 z-[100] py-4 px-8 bg-[var(--color-fondo)]/80 backdrop-blur-md">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between">
           <Link href="/" className="shrink-0">
-            <Image src="/logo.png" alt="Eventia Logo" width={140} height={45} className="w-auto h-11 object-contain" priority />
+            <Logo width={140} height={45} className="w-auto h-11 object-contain" />
           </Link>
 
           {/* Menú Superior removido para usuarios no autenticados */}
@@ -115,7 +116,7 @@ export default function HomeClient() {
             {CATEGORIAS.map((cat) => (
               <Link 
                 key={cat.id} 
-                href={`/cliente/explorar?categoria=${cat.id}`}
+                href={`/explorar?categoria=${cat.id}`}
                 className="group relative aspect-[3/4] w-[140px] md:w-[160px] overflow-hidden rounded-2xl border border-[var(--color-borde)] transition-all hover:scale-[1.03] hover:shadow-glow-oro shrink-0"
               >
                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10" />
@@ -136,11 +137,15 @@ export default function HomeClient() {
         </div>
       </section>
 
+      <div className="max-w-[1400px] mx-auto px-6">
+        <MarketingSection />
+      </div>
+
       {/* ──────────── Footer ──────────── */}
       <footer className="py-12 px-8 border-t border-[var(--color-borde-suave)] bg-[var(--color-fondo)]">
         <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="shrink-0">
-            <Image src="/logo.png" alt="Eventia Logo" width={110} height={35} className="w-auto h-8 opacity-60 grayscale" />
+            <Logo width={110} height={35} className="w-auto h-8 opacity-60 grayscale" />
           </div>
 
           <p className="text-[11px] text-[var(--color-texto-muted)] font-medium">

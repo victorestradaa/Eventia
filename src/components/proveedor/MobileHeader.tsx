@@ -1,6 +1,6 @@
 "use client";
 
-import Image from 'next/image';
+import Logo from '@/components/common/Logo';
 import { Menu } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -18,7 +18,7 @@ export default function MobileHeader({ onOpenSidebar }: MobileHeaderProps) {
         >
           <Menu size={24} />
         </button>
-        <Image src="/logo.png" alt="Eventia Logo" width={120} height={40} className="w-auto h-8 object-contain" />
+        <Logo width={120} height={40} className="w-auto h-8 object-contain" />
       </div>
 
       <div className="flex items-center gap-2">

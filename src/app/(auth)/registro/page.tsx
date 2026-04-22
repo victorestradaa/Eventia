@@ -17,6 +17,7 @@ import {
 import { createClient } from '@/lib/supabase/cliente';
 import { registrarUsuario } from '@/lib/actions/authActions';
 import { cn } from '@/lib/utils';
+import Logo from '@/components/common/Logo';
 
 export default function RegisterPage() {
   const [rol, setRol] = useState<'CLIENTE' | 'PROVEEDOR'>('CLIENTE');
@@ -64,7 +65,7 @@ export default function RegisterPage() {
 
       if (authError) {
         if (authError.message.toLowerCase().includes('rate limit')) {
-          throw new Error('Supabase Rate Limit: Has intentado demasiados registros. Espera unos minutos.');
+          throw new Error('Supabase Rate Limit: Has intentados demasiados registros. Espera unos minutos.');
         }
         if (authError.message.toLowerCase().includes('already registered')) {
           throw new Error('Este correo ya tiene una cuenta activa en Supabase Auth. Intenta otro correo o recupera tu contraseña.');
@@ -112,7 +113,7 @@ export default function RegisterPage() {
       <div className="card w-full max-w-md">
         <div className="flex flex-col items-center text-center mb-8">
           <div className="mb-4">
-            <Image src="/logo.png" alt="Eventia Logo" width={400} height={160} className="w-auto h-28 object-contain" priority />
+            <Logo />
           </div>
           <h1 className="text-3xl font-bold mb-2">Crear Cuenta</h1>
           <p className="text-[var(--color-texto-suave)]">Únete a la mejor red de eventos</p>
