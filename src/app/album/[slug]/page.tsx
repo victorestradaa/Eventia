@@ -18,7 +18,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { getAlbumPublic, uploadAlbumMedia } from '@/lib/actions/albumActions';
-import { cn } from '@/lib/utils';
+import { cn, parseFechaLocal } from '@/lib/utils';
 
 export default function GuestAlbumPage() {
   const { slug } = useParams();
@@ -189,7 +189,7 @@ export default function GuestAlbumPage() {
                <div>
                   <h1 className="text-lg font-bold font-serif italic tracking-tight leading-tight">{album.evento.nombre}</h1>
                   <p className="text-[10px] font-black opacity-40 uppercase tracking-[0.2em] flex items-center gap-1.5 mt-0.5">
-                    <Calendar size={10} className="text-[#bd9b65]" /> {new Date(album.evento.fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    <Calendar size={10} className="text-[#bd9b65]" /> {parseFechaLocal(album.evento.fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
                </div>
             </div>

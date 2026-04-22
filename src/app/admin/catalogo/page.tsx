@@ -25,6 +25,7 @@ export default function CatalogoAdminPage() {
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -53,13 +54,13 @@ export default function CatalogoAdminPage() {
     loadAssets();
   }, []);
 
-  const loadAssets = async () => {
-    setLoading(true);
+  const loadAssets = async (silent = false) => {
+    if (!silent) setLoading(true);
     const res = await getCatalogoAssets();
     if (res.success) {
       setAssets(res.data || []);
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,38 +90,42 @@ export default function CatalogoAdminPage() {
     if (selectedFiles.length === 0) return alert('Selecciona al menos un archivo');
 
     setUploading(true);
+    setUploadProgress({ current: 0, total: selectedFiles.length });
     let successCount = 0;
 
     for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
+        setUploadProgress({ current: i + 1, total: selectedFiles.length });
         
-        // Convertir archivo a base64 para el servidor (o manejarlo como prefieras)
-        // Por simplicidad en este entorno, usamos el preview (base64) que ya tenemos generada
-        // En una app real, aquí subirías a S3/Supabase Storage primero.
-        
-        const reader = new FileReader();
-        const base64: string = await new Promise((resolve) => {
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-        });
+        try {
+          const reader = new FileReader();
+          const base64: string = await new Promise((resolve, reject) => {
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+          });
 
-        const res = await createCatalogoAsset({
-            tipo: formData.tipo,
-            categoria: formData.categoria,
-            nombre: file.name.split('.')[0] || `Activo_${Date.now()}_${i}`,
-            url: base64
-        });
+          const res = await createCatalogoAsset({
+              tipo: formData.tipo,
+              categoria: formData.categoria,
+              nombre: file.name.split('.')[0] || `Activo_${Date.now()}_${i}`,
+              url: base64
+          });
 
-        if (res.success) successCount++;
+          if (res.success) successCount++;
+        } catch (err) {
+          console.error(`Error subiendo archivo ${i}:`, err);
+        }
     }
 
     if (successCount > 0) {
       setSelectedFiles([]);
       setPreviews([]);
-      loadAssets();
-      alert(`¡Éxito! Se subieron ${successCount} archivos.`);
+      loadAssets(true); // Silent reload after upload
+      alert(`¡Éxito! Se procesaron ${successCount} de ${selectedFiles.length} archivos.`);
     }
     setUploading(false);
+    setUploadProgress({ current: 0, total: 0 });
   };
 
   const handleDelete = async (id: string) => {
@@ -131,10 +136,16 @@ export default function CatalogoAdminPage() {
   };
 
   const handleUpdate = async (id: string, updatedData: any) => {
+    // Optimistic update locally to prevent jumpy UI
+    setAssets(prev => prev.map(a => a.id === id ? { ...a, ...updatedData } : a));
+    
     const res = await updateCatalogoAsset(id, updatedData);
     if (res.success) {
-      setEditingId(null);
-      loadAssets();
+      // No cerramos el editingId inmediatamente si fue un cambio de select para permitir fluidez, 
+      // pero el usuario pidió que no se actualizara la página de golpe.
+      // Si el cambio fue el nombre (onBlur), sí podemos cerrar.
+      if (updatedData.nombre) setEditingId(null);
+      loadAssets(true);
     }
   };
 
@@ -234,11 +245,18 @@ export default function CatalogoAdminPage() {
 
               <button 
                 type="submit" 
-                className="btn btn-primario w-full py-4 text-sm font-black uppercase tracking-widest flex items-center justify-center gap-2 group"
+                className="btn btn-primario w-full py-4 text-sm font-black uppercase tracking-widest flex flex-col items-center justify-center gap-1 group"
                 disabled={uploading || selectedFiles.length === 0}
               >
-                {uploading ? <Loader2 className="animate-spin" /> : <Upload size={18} className="group-hover:-translate-y-1 transition-transform" />}
-                {uploading ? 'Procesando...' : 'Iniciar Carga'}
+                <div className="flex items-center gap-2">
+                  {uploading ? <Loader2 className="animate-spin" /> : <Upload size={18} className="group-hover:-translate-y-1 transition-transform" />}
+                  {uploading ? 'Procesando...' : 'Iniciar Carga'}
+                </div>
+                {uploading && uploadProgress.total > 0 && (
+                  <span className="text-[10px] opacity-60">
+                    {uploadProgress.current} de {uploadProgress.total} archivos
+                  </span>
+                )}
               </button>
             </form>
           </div>
