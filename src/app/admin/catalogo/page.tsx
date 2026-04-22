@@ -316,7 +316,15 @@ export default function CatalogoAdminPage() {
                   {/* Visual Preview */}
                   <div className="aspect-[3/4] bg-neutral-900 overflow-hidden relative">
                     {asset.tipo === 'FONDO' || asset.tipo === 'ICONO' ? (
-                       <img src={asset.url} alt={asset.nombre} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                       <img 
+                         src={asset.url} 
+                         alt={asset.nombre} 
+                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                         onError={(e) => {
+                           console.error('Error cargando imagen:', asset.url);
+                           e.currentTarget.src = "https://via.placeholder.com/300x400/ff0000/ffffff?text=ERROR+DE+RED";
+                         }}
+                       />
                     ) : (
                        <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center gap-3">
                           <FontIcon size={40} className="text-[var(--color-primario-claro)]" />
