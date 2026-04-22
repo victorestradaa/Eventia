@@ -76,7 +76,7 @@
 }
 
 /* Ajuste global para que el logotipo sea blanco en modo oscuro */
-[data-theme="dark"] img[src*="logo"] {
+[data-theme="dark"] img.dark-mode-logo {
   filter: brightness(0) invert(1);
 }
 
