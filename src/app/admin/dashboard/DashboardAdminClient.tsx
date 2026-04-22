@@ -1,14 +1,28 @@
 'use client';
 
 import React from 'react';
-import { Users, Calendar, DollarSign, Store, Activity, Database, ShieldCheck, ChevronUp, ChevronDown } from 'lucide-react';
+import { Users, Calendar, DollarSign, Store, Activity, Database, ShieldCheck, ChevronUp, ChevronDown, PieChart as PieChartIcon, BarChart2 } from 'lucide-react';
 import { formatearMoneda } from '@/lib/utils';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, Legend,
+  PieChart, Pie, Cell,
+  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+} from 'recharts';
 
 interface DashboardAdminClientProps {
   stats: any;
+  analytics?: {
+    userTrends: any[];
+    eventTrends: any[];
+    catStats: any[];
+    typeStats: any[];
+  }
 }
 
-export default function DashboardAdminClient({ stats }: DashboardAdminClientProps) {
+const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4'];
+
+export default function DashboardAdminClient({ stats, analytics }: DashboardAdminClientProps) {
   const kpis = [
     { label: 'Usuarios Totales', valor: stats.totalUsuarios.toLocaleString(), cambio: '+0%', icon: Users, color: 'text-blue-400' },
     { label: 'Eventos Activos', valor: stats.totalEventos.toLocaleString(), cambio: '+0%', icon: Calendar, color: 'text-violet-400' },
@@ -16,12 +30,14 @@ export default function DashboardAdminClient({ stats }: DashboardAdminClientProp
     { label: 'Proveedores Registrados', valor: stats.totalProveedores.toLocaleString(), cambio: '+0%', icon: Store, color: 'text-amber-400' },
   ];
 
+  const { userTrends = [], eventTrends = [], catStats = [], typeStats = [] } = analytics || {};
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-           <h1 className="text-3xl font-black italic tracking-tighter uppercase">Global Overview</h1>
-           <p className="text-[var(--color-texto-suave)] text-sm">Estado real de la plataforma en tiempo real.</p>
+           <h1 className="text-3xl font-black italic tracking-tighter uppercase">Admin Panel</h1>
+           <p className="text-[var(--color-texto-suave)] text-sm">Analítica y Control de Plataforma (Eventia)</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -47,34 +63,41 @@ export default function DashboardAdminClient({ stats }: DashboardAdminClientProp
         ))}
       </div>
 
-      {/* Main Sections */}
+      {/* Main Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Activity (Still mocked for now but framed better) */}
-        <div className="lg:col-span-2 card p-0 overflow-hidden">
-          <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+        
+        {/* User Growth Chart */}
+        <div className="lg:col-span-2 card p-6">
+          <div className="mb-6 flex items-center justify-between">
              <h3 className="text-xl font-bold flex items-center gap-2">
-                <Activity size={20} className="text-[var(--color-primario-claro)]" />
-                Live Feed de Actividad
+                <Activity size={20} className="text-blue-400" />
+                Tendencia de Nuevos Registros (Últimos 30 días)
              </h3>
-             <button className="text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)] hover:text-white transition-colors">Audit Log &rarr;</button>
           </div>
-          <div className="divide-y divide-white/5">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-center gap-4 p-5 hover:bg-white/[0.02] transition-colors group">
-                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-                  {i % 2 === 0 ? '👤' : '🏪'}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold group-hover:text-[var(--color-primario-claro)] transition-colors">
-                    {i % 2 === 0 ? 'Gestión de Nuevo Cliente' : 'Actualización de Perfil de Proveedor'}
-                  </p>
-                  <p className="text-[10px] text-[var(--color-texto-muted)] uppercase tracking-wider font-extrabold mt-0.5">Hace {i * 10} min • Sistema</p>
-                </div>
-                <button className="p-2 rounded-xl bg-white/5 hover:bg-[var(--color-primario)]/20 text-[var(--color-primario-claro)] opacity-0 group-hover:opacity-100 transition-all">
-                  <ShieldCheck size={18} />
-                </button>
-              </div>
-            ))}
+          <div className="h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={userTrends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorCliente" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorProveedor" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="name" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} 
+                  itemStyle={{ fontSize: '12px', fontWeight: 'bold' }} 
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                <Area type="monotone" name="Clientes Nuevos" dataKey="CLIENTE" stroke="#3b82f6" fillOpacity={1} fill="url(#colorCliente)" strokeWidth={3} />
+                <Area type="monotone" name="Proveedores Nuevos" dataKey="PROVEEDOR" stroke="#f59e0b" fillOpacity={1} fill="url(#colorProveedor)" strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -104,6 +127,76 @@ export default function DashboardAdminClient({ stats }: DashboardAdminClientProp
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Secondary Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Events Bar Chart */}
+        <div className="card p-6">
+           <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
+              <BarChart2 size={20} className="text-violet-400" />
+              Eventos Creados
+           </h3>
+           <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={eventTrends} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
+                <XAxis dataKey="name" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                <Bar name="Eventos" dataKey="Eventos" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+           </div>
+        </div>
+
+        {/* Services Categories Pie */}
+        <div className="card p-6">
+           <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
+              <PieChartIcon size={20} className="text-emerald-400" />
+              Servicios por Categoría
+           </h3>
+           <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={catStats}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {catStats.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{ fontSize: '10px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+           </div>
+        </div>
+
+        {/* Services Event Types Radar */}
+        <div className="card p-6">
+           <h3 className="text-xl font-bold flex items-center gap-2 mb-6 text-center justify-center">
+              Target (Tipos de Evento)
+           </h3>
+           <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={typeStats}>
+                <PolarGrid stroke="#27272a" />
+                <PolarAngleAxis dataKey="name" tick={{ fill: '#a1a1aa', fontSize: 10, fontWeight: 'bold' }} />
+                <Radar name="Servicios Afines" dataKey="value" stroke="#ec4899" fill="#ec4899" fillOpacity={0.5} />
+                <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+              </RadarChart>
+            </ResponsiveContainer>
+           </div>
+        </div>
+        
       </div>
     </div>
   );
