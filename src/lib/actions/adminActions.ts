@@ -12,7 +12,7 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 const BUCKET_NAME = 'servicios';
-const FOLDER_NAME = 'catalogo';
+const FOLDER_NAME = 'albums/catalogo';
 
 /**
  * Obtiene las métricas globales de la plataforma para el administrador.
