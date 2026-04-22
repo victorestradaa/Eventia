@@ -97,3 +97,21 @@ export async function deleteCatalogoAsset(id: string) {
     return { success: false, error: 'Error deleting asset' };
   }
 }
+
+export async function updateCatalogoAsset(id: string, data: { tipo?: string; categoria?: string; nombre?: string; activo?: boolean }) {
+  try {
+    const asset = await prisma.catalogoAsset.update({
+      where: { id },
+      data: {
+        tipo: data.tipo,
+        categoria: data.categoria,
+        nombre: data.nombre,
+        activo: data.activo
+      }
+    });
+    return { success: true, data: asset };
+  } catch (error) {
+    console.error('Error updating asset', error);
+    return { success: false, error: 'Error updating asset' };
+  }
+}

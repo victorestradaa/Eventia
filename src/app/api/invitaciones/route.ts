@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { getCurrentProfile } from '@/lib/actions/authActions';
 
 export async function POST(req: Request) {
   try {
@@ -31,9 +32,13 @@ export async function POST(req: Request) {
       }
     );
 
-    // 2. Verificar que el usuario está autenticado de forma segura
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 });
+    // 2. Verificar que el usuario está autenticado y obtener su perfil de Prisma
+    const perfilRes = await getCurrentProfile();
+    if (!perfilRes.success || !perfilRes.data) {
+      return NextResponse.json({ success: false, error: 'No autorizado / Sesión inválida' }, { status: 401 });
+    }
+
+    const prismaUser = perfilRes.data;
 
     if (!data.eventoId) {
       return NextResponse.json(
@@ -48,8 +53,10 @@ export async function POST(req: Request) {
       include: { cliente: true }
     });
     
-    if (!evento || evento.cliente.usuarioId !== user.id) {
-      return NextResponse.json({ success: false, error: 'Acceso denegado' }, { status: 403 });
+    // IMPORTANTE: Comparamos el ID de Prisma (cuid), no el UUID de Supabase
+    if (!evento || evento.cliente.usuarioId !== prismaUser.id) {
+      console.error(`[ACCESO DENEGADO] Intento de guardado por ${prismaUser.email} para evento ${data.eventoId}`);
+      return NextResponse.json({ success: false, error: 'Acceso denegado: El evento no pertenece a este perfil.' }, { status: 403 });
     }
 
     // LOG DE SEGURIDAD PARA DEPURACIÓN
