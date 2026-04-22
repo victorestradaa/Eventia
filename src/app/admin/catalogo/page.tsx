@@ -5,7 +5,8 @@ import {
   getCatalogoAssets, 
   createCatalogoAsset, 
   deleteCatalogoAsset, 
-  updateCatalogoAsset 
+  updateCatalogoAsset,
+  limpiarActivosCorruptos
 } from '@/lib/actions/adminActions';
 import { 
   Upload, 
@@ -98,19 +99,13 @@ export default function CatalogoAdminPage() {
         setUploadProgress({ current: i + 1, total: selectedFiles.length });
         
         try {
-          const reader = new FileReader();
-          const base64: string = await new Promise((resolve, reject) => {
-              reader.onloadend = () => resolve(reader.result as string);
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
-          });
+          const formDataToUpload = new FormData();
+          formDataToUpload.append('file', file);
+          formDataToUpload.append('tipo', formData.tipo);
+          formDataToUpload.append('categoria', formData.categoria);
+          formDataToUpload.append('nombre', file.name.split('.')[0] || `Activo_${Date.now()}_${i}`);
 
-          const res = await createCatalogoAsset({
-              tipo: formData.tipo,
-              categoria: formData.categoria,
-              nombre: file.name.split('.')[0] || `Activo_${Date.now()}_${i}`,
-              url: base64
-          });
+          const res = await createCatalogoAsset(formDataToUpload);
 
           if (res.success) successCount++;
         } catch (err) {
@@ -149,6 +144,18 @@ export default function CatalogoAdminPage() {
     }
   };
 
+  const handleCleanup = async () => {
+    if (confirm('¿Deseas limpiar los archivos corruptos (Base64) que están bloqueando el catálogo? Esto borrará tus cargas fallidas actuales para desbloquear la página.')) {
+      setLoading(true);
+      const res = await limpiarActivosCorruptos();
+      if (res.success) {
+        alert(`Limpieza exitosa. Se eliminaron ${res.eliminados} registros corruptos.`);
+        loadAssets();
+      }
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -156,6 +163,12 @@ export default function CatalogoAdminPage() {
            <h2 className="text-3xl font-black italic tracking-tighter uppercase">Gestión de Catálogo</h2>
            <p className="text-[var(--color-texto-suave)] text-sm">Control central de recursos para invitaciones premium.</p>
         </div>
+        <button 
+          onClick={handleCleanup}
+          className="text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-300 bg-red-400/5 hover:bg-red-400/10 px-4 py-2 rounded-xl transition-all border border-red-400/20"
+        >
+          Limpieza de Emergencia
+        </button>
       </header>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">

@@ -2,6 +2,17 @@
 
 import { prisma } from '@/lib/prisma';
 import { serializePrisma } from '@/lib/utils';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: { autoRefreshToken: false, persistSession: false }
+});
+
+const BUCKET_NAME = 'servicios';
+const FOLDER_NAME = 'catalogo';
 
 /**
  * Obtiene las métricas globales de la plataforma para el administrador.
@@ -71,21 +82,51 @@ export async function getCatalogoAssets(tipo?: string, categoria?: string) {
   }
 }
 
-export async function createCatalogoAsset(data: { tipo: string; categoria: string; nombre: string; url: string; etiquetas?: string }) {
+export async function createCatalogoAsset(formData: FormData) {
   try {
+    const tipo = formData.get('tipo') as string;
+    const categoria = formData.get('categoria') as string;
+    const nombre = formData.get('nombre') as string;
+    const labels = formData.get('etiquetas') as string;
+    const file = formData.get('file') as File;
+
+    if (!file || !tipo) return { success: false, error: 'Datos incompletos' };
+
+    // 1. Subir a Supabase Storage
+    const fileExt = file.name.split('.').pop() || 'png';
+    const fileName = `${FOLDER_NAME}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: publicData } = supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(fileName);
+
+    // 2. Guardar referencia en DB
     const asset = await prisma.catalogoAsset.create({
       data: {
-        tipo: data.tipo,
-        categoria: data.categoria,
-        nombre: data.nombre,
-        url: data.url,
-        etiquetas: data.etiquetas || ''
+        tipo,
+        categoria,
+        nombre,
+        url: publicData.publicUrl,
+        etiquetas: labels || ''
       }
     });
+
     return { success: true, data: asset };
   } catch (error) {
-    console.error('Error creating asset', error);
-    return { success: false, error: 'Error creating asset' };
+    console.error('Error creating asset with storage:', error);
+    return { success: false, error: 'Error al subir activo al almacenamiento' };
   }
 }
 
@@ -113,5 +154,24 @@ export async function updateCatalogoAsset(id: string, data: { tipo?: string; cat
   } catch (error) {
     console.error('Error updating asset', error);
     return { success: false, error: 'Error updating asset' };
+  }
+}
+
+/**
+ * Función de emergencia para limpiar los assets que tienen Base64 en el campo URL
+ * que son los que causan que la página se cuelgue al cargar.
+ */
+export async function limpiarActivosCorruptos() {
+  try {
+    const res = await prisma.catalogoAsset.deleteMany({
+      where: {
+        url: { startsWith: 'data:' }
+      }
+    });
+    console.log(`[LIMPIEZA] Se eliminaron ${res.count} registros corruptos.`);
+    return { success: true, eliminados: res.count };
+  } catch (error) {
+    console.error('Error en limpieza:', error);
+    return { success: false };
   }
 }
