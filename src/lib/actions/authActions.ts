@@ -19,8 +19,11 @@ export async function getCurrentProfile() {
       return { success: false, error: `AUTH_LOST: ${authError?.message || 'No user session found'}` };
     }
 
-    const perfil = await prisma.usuario.findUnique({
-      where: { email: user.email },
+    // Use case-insensitive search to prevent Auth vs Prisma email casing mismatches
+    const perfil = await prisma.usuario.findFirst({
+      where: { 
+        email: { equals: user.email, mode: 'insensitive' }
+      },
       include: {
         cliente: true,
         proveedor: true
@@ -47,8 +50,8 @@ export async function getCurrentProfile() {
         if (nuevoPerfilRes.success && nuevoPerfilRes.data) {
           console.log(`[Auto-Heal] Reparación exitosa para ${user.email}`);
           // Recargar el perfil desde la base de datos para asegurar todas las relaciones
-          const perfilReparado = await prisma.usuario.findUnique({
-            where: { email: user.email },
+          const perfilReparado = await prisma.usuario.findFirst({
+            where: { email: { equals: user.email, mode: 'insensitive' } },
             include: { cliente: true, proveedor: true }
           });
           return { success: true, data: perfilReparado };
