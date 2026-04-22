@@ -311,7 +311,7 @@ export async function getInvitadoRSVPDetail(invitadoId: string) {
       return { success: false, error: 'Invitado no encontrado.' };
     }
 
-    return { 
+    const responseData = { 
       success: true, 
       invitado: {
         id: invitado.id,
@@ -331,6 +331,8 @@ export async function getInvitadoRSVPDetail(invitadoId: string) {
         album: invitado.evento.album
       }
     };
+
+    return JSON.parse(JSON.stringify(responseData));
   } catch (error) {
     console.error('Error al obtener detalle de RSVP:', error);
     return { success: false, error: 'Hubo un error al cargar la invitación.' };

@@ -20,7 +20,7 @@ export async function PATCH(
       // Obtener el titular (por su id real) y sus miembros
       const titular = await prisma.invitado.findUnique({
         where: { id },
-        include: { grupoMiembros: true }
+        include: { grupoMiembros: true, evento: true }
       });
 
       if (!titular) {
@@ -38,7 +38,27 @@ export async function PATCH(
         })
       ));
 
-      return NextResponse.json({ success: true });
+      const responseData = { 
+        success: true, 
+        invitado: {
+          id: titular.id,
+          nombre: titular.nombre,
+          tipoPersona: (titular as any).tipoPersona,
+          esGrupoTitular: (titular as any).esGrupoTitular,
+          rsvpEstado: titular.rsvpEstado,
+          grupoMiembros: (titular as any).grupoMiembros || []
+        },
+        evento: { 
+          id: (titular as any).evento.id, 
+          nombre: (titular as any).evento.nombre, 
+          fecha: (titular as any).evento.fecha,
+          tipo: (titular as any).evento.tipo,
+          invitacion: (titular as any).evento.invitacion,
+          album: (titular as any).evento.album
+        }
+      };
+
+      return NextResponse.json(JSON.parse(JSON.stringify(responseData)));
     }
 
     // ── Modo Individual (comportamiento original) ─────────────────────────────
@@ -56,7 +76,11 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: invitadoActualizado });
   } catch (error: any) {
-    console.error(`Error updating guest:`, error);
+    console.error(`--- ERROR UPDATING GUEST (${params.id}) ---`);
+    console.error('Message:', error.message);
+    if (error.code) console.error('Prisma Code:', error.code);
+    if (error.meta) console.error('Meta:', error.meta);
+    
     return NextResponse.json(
       { success: false, error: error.message || 'Error interno del servidor' },
       { status: 500 }
