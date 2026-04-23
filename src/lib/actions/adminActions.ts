@@ -233,7 +233,10 @@ export async function getAdminReportes() {
       }, {})
     ).sort((a: any, b: any) => b.count - a.count).slice(0, 10);
 
-    // 6. Ingresos Totales y Detalle Recent
+    // 6. Reservas por Estado y Tiempo (Line Chart Comparativo)
+    const reservasPorEstadoTiempo = processReservasStatusTiempo(reservas);
+
+    // 7. Ingresos Totales y Detalle Recent
     const ingresosTotales = reservas
       .filter(r => r.estado === 'LIQUIDADO' || r.estado === 'APARTADO')
       .reduce((acc, r) => acc + Number(r.montoTotal), 0);
@@ -258,6 +261,7 @@ export async function getAdminReportes() {
         serviciosPorCategoria,
         reservasPorTiempo,
         reservasPorEstado,
+        reservasPorEstadoTiempo,
         ubicacionProveedores,
         metricas: {
           comisionesTotales,
@@ -286,7 +290,33 @@ function processTimeData(items: any[]) {
   return Object.values(grouped).sort((a: any, b: any) => {
     const [mA, yA] = a.name.split(' ');
     const [mB, yB] = b.name.split(' ');
-    return months.indexOf(mA) - months.indexOf(mB) || yA - yB;
+    return Number(yA) - Number(yB) || months.indexOf(mA) - months.indexOf(mB);
+  });
+}
+
+function processReservasStatusTiempo(reservas: any[]) {
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const grouped = reservas.reduce((acc: any, r: any) => {
+    const date = new Date(r.creadoEn);
+    const label = `${months[date.getMonth()]} ${date.getFullYear()}`;
+    if (!acc[label]) {
+      acc[label] = { name: label, confirmadas: 0, pendientes: 0 };
+    }
+    
+    // Apartado o Liquidado = Confirmado
+    if (r.estado === 'APARTADO' || r.estado === 'LIQUIDADO') {
+      acc[label].confirmadas++;
+    } else if (r.estado === 'TEMPORAL') {
+      acc[label].pendientes++;
+    }
+    
+    return acc;
+  }, {});
+
+  return Object.values(grouped).sort((a: any, b: any) => {
+    const [mA, yA] = a.name.split(' ');
+    const [mB, yB] = b.name.split(' ');
+    return Number(yA) - Number(yB) || months.indexOf(mA) - months.indexOf(mB);
   });
 }
 

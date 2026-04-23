@@ -7,7 +7,8 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Legend,
   PieChart, Pie, Cell,
-  Radar, RadarChart, PolarGrid, PolarAngleAxis
+  Radar, RadarChart, PolarGrid, PolarAngleAxis,
+  LineChart, Line
 } from 'recharts';
 
 interface DashboardAdminClientProps {
@@ -247,6 +248,76 @@ export default function DashboardAdminClient({ stats, analytics }: DashboardAdmi
                 <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
                 <Bar name="Contrataciones" dataKey="total" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
+            </ResponsiveContainer>
+           </div>
+        </div>
+      </div>
+
+      {/* NEW ROW: Confirmation Trends (Line Chart) */}
+      <div className="grid grid-cols-1 gap-8">
+        <div className="card p-8 bg-gradient-to-br from-emerald-500/5 via-transparent to-amber-500/5">
+           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+              <div>
+                <h3 className="text-2xl font-bold flex items-center gap-3">
+                   <Activity size={24} className="text-emerald-400" />
+                   Contrataciones: Confirmadas vs. Pendientes
+                </h3>
+                <p className="text-sm text-[var(--color-texto-suave)] mt-1">Histórico de servicios pagados vs. solicitudes pendientes de aprobación (Temporales)</p>
+              </div>
+              <div className="flex gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                  <span className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Confirmadas</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-amber-500" />
+                  <span className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Pendientes</span>
+                </div>
+              </div>
+           </div>
+           
+           <div className="h-80 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={reports?.reservasPorEstadoTiempo || []} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#52525b" 
+                  fontSize={11} 
+                  tickLine={false} 
+                  axisLine={false}
+                  dy={10}
+                />
+                <YAxis 
+                  stroke="#52525b" 
+                  fontSize={11} 
+                  tickLine={false} 
+                  axisLine={false} 
+                />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} 
+                  itemStyle={{ fontSize: '13px', fontWeight: 'bold' }}
+                />
+                <Line 
+                  name="Confirmadas" 
+                  type="monotone" 
+                  dataKey="confirmadas" 
+                  stroke="#10b981" 
+                  strokeWidth={4} 
+                  dot={{ r: 6, fill: '#10b981', strokeWidth: 2, stroke: '#18181b' }} 
+                  activeDot={{ r: 8, strokeWidth: 0 }}
+                />
+                <Line 
+                  name="Pendientes" 
+                  type="monotone" 
+                  dataKey="pendientes" 
+                  stroke="#f59e0b" 
+                  strokeWidth={4} 
+                  dot={{ r: 6, fill: '#f59e0b', strokeWidth: 2, stroke: '#18181b' }} 
+                  activeDot={{ r: 8, strokeWidth: 0 }}
+                  strokeDasharray="8 4"
+                />
+              </LineChart>
             </ResponsiveContainer>
            </div>
         </div>
