@@ -153,7 +153,7 @@ export async function updateClientProfile(usuarioId: string, data: {
         usuarioId,
         ciudad: data.ciudad,
         estado: data.estado,
-        plan: 'FREE',
+        // plan tiene @default(FREE) en el schema, Prisma lo asigna automáticamente
       }
     });
 
