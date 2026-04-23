@@ -381,15 +381,30 @@ export async function toggleUserStatus(id: string, currentStatus: boolean) {
  */
 export async function deleteUserAdmin(id: string) {
   try {
-    // 1. Eliminar de Supabase Auth usando el cliente admin
-    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id);
-    if (authError) {
-      console.error('Error eliminando de Auth:', authError);
-      // Continuamos incluso si falla en Auth para limpiar la DB si fuera necesario, 
-      // o retornamos error si es crítico.
+    // 1. Obtener el usuario de Prisma para saber su email
+    const usuario = await prisma.usuario.findUnique({
+      where: { id }
+    });
+
+    if (!usuario) return { success: false, error: 'Usuario no encontrado en la base de datos' };
+
+    // 2. Buscar al usuario en Supabase Auth por email
+    const { data: authData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    if (listError) console.error('Error listando usuarios en Auth:', listError);
+    
+    const supabaseUser = authData?.users.find(u => u.email?.toLowerCase() === usuario.email.toLowerCase());
+
+    if (supabaseUser) {
+      // 3. Eliminar de Supabase Auth usando su UUID real
+      const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(supabaseUser.id);
+      if (authError) {
+        console.error('Error eliminando de Auth:', authError);
+      }
+    } else {
+      console.warn(`No se encontró el usuario ${usuario.email} en Supabase Auth, se procederá solo con el borrado en DB.`);
     }
 
-    // 2. Eliminar de Prisma (OnDelete Cascade debería limpiar Cliente/Proveedor)
+    // 4. Eliminar de Prisma (OnDelete Cascade debería limpiar Cliente/Proveedor)
     await prisma.usuario.delete({
       where: { id }
     });
@@ -407,7 +422,18 @@ export async function deleteUserAdmin(id: string) {
  */
 export async function updateUserPasswordAdmin(id: string, newPassword: string) {
   try {
-    const { error } = await supabaseAdmin.auth.admin.updateUserById(id, {
+    // 1. Obtener email de Prisma
+    const usuario = await prisma.usuario.findUnique({ where: { id } });
+    if (!usuario) return { success: false, error: 'Usuario no encontrado' };
+
+    // 2. Buscar UUID en Supabase
+    const { data: authData } = await supabaseAdmin.auth.admin.listUsers();
+    const supabaseUser = authData?.users.find(u => u.email?.toLowerCase() === usuario.email.toLowerCase());
+
+    if (!supabaseUser) return { success: false, error: 'No se encontró el usuario en el sistema de autenticación.' };
+
+    // 3. Actualizar contraseña usando el UUID real
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(supabaseUser.id, {
       password: newPassword
     });
 
