@@ -1,4 +1,4 @@
-import { getPlatformStats } from '@/lib/actions/adminActions';
+import { getPlatformStats, getAdminReportes } from '@/lib/actions/adminActions';
 import { 
   getUserTrends, 
   getEventTrends, 
@@ -17,19 +17,21 @@ export default async function AdminDashboardPage() {
   }
 
   // Ejecutar en paralelo todas las consultas para optimizar carga
-  const [statsRes, userTrends, eventTrends, catStats, typeStats] = await Promise.all([
+  const [statsRes, userTrends, eventTrends, catStats, typeStats, reportsRes] = await Promise.all([
     getPlatformStats(),
     getUserTrends(),
     getEventTrends(),
     getServiceCategoryStats(),
-    getServiceEventTypeStats()
+    getServiceEventTypeStats(),
+    getAdminReportes()
   ]);
 
   const analyticsData = {
     userTrends: userTrends.success ? userTrends.data : [],
     eventTrends: eventTrends.success ? eventTrends.data : [],
     catStats: catStats.success ? catStats.data : [],
-    typeStats: typeStats.success ? typeStats.data : []
+    typeStats: typeStats.success ? typeStats.data : [],
+    reports: reportsRes.success ? reportsRes.data : null
   };
 
   return (

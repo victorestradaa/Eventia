@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Users, Calendar, DollarSign, Store, Activity, Database, ShieldCheck, ChevronUp, ChevronDown, PieChart as PieChartIcon, BarChart2 } from 'lucide-react';
-import { formatearMoneda } from '@/lib/utils';
+import { Users, Calendar, DollarSign, Store, Activity, Database, ChevronUp, BarChart2, PieChart as PieChartIcon, MapPin, Package, Clock } from 'lucide-react';
+import { formatearMoneda, cn } from '@/lib/utils';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Legend,
   PieChart, Pie, Cell,
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+  Radar, RadarChart, PolarGrid, PolarAngleAxis
 } from 'recharts';
 
 interface DashboardAdminClientProps {
@@ -17,6 +17,7 @@ interface DashboardAdminClientProps {
     eventTrends: any[];
     catStats: any[];
     typeStats: any[];
+    reports: any;
   }
 }
 
@@ -30,12 +31,19 @@ export default function DashboardAdminClient({ stats, analytics }: DashboardAdmi
     { label: 'Proveedores Registrados', valor: stats.totalProveedores.toLocaleString(), cambio: '+0%', icon: Store, color: 'text-amber-400' },
   ];
 
-  const { userTrends = [], eventTrends = [], catStats = [], typeStats = [] } = analytics || {};
+  const { 
+    userTrends = [], 
+    eventTrends = [], 
+    catStats = [], 
+    typeStats = [],
+    reports = null
+  } = analytics || {};
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className="space-y-8 animate-in fade-in duration-700 pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
+           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d4af37] mb-1">Sistema de Gestión</p>
            <h1 className="text-3xl font-black italic tracking-tighter uppercase">Admin Panel</h1>
            <p className="text-[var(--color-texto-suave)] text-sm">Analítica y Control de Plataforma (Eventia)</p>
         </div>
@@ -129,10 +137,10 @@ export default function DashboardAdminClient({ stats, analytics }: DashboardAdmi
         </div>
       </div>
 
-      {/* Secondary Charts Row */}
+      {/* NEW SECTION: Reports & Detailed Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Events Bar Chart */}
+        {/* Events Created */}
         <div className="card p-6">
            <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
               <BarChart2 size={20} className="text-violet-400" />
@@ -150,7 +158,7 @@ export default function DashboardAdminClient({ stats, analytics }: DashboardAdmi
            </div>
         </div>
 
-        {/* Services Categories Pie */}
+        {/* Services by Category */}
         <div className="card p-6">
            <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
               <PieChartIcon size={20} className="text-emerald-400" />
@@ -180,7 +188,7 @@ export default function DashboardAdminClient({ stats, analytics }: DashboardAdmi
            </div>
         </div>
 
-        {/* Services Event Types Radar */}
+        {/* Target Event Types */}
         <div className="card p-6">
            <h3 className="text-xl font-bold flex items-center gap-2 mb-6 text-center justify-center">
               Target (Tipos de Evento)
@@ -196,7 +204,75 @@ export default function DashboardAdminClient({ stats, analytics }: DashboardAdmi
             </ResponsiveContainer>
            </div>
         </div>
+      </div>
+
+      {/* EXTRA ROW: Services Time and Reservations (Contratados) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
+        {/* Services over Time */}
+        <div className="card p-6">
+           <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
+              <Clock size={20} className="text-amber-400" />
+              Servicios Creados por Tiempo
+           </h3>
+           <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={reports?.serviciosPorTiempo || []}>
+                <defs>
+                  <linearGradient id="colorServ" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="name" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                <Area type="monotone" dataKey="total" stroke="#f59e0b" fillOpacity={1} fill="url(#colorServ)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+           </div>
+        </div>
+
+        {/* Bookings (Contratados) */}
+        <div className="card p-6">
+           <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
+              <Package size={20} className="text-emerald-400" />
+              Tendencia de Servicios Contratados
+           </h3>
+           <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={reports?.reservasPorTiempo || []}>
+                <XAxis dataKey="name" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                <Bar name="Contrataciones" dataKey="total" fill="#10b981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+           </div>
+        </div>
+      </div>
+
+      {/* FINAL ROW: Location of Providers */}
+      <div className="grid grid-cols-1 gap-8">
+        <div className="card p-8">
+           <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-bold flex items-center gap-3">
+                 <MapPin size={24} className="text-red-400" />
+                 Distribución Geográfica de Proveedores
+              </h3>
+              <p className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-[0.2em]">Top 10 Ciudades</p>
+           </div>
+           <div className="h-80 w-full">
+             <ResponsiveContainer width="100%" height="100%">
+               <BarChart data={reports?.ubicacionProveedores || []} layout="vertical">
+                 <XAxis type="number" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                 <YAxis dataKey="name" type="category" stroke="#fff" fontSize={10} width={120} tickLine={false} axisLine={false} />
+                 <Tooltip cursor={{fill: 'rgba(255,255,255,0.02)'}} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                 <Bar dataKey="count" fill="#d4af37" radius={[0, 10, 10, 0]} barSize={30} />
+               </BarChart>
+             </ResponsiveContainer>
+           </div>
+        </div>
       </div>
     </div>
   );
@@ -214,8 +290,4 @@ function HealthBar({ label, valor, color }: { label: string, valor: number, colo
       </div>
     </div>
   );
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
 }
