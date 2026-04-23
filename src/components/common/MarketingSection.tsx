@@ -10,7 +10,9 @@ import {
   Image as ImageIcon,
   CheckCircle2,
   ArrowRight,
-  Send
+  Send,
+  Briefcase,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -112,28 +114,36 @@ export function MarketingSection() {
         </p>
       </div>
 
-      <div className="flex justify-center">
-        <div className="inline-flex p-1.5 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-full shadow-inner">
+      {/* --- SELECTOR DE PESTAÑAS REDISEÑADO (MODERNO Y VISIBLE) --- */}
+      <div className="flex justify-center pt-4">
+        <div className="relative p-1.5 bg-[var(--color-fondo-input)] border-2 border-[var(--color-borde)] rounded-[2.5rem] shadow-xl flex items-center gap-1">
+          {/* Fondo deslizante (Simulado con una div absoluta) */}
+          <div 
+            className={cn(
+              "absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-[#d4af37] to-[#b89547] rounded-full transition-all duration-500 ease-out z-0 shadow-lg shadow-[#d4af37]/20",
+              activeTab === 'CLIENTE' ? "left-1.5" : "left-[calc(50%+1.5px)]"
+            )}
+          />
+          
           <button
             onClick={() => setActiveTab('CLIENTE')}
             className={cn(
-              "px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300",
-              activeTab === 'CLIENTE' 
-                ? "bg-[var(--color-primario)] text-white shadow-lg" 
-                : "text-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
+              "relative z-10 px-8 py-3.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] transition-all duration-500 flex items-center gap-3",
+              activeTab === 'CLIENTE' ? "text-black" : "text-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
             )}
           >
+            <User size={16} className={cn("transition-transform duration-500", activeTab === 'CLIENTE' && "scale-110")} />
             Para Organizadores
           </button>
+          
           <button
             onClick={() => setActiveTab('PROVEEDOR')}
             className={cn(
-              "px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300",
-              activeTab === 'PROVEEDOR' 
-                ? "bg-[var(--color-primario)] text-white shadow-lg" 
-                : "text-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
+              "relative z-10 px-8 py-3.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] transition-all duration-500 flex items-center gap-3",
+              activeTab === 'PROVEEDOR' ? "text-black" : "text-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
             )}
           >
+            <Briefcase size={16} className={cn("transition-transform duration-500", activeTab === 'PROVEEDOR' && "scale-110")} />
             Para Proveedores
           </button>
         </div>
