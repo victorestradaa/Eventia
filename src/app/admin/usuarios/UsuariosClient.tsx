@@ -16,7 +16,8 @@ import {
   Lock,
   ChevronRight,
   ShieldCheck,
-  AlertTriangle
+  AlertTriangle,
+  Phone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { updateUserAdmin, toggleUserStatus, deleteUserAdmin, updateUserPasswordAdmin } from '@/lib/actions/adminActions';
@@ -44,6 +45,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
     estado: '',
     ciudad: '',
     categoria: '',
+    telefono: '',
     newPassword: '' // Nueva contraseña opcional
   });
 
@@ -64,6 +66,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
       estado: user.rol === 'PROVEEDOR' ? (user.proveedor?.estado || '') : (user.cliente?.estado || ''),
       ciudad: user.rol === 'PROVEEDOR' ? (user.proveedor?.ciudad || '') : (user.cliente?.ciudad || ''),
       categoria: user.rol === 'PROVEEDOR' ? (user.proveedor?.categoria || '') : '',
+      telefono: user.telefono || '',
       newPassword: ''
     });
     setIsEditModalOpen(true);

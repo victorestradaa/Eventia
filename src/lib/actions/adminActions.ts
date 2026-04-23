@@ -413,6 +413,7 @@ export async function updateUserAdmin(id: string, data: {
   estado?: string;
   ciudad?: string;
   categoria?: any;
+  telefono?: string;
 }) {
   try {
     const originalUser = await prisma.usuario.findUnique({
@@ -429,6 +430,7 @@ export async function updateUserAdmin(id: string, data: {
         nombre: data.nombre,
         email: data.email,
         rol: data.rol,
+        telefono: data.telefono || null,
       }
     });
 

@@ -30,7 +30,12 @@ export default async function ConfigPage() {
   return (
     <ConfigClient 
       proveedor={proveedorData} 
-      usuario={{ id: perfil.id, nombre: perfil.nombre, email: perfil.email }} 
+      usuario={{ 
+        id: perfil.id, 
+        nombre: perfil.nombre, 
+        email: perfil.email, 
+        telefono: perfil.telefono 
+      }} 
     />
   );
 }

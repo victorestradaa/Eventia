@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Settings, Building2, User, Shield, Gem, Crown, Star, Zap, Save, Loader2, CheckCircle, MapPin, FileText, Clock } from 'lucide-react';
+import { Settings, Building2, User, Shield, Gem, Crown, Star, Zap, Save, Loader2, CheckCircle, MapPin, FileText, Clock, Phone } from 'lucide-react';
 import { updateProviderProfile, updateProviderCredentials, updateProviderAvailability } from '@/lib/actions/settingsActions';
 import { MEXICO_LOCATIONS } from '@/lib/constants/locations';
 import { uploadServiceImage } from '@/lib/actions/uploadActions';
@@ -19,7 +19,7 @@ const PLAN_INFO: Record<string, { label: string; color: string; icon: any }> = {
 
 interface ConfigClientProps {
   proveedor: any;
-  usuario: { id: string; nombre: string; email: string };
+  usuario: { id: string; nombre: string; email: string; telefono?: string };
 }
 
 export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) {
@@ -43,6 +43,7 @@ export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) 
   const [creds, setCreds] = useState({
     nombre: usuario.nombre || '',
     email: usuario.email || '',
+    telefono: usuario.telefono || '',
   });
   const [savingCreds, setSavingCreds] = useState(false);
   const [credsSaved, setCredsSaved] = useState(false);
@@ -386,6 +387,17 @@ export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) 
                 type="email"
                 className="input w-full h-12"
                 placeholder="tu@correo.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-[var(--color-texto-suave)] flex items-center gap-1"><Phone size={14} /> Teléfono / Celular</label>
+              <input 
+                required
+                value={creds.telefono}
+                onChange={e => setCreds({...creds, telefono: e.target.value})}
+                type="tel"
+                className="input w-full h-12"
+                placeholder="Ej. 1234567890"
               />
             </div>
           </div>

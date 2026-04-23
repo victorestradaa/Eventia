@@ -48,6 +48,7 @@ export async function updateProviderProfile(proveedorId: string, data: {
 export async function updateProviderCredentials(usuarioId: string, data: {
   nombre: string;
   email: string;
+  telefono?: string;
 }) {
   try {
     // Check if email is already taken by another user
@@ -61,6 +62,7 @@ export async function updateProviderCredentials(usuarioId: string, data: {
       data: {
         nombre: data.nombre,
         email: data.email,
+        telefono: data.telefono || null,
       }
     });
 
