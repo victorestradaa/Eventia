@@ -33,17 +33,19 @@ function FeatureCard({ title, description, image, icon: Icon, index }: FeatureCa
         index % 3 === 0 ? "md:col-span-2" : "md:col-span-1"
       )}
     >
-      <div className="flex flex-col h-full">
-        <div className="p-8 pb-4 relative z-10">
+      <div className="flex flex-col h-full items-center">
+        {/* Contenido de Texto e Icono Centrado */}
+        <div className="p-8 pb-4 relative z-10 flex flex-col items-center text-center w-full">
           <div className="w-12 h-12 rounded-2xl bg-[#d4af37]/10 flex items-center justify-center text-[#d4af37] mb-6 group-hover:scale-110 transition-transform duration-500">
             <Icon size={24} />
           </div>
-          <h3 className="text-2xl font-serif text-[var(--color-texto)] mb-3 leading-tight">{title}</h3>
-          <p className="text-[var(--color-texto-suave)] text-sm leading-relaxed max-w-xs">{description}</p>
+          <h3 className="text-2xl font-serif text-[var(--color-texto)] mb-3 leading-tight w-full">{title}</h3>
+          <p className="text-[var(--color-texto-suave)] text-sm leading-relaxed max-w-md mx-auto">{description}</p>
         </div>
         
+        {/* Imagen de la tarjeta */}
         <div className={cn(
-          "relative mt-auto pt-4 overflow-hidden mask-fade-top",
+          "relative mt-auto pt-4 overflow-hidden mask-fade-top w-full",
           index % 3 === 0 ? "aspect-video" : "aspect-[4/5]"
         )}>
           <img 
@@ -105,7 +107,7 @@ export function MarketingSection() {
 
   return (
     <section className="w-full pt-8 pb-24 space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 flex flex-col items-center">
-      <div className="w-full text-center max-w-4xl mx-auto space-y-6 flex flex-col items-center">
+      <div className="w-full text-center max-w-4xl mx-auto space-y-6 flex flex-col items-center px-4">
         <h2 className="text-5xl md:text-6xl font-serif text-[var(--color-texto)] tracking-tight italic">
           Todo lo que necesitas para tu <span className="text-[#d4af37]">momento especial</span>
         </h2>
@@ -114,42 +116,43 @@ export function MarketingSection() {
         </p>
       </div>
 
-      {/* --- SELECTOR DE PESTAÑAS REDISEÑADO (MODERNO Y VISIBLE) --- */}
+      {/* --- SELECTOR DE PESTAÑAS (FONDO BLANCO, PILL GRUESO) --- */}
       <div className="flex justify-center pt-4">
-        <div className="relative p-1.5 bg-[var(--color-fondo-input)] border-2 border-[var(--color-borde)] rounded-[2.5rem] shadow-xl flex items-center gap-1">
-          {/* Fondo deslizante (Simulado con una div absoluta) */}
+        <div className="relative p-1 bg-[var(--color-fondo-card)] rounded-full shadow-2xl flex items-center border-[2px] border-[var(--color-borde)] overflow-hidden scale-110">
+          
+          {/* Fondo deslizante GRUESO */}
           <div 
             className={cn(
-              "absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-gradient-to-r from-[#d4af37] to-[#b89547] rounded-full transition-all duration-500 ease-out z-0 shadow-lg shadow-[#d4af37]/20",
-              activeTab === 'CLIENTE' ? "left-1.5" : "left-[calc(50%+1.5px)]"
+              "absolute top-[3px] bottom-[3px] w-[calc(50%-4px)] bg-gradient-to-br from-[#f3cf6d] via-[#d4af37] to-[#b89547] rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-0 shadow-lg shadow-[#d4af37]/20",
+              activeTab === 'CLIENTE' ? "left-[3px]" : "left-[calc(50%+1px)]"
             )}
           />
           
           <button
             onClick={() => setActiveTab('CLIENTE')}
             className={cn(
-              "relative z-10 px-8 py-3.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] transition-all duration-500 flex items-center gap-3",
+              "relative z-10 px-10 py-3.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-[0.25em] transition-all duration-500 flex items-center justify-center gap-3 min-w-[160px] sm:min-w-[200px]",
               activeTab === 'CLIENTE' ? "text-black" : "text-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
             )}
           >
-            <User size={16} className={cn("transition-transform duration-500", activeTab === 'CLIENTE' && "scale-110")} />
-            Para Organizadores
+            <User size={18} fill={activeTab === 'CLIENTE' ? "black" : "none"} strokeWidth={activeTab === 'CLIENTE' ? 3 : 2} />
+            Usuarios
           </button>
           
           <button
             onClick={() => setActiveTab('PROVEEDOR')}
             className={cn(
-              "relative z-10 px-8 py-3.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] transition-all duration-500 flex items-center gap-3",
+              "relative z-10 px-10 py-3.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-[0.25em] transition-all duration-500 flex items-center justify-center gap-3 min-w-[160px] sm:min-w-[200px]",
               activeTab === 'PROVEEDOR' ? "text-black" : "text-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
             )}
           >
-            <Briefcase size={16} className={cn("transition-transform duration-500", activeTab === 'PROVEEDOR' && "scale-110")} />
-            Para Proveedores
+            <Briefcase size={18} fill={activeTab === 'PROVEEDOR' ? "black" : "none"} strokeWidth={activeTab === 'PROVEEDOR' ? 3 : 2} />
+            Proveedores
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-[1400px] px-6">
         {(activeTab === 'CLIENTE' ? clienteFeatures : proveedorFeatures).map((feature, i) => (
           <FeatureCard 
             key={feature.title}
@@ -158,24 +161,24 @@ export function MarketingSection() {
           />
         ))}
 
-        {/* CTA Card */}
-        <div className="md:col-span-1 group relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#d4af37] to-[#b89547] p-10 flex flex-col justify-between text-black shadow-2xl hover:scale-[1.02] transition-all duration-500">
-           <div className="space-y-4">
+        {/* CTA Card (CENTRADA) */}
+        <div className="md:col-span-1 md:col-start-2 group relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#d4af37] to-[#b89547] p-10 flex flex-col items-center justify-between text-black shadow-2xl hover:scale-[1.02] transition-all duration-500 min-h-[400px] text-center">
+           <div className="space-y-4 flex flex-col items-center">
               <Sparkles size={32} className="mb-4" />
               <h3 className="text-4xl font-serif leading-tight">Empieza hoy mismo</h3>
               <p className="text-black/80 text-sm font-bold uppercase tracking-widest">Es gratis y te tomará menos de un minuto.</p>
            </div>
            
-           <div className="space-y-6">
+           <div className="space-y-6 w-full flex flex-col items-center">
               <ul className="space-y-3">
                  {['Sin tarjetas de crédito', 'Acceso instantáneo', 'Soporte VIP'].map(text => (
-                   <li key={text} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                   <li key={text} className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest">
                       <CheckCircle2 size={14} /> {text}
                    </li>
                  ))}
               </ul>
               
-              <Link href="/registro" className="group/btn flex items-center justify-between w-full bg-black text-white p-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-black transition-all shadow-xl">
+              <Link href="/registro" className="group/btn flex items-center justify-between w-full max-w-xs bg-black text-white p-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-black transition-all shadow-xl">
                  Registrarme Ahora
                  <ArrowRight className="group-hover/btn:translate-x-1 transition-transform" />
               </Link>
