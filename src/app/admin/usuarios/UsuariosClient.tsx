@@ -19,7 +19,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { updateUserAdmin, toggleUserStatus } from '@/lib/actions/adminActions';
+import { updateUserAdmin, toggleUserStatus, deleteUserAdmin, updateUserPasswordAdmin } from '@/lib/actions/adminActions';
 import { MEXICO_LOCATIONS } from '@/lib/constants/locations';
 
 interface UsuariosClientProps {
@@ -43,7 +43,8 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
     plan: '',
     estado: '',
     ciudad: '',
-    categoria: ''
+    categoria: '',
+    newPassword: '' // Nueva contraseña opcional
   });
 
   const filteredUsers = users.filter(user => {
@@ -62,7 +63,8 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
       plan: user.rol === 'PROVEEDOR' ? (user.proveedor?.plan || '') : (user.cliente?.plan || ''),
       estado: user.rol === 'PROVEEDOR' ? (user.proveedor?.estado || '') : (user.cliente?.estado || ''),
       ciudad: user.rol === 'PROVEEDOR' ? (user.proveedor?.ciudad || '') : (user.cliente?.ciudad || ''),
-      categoria: user.rol === 'PROVEEDOR' ? (user.proveedor?.categoria || '') : ''
+      categoria: user.rol === 'PROVEEDOR' ? (user.proveedor?.categoria || '') : '',
+      newPassword: ''
     });
     setIsEditModalOpen(true);
   };
@@ -71,6 +73,15 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
     e.preventDefault();
     setLoading(true);
     const res = await updateUserAdmin(selectedUser.id, formData);
+    
+    // Si se ingreso una nueva contraseña, actualizarla también
+    if (res.success && formData.newPassword.trim() !== '') {
+      const passRes = await updateUserPasswordAdmin(selectedUser.id, formData.newPassword.trim());
+      if (!passRes.success) {
+        alert("Usuario actualizado pero falló el cambio de contraseña: " + passRes.error);
+      }
+    }
+
     if (res.success) {
       // Update local state
       setUsers(users.map(u => u.id === selectedUser.id ? { 
@@ -82,6 +93,21 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
       setIsEditModalOpen(false);
     } else {
       alert(res.error);
+    }
+    setLoading(false);
+  };
+
+  const handleDeleteUser = async (user: any) => {
+    if (!confirm(`¿Estás seguro de que deseas eliminar permanentemente a ${user.nombre}? Esta acción no se puede deshacer.`)) return;
+    if (!confirm(`CONFIRMACIÓN FINAL: Se eliminarán todos los datos asociados (eventos, servicios, etc) del usuario ${user.email}. ¿Continuar?`)) return;
+
+    setLoading(true);
+    const res = await deleteUserAdmin(user.id);
+    if (res.success) {
+      setUsers(users.filter(u => u.id !== user.id));
+      alert("Usuario eliminado correctamente.");
+    } else {
+      alert("Error al eliminar: " + res.error);
     }
     setLoading(false);
   };
@@ -201,7 +227,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
                               <button 
                                 onClick={() => handleEditClick(user)}
                                 className="p-3 rounded-xl bg-white/5 border border-white/5 text-[var(--color-texto-muted)] hover:text-white hover:bg-white/10 transition-all"
-                                title="Editar Usuario"
+                                title="Editar Datos y Contraseña"
                               >
                                  <Edit size={18} />
                               </button>
@@ -212,10 +238,19 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
                                     "p-3 rounded-xl border transition-all",
                                     isActive ? "bg-rose-500/10 border-rose-500/10 text-rose-400 hover:bg-rose-500/20" : "bg-emerald-500/10 border-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20"
                                   )}
-                                  title={isActive ? 'Suspender Usuario' : 'Reactivar Usuario'}
+                                  title={isActive ? 'Suspender Proveedor' : 'Reactivar Proveedor'}
                                 >
                                    {isActive ? <Lock size={18} /> : <ShieldCheck size={18} />}
                                 </button>
+                              )}
+                              {user.rol !== 'ADMIN' && (
+                               <button 
+                                 onClick={() => handleDeleteUser(user)}
+                                 className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-all"
+                                 title="Eliminar Usuario Permanentemente"
+                               >
+                                  <Trash2 size={18} />
+                               </button>
                               )}
                            </div>
                         </td>
@@ -355,6 +390,21 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
                             <option key={ciudad} value={ciudad} className="bg-[#111]">{ciudad}</option>
                           ))}
                        </select>
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2 pt-4 border-t border-white/5">
+                        <label className="text-[10px] font-black uppercase text-[#d4af37] tracking-widest ml-1">Forzar Nueva Contraseña</label>
+                        <div className="relative group">
+                            <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)] group-focus-within:text-[#d4af37] transition-colors" size={18} />
+                            <input 
+                                type="text" 
+                                placeholder="Dejar en blanco para mantener actual..."
+                                value={formData.newPassword}
+                                onChange={(e) => setFormData({...formData, newPassword: e.target.value})}
+                                className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl pl-12 pr-5 py-4 text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all"
+                            />
+                        </div>
+                        <p className="text-[9px] text-[var(--color-texto-muted)] ml-1 italic">* El usuario deberá usar esta contraseña en su próximo inicio de sesión.</p>
                     </div>
                  </div>
 

@@ -352,7 +352,7 @@ export async function updateUserAdmin(id: string, data: {
 }
 
 /**
- * Alterna el estado de activación de un proveedor (o podría ser de un usuario en general).
+ * Alterna el estado de activación de un proveedor.
  */
 export async function toggleUserStatus(id: string, currentStatus: boolean) {
   try {
@@ -373,6 +373,50 @@ export async function toggleUserStatus(id: string, currentStatus: boolean) {
   } catch (error) {
     console.error('Error toggling user status:', error);
     return { success: false, error: 'Error al cambiar estado' };
+  }
+}
+
+/**
+ * Elimina un usuario permanentemente de la DB y de Auth (Supabase).
+ */
+export async function deleteUserAdmin(id: string) {
+  try {
+    // 1. Eliminar de Supabase Auth usando el cliente admin
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id);
+    if (authError) {
+      console.error('Error eliminando de Auth:', authError);
+      // Continuamos incluso si falla en Auth para limpiar la DB si fuera necesario, 
+      // o retornamos error si es crítico.
+    }
+
+    // 2. Eliminar de Prisma (OnDelete Cascade debería limpiar Cliente/Proveedor)
+    await prisma.usuario.delete({
+      where: { id }
+    });
+
+    revalidatePath('/admin/usuarios');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error al eliminar usuario:', error);
+    return { success: false, error: error.message || 'Error al eliminar usuario' };
+  }
+}
+
+/**
+ * Actualiza la contraseña de un usuario en Supabase Auth desde el panel admin.
+ */
+export async function updateUserPasswordAdmin(id: string, newPassword: string) {
+  try {
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(id, {
+      password: newPassword
+    });
+
+    if (error) throw error;
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error al actualizar contraseña:', error);
+    return { success: false, error: error.message || 'Error al actualizar contraseña' };
   }
 }
 
