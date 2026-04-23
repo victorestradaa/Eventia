@@ -186,10 +186,11 @@ export async function limpiarActivosCorruptos() {
  */
 export async function getAdminReportes() {
   try {
-    const [servicios, reservas, proveedores] = await Promise.all([
+    const [servicios, reservas, proveedores, clientes] = await Promise.all([
       prisma.servicio.findMany({ select: { creadoEn: true, proveedor: { select: { categoria: true } } } }),
       prisma.reserva.findMany({ select: { creadoEn: true, estado: true, montoTotal: true, fechaEvento: true, proveedor: { select: { nombre: true, categoria: true } } } }),
-      prisma.proveedor.findMany({ select: { ciudad: true, categoria: true } })
+      prisma.proveedor.findMany({ select: { ciudad: true, estado: true } }),
+      prisma.cliente.findMany({ select: { ciudad: true, estado: true } })
     ]);
 
     // 1. Servicios por tiempo (Line Chart)
@@ -223,10 +224,20 @@ export async function getAdminReportes() {
       }, {})
     );
 
-    // 5. Ubicación de Proveedores
     const ubicacionProveedores = Object.values(
       proveedores.reduce((acc: any, p: any) => {
         const city = p.ciudad || 'Sin asignar';
+        if (!acc[city]) acc[city] = { name: city, count: 0 };
+        acc[city].count++;
+        return acc;
+      }, {})
+    ).sort((a: any, b: any) => b.count - a.count).slice(0, 10);
+
+    // 6. Ubicación Global de Usuarios (Clientes + Proveedores)
+    const combinedLocations = [...proveedores, ...clientes];
+    const ubicacionUsuarios = Object.values(
+      combinedLocations.reduce((acc: any, curr: any) => {
+        const city = curr.ciudad || 'Sin asignar';
         if (!acc[city]) acc[city] = { name: city, count: 0 };
         acc[city].count++;
         return acc;
@@ -263,6 +274,7 @@ export async function getAdminReportes() {
         reservasPorEstado,
         reservasPorEstadoTiempo,
         ubicacionProveedores,
+        ubicacionUsuarios,
         metricas: {
           comisionesTotales,
           ingresosTotales,

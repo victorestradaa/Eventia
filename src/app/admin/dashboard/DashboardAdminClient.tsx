@@ -323,23 +323,45 @@ export default function DashboardAdminClient({ stats, analytics }: DashboardAdmi
         </div>
       </div>
 
-      {/* FINAL ROW: Location of Providers */}
-      <div className="grid grid-cols-1 gap-8">
+      {/* FINAL ROW: Geographic Distribution (Split) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Providers by Location */}
         <div className="card p-8">
-           <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-bold flex items-center gap-3">
-                 <MapPin size={24} className="text-red-400" />
-                 Distribución Geográfica de Proveedores
+           <div className="mb-8">
+              <h3 className="text-xl font-bold flex items-center gap-3">
+                 <Store size={22} className="text-[#d4af37]" />
+                 Ubicación de Proveedores
               </h3>
-              <p className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-[0.2em]">Top 10 Ciudades</p>
+              <p className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-[0.2em] mt-1">Concentración de Negocios</p>
            </div>
            <div className="h-80 w-full">
              <ResponsiveContainer width="100%" height="100%">
-               <BarChart data={reports?.ubicacionProveedores || []} layout="vertical">
+               <BarChart data={reports?.ubicacionProveedores || []} layout="vertical" margin={{ left: -20 }}>
                  <XAxis type="number" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
                  <YAxis dataKey="name" type="category" stroke="var(--color-texto-muted)" fontSize={10} width={120} tickLine={false} axisLine={false} />
                  <Tooltip cursor={{fill: 'rgba(255,255,255,0.02)'}} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
-                 <Bar dataKey="count" fill="#d4af37" radius={[0, 10, 10, 0]} barSize={30} />
+                 <Bar dataKey="count" fill="#d4af37" radius={[0, 10, 10, 0]} barSize={20} />
+               </BarChart>
+             </ResponsiveContainer>
+           </div>
+        </div>
+
+        {/* Global Users by Location */}
+        <div className="card p-8">
+           <div className="mb-8">
+              <h3 className="text-xl font-bold flex items-center gap-3">
+                 <Users size={22} className="text-blue-400" />
+                 Densidad de Usuarios (Global)
+              </h3>
+              <p className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-[0.2em] mt-1">Clientes + Proveedores por Ciudad</p>
+           </div>
+           <div className="h-80 w-full">
+             <ResponsiveContainer width="100%" height="100%">
+               <BarChart data={reports?.ubicacionUsuarios || []} layout="vertical" margin={{ left: -20 }}>
+                 <XAxis type="number" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                 <YAxis dataKey="name" type="category" stroke="var(--color-texto-muted)" fontSize={10} width={120} tickLine={false} axisLine={false} />
+                 <Tooltip cursor={{fill: 'rgba(255,255,255,0.02)'}} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                 <Bar dataKey="count" fill="#3b82f6" radius={[0, 10, 10, 0]} barSize={20} />
                </BarChart>
              </ResponsiveContainer>
            </div>
