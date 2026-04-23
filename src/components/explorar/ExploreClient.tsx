@@ -90,7 +90,7 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
 
   const handleCardClick = (p: any) => {
     if (isPublic) {
-      setSelectedProviderName(p.nombre);
+      setSelectedProviderName(p.proveedorNombre || p.nombre);
       setIsRegisterModalOpen(true);
     }
   };
