@@ -138,7 +138,104 @@ export default function DashboardAdminClient({ stats, analytics }: DashboardAdmi
         </div>
       </div>
 
-      {/* NEW SECTION: Reports & Detailed Analytics */}
+      {/* NEW SECTION: Plans & Subscription Analytics */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Client Plans */}
+        <div className="card p-8 bg-gradient-to-br from-blue-500/5 to-transparent">
+           <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
+              <PieChartIcon size={22} className="text-blue-400" />
+              Suscripciones: Clientes (Roles)
+           </h3>
+           <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={reports?.planesClientes || []}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {reports?.planesClientes?.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                <Legend layout="vertical" align="right" verticalAlign="middle" wrapperStyle={{ fontSize: '10px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+           </div>
+        </div>
+
+        {/* Provider Plans */}
+        <div className="card p-8 bg-gradient-to-br from-[#d4af37]/5 to-transparent">
+           <h3 className="text-xl font-bold flex items-center gap-2 mb-6">
+              <PieChartIcon size={22} className="text-[#d4af37]" />
+              Suscripciones: Proveedores (Tiers)
+           </h3>
+           <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={reports?.planesProveedores || []}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {reports?.planesProveedores?.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[(index + 3) % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                <Legend layout="vertical" align="right" verticalAlign="middle" wrapperStyle={{ fontSize: '10px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+           </div>
+        </div>
+      </div>
+
+      {/* NEW ROW: Performance by Location over Time */}
+      <div className="grid grid-cols-1 gap-8">
+        <div className="card p-8">
+           <h3 className="text-xl font-bold flex items-center gap-2 mb-8">
+              <Activity size={22} className="text-emerald-400" />
+              Crecimiento de Clientes por Ciudad (Histórico)
+           </h3>
+           <div className="h-80 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={reports?.clientesTrendUbicacion || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="name" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <Tooltip 
+                   cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
+                   contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} 
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '20px' }} />
+                {reports?.clientesTrendUbicacion && reports.clientesTrendUbicacion.length > 0 && Object.keys(reports.clientesTrendUbicacion[0])
+                  .filter(key => key !== 'name')
+                  .map((city, index) => (
+                    <Bar 
+                      key={city} 
+                      dataKey={city} 
+                      stackId="a" 
+                      fill={COLORS[index % COLORS.length]} 
+                      radius={index === 0 ? [0, 0, 4, 4] : [0, 0, 0, 0]}
+                    />
+                  ))
+                }
+              </BarChart>
+            </ResponsiveContainer>
+           </div>
+        </div>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Events Created */}

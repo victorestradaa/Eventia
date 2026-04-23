@@ -189,8 +189,8 @@ export async function getAdminReportes() {
     const [servicios, reservas, proveedores, clientes] = await Promise.all([
       prisma.servicio.findMany({ select: { creadoEn: true, proveedor: { select: { categoria: true } } } }),
       prisma.reserva.findMany({ select: { creadoEn: true, estado: true, montoTotal: true, fechaEvento: true, proveedor: { select: { nombre: true, categoria: true } } } }),
-      prisma.proveedor.findMany({ select: { ciudad: true, estado: true } }),
-      prisma.cliente.findMany({ select: { ciudad: true, estado: true } })
+      prisma.proveedor.findMany({ select: { creadoEn: true, ciudad: true, estado: true, plan: true } }),
+      prisma.cliente.findMany({ select: { creadoEn: true, ciudad: true, estado: true, plan: true } })
     ]);
 
     // 1. Servicios por tiempo (Line Chart)
@@ -244,7 +244,40 @@ export async function getAdminReportes() {
       }, {})
     ).sort((a: any, b: any) => b.count - a.count).slice(0, 10);
 
-    // 6. Reservas por Estado y Tiempo (Line Chart Comparativo)
+    // 7. Tipos de Planes de Clientes
+    const planesClientes = Object.values(
+      clientes.reduce((acc: any, c: any) => {
+        const plan = c.plan || 'FREE';
+        if (!acc[plan]) acc[plan] = { name: plan, value: 0 };
+        acc[plan].value++;
+        return acc;
+      }, {})
+    );
+
+    // 8. Tipos de Planes de Proveedores
+    const planesProveedores = Object.values(
+      proveedores.reduce((acc: any, p: any) => {
+        const plan = p.plan || 'GRATIS';
+        if (!acc[plan]) acc[plan] = { name: plan, value: 0 };
+        acc[plan].value++;
+        return acc;
+      }, {})
+    );
+
+    // 9. Crecimiento de Clientes por Ubicación (Top 5 Ciudades)
+    const topCities = combinedLocations
+      .reduce((acc: any, curr: any) => {
+        const city = (curr.ciudad || 'Sin asignar').trim();
+        acc[city] = (acc[city] || 0) + 1;
+        return acc;
+      }, {});
+    
+    const top5Cities = Object.entries(topCities)
+      .sort((a: any, b: any) => b[1] - a[1])
+      .slice(0, 5)
+      .map(entry => entry[0]);
+
+    const clientesTrendUbicacion = processTrendByLocation(clientes, top5Cities);
     const reservasPorEstadoTiempo = processReservasStatusTiempo(reservas);
 
     // 7. Ingresos Totales y Detalle Recent
@@ -275,6 +308,9 @@ export async function getAdminReportes() {
         reservasPorEstadoTiempo,
         ubicacionProveedores,
         ubicacionUsuarios,
+        planesClientes,
+        planesProveedores,
+        clientesTrendUbicacion,
         metricas: {
           comisionesTotales,
           ingresosTotales,
@@ -320,6 +356,35 @@ function processReservasStatusTiempo(reservas: any[]) {
       acc[label].confirmadas++;
     } else if (r.estado === 'TEMPORAL') {
       acc[label].pendientes++;
+    }
+    
+    return acc;
+  }, {});
+
+  return Object.values(grouped).sort((a: any, b: any) => {
+    const [mA, yA] = a.name.split(' ');
+    const [mB, yB] = b.name.split(' ');
+    return Number(yA) - Number(yB) || months.indexOf(mA) - months.indexOf(mB);
+  });
+}
+
+function processTrendByLocation(items: any[], topCities: string[]) {
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const grouped = items.reduce((acc: any, item: any) => {
+    const date = new Date(item.creadoEn);
+    const label = `${months[date.getMonth()]} ${date.getFullYear()}`;
+    const city = (item.ciudad || 'Sin asignar').trim();
+    
+    if (!acc[label]) {
+      acc[label] = { name: label };
+      topCities.forEach(c => acc[label][c] = 0);
+      acc[label]['Otros'] = 0;
+    }
+    
+    if (topCities.includes(city)) {
+      acc[label][city]++;
+    } else {
+      acc[label]['Otros']++;
     }
     
     return acc;
