@@ -55,11 +55,20 @@ export default async function CatalogPage() {
   const complementosSerializados = JSON.parse(JSON.stringify(rawComplementos));
   const proveedorSerializado = JSON.parse(JSON.stringify(proveedor));
 
+  const isProfileComplete = !!(
+    proveedor.nombre && 
+    proveedor.categoria && 
+    proveedor.estado && 
+    proveedor.ciudad && 
+    proveedor.direccion
+  );
+
   return (
     <CatalogoClient 
       servicios={serviciosSerializados} 
       proveedor={proveedorSerializado}
       complementos={complementosSerializados}
+      perfilCompleto={isProfileComplete}
     />
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Plus, Search, Edit2, Trash2, Camera, X, Loader2, UploadCloud, Star, Trash, CalendarDays, Package, CheckCircle2, Users } from 'lucide-react';
+import { ProfileCompleteModal } from './ProfileCompleteModal';
 import { CATEGORIAS_LABELS, TIPO_EVENTO_LABELS, formatearMoneda } from '@/lib/utils';
 import { createServicio, updateServicio, deleteServicio, upsertVariaciones, createComplemento, updateComplemento, deleteComplemento } from '@/lib/actions/providerActions';
 import { uploadServiceImage } from '@/lib/actions/uploadActions';
@@ -22,15 +23,17 @@ interface CatalogoClientProps {
   servicios: any[];
   proveedor: any;
   complementos?: any[];
+  perfilCompleto?: boolean;
 }
 
-export default function CatalogoClient({ servicios: initialServicios, proveedor, complementos: initialComplementos = [] }: CatalogoClientProps) {
+export default function CatalogoClient({ servicios: initialServicios, proveedor, complementos: initialComplementos = [], perfilCompleto = true }: CatalogoClientProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [servicios, setServicios] = useState(initialServicios);
   const [complementos, setComplementos] = useState(initialComplementos);
   
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
@@ -57,6 +60,10 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
   );
 
   const openNewModal = () => {
+    if (!perfilCompleto) {
+      setProfileModalOpen(true);
+      return;
+    }
     setEditingId(null);
     setFormData({ 
       nombre: '', descripcion: '', precio: '', capacidadMin: '', capacidadMax: '', 
@@ -737,6 +744,11 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
         servicios={servicios}
         proveedorId={proveedor.id}
       />
+
+      <ProfileCompleteModal 
+        isOpen={profileModalOpen} 
+        onClose={() => setProfileModalOpen(false)} 
+      />
     </div>
   );
 }
@@ -764,6 +776,10 @@ function ComplementosSection({ complementos, setComplementos, servicios, proveed
   };
 
   const openCreate = () => {
+    if (!perfilCompleto) {
+      setProfileModalOpen(true);
+      return;
+    }
     resetForm();
     setModalOpen(true);
   };

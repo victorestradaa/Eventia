@@ -96,7 +96,7 @@ export default function RegisterPage() {
       if (rol === 'CLIENTE') {
         window.location.href = '/cliente/dashboard';
       } else {
-        window.location.href = '/proveedor/dashboard';
+        window.location.href = '/proveedor/configuracion';
       }
       
     } catch (err: any) {
