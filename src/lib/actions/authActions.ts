@@ -116,14 +116,15 @@ export async function registrarUsuario(data: {
         nombre: data.nombre,
         rol: data.rol,
         ...(data.rol === 'CLIENTE' ? {
-          cliente: { create: {} }
+          cliente: { create: { plan: 'ORO' } }
         } : {
           proveedor: {
             create: {
               nombre: data.nombre,
               categoria: data.categoria || 'SALON',
               ciudad: 'Sin asignar',
-              estado: 'Sin asignar'
+              estado: 'Sin asignar',
+              plan: 'ELITE'
             }
           }
         })
