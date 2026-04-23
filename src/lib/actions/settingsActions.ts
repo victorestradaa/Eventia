@@ -132,28 +132,30 @@ export async function updateClientProfile(usuarioId: string, data: {
   avatarUrl?: string;
 }) {
   try {
-    // 1. Actualizar datos básicos del usuario
+    // Usamos una sola operación atómica con upsert anidado
+    // Esto es mucho más robusto para relaciones 1-1 en Prisma
     const updated = await prisma.usuario.update({
       where: { id: usuarioId },
       data: {
         nombre: data.nombre,
         telefono: data.telefono,
         ...(data.avatarUrl ? { avatarUrl: data.avatarUrl } : {}),
-      }
-    });
-
-    // 2. Upsert del registro Cliente (por si no existe aún)
-    await prisma.cliente.upsert({
-      where: { usuarioId },
-      update: {
-        ciudad: data.ciudad,
-        estado: data.estado,
+        cliente: {
+          upsert: {
+            update: {
+              ciudad: data.ciudad,
+              estado: data.estado,
+            },
+            create: {
+              ciudad: data.ciudad,
+              estado: data.estado,
+              // plan se asigna por defecto en el schema (FREE)
+            }
+          }
+        }
       },
-      create: {
-        usuarioId,
-        ciudad: data.ciudad,
-        estado: data.estado,
-        // plan tiene @default(FREE) en el schema, Prisma lo asigna automáticamente
+      include: {
+        cliente: true
       }
     });
 
@@ -162,7 +164,8 @@ export async function updateClientProfile(usuarioId: string, data: {
     return { success: true, data: JSON.parse(JSON.stringify(updated)) };
   } catch (error: any) {
     console.error('Error al actualizar perfil de cliente:', error);
-    return { success: false, error: error?.message || 'No se pudo actualizar el perfil.' };
+    // Retornamos el mensaje de error interno para diagnóstico si falla
+    return { success: false, error: `Error de base de datos: ${error.message || 'Desconocido'}` };
   }
 }
 
