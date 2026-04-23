@@ -183,10 +183,10 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
       {/* Search & Filter Bar */}
       <div className={cn("flex flex-wrap gap-4 z-40 bg-[var(--color-fondo)]/80 backdrop-blur-xl py-3 transition-all duration-300", isPublic ? "sticky top-16" : "sticky top-[55px] -mx-4 px-4")}>
         <div className="relative flex-1 min-w-[300px] group">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)] group-focus-within:text-[#d4af37] transition-colors" size={20} />
+          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)] group-focus-within:text-[#d4af37] transition-colors" size={20} />
           <input 
             type="text" 
-            className="w-full pl-16 h-16 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] shadow-sm focus:border-[#d4af37]/30 focus:shadow-lg rounded-2xl transition-all font-medium outline-none" 
+            className="w-full pl-[70px] h-16 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] shadow-sm focus:border-[#d4af37]/30 focus:shadow-lg rounded-2xl transition-all font-medium outline-none" 
             placeholder="Buscar por nombre o ciudad..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -194,13 +194,13 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
         </div>
 
         <div className="relative group">
-            <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)] group-focus-within:text-[#d4af37] transition-colors" size={20} />
+            <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)] group-focus-within:text-[#d4af37] transition-colors" size={20} />
             <input 
                 type="text" 
                 placeholder="Filtrar por ciudad..." 
                 value={filtros.ubicacion}
                 onChange={(e) => setFiltros({...filtros, ubicacion: e.target.value})}
-                className="w-full sm:w-[240px] pl-16 h-16 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] shadow-sm focus:border-[#d4af37]/30 focus:shadow-lg rounded-2xl transition-all font-medium outline-none" 
+                className="w-full sm:w-[240px] pl-[70px] h-16 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] shadow-sm focus:border-[#d4af37]/30 focus:shadow-lg rounded-2xl transition-all font-medium outline-none" 
             />
         </div>
 
