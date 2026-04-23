@@ -181,7 +181,7 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
       </div>
 
       {/* Search & Filter Bar */}
-      <div className={cn("flex flex-wrap gap-4 z-40 bg-[var(--color-fondo)]/80 backdrop-blur-xl py-4", isPublic ? "sticky top-20" : "sticky top-24 -mx-4 px-4")}>
+      <div className={cn("flex flex-wrap gap-4 z-40 bg-[var(--color-fondo)]/80 backdrop-blur-xl py-4 transition-all duration-300", isPublic ? "sticky top-20" : "sticky top-[60px] -mx-4 px-4")}>
         <div className="relative flex-1 min-w-[300px] group">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)] group-focus-within:text-[#d4af37] transition-colors" size={20} />
           <input 
@@ -283,7 +283,7 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
                 "px-10 py-4 rounded-xl whitespace-nowrap text-[13px] font-black uppercase tracking-[0.1em] transition-all border duration-300 shadow-sm",
                 isActive 
                   ? "text-white shadow-xl scale-105 active:scale-95" 
-                  : "bg-[var(--color-fondo-input)] border-[var(--color-borde-suave)] text-[var(--color-texto-muted)] hover:border-stone-500 hover:text-[var(--color-texto)]"
+                  : "bg-[var(--color-fondo-input)] border-[var(--color-borde-suave)] text-[var(--color-texto-muted)] hover:border-stone- stone-500 hover:text-[var(--color-texto)]"
               )}
               style={isActive ? {
                 backgroundColor: catColor,
@@ -305,88 +305,96 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
         </div>
       ) : serviciosFiltrados.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {serviciosFiltrados.map((p) => (
-            <div 
-              key={p.id} 
-              onClick={() => handleCardClick(p)}
-              className={cn(
-                "group rounded-[2rem] overflow-hidden relative border border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] transition-all hover:shadow-2xl hover:-translate-y-1",
-                isPublic ? "cursor-pointer" : ""
-              )}
-            >
-              {/* Header Image */}
-              <div className="relative aspect-[4/3] overflow-hidden">
-                 <img 
-                   src={p.img || '/placeholder_provider.png'} 
-                   alt={p.nombre} 
-                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                 />
-                 {!isPublic && (
-                   <button className="absolute top-4 right-4 p-2.5 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-red-500 transition-all">
-                     <Heart size={20} />
-                   </button>
-                 )}
-                 {p.premium && (
-                   <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-primario-oscuro)] text-white text-[10px] font-black uppercase tracking-widest shadow-lg border border-white/20">
-                     <Star size={10} fill="#d4af37" className="text-[#d4af37]" /> Premium
-                   </div>
-                 )}
-                 <div className="absolute bottom-4 left-4">
-                    <span className="bg-white/90 backdrop-blur-sm text-black px-3 py-1 rounded-lg text-[10px] font-black uppercase border border-stone-100">{p.categoria}</span>
-                 </div>
-              </div>
+          {serviciosFiltrados.map((p) => {
+            const profileUrl = isPublic ? '#' : `/cliente/proveedor/${p.proveedorId}?paquete=${p.id}`;
+            const onClickHandler = isPublic ? () => handleCardClick(p) : undefined;
 
-              {/* Content */}
-              <div className="p-6 space-y-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-serif text-[var(--color-texto)] mb-1 group-hover:text-[#b89547] transition-colors line-clamp-1">{p.nombre}</h3>
-                    <div className="flex items-center gap-2 text-xs text-[var(--color-texto-suave)] font-medium">
-                      <MapPin size={12} className="text-[#d4af37]" /> {p.ciudad}
-                    </div>
-                  </div>
-                  {!isPublic && (
-                    <div className="flex items-center gap-1 bg-amber-50 text-amber-600 px-2 py-1 rounded-lg text-xs font-black border border-amber-100">
-                       <Star size={12} fill="currentColor" /> {p.calificacion}
-                    </div>
-                  )}
+            return (
+              <div 
+                key={p.id} 
+                onClick={onClickHandler}
+                className={cn(
+                  "group rounded-[2rem] overflow-hidden relative border border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] transition-all hover:shadow-2xl hover:-translate-y-1 block cursor-pointer",
+                )}
+              >
+                {!isPublic ? (
+                  <Link href={profileUrl} className="absolute inset-0 z-[5]" />
+                ) : null}
+
+                {/* Header Image */}
+                <div className="relative aspect-[4/3] overflow-hidden">
+                   <img 
+                     src={p.img || '/placeholder_provider.png'} 
+                     alt={p.nombre} 
+                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                   />
+                   {!isPublic && (
+                     <button className="absolute top-4 right-4 p-2.5 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-red-500 transition-all z-10">
+                       <Heart size={20} />
+                     </button>
+                   )}
+                   {p.premium && (
+                     <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-primario-oscuro)] text-white text-[10px] font-black uppercase tracking-widest shadow-lg border border-white/20 z-10">
+                       <Star size={10} fill="#d4af37" className="text-[#d4af37]" /> Premium
+                     </div>
+                   )}
+                   <div className="absolute bottom-4 left-4 z-10">
+                      <span className="bg-white/90 backdrop-blur-sm text-black px-3 py-1 rounded-lg text-[10px] font-black uppercase border border-stone-100">{p.categoria}</span>
+                   </div>
                 </div>
 
-                {isPublic ? (
-                    <div className="pt-4 border-t border-[var(--color-borde-suave)] flex items-center justify-between group/btn">
-                         <span className="text-[10px] font-black uppercase text-[#b89547] tracking-widest group-hover:translate-x-1 transition-transform">Ver detalles del proveedor</span>
-                         <div className="w-8 h-8 rounded-full bg-[var(--color-fondo-hover)] flex items-center justify-center text-[var(--color-texto-muted)] group-hover/btn:bg-[#d4af37] group-hover/btn:text-white transition-all">
-                            <ChevronRight size={16} />
-                         </div>
+                {/* Content */}
+                <div className="p-6 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-serif text-[var(--color-texto)] mb-1 group-hover:text-[#b89547] transition-colors line-clamp-1 italic font-bold tracking-tight">{p.nombre}</h3>
+                      <div className="flex items-center gap-2 text-xs text-[var(--color-texto-suave)] font-medium">
+                        <MapPin size={12} className="text-[#d4af37]" /> {p.ciudad}
+                      </div>
                     </div>
-                ) : (
-                    <>
-                        <div className="flex items-center justify-between py-3 border-y border-[var(--color-borde-suave)]">
-                           <div className="flex items-center gap-2 text-xs text-[var(--color-texto-suave)] font-bold">
-                              <Users size={14} className="text-[var(--color-texto-muted)]" /> 
-                              <span>Capacidad: {p.capacidad}</span>
-                           </div>
-                           <div className="text-right">
-                              <p className="text-[9px] text-[var(--color-texto-muted)] uppercase font-black">Desde</p>
-                              <p className="text-lg font-black text-[#b89547]">
-                                {p.categoria === 'Comida' ? `${formatearMoneda(p.precio)} c/u` : formatearMoneda(p.precio)}
-                              </p>
-                           </div>
-                        </div>
+                    {!isPublic && (
+                      <div className="flex items-center gap-1 bg-amber-50 text-amber-600 px-2 py-1 rounded-lg text-xs font-black border border-amber-100">
+                         <Star size={12} fill="currentColor" /> {p.calificacion}
+                      </div>
+                    )}
+                  </div>
 
-                        <div className="grid grid-cols-2 gap-3 pt-2">
-                          <Link href={`/cliente/proveedor/${p.proveedorId}`} className="w-full">
-                            <button className="w-full py-3 rounded-xl border border-[var(--color-borde-suave)] text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)] transition-all">Ver Perfil</button>
-                          </Link>
-                          <Link href={`/cliente/proveedor/${p.proveedorId}`} className="w-full">
-                            <button className="w-full py-3 rounded-xl bg-[var(--color-primario)] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[var(--color-acento)] hover:text-black transition-all shadow-md">Apartar Fecha</button>
-                          </Link>
-                        </div>
-                    </>
-                )}
+                  {isPublic ? (
+                      <div className="pt-4 border-t border-[var(--color-borde-suave)] flex items-center justify-between group/btn">
+                           <span className="text-[10px] font-black uppercase text-[#b89547] tracking-widest group-hover:translate-x-1 transition-transform">Ver detalles del proveedor</span>
+                           <div className="w-8 h-8 rounded-full bg-[var(--color-fondo-hover)] flex items-center justify-center text-[var(--color-texto-muted)] group-hover/btn:bg-[#d4af37] group-hover/btn:text-white transition-all">
+                              <ChevronRight size={16} />
+                           </div>
+                      </div>
+                  ) : (
+                      <>
+                          <div className="flex items-center justify-between py-3 border-y border-[var(--color-borde-suave)]">
+                             <div className="flex items-center gap-2 text-xs text-[var(--color-texto-suave)] font-bold">
+                                <Users size={14} className="text-[var(--color-texto-muted)]" /> 
+                                <span>Capacidad: {p.capacidad}</span>
+                             </div>
+                             <div className="text-right">
+                                <p className="text-[9px] text-[var(--color-texto-muted)] uppercase font-black">Desde</p>
+                                <p className="text-lg font-black text-[#b89547]">
+                                  {p.categoria === 'Comida' ? `${formatearMoneda(p.precio)} c/u` : formatearMoneda(p.precio)}
+                                </p>
+                             </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3 pt-2 relative z-10">
+                            <Link href={profileUrl} className="w-full">
+                              <button className="w-full py-3 rounded-xl border border-[var(--color-borde-suave)] text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-suave)] hover:bg-[var(--color-primario)]/10 hover:text-[var(--color-primario-claro)] hover:border-[var(--color-primario-claro)] transition-all">Ver Perfil</button>
+                            </Link>
+                            <Link href={profileUrl} className="w-full">
+                              <button className="w-full py-3 rounded-xl bg-[var(--color-primario)] text-white text-[10px] font-black uppercase tracking-widest hover:bg-[var(--color-acento)] hover:text-black transition-all shadow-md italic">Apartar Fecha</button>
+                            </Link>
+                          </div>
+                      </>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-24 text-center space-y-6 bg-[var(--color-fondo-card)] rounded-[3rem] border border-[var(--color-borde-suave)]">

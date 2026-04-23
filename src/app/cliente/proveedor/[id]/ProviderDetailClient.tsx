@@ -49,7 +49,12 @@ interface ProviderDetailClientProps {
   activeEvent?: any;
 }
 
+import { useSearchParams } from 'next/navigation';
+
 export default function ProviderDetailClient({ data, activeEvent }: ProviderDetailClientProps) {
+  const searchParams = useSearchParams();
+  const packageParam = searchParams.get('paquete');
+
   const [imgActiva, setImgActiva] = useState(0);
   const [reservado, setReservado] = useState(false);
   const [mostrarCalendario, setMostrarCalendario] = useState(false);
@@ -58,11 +63,18 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
   const [reservas, setReservas] = useState<any[]>([]);
   const [loadingCalendar, setLoadingCalendar] = useState(false);
   const [errorDisponibilidad, setErrorDisponibilidad] = useState<string | null>(null);
-  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(data?.servicios?.[0]?.id || null);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(packageParam || data?.servicios?.[0]?.id || null);
   const [solicitando, setSolicitando] = useState(false);
   const [errorSolicitud, setErrorSolicitud] = useState<string | null>(null);
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [calendarView, setCalendarView] = useState<any>('month');
+
+  useEffect(() => {
+    // Si el parámetro de paquete cambia, actualizamos el servicio seleccionado
+    if (packageParam && data?.servicios?.some((s: any) => s.id === packageParam)) {
+      setSelectedServiceId(packageParam);
+    }
+  }, [packageParam, data.servicios]);
 
   useEffect(() => {
     if (mostrarCalendario) {

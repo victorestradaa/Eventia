@@ -33,7 +33,15 @@ export default function Logo({ width = 200, height = 60, className, forceWhite =
   }
 
   return (
-    <div className={cn("relative inline-flex items-center justify-center", className)} style={{ width: !className?.includes('w-') ? width : undefined, height: !className?.includes('h-') ? height : undefined }}>
+    <div 
+      className={cn("relative inline-flex items-center justify-center", className)} 
+      style={{ 
+        width: className?.includes('w-') ? undefined : width, 
+        height: className?.includes('h-') ? undefined : height,
+        minWidth: width ? (width / 2) : undefined, // Garantizar un ancho mínimo para que no colapse
+        minHeight: height ? (height / 2) : undefined
+      }}
+    >
       {/* Versión estándar (oscura) - Se oculta en modo oscuro */}
       <div className="dark-hidden relative w-full h-full">
         <Image 

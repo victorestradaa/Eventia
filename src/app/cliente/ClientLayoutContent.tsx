@@ -104,11 +104,11 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
   return (
     <div className="min-h-screen bg-[var(--color-fondo)] bg-marble transition-colors duration-500">
       {/* Top Navbar Refinado */}
-      <header className="sticky top-0 z-[100] glass-premium border-b border-[var(--color-borde-suave)] px-6 py-4">
+      <header className="sticky top-0 z-[100] glass-premium border-b border-[var(--color-borde-suave)] px-4 py-2 md:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-3 group transition-transform hover:scale-105">
-              <Logo width={180} height={60} className="w-auto h-12 object-contain" />
+          <div className="flex items-center gap-3 md:gap-6">
+            <Link href="/" className="flex items-center gap-2 group transition-transform hover:scale-105 shrink-0">
+              <Logo width={140} height={40} className="w-auto h-8 md:h-10 object-contain" />
             </Link>
             
             {/* Context Indicator (Active Event Selector) */}
