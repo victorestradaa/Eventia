@@ -113,7 +113,7 @@ export default function RegisterPage() {
       <div className="card w-full max-w-md">
         <div className="flex flex-col items-center text-center mb-8">
           <div className="mb-4">
-            <Logo />
+            <Logo width={280} height={100} />
           </div>
           <h1 className="text-3xl font-bold mb-2">Crear Cuenta</h1>
           <p className="text-[var(--color-texto-suave)]">Únete a la mejor red de eventos</p>

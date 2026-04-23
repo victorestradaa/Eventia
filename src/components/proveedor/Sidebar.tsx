@@ -12,7 +12,8 @@ import {
   LogOut,
   DollarSign,
   X,
-  Bell
+  Bell,
+  Image as ImageIcon
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getPendingTasksCount } from '@/lib/actions/providerActions';
@@ -28,6 +29,7 @@ const MENU_ITEMS = [
   { href: '/proveedor/calendario', label: 'Calendario', icon: Calendar },
   { href: '/proveedor/catalogo', label: 'Catálogo', icon: Package },
   { href: '/proveedor/ventas', label: 'Ventas', icon: TrendingUp },
+  { href: '/proveedor/portafolio', label: 'Portafolio', icon: ImageIcon },
   { href: '/proveedor/planes', label: 'Mi Plan', icon: DollarSign },
 ];
 

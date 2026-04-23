@@ -26,10 +26,10 @@ export default function HomeClient() {
     <div className="flex flex-col min-h-screen font-sans bg-[var(--color-fondo)] text-[var(--color-texto)]">
       
       {/* ──────────── Header ──────────── */}
-      <header className="sticky top-0 z-[100] py-4 px-8 bg-[var(--color-fondo)]/80 backdrop-blur-md">
+      <header className="sticky top-0 z-[100] py-5 px-8 bg-[var(--color-fondo)]/80 backdrop-blur-md border-b border-[var(--color-borde-suave)]/30">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between">
-          <Link href="/" className="shrink-0">
-            <Logo width={140} height={45} className="w-auto h-11 object-contain" />
+          <Link href="/" className="shrink-0 flex items-center">
+            <Logo width={180} height={55} className="w-52 h-12" />
           </Link>
 
           {/* Menú Superior removido para usuarios no autenticados */}

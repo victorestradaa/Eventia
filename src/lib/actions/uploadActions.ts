@@ -134,3 +134,50 @@ export async function uploadInvitationAsset(formData: FormData): Promise<{ succe
     return { success: false, error: 'Fallo al procesar el activo de invitación' };
   }
 }
+
+/**
+ * Sube una imagen al portafolio del proveedor.
+ */
+export async function uploadPortfolioImage(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const file = formData.get('file') as File;
+    const proveedorId = formData.get('proveedorId') as string;
+
+    if (!file || !proveedorId) {
+      return { success: false, error: 'Falta el archivo o el ID del proveedor' };
+    }
+
+    await asegurarBucket();
+
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const fileName = `portafolio/${proveedorId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const { data, error } = await supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Error uploading portfolio image:', error);
+      return { success: false, error: 'Error al guardar la imagen' };
+    }
+
+    const { data: publicData } = supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(fileName);
+
+    return { 
+      success: true, 
+      url: publicData.publicUrl 
+    };
+
+  } catch (error) {
+    console.error('Portfolio upload error:', error);
+    return { success: false, error: 'Fallo al procesar la imagen' };
+  }
+}

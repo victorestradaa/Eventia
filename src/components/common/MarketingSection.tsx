@@ -102,8 +102,8 @@ export function MarketingSection() {
   ];
 
   return (
-    <section className="pt-8 pb-24 space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-      <div className="text-center max-w-4xl mx-auto space-y-6">
+    <section className="w-full pt-8 pb-24 space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 flex flex-col items-center">
+      <div className="w-full text-center max-w-4xl mx-auto space-y-6 flex flex-col items-center">
         <h2 className="text-5xl md:text-6xl font-serif text-[var(--color-texto)] tracking-tight italic">
           Todo lo que necesitas para tu <span className="text-[#d4af37]">momento especial</span>
         </h2>

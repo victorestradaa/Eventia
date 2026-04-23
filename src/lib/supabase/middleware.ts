@@ -53,8 +53,11 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (error) {
+      if (error.message.includes('Auth session missing')) {
+        // Silencio para usuarios no logueados - estado normal
+        return supabaseResponse
+      }
       console.error('❌ Supabase auth error in middleware:', error.message)
-      // If error occurs, let it pass to avoid infinite loading/redirects
       return supabaseResponse
     }
 

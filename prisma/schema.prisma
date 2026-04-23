@@ -51,6 +51,7 @@ model Proveedor {
   resenas                 Resena[]
   reservas                Reserva[]
   servicios               Servicio[]
+  portafolio              PortfolioItem[]
 }
 
 model Servicio {
@@ -98,6 +99,19 @@ model Complemento {
   actualizadoEn DateTime   @updatedAt
   proveedor     Proveedor  @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
   servicios     Servicio[] @relation("ComplementoToServicio")
+}
+
+model PortfolioItem {
+  id          String    @id @default(cuid())
+  proveedorId String
+  url         String
+  tipo        String    @default("IMAGE") // IMAGE or VIDEO
+  titulo      String?
+  descripcion String?
+  categoria   String?   // Para filtrar (e.g. Wedding, Social, Corporate)
+  orden       Int       @default(0)
+  creadoEn    DateTime  @default(now())
+  proveedor   Proveedor @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
 }
 
 model Cliente {

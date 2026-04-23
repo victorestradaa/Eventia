@@ -569,6 +569,9 @@ export async function getDetalleProveedor(id: string) {
           where: { activo: true },
           orderBy: { creadoEn: 'desc' },
         },
+        portafolio: {
+          orderBy: { orden: 'asc' }
+        },
         resenas: {
           include: { cliente: { include: { usuario: true } } },
           orderBy: { creadoEn: 'desc' },
@@ -611,6 +614,13 @@ export async function getDetalleProveedor(id: string) {
         desc: s.descripcion || 'Sin descripción disponible.',
         imagenes: s.imagenes || [],
         diasDisponibles: s.diasDisponibles || []
+      })),
+      portafolio: proveedor.portafolio.map((p: any) => ({
+        id: p.id,
+        url: p.url,
+        titulo: p.titulo,
+        descripcion: p.descripcion,
+        categoria: p.categoria
       })),
       resenas: proveedor.resenas.map((r: any) => ({
         id: r.id,

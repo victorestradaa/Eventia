@@ -16,7 +16,8 @@ import {
   X,
   Loader2,
   Map as MapIcon,
-  ShoppingBag
+  ShoppingBag,
+  Plus
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { cn, formatearMoneda, parseFechaLocal } from '@/lib/utils';
@@ -139,7 +140,7 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
          </div>
       </div>
 
-      {/* --- SECCIÓN GALERÍA (IMAGEN 3: ZONA VERDE) --- */}
+      {/* --- SECCIÓN GALERÍA --- */}
       <section className="relative rounded-[3rem] overflow-hidden group h-[550px] bg-[var(--color-fondo-input)] border-4 border-[var(--color-fondo-card)] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)]">
          {galeriaReal.length > 0 ? (
            <>
@@ -190,18 +191,16 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
          </div>
       </section>
 
-      {/* --- GRID PRINCIPAL (IMAGEN 3: ZONA ROJA Y AZUL) --- */}
+      {/* --- GRID PRINCIPAL --- */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
         
-        {/* --- COLUMNA IZQUIERDA: INFO PRODUCTO (ZONA ROJA) --- */}
+        {/* --- COLUMNA IZQUIERDA: INFO PRODUCTO --- */}
         <div className="lg:col-span-8 space-y-8">
            <div className="card bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] p-12 shadow-2xl relative overflow-hidden">
-              {/* Decoración de fondo */}
               <div className="absolute -top-24 -left-24 w-96 h-96 bg-[var(--color-primario)]/5 rounded-full blur-[100px] pointer-events-none" />
               <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-amber-500/5 rounded-full blur-[80px] pointer-events-none" />
 
               <div className="space-y-10 relative z-10">
-                 {/* Rating y Categoría */}
                  <div className="flex items-center gap-6">
                     <div className="flex items-center gap-2 bg-amber-500/10 text-amber-500 px-5 py-2 rounded-full border border-amber-500/10 active:scale-95 transition-transform">
                        <Star size={20} fill="currentColor" />
@@ -211,7 +210,6 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
                     <span className="text-xs font-black uppercase tracking-widest text-[var(--color-texto-muted)]">{p.categoria}</span>
                  </div>
 
-                 {/* Títulos */}
                  <div className="space-y-4">
                     <h1 className="text-5xl font-black tracking-tighter uppercase italic leading-none">{selectedService?.nombre}</h1>
                     <div className="p-6 rounded-[2rem] bg-white/5 border border-white/5 mt-4 backdrop-blur-sm">
@@ -221,7 +219,6 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
                     </div>
                  </div>
 
-                 {/* Precio */}
                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pt-4">
                     <div className="space-y-1">
                        <p className="text-[10px] font-black text-[var(--color-texto-muted)] uppercase tracking-[0.3em] ml-1">Inversión del servicio</p>
@@ -229,7 +226,6 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
                     </div>
                  </div>
 
-                 {/* Selector de otros paquetes */}
                  <div className="pt-8 border-t border-white/5 space-y-6">
                     <div className="flex items-center justify-between">
                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-texto-muted)]">Explorar otros paquetes</h4>
@@ -257,7 +253,6 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
                     </div>
                  </div>
 
-                 {/* Botones de Acción */}
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-10">
                     {errorDisponibilidad && (
                         <div className="md:col-span-2 p-6 rounded-3xl bg-red-500/10 border-2 border-red-500/20 text-red-500 text-xs font-black uppercase tracking-widest animate-bounce flex items-center gap-4 text-center">
@@ -282,7 +277,6 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
                             return;
                          }
 
-                         // Robust day calculation: ensure we get the local day of the week for the event date without shifting
                          const fechaLocal = parseFechaLocal(activeEvent.fecha);
                          const diaEvento = fechaLocal.getDay(); 
                          
@@ -305,12 +299,10 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
            </div>
         </div>
 
-        {/* --- COLUMNA DERECHA: PERFIL PROVEEDOR (ZONA AZUL) --- */}
+        {/* --- COLUMNA DERECHA: PERFIL PROVEEDOR --- */}
         <aside className="lg:col-span-4 space-y-6">
-           {/* Perfil del Vendedor */}
            <div className="card bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] p-10 shadow-2xl relative overflow-hidden sticky top-32">
               <div className="flex flex-col items-center text-center space-y-6">
-                 {/* Logo mini discreto con Zoom */}
                  <div className="relative group/logo">
                    <div 
                     onClick={() => setZoomLogo(true)}
@@ -337,7 +329,6 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
                     </div>
                  </div>
 
-                 {/* Stats Rápidos */}
                  <div className="grid grid-cols-2 gap-4 w-full">
                     <div className="p-5 rounded-3xl bg-white/5 border border-white/5 transition-all hover:bg-white/10">
                        <ShoppingBag size={20} className="mx-auto mb-2 text-[var(--color-primario-claro)]" />
@@ -351,7 +342,6 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
                     </div>
                  </div>
 
-                 {/* Ubicación y Mapa */}
                  <div className="w-full space-y-4 pt-4">
                     <div className="rounded-[2rem] overflow-hidden border-2 border-white/10 h-44 shadow-inner grayscale group-hover:grayscale-0 transition-all cursor-pointer">
                         {p.latitud && p.longitud ? (
@@ -380,6 +370,100 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
            </div>
         </aside>
       </div>
+
+      {/* --- SECCIÓN PORTAFOLIO --- */}
+      {p.portafolio && p.portafolio.length > 0 && (
+        <section className="space-y-10 pt-12 animate-in slide-in-from-bottom-10 duration-700">
+           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-4">
+              <div className="space-y-2">
+                 <div className="flex items-center gap-2 text-[var(--color-primario-claro)]">
+                    <ShoppingBag size={20} />
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em]">Experiencia Real</span>
+                 </div>
+                 <h2 className="text-5xl font-black italic uppercase tracking-tighter leading-none">Nuestro Portafolio</h2>
+                 <p className="text-sm text-[var(--color-texto-suave)] font-medium italic">
+                    Una muestra de los momentos que hemos capturado para nuestros clientes.
+                 </p>
+              </div>
+              <div className="flex items-center gap-3 bg-[var(--color-fondo-card)] px-6 py-3 rounded-2xl border border-[var(--color-borde-suave)]">
+                 <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)]">Proyectos en total:</span>
+                 <span className="text-lg font-black text-[var(--color-primario-claro)]">{p.portafolio.length}</span>
+              </div>
+           </div>
+
+           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {p.portafolio.map((item: any, idx: number) => (
+                 <div 
+                  key={item.id} 
+                  className={cn(
+                    "group relative overflow-hidden rounded-[2.5rem] border-2 border-[var(--color-borde-suave)] bg-[var(--color-fondo-input)] shadow-xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-2",
+                    idx % 5 === 0 ? "md:col-span-2 md:row-span-2 aspect-square" : "aspect-square"
+                  )}
+                 >
+                    <img 
+                      src={item.url} 
+                      alt={item.titulo || 'Portfolio'} 
+                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                    />
+                    
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-8">
+                       <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                          {item.categoria && (
+                            <span className="px-3 py-1 rounded-full bg-[var(--color-primario)] text-white text-[8px] font-black uppercase tracking-widest mb-3 inline-block">
+                              {item.categoria}
+                            </span>
+                          )}
+                          <h4 className="text-xl font-black italic uppercase text-white leading-tight">
+                            {item.titulo || 'Proyecto Especial'}
+                          </h4>
+                          {item.descripcion && (
+                            <p className="text-xs text-white/70 italic mt-2 line-clamp-2">
+                              {item.descripcion}
+                            </p>
+                          )}
+                       </div>
+                    </div>
+
+                    <div className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                       <Plus className="text-white" size={20} />
+                    </div>
+                 </div>
+              ))}
+           </div>
+        </section>
+      )}
+
+      {/* --- SECCIÓN RESEÑAS --- */}
+      {p.resenas && p.resenas.length > 0 && (
+         <section className="space-y-10 pt-12">
+            <div className="text-center space-y-2">
+               <h2 className="text-4xl font-black italic uppercase tracking-tighter">Lo que dicen de nosotros</h2>
+               <div className="h-1 w-20 bg-[var(--color-primario)] mx-auto rounded-full" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
+               {p.resenas.map((r: any) => (
+                  <div key={r.id} className="card p-8 bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] hover:border-white/20 transition-all rounded-[2rem] space-y-4">
+                     <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1 text-amber-500">
+                           {Array.from({length: 5}).map((_, i) => (
+                             <Star key={i} size={14} fill={i < r.calificacion ? "currentColor" : "none"} />
+                           ))}
+                        </div>
+                        <span className="text-[9px] font-black text-[var(--color-texto-muted)] uppercase tracking-widest">{new Date(r.creadoEn).toLocaleDateString()}</span>
+                     </div>
+                     <p className="text-sm italic text-[var(--color-texto-suave)] leading-relaxed underline decoration-white/5 underline-offset-8">"{r.comentario}"</p>
+                     <div className="pt-4 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-[var(--color-primario)]/20 flex items-center justify-center text-[var(--color-primario-claro)] font-black text-[10px]">
+                           {r.nombre.charAt(0)}
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-widest">{r.nombre}</p>
+                     </div>
+                  </div>
+               ))}
+            </div>
+         </section>
+      )}
 
       {/* --- MODALES --- */}
 

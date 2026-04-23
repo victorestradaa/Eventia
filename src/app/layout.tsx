@@ -30,20 +30,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} ${playfair.variable}`}>
-      <body className="antialiased">
-        {/* Inline script prevents flash of wrong theme on first load */}
+      <head>
+        {/* Usamos una etiqueta script tradicional con suppressHydrationWarning para evitar el error en React 19 */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               try {
                 const t = localStorage.getItem('theme');
-                if (t) document.documentElement.setAttribute('data-theme', t);
-                else if (window.matchMedia('(prefers-color-scheme: dark)').matches)
+                if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                   document.documentElement.setAttribute('data-theme', 'dark');
+                }
               } catch(e) {}
             `,
           }}
+          suppressHydrationWarning
         />
+      </head>
+      <body className="antialiased">
         <ThemeProvider>
           {children}
         </ThemeProvider>
