@@ -2,10 +2,20 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LogOut, X, BarChart2, Users, Calendar, TrendingUp, Settings, FolderTree } from 'lucide-react';
+import { 
+  BarChart2, 
+  Users, 
+  Calendar, 
+  TrendingUp, 
+  Settings, 
+  FolderTree, 
+  LogOut, 
+  X 
+} from 'lucide-react';
 import { cerrarSesion } from '@/lib/actions/authActions';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn } from '@/lib/utils';
+import Logo from '@/components/common/Logo';
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -13,12 +23,11 @@ interface AdminSidebarProps {
 }
 
 const MENU_ITEMS = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: BarChart2 },
-  { href: '/admin/usuarios', label: 'Usuarios', icon: Users },
-  { href: '/admin/eventos', label: 'Eventos', icon: Calendar },
-  { href: '/admin/reportes', label: 'Reportes', icon: TrendingUp },
-  { href: '/admin/configuracion', label: 'Configuración', icon: Settings },
-  { href: '/admin/catalogo', label: 'Catálogo Invitaciones', icon: FolderTree },
+  { href: '/admin/dashboard',     label: 'Dashboard',             icon: BarChart2 },
+  { href: '/admin/usuarios',      label: 'Usuarios',              icon: Users },
+  { href: '/admin/eventos',       label: 'Eventos',               icon: Calendar },
+  { href: '/admin/reportes',      label: 'Reportes',              icon: TrendingUp },
+  { href: '/admin/catalogo',      label: 'Catálogo Invitaciones', icon: FolderTree },
 ];
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
@@ -26,35 +35,35 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
   return (
     <>
-      {/* Overlay para móvil con z-index alto */}
+      {/* Overlay para móvil */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/90 backdrop-blur-md z-[999] md:hidden animate-in fade-in duration-300"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] md:hidden animate-in fade-in duration-300"
           onClick={onClose}
         />
       )}
 
-      {/* Sidebar con z-index más alto que el overlay */}
       <aside className={cn(
-        "fixed top-0 left-0 h-screen w-[310px] bg-[#0c0d16] border-r border-white/5 z-[1000] flex flex-col transition-transform duration-500 ease-in-out shadow-2xl",
-        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        "sidebar z-[120]",
+        isOpen && "abierto"
       )}>
-        {/* Header del Sidebar */}
-        <div className="flex items-center justify-between p-8 mb-4 border-b border-white/5">
-          <Link href="/admin/dashboard" className="text-3xl font-black tracking-[0.2em] text-[#d4af37] uppercase italic drop-shadow-md">
-            ADMIN
-          </Link>
+        <div className="sidebar-logo pt-2 text-center relative px-2">
+          {/* Botón cerrar para móvil */}
           <button 
             onClick={onClose}
-            className="md:hidden p-3 bg-white/5 rounded-full text-white/50 hover:text-white transition-colors"
+            className="md:hidden absolute -right-2 top-2 p-2 text-[var(--color-texto-muted)] hover:text-white"
           >
-            <X size={28} />
+            <X size={20} />
           </button>
+
+          <Logo width={280} height={90} className="w-full h-20" />
+          <p className="text-[10px] text-[var(--color-texto-muted)] uppercase tracking-widest font-black mt-2">
+            Panel Central
+          </p>
         </div>
         
-        {/* Navegación */}
-        <nav className="flex-1 overflow-y-auto px-5 py-4">
-          <ul className="space-y-4">
+        <nav className="sidebar-nav">
+          <ul className="space-y-1">
             {MENU_ITEMS.map((item) => {
               const Icon = item.icon;
               const activo = pathname === item.href;
@@ -65,14 +74,12 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                     href={item.href}
                     onClick={onClose}
                     className={cn(
-                      "flex items-center gap-6 px-6 py-5 rounded-[2rem] text-base md:text-lg font-bold transition-all duration-300 group",
-                      activo 
-                        ? "bg-gradient-to-r from-[#d4af37] to-[#b89547] text-black shadow-xl shadow-[#d4af37]/20 translate-x-2" 
-                        : "text-white/70 hover:bg-white/5 hover:text-white hover:translate-x-2"
+                      "sidebar-item relative",
+                      activo && "activo"
                     )}
                   >
-                    <Icon size={26} className={activo ? "text-black" : "text-[#d4af37] group-hover:text-white"} />
-                    <span className="tracking-wide">{item.label}</span>
+                    <Icon size={18} />
+                    {item.label}
                   </Link>
                 </li>
               );
@@ -80,18 +87,22 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           </ul>
         </nav>
 
-        {/* Footer del Sidebar */}
-        <div className="p-8 border-t border-white/5 space-y-6">
-          <div className="bg-white/5 rounded-3xl p-2 border border-white/5">
-             <ThemeToggle className="w-full justify-start py-4 px-6 text-white hover:bg-white/5 rounded-2xl transition-all font-bold text-base" />
+        <div className="mt-auto px-3 border-t border-[var(--color-borde-suave)] pt-4 pb-2 space-y-1">
+          <div className="px-2 py-2">
+             <ThemeToggle className="w-full justify-start" />
           </div>
+          <Link 
+            href="/admin/configuracion" 
+            onClick={onClose}
+            className={cn("sidebar-item mb-1", pathname === '/admin/configuracion' && "activo")}
+          >
+            <Settings size={18} />
+            Configuración
+          </Link>
           <form action={cerrarSesion}>
-            <button 
-              type="submit" 
-              className="flex items-center gap-6 w-full px-6 py-5 rounded-[2rem] text-base font-bold text-red-400 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20"
-            >
-              <LogOut size={26} />
-              <span className="tracking-wide">Cerrar Sesión</span>
+            <button type="submit" className="w-full text-left sidebar-item text-red-500 hover:bg-red-500/10 transition-colors">
+              <LogOut size={18} />
+              Cerrar Sesión
             </button>
           </form>
         </div>
