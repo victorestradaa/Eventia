@@ -19,6 +19,7 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
   const router = useRouter();
   const [eventos, setEventos] = useState(initialEventos);
   const [loading, setLoading] = useState(false);
+  const [createError, setCreateError] = useState('');
   
   const usuario = {
     plan: perfil?.cliente?.plan || 'FREE',
@@ -70,7 +71,7 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
 
     if (!nuevoEvento.nombre.trim() || !nuevoEvento.invitados || !nuevoEvento.tipo) return;
 
-
+    setCreateError('');
     setLoading(true);
     const res = await createEvento({
       clienteId: perfil.cliente?.id || '',
@@ -82,12 +83,11 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
     });
 
     if (res.success) {
-      // En lugar de actualizar el estado local, refrescamos la página para que el Server Component vuelva a traer todo
       router.refresh();
       setIsNewEventModalOpen(false);
       setNuevoEvento({ nombre: '', invitados: '', fecha: '', presupuesto: '', tipo: 'Boda' });
     } else {
-      alert(res.error);
+      setCreateError(res.error || 'Ocurrió un error al crear el evento. Intenta de nuevo.');
     }
     setLoading(false);
   };
@@ -110,6 +110,14 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
 
         {/* Modal siempre se renderiza aquí cuando está abierto */}
         {isNewEventModalOpen && renderModal()}
+
+        {/* Modal perfil incompleto (también en estado vacío) */}
+        {showProfileModal && (
+          <ProfileCompleteModal
+            onClose={() => setShowProfileModal(false)}
+            perfil={perfil}
+          />
+        )}
       </div>
     );
   }
@@ -190,8 +198,14 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
                 </div>
               </div>
 
+              {createError && (
+                <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30">
+                  <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
+                  <p className="text-red-400 text-xs font-bold">{createError}</p>
+                </div>
+              )}
               <div className="flex gap-4 pt-4 border-t border-[var(--color-borde-suave)]">
-                 <button type="button" onClick={() => setIsNewEventModalOpen(false)} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-[var(--color-texto-muted)] hover:text-[var(--color-texto)] transition-colors" disabled={loading}>Cancelar</button>
+                 <button type="button" onClick={() => { setIsNewEventModalOpen(false); setCreateError(''); }} className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-[var(--color-texto-muted)] hover:text-[var(--color-texto)] transition-colors" disabled={loading}>Cancelar</button>
                  <button type="submit" className="btn-oro flex-1 py-4 font-bold shadow-xl flex items-center justify-center gap-2" disabled={loading}>
                    {loading ? <Loader2 className="animate-spin" size={20} /> : 'Crear Evento'}
                  </button>
@@ -468,7 +482,10 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
       )}
       {/* MODAL PERFIL INCOMPLETO */}
       {showProfileModal && (
-        <ProfileCompleteModal onClose={() => setShowProfileModal(false)} />
+        <ProfileCompleteModal 
+          onClose={() => setShowProfileModal(false)} 
+          perfil={perfil}
+        />
       )}
     </div>
   );

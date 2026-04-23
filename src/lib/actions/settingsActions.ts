@@ -132,27 +132,37 @@ export async function updateClientProfile(usuarioId: string, data: {
   avatarUrl?: string;
 }) {
   try {
+    // 1. Actualizar datos básicos del usuario
     const updated = await prisma.usuario.update({
       where: { id: usuarioId },
       data: {
         nombre: data.nombre,
         telefono: data.telefono,
-        avatarUrl: data.avatarUrl || undefined,
-        cliente: {
-          update: {
-            ciudad: data.ciudad,
-            estado: data.estado,
-          }
-        }
+        ...(data.avatarUrl ? { avatarUrl: data.avatarUrl } : {}),
+      }
+    });
+
+    // 2. Upsert del registro Cliente (por si no existe aún)
+    await prisma.cliente.upsert({
+      where: { usuarioId },
+      update: {
+        ciudad: data.ciudad,
+        estado: data.estado,
+      },
+      create: {
+        usuarioId,
+        ciudad: data.ciudad,
+        estado: data.estado,
+        plan: 'FREE',
       }
     });
 
     revalidatePath('/cliente/perfil');
     revalidatePath('/cliente/dashboard');
     return { success: true, data: JSON.parse(JSON.stringify(updated)) };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error al actualizar perfil de cliente:', error);
-    return { success: false, error: 'No se pudo actualizar el perfil.' };
+    return { success: false, error: error?.message || 'No se pudo actualizar el perfil.' };
   }
 }
 
