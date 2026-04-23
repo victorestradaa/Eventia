@@ -226,7 +226,7 @@ export async function getAdminReportes() {
 
     const ubicacionProveedores = Object.values(
       proveedores.reduce((acc: any, p: any) => {
-        const city = p.ciudad || 'Sin asignar';
+        const city = (p.ciudad || 'Sin asignar').trim();
         if (!acc[city]) acc[city] = { name: city, count: 0 };
         acc[city].count++;
         return acc;
@@ -237,7 +237,7 @@ export async function getAdminReportes() {
     const combinedLocations = [...proveedores, ...clientes];
     const ubicacionUsuarios = Object.values(
       combinedLocations.reduce((acc: any, curr: any) => {
-        const city = curr.ciudad || 'Sin asignar';
+        const city = (curr.ciudad || 'Sin asignar').trim();
         if (!acc[city]) acc[city] = { name: city, count: 0 };
         acc[city].count++;
         return acc;
