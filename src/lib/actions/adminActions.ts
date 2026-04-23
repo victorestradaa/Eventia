@@ -215,6 +215,9 @@ export async function getAdminReportes() {
     // 3. Reservas por tiempo
     const reservasPorTiempo = processTimeData(reservas);
 
+    // 3b. Ingresos por tiempo (Monetarizado)
+    const ingresosPorTiempo = processMoneyTimeData(reservas);
+
     // 4. Reservas por Estado
     const reservasPorEstado = Object.values(
       reservas.reduce((acc: any, r: any) => {
@@ -304,6 +307,7 @@ export async function getAdminReportes() {
         serviciosPorTiempo,
         serviciosPorCategoria,
         reservasPorTiempo,
+        ingresosPorTiempo,
         reservasPorEstado,
         reservasPorEstadoTiempo,
         ubicacionProveedores,
@@ -551,5 +555,24 @@ export async function updateUserPasswordAdmin(id: string, newPassword: string) {
     console.error('Error al actualizar contraseña:', error);
     return { success: false, error: error.message || 'Error al actualizar contraseña' };
   }
+}
+
+function processMoneyTimeData(items: any[]) {
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const grouped = items.reduce((acc: any, item: any) => {
+    if (item.estado === 'CANCELADO' || item.estado === 'TEMPORAL') return acc;
+    
+    const date = new Date(item.creadoEn || new Date());
+    const label = `${months[date.getMonth()]} ${date.getFullYear()}`;
+    if (!acc[label]) acc[label] = { name: label, total: 0 };
+    acc[label].total += Number(item.montoTotal || 0);
+    return acc;
+  }, {});
+
+  return Object.values(grouped).sort((a: any, b: any) => {
+    const [mA, yA] = a.name.split(' ');
+    const [mB, yB] = b.name.split(' ');
+    return Number(yA) - Number(yB) || months.indexOf(mA) - months.indexOf(mB);
+  });
 }
 
