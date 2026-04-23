@@ -38,13 +38,13 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       {/* Overlay para móvil */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] md:hidden animate-in fade-in duration-300"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[38] md:hidden animate-in fade-in duration-300"
           onClick={onClose}
         />
       )}
 
       <aside className={cn(
-        "sidebar z-[120]",
+        "sidebar !z-[50]",
         isOpen && "abierto"
       )}>
         <div className="sidebar-logo pt-2 text-center relative px-2">
