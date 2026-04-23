@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { updateUserAdmin, toggleUserStatus } from '@/lib/actions/adminActions';
+import { MEXICO_LOCATIONS } from '@/lib/constants/locations';
 
 interface UsuariosClientProps {
   initialUsers: any[];
@@ -329,22 +330,31 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
 
                     <div className="space-y-1.5">
                        <label className="text-[10px] font-black uppercase text-[#d4af37] tracking-widest ml-1">Estado</label>
-                       <input 
-                         type="text" 
+                       <select 
                          value={formData.estado}
-                         onChange={(e) => setFormData({...formData, estado: e.target.value})}
-                         className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl px-5 py-4 text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all"
-                       />
+                         onChange={(e) => setFormData({...formData, estado: e.target.value, ciudad: ''})}
+                         className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl px-5 py-4 text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all cursor-pointer"
+                       >
+                          <option value="" className="bg-[#111]">Seleccionar estado...</option>
+                          {Object.keys(MEXICO_LOCATIONS).sort().map(estado => (
+                            <option key={estado} value={estado} className="bg-[#111]">{estado}</option>
+                          ))}
+                       </select>
                     </div>
 
                     <div className="space-y-1.5">
                        <label className="text-[10px] font-black uppercase text-[#d4af37] tracking-widest ml-1">Ciudad / Municipio</label>
-                       <input 
-                         type="text" 
+                       <select 
                          value={formData.ciudad}
                          onChange={(e) => setFormData({...formData, ciudad: e.target.value})}
-                         className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl px-5 py-4 text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all"
-                       />
+                         className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl px-5 py-4 text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all cursor-pointer disabled:opacity-50"
+                         disabled={!formData.estado}
+                       >
+                          <option value="" className="bg-[#111]">Seleccionar ciudad...</option>
+                          {formData.estado && MEXICO_LOCATIONS[formData.estado]?.map(ciudad => (
+                            <option key={ciudad} value={ciudad} className="bg-[#111]">{ciudad}</option>
+                          ))}
+                       </select>
                     </div>
                  </div>
 
