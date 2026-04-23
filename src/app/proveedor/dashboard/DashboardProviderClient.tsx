@@ -11,10 +11,19 @@ import {
   Zap,
   Star,
   Crown,
-  Gem
+  Gem,
+  BarChart2,
+  LineChart as LineChartIcon,
+  Activity
 } from 'lucide-react';
 import { formatearMoneda, cn } from '@/lib/utils';
 import Link from 'next/link';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, LineChart, Line, Legend, Cell
+} from 'recharts';
+
+const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#f43f5e'];
 
 interface DashboardProviderClientProps {
   resumen: any;
@@ -104,6 +113,77 @@ export default function DashboardProviderClient({ resumen, perfil }: DashboardPr
             </p>
           </div>
         ))}
+      </div>
+
+      {/* Analytics Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Trend Area Chart */}
+        <div className="card p-8 bg-gradient-to-br from-blue-500/5 to-transparent">
+          <h3 className="text-xl font-bold flex items-center gap-2 mb-8">
+            <Activity size={22} className="text-blue-400" />
+            Crecimiento de Servicios Contratados
+          </h3>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={resumen.trends || []}>
+                <defs>
+                  <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="name" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                <Area type="monotone" dataKey="total" stroke="#3b82f6" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Status Line Chart */}
+        <div className="card p-8 bg-gradient-to-br from-emerald-500/5 to-transparent">
+          <h3 className="text-xl font-bold flex items-center gap-2 mb-8">
+            <LineChartIcon size={22} className="text-emerald-400" />
+            Desempeño por Estado de Reserva
+          </h3>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={resumen.trends || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="name" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '20px' }} />
+                <Line type="monotone" name="Confirmados" dataKey="confirmados" stroke="#10b981" strokeWidth={3} dot={false} />
+                <Line type="monotone" name="Pendientes" dataKey="pendientes" stroke="#f59e0b" strokeWidth={3} dot={false} />
+                <Line type="monotone" name="Cancelados" dataKey="cancelados" stroke="#f43f5e" strokeWidth={2} dot={false} strokeDasharray="5 5" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Monthly Accumulation Bar Chart */}
+      <div className="grid grid-cols-1 gap-8">
+        <div className="card p-8">
+          <h3 className="text-xl font-bold flex items-center gap-2 mb-8">
+            <BarChart2 size={22} className="text-[#d4af37]" />
+            Actividad Mes a Mes (Año actual)
+          </h3>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={resumen.monthlyTrends || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="name" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
+                <Bar dataKey="count" fill="#d4af37" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

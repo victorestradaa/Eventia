@@ -4,12 +4,60 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { serializePrisma } from '@/lib/utils';
 
+function processTrends(reservas: any[]) {
+  const grouped: Record<string, any> = {};
+  
+  reservas.forEach(r => {
+    const date = new Date(r.creadoEn).toISOString().split('T')[0];
+    if (!grouped[date]) {
+      grouped[date] = { 
+        name: date, 
+        total: 0, 
+        confirmados: 0, 
+        pendientes: 0, 
+        cancelados: 0 
+      };
+    }
+    
+    grouped[date].total++;
+    
+    if (r.estado === 'APARTADO' || r.estado === 'LIQUIDADO') {
+      grouped[date].confirmados++;
+    } else if (r.estado === 'TEMPORAL') {
+      grouped[date].pendientes++;
+    } else if (r.estado === 'CANCELADO') {
+      grouped[date].cancelados++;
+    }
+  });
+
+  return Object.values(grouped).sort((a: any, b: any) => a.name.localeCompare(b.name));
+}
+
+function processMonthlyAccumulation(reservas: any[]) {
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const currentYear = new Date().getFullYear();
+  
+  const monthlyCounts = Array(12).fill(0).map((_, i) => ({
+    name: months[i],
+    count: 0
+  }));
+
+  reservas.forEach(r => {
+    const date = new Date(r.creadoEn);
+    if (date.getFullYear() === currentYear) {
+      monthlyCounts[date.getMonth()].count++;
+    }
+  });
+
+  return monthlyCounts;
+}
+
 /**
  * Obtiene el resumen de actividad de un proveedor.
  */
 export async function getResumenProveedor(proveedorId: string) {
   try {
-    const [reservas, servicios, metricas, tareasPendientes] = await Promise.all([
+    const [reservas, servicios, metricas, tareasPendientes, allReservas] = await Promise.all([
       prisma.reserva.findMany({
         where: { proveedorId },
         orderBy: { fechaEvento: 'asc' },
@@ -33,8 +81,18 @@ export async function getResumenProveedor(proveedorId: string) {
       }),
       prisma.reserva.count({
         where: { proveedorId, estado: 'TEMPORAL' }
+      }),
+      // New: fetch all reservations for trends
+      prisma.reserva.findMany({
+        where: { proveedorId },
+        select: { creadoEn: true, estado: true, montoTotal: true },
+        orderBy: { creadoEn: 'asc' }
       })
     ]);
+
+    // Trend Processing
+    const trends = processTrends(allReservas);
+    const monthlyTrends = processMonthlyAccumulation(allReservas);
 
     return { 
       success: true, 
@@ -52,7 +110,9 @@ export async function getResumenProveedor(proveedorId: string) {
         })), 
         ingresosTotales: metricas._sum.montoTotal ? Number(metricas._sum.montoTotal) : 0,
         totalReservas: metricas._count.id,
-        tareasPendientes: tareasPendientes
+        tareasPendientes: tareasPendientes,
+        trends,
+        monthlyTrends
       } 
     };
   } catch (error) {
