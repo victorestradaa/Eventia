@@ -179,3 +179,112 @@ export async function limpiarActivosCorruptos() {
     return { success: false };
   }
 }
+
+/**
+ * Obtiene datos reales para los reportes administrativos detallados.
+ */
+export async function getAdminReportes() {
+  try {
+    const [servicios, reservas, proveedores] = await Promise.all([
+      prisma.servicio.findMany({ select: { creadoEn: true, proveedor: { select: { categoria: true } } } }),
+      prisma.reserva.findMany({ select: { creadoEn: true, estado: true, montoTotal: true, fechaEvento: true, proveedor: { select: { nombre: true, categoria: true } } } }),
+      prisma.proveedor.findMany({ select: { ciudad: true, categoria: true } })
+    ]);
+
+    // 1. Servicios por tiempo (Line Chart)
+    const serviciosPorTiempo = processTimeData(servicios);
+
+    // 2. Servicios por Categoría (Pie Chart)
+    const catLabels: any = {
+      SALON: 'Salones', MUSICA: 'Música', COMIDA: 'Banquetes', ANIMACION: 'Animación',
+      FOTOGRAFIA: 'Foto & Video', DECORACION: 'Decoración', RECUERDOS: 'Recuerdos',
+      MOBILIARIO: 'Mobiliario', PAQUETES_COMPLETOS: 'Paquetes'
+    };
+
+    const serviciosPorCategoria = Object.values(
+      servicios.reduce((acc: any, s: any) => {
+        const cat = catLabels[s.proveedor?.categoria] || 'Otros';
+        if (!acc[cat]) acc[cat] = { name: cat, value: 0 };
+        acc[cat].value++;
+        return acc;
+      }, {})
+    );
+
+    // 3. Reservas por tiempo
+    const reservasPorTiempo = processTimeData(reservas);
+
+    // 4. Reservas por Estado
+    const reservasPorEstado = Object.values(
+      reservas.reduce((acc: any, r: any) => {
+        if (!acc[r.estado]) acc[r.estado] = { name: r.estado, value: 0 };
+        acc[r.estado].value++;
+        return acc;
+      }, {})
+    );
+
+    // 5. Ubicación de Proveedores
+    const ubicacionProveedores = Object.values(
+      proveedores.reduce((acc: any, p: any) => {
+        const city = p.ciudad || 'Sin asignar';
+        if (!acc[city]) acc[city] = { name: city, count: 0 };
+        acc[city].count++;
+        return acc;
+      }, {})
+    ).sort((a: any, b: any) => b.count - a.count).slice(0, 10);
+
+    // 6. Ingresos Totales y Detalle Recent
+    const ingresosTotales = reservas
+      .filter(r => r.estado === 'LIQUIDADO' || r.estado === 'APARTADO')
+      .reduce((acc, r) => acc + Number(r.montoTotal), 0);
+
+    const comisionesTotales = ingresosTotales * 0.1;
+
+    const detalleIngresos = reservas
+      .sort((a, b) => b.creadoEn.getTime() - a.creadoEn.getTime())
+      .slice(0, 10)
+      .map(r => ({
+        proveedor: r.proveedor?.nombre || 'Proveedor',
+        evento: r.proveedor?.categoria || 'Evento',
+        total: Number(r.montoTotal),
+        comision: Number(r.montoTotal) * 0.1,
+        fecha: r.fechaEvento.toLocaleDateString('es-MX')
+      }));
+
+    return {
+      success: true,
+      data: {
+        serviciosPorTiempo,
+        serviciosPorCategoria,
+        reservasPorTiempo,
+        reservasPorEstado,
+        ubicacionProveedores,
+        metricas: {
+          comisionesTotales,
+          ingresosTotales,
+          devoluciones: 450 // Mocked for now as we don't have refund model yet
+        },
+        detalleIngresos
+      }
+    };
+  } catch (error) {
+    console.error('Error al generar reportes:', error);
+    return { success: false, error: 'Error al generar reportes' };
+  }
+}
+
+function processTimeData(items: any[]) {
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const grouped = items.reduce((acc: any, item: any) => {
+    const date = new Date(item.creadoEn);
+    const label = `${months[date.getMonth()]} ${date.getFullYear()}`;
+    if (!acc[label]) acc[label] = { name: label, total: 0 };
+    acc[label].total++;
+    return acc;
+  }, {});
+
+  return Object.values(grouped).sort((a: any, b: any) => {
+    const [mA, yA] = a.name.split(' ');
+    const [mB, yB] = b.name.split(' ');
+    return months.indexOf(mA) - months.indexOf(mB) || yA - yB;
+  });
+}
