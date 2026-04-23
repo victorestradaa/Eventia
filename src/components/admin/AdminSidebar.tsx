@@ -29,29 +29,30 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       {/* Overlay para móvil */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] md:hidden animate-in fade-in duration-300"
+          className="fixed inset-0 bg-black/80 backdrop-blur-md z-[110] md:hidden animate-in fade-in duration-500"
           onClick={onClose}
         />
       )}
 
       <aside className={cn(
-        "sidebar z-[120]",
-        isOpen && "abierto"
+        "sidebar z-[120] border-r border-[var(--color-borde-suave)] shadow-2xl transition-transform duration-500 ease-in-out",
+        "bg-[var(--color-fondo-card)]", // Asegurar color de fondo sólido
+        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       )}>
-        <div className="sidebar-logo flex items-center justify-between">
-          <Link href="/admin/dashboard" className="text-2xl font-bold gradient-texto">
+        <div className="sidebar-logo flex items-center justify-between py-8">
+          <Link href="/admin/dashboard" className="text-2xl font-black tracking-tighter uppercase gradient-texto block px-2">
             Admin Panel
           </Link>
           <button 
             onClick={onClose}
-            className="md:hidden p-2 text-[var(--color-texto-muted)] hover:text-white"
+            className="md:hidden p-2 text-[var(--color-texto-muted)] hover:text-[var(--color-acento)] transition-colors"
           >
-            <X size={20} />
+            <X size={24} />
           </button>
         </div>
         
-        <nav className="sidebar-nav">
-          <ul className="space-y-1">
+        <nav className="sidebar-nav px-4">
+          <ul className="space-y-2">
             {MENU_ITEMS.map((item) => {
               const Icon = item.icon;
               const activo = pathname === item.href;
@@ -62,11 +63,13 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                     href={item.href}
                     onClick={onClose}
                     className={cn(
-                      "sidebar-item",
-                      activo && "activo"
+                      "flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all duration-300",
+                      activo 
+                        ? "bg-gradient-to-r from-[var(--color-primario)]/20 to-[var(--color-acento)]/10 text-[var(--color-acento-claro)] border border-[var(--color-acento)]/20 shadow-lg shadow-[var(--color-acento)]/5" 
+                        : "text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)] hover:text-[var(--color-texto)]"
                     )}
                   >
-                    <Icon size={18} />
+                    <Icon size={20} className={activo ? "text-[var(--color-acento)]" : "text-[var(--color-texto-muted)]"} />
                     {item.label}
                   </Link>
                 </li>
@@ -75,13 +78,16 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           </ul>
         </nav>
 
-        <div className="mt-auto p-4 border-t border-[var(--color-borde-suave)] space-y-2">
-          <div className="px-2 pb-1">
-             <ThemeToggle className="w-full justify-start py-3" />
+        <div className="mt-auto p-6 border-t border-[var(--color-borde-suave)] space-y-4">
+          <div className="bg-[var(--color-fondo-input)]/50 rounded-2xl p-2 border border-[var(--color-borde-suave)]">
+             <ThemeToggle className="w-full justify-start py-3 px-4 hover:bg-[var(--color-fondo-hover)] rounded-xl transition-all" />
           </div>
           <form action={cerrarSesion}>
-            <button type="submit" className="sidebar-item w-full text-left text-red-400 hover:bg-red-500/10 transition-colors">
-              <LogOut size={18} />
+            <button 
+              type="submit" 
+              className="flex items-center gap-4 w-full px-4 py-3.5 rounded-2xl text-sm font-bold text-red-400 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20"
+            >
+              <LogOut size={20} />
               Cerrar Sesión
             </button>
           </form>
