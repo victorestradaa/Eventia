@@ -549,7 +549,8 @@ export async function getExplorarServicios() {
         capacidad: s.capacidadMax ? `${s.capacidadMin}-${s.capacidadMax}` : 'N/A',
         premium: s.proveedor.plan === 'PREMIUM' || s.proveedor.plan === 'ELITE',
         img: s.imagenes[0] || s.proveedor.logoUrl || null,
-        proveedorId: s.proveedorId
+        proveedorId: s.proveedorId,
+        proveedorNombre: s.proveedor.nombre
       };
     });
 

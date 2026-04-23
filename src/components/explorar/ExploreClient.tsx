@@ -148,8 +148,8 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
         </header>
       )}
 
-      <div className={cn("flex-1 space-y-8", isPublic ? "max-w-7xl mx-auto px-6 py-12" : "pt-2")}>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[var(--color-borde-suave)] pb-8">
+      <div className={cn("flex-1 space-y-4", isPublic ? "max-w-7xl mx-auto px-6 py-6" : "pt-2")}>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[var(--color-borde-suave)] pb-4">
         <div>
           <h1 className="text-4xl font-serif text-[var(--color-texto)] tracking-tight mb-2 italic">
             Explorar {isPublic && 'Proveedores'}
@@ -181,7 +181,7 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
       </div>
 
       {/* Search & Filter Bar */}
-      <div className={cn("flex flex-wrap gap-4 z-40 bg-[var(--color-fondo)]/80 backdrop-blur-xl py-4 transition-all duration-300", isPublic ? "sticky top-20" : "sticky top-[60px] -mx-4 px-4")}>
+      <div className={cn("flex flex-wrap gap-4 z-40 bg-[var(--color-fondo)]/80 backdrop-blur-xl py-3 transition-all duration-300", isPublic ? "sticky top-16" : "sticky top-[55px] -mx-4 px-4")}>
         <div className="relative flex-1 min-w-[300px] group">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)] group-focus-within:text-[#d4af37] transition-colors" size={20} />
           <input 
@@ -347,6 +347,7 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
                 <div className="p-6 space-y-4">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#d4af37] -mb-1">{p.proveedorNombre}</p>
                       <h3 className="text-xl font-serif text-[var(--color-texto)] mb-1 group-hover:text-[#b89547] transition-colors line-clamp-1 italic font-bold tracking-tight">{p.nombre}</h3>
                       <div className="flex items-center gap-2 text-xs text-[var(--color-texto-suave)] font-medium">
                         <MapPin size={12} className="text-[#d4af37]" /> {p.ciudad}
