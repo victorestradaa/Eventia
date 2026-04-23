@@ -29,7 +29,7 @@ export default function Logo({ width = 400, height = 160, className = "w-auto h-
   }
 
   return (
-    <div className="relative inline-flex items-center justify-center">
+    <div className={cn("relative flex items-center justify-center", className)}>
       {/* Versión estándar (oscura) - Se oculta en modo oscuro */}
       <div className="dark-hidden">
         <Image 
@@ -37,7 +37,7 @@ export default function Logo({ width = 400, height = 160, className = "w-auto h-
           alt="Eventia Logo" 
           width={width} 
           height={height} 
-          className={className} 
+          className="w-auto h-full object-contain" 
           priority 
         />
       </div>
@@ -49,7 +49,7 @@ export default function Logo({ width = 400, height = 160, className = "w-auto h-
           alt="Eventia Logo" 
           width={width} 
           height={height} 
-          className={className} 
+          className="w-auto h-full object-contain" 
           priority 
         />
       </div>

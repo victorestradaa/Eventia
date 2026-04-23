@@ -186,7 +186,7 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)] group-focus-within:text-[#d4af37] transition-colors" size={20} />
           <input 
             type="text" 
-            className="w-full pl-14 h-16 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] shadow-sm focus:border-[#d4af37]/30 focus:shadow-lg rounded-2xl transition-all font-medium outline-none" 
+            className="w-full pl-16 h-16 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] shadow-sm focus:border-[#d4af37]/30 focus:shadow-lg rounded-2xl transition-all font-medium outline-none" 
             placeholder="Buscar por nombre o ciudad..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -200,7 +200,7 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
                 placeholder="Filtrar por ciudad..." 
                 value={filtros.ubicacion}
                 onChange={(e) => setFiltros({...filtros, ubicacion: e.target.value})}
-                className="w-full sm:w-[240px] pl-14 h-16 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] shadow-sm focus:border-[#d4af37]/30 focus:shadow-lg rounded-2xl transition-all font-medium outline-none" 
+                className="w-full sm:w-[240px] pl-16 h-16 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] shadow-sm focus:border-[#d4af37]/30 focus:shadow-lg rounded-2xl transition-all font-medium outline-none" 
             />
         </div>
 

@@ -75,7 +75,7 @@ export default function ProviderSidebar({ isOpen, onClose }: ProviderSidebarProp
             <X size={20} />
           </button>
 
-          <Logo forceWhite={true} width={280} height={90} className="w-auto h-20 mx-auto object-contain" />
+          <Logo width={280} height={90} className="w-full h-20" />
           <p className="text-[10px] text-[var(--color-texto-muted)] uppercase tracking-widest font-bold mt-2">
             Panel Proveedor
           </p>
