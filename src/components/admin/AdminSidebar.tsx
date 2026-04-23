@@ -6,7 +6,7 @@ import {
   BarChart2, 
   Users, 
   Calendar, 
-  TrendingUp, 
+  DollarSign, 
   Settings, 
   FolderTree, 
   LogOut, 
@@ -26,7 +26,7 @@ const MENU_ITEMS = [
   { href: '/admin/dashboard',     label: 'Dashboard',             icon: BarChart2 },
   { href: '/admin/usuarios',      label: 'Usuarios',              icon: Users },
   { href: '/admin/eventos',       label: 'Eventos',               icon: Calendar },
-  { href: '/admin/reportes',      label: 'Reportes',              icon: TrendingUp },
+  { href: '/admin/reportes',      label: 'Reportes',              icon: DollarSign },
   { href: '/admin/catalogo',      label: 'Catálogo Invitaciones', icon: FolderTree },
 ];
 

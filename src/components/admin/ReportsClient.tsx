@@ -34,8 +34,13 @@ export default function ReportsClient({ data }: ReportsClientProps) {
       {/* MONETARY HEADER ONLY */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-           <h1 className="text-4xl font-black italic tracking-tighter uppercase text-white">Reporte de Ingresos</h1>
-           <p className="text-[#d4af37] text-sm font-bold tracking-widest uppercase mt-1">Métricas Financieras Globales (MXN)</p>
+           <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#d4af37]/10 flex items-center justify-center text-[#d4af37] border border-[#d4af37]/20">
+                <DollarSign size={20} />
+              </div>
+              <h1 className="text-4xl font-black italic tracking-tighter uppercase text-white">Reporte de Ingresos</h1>
+           </div>
+           <p className="text-[#d4af37] text-sm font-bold tracking-widest uppercase mt-2 ml-1">Métricas Financieras Globales (MXN)</p>
         </div>
         <button className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-[#d4af37]/20 bg-[#d4af37]/5 text-[#d4af37] text-[10px] font-black uppercase tracking-widest hover:bg-[#d4af37]/10 transition-all">
            <Download size={14} /> Exportar Reporte
