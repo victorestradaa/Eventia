@@ -44,7 +44,7 @@ export default function DashboardAdminClient({ stats, analytics }: DashboardAdmi
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d4af37] mb-1">Sistema de Gestión</p>
-           <h1 className="text-3xl font-black italic tracking-tighter uppercase">Admin Panel</h1>
+           <h1 className="text-3xl font-black italic tracking-tighter uppercase text-[var(--color-texto)]">Admin Panel</h1>
            <p className="text-[var(--color-texto-suave)] text-sm">Analítica y Control de Plataforma (Eventia)</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
@@ -66,7 +66,7 @@ export default function DashboardAdminClient({ stats, analytics }: DashboardAdmi
               </div>
             </div>
             <h3 className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest mb-1">{stat.label}</h3>
-            <p className="stat-valor text-3xl">{stat.valor}</p>
+            <p className="stat-valor text-3xl text-[var(--color-texto)]">{stat.valor}</p>
           </div>
         ))}
       </div>
@@ -111,7 +111,7 @@ export default function DashboardAdminClient({ stats, analytics }: DashboardAdmi
 
         {/* Platform Health */}
         <div className="flex flex-col gap-6">
-          <div className="card space-y-8 bg-gradient-to-br from-white/[0.03] to-transparent">
+          <div className="card space-y-8 bg-gradient-to-br from-[var(--color-acento)]/5 to-transparent">
             <h3 className="text-xl font-bold flex items-center gap-2">
               <Database size={20} className="text-blue-400" />
               Sinfraestructura
@@ -124,7 +124,7 @@ export default function DashboardAdminClient({ stats, analytics }: DashboardAdmi
               <div className="pt-4 border-t border-white/5">
                  <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Uptime (30d)</span>
-                    <span className="text-sm font-black text-emerald-400 tracking-tighter">99.99%</span>
+                    <span className="text-sm font-black text-emerald-500 tracking-tighter">99.99%</span>
                  </div>
                  <div className="flex gap-1 h-3">
                    {[...Array(20)].map((_, i) => (
@@ -266,7 +266,7 @@ export default function DashboardAdminClient({ stats, analytics }: DashboardAdmi
              <ResponsiveContainer width="100%" height="100%">
                <BarChart data={reports?.ubicacionProveedores || []} layout="vertical">
                  <XAxis type="number" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
-                 <YAxis dataKey="name" type="category" stroke="#fff" fontSize={10} width={120} tickLine={false} axisLine={false} />
+                 <YAxis dataKey="name" type="category" stroke="var(--color-texto-muted)" fontSize={10} width={120} tickLine={false} axisLine={false} />
                  <Tooltip cursor={{fill: 'rgba(255,255,255,0.02)'}} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '12px' }} />
                  <Bar dataKey="count" fill="#d4af37" radius={[0, 10, 10, 0]} barSize={30} />
                </BarChart>
@@ -283,7 +283,7 @@ function HealthBar({ label, valor, color }: { label: string, valor: number, colo
     <div>
       <div className="flex justify-between text-[10px] font-black uppercase tracking-widest mb-3 text-[var(--color-texto-muted)]">
         <span>{label}</span>
-        <span className="text-white">{valor}%</span>
+        <span className="text-[var(--color-texto)]">{valor}%</span>
       </div>
       <div className="h-1.5 bg-[var(--color-fondo-input)] rounded-full overflow-hidden">
         <div className={cn("h-full transition-all duration-1000", color)} style={{ width: `${valor}%` }} />

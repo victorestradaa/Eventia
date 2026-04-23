@@ -101,7 +101,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d4af37] mb-1">Administración</p>
-           <h1 className="text-3xl font-black italic tracking-tighter uppercase text-white">Usuarios de Sistema</h1>
+           <h1 className="text-3xl font-black italic tracking-tighter uppercase text-[var(--color-texto)]">Usuarios de Sistema</h1>
            <p className="text-[var(--color-texto-suave)] text-sm">Control total de cuentas y permisos</p>
         </div>
         
@@ -111,7 +111,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
               <input 
                 type="text" 
                 placeholder="Buscar por nombre o email..." 
-                className="bg-white/5 border border-white/10 rounded-full pl-12 pr-6 py-3 text-sm text-white outline-none focus:border-[#d4af37] transition-all w-full sm:w-64"
+                className="bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-full pl-12 pr-6 py-3 text-sm text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all w-full sm:w-64"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -120,7 +120,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4">
               <Filter size={16} className="text-[#d4af37]" />
               <select 
-                className="bg-transparent border-none text-xs font-black uppercase tracking-widest text-white outline-none py-3 pr-2 cursor-pointer"
+                className="bg-transparent border-none text-xs font-black uppercase tracking-widest text-[var(--color-texto)] outline-none py-3 pr-2 cursor-pointer"
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
               >
@@ -166,7 +166,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
                                   <UserIcon size={24} />}
                               </div>
                               <div>
-                                 <p className="text-white font-bold text-lg tracking-tight group-hover:text-[#d4af37] transition-colors">{user.nombre}</p>
+                                 <p className="text-[var(--color-texto)] font-bold text-lg tracking-tight group-hover:text-[#d4af37] transition-colors">{user.nombre}</p>
                                  <p className="text-[10px] font-medium text-[var(--color-texto-muted)] tracking-widest">{user.email}</p>
                               </div>
                            </div>
@@ -192,7 +192,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
                               )}>
                                  {user.rol}
                               </span>
-                              <p className="text-xs font-black text-white px-1 tracking-tighter">PLAN {plan}</p>
+                              <p className="text-xs font-black text-[var(--color-texto)] px-1 tracking-tighter">PLAN {plan}</p>
                            </div>
                         </td>
                         <td className="px-8 py-6 text-right">
@@ -242,7 +242,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
               
               <div className="flex justify-between items-center">
                  <div>
-                    <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">Editar Perfil de Usuario</h2>
+                    <h2 className="text-3xl font-black italic uppercase tracking-tighter text-[var(--color-texto)]">Editar Perfil de Usuario</h2>
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d4af37] mt-1">Control de Administrador</p>
                  </div>
                  <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full text-[var(--color-texto-muted)] transition-colors"><X size={28} /></button>
@@ -256,7 +256,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
                          type="text" 
                          value={formData.nombre}
                          onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#d4af37] transition-all"
+                         className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl px-5 py-4 text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all"
                        />
                     </div>
 
@@ -266,7 +266,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
                          type="email" 
                          value={formData.email}
                          onChange={(e) => setFormData({...formData, email: e.target.value})}
-                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#d4af37] transition-all"
+                         className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl px-5 py-4 text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all"
                        />
                     </div>
 
@@ -275,7 +275,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
                        <select 
                          value={formData.rol}
                          onChange={(e) => setFormData({...formData, rol: e.target.value})}
-                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#d4af37] transition-all cursor-pointer"
+                         className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl px-5 py-4 text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all cursor-pointer"
                        >
                           <option value="CLIENTE" className="bg-[#111]">CLIENTE</option>
                           <option value="PROVEEDOR" className="bg-[#111]">PROVEEDOR</option>
@@ -288,7 +288,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
                        <select 
                          value={formData.plan}
                          onChange={(e) => setFormData({...formData, plan: e.target.value})}
-                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#d4af37] transition-all cursor-pointer"
+                         className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl px-5 py-4 text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all cursor-pointer"
                        >
                           {formData.rol === 'PROVEEDOR' ? (
                             <>
@@ -313,7 +313,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
                         <select 
                           value={formData.categoria}
                           onChange={(e) => setFormData({...formData, categoria: e.target.value})}
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#d4af37] transition-all cursor-pointer"
+                          className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl px-5 py-4 text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all cursor-pointer"
                         >
                            <option value="SALON" className="bg-[#111]">SALÓN</option>
                            <option value="MUSICA" className="bg-[#111]">MÚSICA</option>
@@ -333,7 +333,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
                          type="text" 
                          value={formData.estado}
                          onChange={(e) => setFormData({...formData, estado: e.target.value})}
-                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#d4af37] transition-all"
+                         className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl px-5 py-4 text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all"
                        />
                     </div>
 
@@ -343,7 +343,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
                          type="text" 
                          value={formData.ciudad}
                          onChange={(e) => setFormData({...formData, ciudad: e.target.value})}
-                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#d4af37] transition-all"
+                         className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl px-5 py-4 text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all"
                        />
                     </div>
                  </div>
