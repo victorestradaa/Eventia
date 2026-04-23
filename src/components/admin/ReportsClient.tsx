@@ -50,7 +50,7 @@ export default function ReportsClient({ data }: ReportsClientProps) {
               <DollarSign size={24} />
             </div>
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-texto-muted)] mb-1">Comisiones Totales</h3>
-            <p className="text-4xl font-serif text-[#d4af37] italic tracking-tight">{formatearMoneda(metricas.comisionesTotales)}</p>
+            <p className="text-4xl font-black text-[#d4af37] tracking-tighter">{formatearMoneda(metricas.comisionesTotales)}</p>
           </div>
         </div>
 
@@ -60,7 +60,7 @@ export default function ReportsClient({ data }: ReportsClientProps) {
               <Package size={24} />
             </div>
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-texto-muted)] mb-1">Volumen de Negocio</h3>
-            <p className="text-4xl font-serif text-blue-400 italic tracking-tight">{formatearMoneda(metricas.ingresosTotales)}</p>
+            <p className="text-4xl font-black text-blue-400 tracking-tighter">{formatearMoneda(metricas.ingresosTotales)}</p>
           </div>
         </div>
 
@@ -70,7 +70,7 @@ export default function ReportsClient({ data }: ReportsClientProps) {
               <TrendingDown size={24} />
             </div>
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-texto-muted)] mb-1">Ajustes / Devoluciones</h3>
-            <p className="text-4xl font-serif text-rose-400 italic tracking-tight">{formatearMoneda(metricas.devoluciones)}</p>
+            <p className="text-4xl font-black text-rose-400 tracking-tighter">{formatearMoneda(metricas.devoluciones)}</p>
           </div>
         </div>
       </div>
