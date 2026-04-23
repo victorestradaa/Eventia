@@ -137,9 +137,11 @@ export default function HomeClient() {
         </div>
       </section>
 
-      <div className="max-w-[1400px] mx-auto px-6">
-        <MarketingSection />
-      </div>
+      <section className="px-6">
+        <div className="max-w-[1450px] mx-auto">
+          <MarketingSection />
+        </div>
+      </section>
 
       {/* ──────────── Footer ──────────── */}
       <footer className="py-12 px-8 border-t border-[var(--color-borde-suave)] bg-[var(--color-fondo)]">

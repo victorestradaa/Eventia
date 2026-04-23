@@ -42,12 +42,12 @@ function FeatureCard({ title, description, image, icon: Icon, index }: FeatureCa
         
         <div className={cn(
           "relative mt-auto pt-4 overflow-hidden mask-fade-top",
-          index % 3 === 0 ? "aspect-[21/9]" : "aspect-[4/3]"
+          index % 3 === 0 ? "aspect-video" : "aspect-[4/5]"
         )}>
           <img 
             src={image} 
             alt={title} 
-            className="w-full h-full object-cover object-top transition-transform duration-1000 group-hover:scale-105"
+            className="w-full h-full object-cover object-center transition-transform duration-1000 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-fondo-card)] via-transparent to-transparent opacity-60" />
         </div>
@@ -102,12 +102,12 @@ export function MarketingSection() {
   ];
 
   return (
-    <section className="py-20 space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-      <div className="text-center max-w-3xl mx-auto space-y-4">
-        <h2 className="text-5xl font-serif text-[var(--color-texto)] tracking-tight italic">
+    <section className="pt-8 pb-24 space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+      <div className="text-center max-w-4xl mx-auto space-y-6">
+        <h2 className="text-5xl md:text-6xl font-serif text-[var(--color-texto)] tracking-tight italic">
           Todo lo que necesitas para tu <span className="text-[#d4af37]">momento especial</span>
         </h2>
-        <p className="text-[var(--color-texto-suave)] text-lg">
+        <p className="text-[var(--color-texto-suave)] text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
           La plataforma más completa para organizar eventos y hacer crecer tu negocio de servicios.
         </p>
       </div>
