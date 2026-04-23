@@ -143,3 +143,24 @@ export async function registrarUsuario(data: {
     return { success: false, error: 'No se pudo registrar el usuario debido a un error interno.' };
   }
 }
+
+/**
+ * Actualiza la contraseña del usuario en Supabase
+ */
+export async function actualizarPassword(password: string) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.updateUser({
+      password: password
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error en actualizarPassword:', error);
+    return { success: false, error: 'Ocurrió un error inesperado al intentar cambiar la contraseña.' };
+  }
+}

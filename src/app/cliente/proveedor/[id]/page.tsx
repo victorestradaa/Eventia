@@ -4,6 +4,7 @@ import { getEventosCliente } from '@/lib/actions/eventActions';
 import ProviderDetailClient from './ProviderDetailClient';
 import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
+import { prisma } from '@/lib/prisma';
 
 
 export default async function ProviderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -16,9 +17,12 @@ export default async function ProviderDetailPage({ params }: { params: Promise<{
   // Obtener datos del cliente actual para validar su fecha de evento
   const perfilRes = await getCurrentProfile();
   let eventoActivo = null;
+  let canViewContact = false;
 
   if (perfilRes.success && perfilRes.data?.cliente) {
-    const eventosRes = await getEventosCliente(perfilRes.data.cliente.id);
+    const clienteId = perfilRes.data.cliente.id;
+    const eventosRes = await getEventosCliente(clienteId);
+    
     if (eventosRes.success && eventosRes.data && eventosRes.data.length > 0) {
       // Intentar obtener el evento activo desde la cookie de gestión
       const cookieStore = await cookies();
@@ -30,9 +34,17 @@ export default async function ProviderDetailPage({ params }: { params: Promise<{
         eventoActivo = eventosRes.data[0];
       }
     }
+
+    // Verificar si tiene reserva confirmada con este proveedor
+    const reservaConfirmada = await prisma.reserva.findFirst({
+      where: {
+        clienteId: clienteId,
+        proveedorId: resolvedParams.id,
+        estado: { in: ['APARTADO', 'LIQUIDADO'] }
+      }
+    });
+    canViewContact = !!reservaConfirmada;
   }
-
-
 
 
   return (
@@ -40,6 +52,7 @@ export default async function ProviderDetailPage({ params }: { params: Promise<{
       <ProviderDetailClient 
         data={res.data} 
         activeEvent={eventoActivo ? JSON.parse(JSON.stringify(eventoActivo)) : null} 
+        canViewContact={canViewContact}
       />
     </div>
   );

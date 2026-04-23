@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { createEvento } from '@/lib/actions/eventActions';
 import { useRouter } from 'next/navigation';
 import ArchiveEventModal from '@/components/cliente/dashboard/ArchiveEventModal';
+import ProfileCompleteModal from '@/components/cliente/ProfileCompleteModal';
 
 interface DashboardClientProps {
   initialEventos: any[];
@@ -40,6 +41,9 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
     tipo: 'Boda'
   });
 
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const perfilCompleto = !!(perfil.nombre && perfil.telefono && perfil.cliente?.estado && perfil.cliente?.ciudad);
+
   const eventTypes = ['Boda', 'XV Años', 'Fiesta Infantil', 'Graduación', 'Fiesta', 'Bautizo'];
 
   const proximoEvento = eventos.find(e => e.id === eventoId) || eventos[0] || null;
@@ -57,7 +61,15 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
 
   const handleCrearEvento = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!perfilCompleto) {
+      setIsNewEventModalOpen(false);
+      setShowProfileModal(true);
+      return;
+    }
+
     if (!nuevoEvento.nombre.trim() || !nuevoEvento.invitados || !nuevoEvento.tipo) return;
+
 
     setLoading(true);
     const res = await createEvento({
@@ -453,6 +465,10 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
           onClose={() => setEventToArchive(null)} 
           onSuccess={() => router.refresh()} 
         />
+      )}
+      {/* MODAL PERFIL INCOMPLETO */}
+      {showProfileModal && (
+        <ProfileCompleteModal onClose={() => setShowProfileModal(false)} />
       )}
     </div>
   );

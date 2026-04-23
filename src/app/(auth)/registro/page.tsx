@@ -18,6 +18,7 @@ import { createClient } from '@/lib/supabase/cliente';
 import { registrarUsuario } from '@/lib/actions/authActions';
 import { cn } from '@/lib/utils';
 import Logo from '@/components/common/Logo';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function RegisterPage() {
   const [rol, setRol] = useState<'CLIENTE' | 'PROVEEDOR'>('CLIENTE');
@@ -94,7 +95,7 @@ export default function RegisterPage() {
 
       // 3. Redireccionar de forma forzada para evitar bloqueos de sesión en Next.js
       if (rol === 'CLIENTE') {
-        window.location.href = '/cliente/dashboard';
+        window.location.href = '/cliente/perfil';
       } else {
         window.location.href = '/proveedor/configuracion';
       }
@@ -238,6 +239,10 @@ export default function RegisterPage() {
             Inicia sesión
           </Link>
         </p>
+      </div>
+
+      <div className="fixed top-6 right-6">
+        <ThemeToggle />
       </div>
     </div>
   );

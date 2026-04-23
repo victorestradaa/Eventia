@@ -181,3 +181,50 @@ export async function uploadPortfolioImage(formData: FormData): Promise<{ succes
     return { success: false, error: 'Fallo al procesar la imagen' };
   }
 }
+
+/**
+ * Sube una imagen de perfil (avatar) para cualquier usuario.
+ */
+export async function uploadAvatar(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const file = formData.get('file') as File;
+    const usuarioId = formData.get('usuarioId') as string;
+
+    if (!file || !usuarioId) {
+      return { success: false, error: 'Falta el archivo o el ID del usuario' };
+    }
+
+    await asegurarBucket();
+
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const fileName = `avatars/${usuarioId}/${Date.now()}.${fileExt}`;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const { error } = await supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: true
+      });
+
+    if (error) {
+      console.error('Error uploading avatar:', error);
+      return { success: false, error: 'Error al actualizar la imagen' };
+    }
+
+    const { data: publicData } = supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(fileName);
+
+    return { 
+      success: true, 
+      url: publicData.publicUrl 
+    };
+
+  } catch (error) {
+    console.error('Avatar upload error:', error);
+    return { success: false, error: 'Fallo al procesar el avatar' };
+  }
+}

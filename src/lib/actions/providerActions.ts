@@ -566,6 +566,7 @@ export async function getDetalleProveedor(id: string) {
     const proveedor = await prisma.proveedor.findUnique({
       where: { id },
       include: {
+        usuario: { select: { telefono: true } },
         servicios: {
           where: { activo: true },
           orderBy: { creadoEn: 'desc' },
@@ -605,6 +606,7 @@ export async function getDetalleProveedor(id: string) {
       descripcion: proveedor.descripcion,
       logoUrl: proveedor.logoUrl,
       bannerUrl: proveedor.bannerUrl,
+      telefono: proveedor.usuario?.telefono,
       calificacion: Number(calificacion.toFixed(1)),
       reseñasCount: proveedor.resenas.length,
       pedidosCount: proveedor._count.reservas,

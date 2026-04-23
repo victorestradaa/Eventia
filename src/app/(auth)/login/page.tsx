@@ -5,6 +5,7 @@ import Logo from '@/components/common/Logo';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/cliente';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function LoginPage() {
   const [rol, setRol] = useState<'CLIENTE' | 'PROVEEDOR'>('CLIENTE');
@@ -141,6 +142,10 @@ export default function LoginPage() {
             Regístrate aquí
           </Link>
         </p>
+      </div>
+
+      <div className="fixed top-6 right-6">
+        <ThemeToggle />
       </div>
     </div>
   );

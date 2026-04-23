@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma';
 import { serializePrisma } from '@/lib/utils';
 import { createClient } from '@supabase/supabase-js';
+import { revalidatePath } from 'next/cache';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -261,7 +262,7 @@ export async function getAdminReportes() {
         metricas: {
           comisionesTotales,
           ingresosTotales,
-          devoluciones: 450 // Mocked for now as we don't have refund model yet
+          devoluciones: 0 // Default to 0 until refund model is implemented
         },
         detalleIngresos
       }
@@ -288,3 +289,90 @@ function processTimeData(items: any[]) {
     return months.indexOf(mA) - months.indexOf(mB) || yA - yB;
   });
 }
+
+/**
+ * Actualiza los datos de un usuario desde el panel de administración.
+ */
+export async function updateUserAdmin(id: string, data: {
+  nombre?: string;
+  email?: string;
+  rol?: any;
+  password?: string;
+  plan?: string;
+  estado?: string;
+  ciudad?: string;
+  categoria?: any;
+}) {
+  try {
+    const originalUser = await prisma.usuario.findUnique({
+      where: { id },
+      include: { cliente: true, proveedor: true }
+    });
+
+    if (!originalUser) return { success: false, error: 'Usuario no encontrado' };
+
+    // 1. Actualización básica en Usuario
+    const updated = await prisma.usuario.update({
+      where: { id },
+      data: {
+        nombre: data.nombre,
+        email: data.email,
+        rol: data.rol,
+      }
+    });
+
+    // 2. Actualización de Plan y Ubicación
+    if (originalUser.rol === 'PROVEEDOR' && originalUser.proveedor) {
+      await prisma.proveedor.update({
+        where: { id: originalUser.proveedor.id },
+        data: {
+          plan: data.plan as any,
+          estado: data.estado || originalUser.proveedor.estado,
+          ciudad: data.ciudad || originalUser.proveedor.ciudad,
+          categoria: data.categoria || originalUser.proveedor.categoria
+        }
+      });
+    } else if (originalUser.rol === 'CLIENTE' && originalUser.cliente) {
+      await prisma.cliente.update({
+        where: { id: originalUser.cliente.id },
+        data: {
+          plan: data.plan as any,
+          estado: data.estado || originalUser.cliente.estado,
+          ciudad: data.ciudad || originalUser.cliente.ciudad
+        }
+      });
+    }
+
+    revalidatePath('/admin/usuarios');
+    return { success: true, data: serializePrisma(updated) };
+  } catch (error) {
+    console.error('Error al actualizar usuario como admin:', error);
+    return { success: false, error: 'No se pudo actualizar el usuario.' };
+  }
+}
+
+/**
+ * Alterna el estado de activación de un proveedor (o podría ser de un usuario en general).
+ */
+export async function toggleUserStatus(id: string, currentStatus: boolean) {
+  try {
+    const user = await prisma.usuario.findUnique({
+      where: { id },
+      include: { proveedor: true }
+    });
+
+    if (user?.proveedor) {
+      await prisma.proveedor.update({
+        where: { id: user.proveedor.id },
+        data: { activo: !currentStatus }
+      });
+    }
+    
+    revalidatePath('/admin/usuarios');
+    return { success: true };
+  } catch (error) {
+    console.error('Error toggling user status:', error);
+    return { success: false, error: 'Error al cambiar estado' };
+  }
+}
+

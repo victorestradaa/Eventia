@@ -120,3 +120,39 @@ export async function updateProviderPlan(proveedorId: string, plan: 'GRATIS' | '
   }
 }
 
+
+/**
+ * Actualizar el perfil del cliente.
+ */
+export async function updateClientProfile(usuarioId: string, data: {
+  nombre: string;
+  telefono: string;
+  ciudad: string;
+  estado: string;
+  avatarUrl?: string;
+}) {
+  try {
+    const updated = await prisma.usuario.update({
+      where: { id: usuarioId },
+      data: {
+        nombre: data.nombre,
+        telefono: data.telefono,
+        avatarUrl: data.avatarUrl || undefined,
+        cliente: {
+          update: {
+            ciudad: data.ciudad,
+            estado: data.estado,
+          }
+        }
+      }
+    });
+
+    revalidatePath('/cliente/perfil');
+    revalidatePath('/cliente/dashboard');
+    return { success: true, data: JSON.parse(JSON.stringify(updated)) };
+  } catch (error) {
+    console.error('Error al actualizar perfil de cliente:', error);
+    return { success: false, error: 'No se pudo actualizar el perfil.' };
+  }
+}
+

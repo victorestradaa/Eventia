@@ -57,9 +57,11 @@ const GooglePublicMap = dynamic(() => import('@/components/GooglePublicMap'), { 
 interface ProviderDetailClientProps {
   data: any;
   activeEvent?: any;
+  canViewContact?: boolean;
 }
 
-export default function ProviderDetailClient({ data, activeEvent }: ProviderDetailClientProps) {
+export default function ProviderDetailClient({ data, activeEvent, canViewContact = false }: ProviderDetailClientProps) {
+
   const searchParams = useSearchParams();
   const packageParam = searchParams.get('paquete');
 
@@ -257,8 +259,20 @@ export default function ProviderDetailClient({ data, activeEvent }: ProviderDeta
                         <div className="w-12 h-12 rounded-2xl bg-[var(--color-acento)]/10 flex items-center justify-center text-[var(--color-acento)] shadow-sm"><ShoppingBag size={24} /></div>
                         <div><p className="text-[10px] font-black text-[var(--color-texto-muted)] uppercase tracking-widest leading-none mb-1">Categoría</p><p className="text-base font-black text-[var(--color-texto)] italic">{p.categoria}</p></div>
                      </div>
+                     <div className="flex items-center gap-4">
+                        <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm", canViewContact ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500")}>
+                           {canViewContact ? <Phone size={24} /> : <ShieldCheck size={24} />}
+                        </div>
+                        <div>
+                           <p className="text-[10px] font-black text-[var(--color-texto-muted)] uppercase tracking-widest leading-none mb-1">Contacto</p>
+                           <p className={cn("text-base font-black italic", canViewContact ? "text-white" : "text-[var(--color-texto-muted)]")}>
+                              {canViewContact ? (p.telefono || 'Sin asignar') : 'Reservar para ver'}
+                           </p>
+                        </div>
+                     </div>
                   </div>
                </section>
+
 
                <div className="grid grid-cols-1 md:grid-cols-12 gap-12 pt-4">
                   <div className="md:col-span-8 space-y-8">

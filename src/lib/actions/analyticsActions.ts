@@ -79,22 +79,27 @@ export async function getEventTrends() {
  */
 export async function getServiceCategoryStats() {
   try {
-    const servicios = await prisma.servicio.groupBy({
-      by: ['categoria'],
-      _count: {
-        id: true,
-      },
-      orderBy: {
+    // Agrupamos proveedores por categoría y sumamos sus servicios
+    const stats = await prisma.proveedor.findMany({
+      select: {
+        categoria: true,
         _count: {
-          id: 'desc'
+          select: { servicios: true }
         }
       }
     });
 
-    const data = servicios.map(s => ({
-      name: s.categoria.replace(/_/g, ' '),
-      value: s._count.id
-    }));
+    // Agrupar los resultados por categoría (ya que findMany trae cada proveedor)
+    const categoryMap: Record<string, number> = {};
+    stats.forEach(s => {
+      const cat = s.categoria;
+      categoryMap[cat] = (categoryMap[cat] || 0) + s._count.servicios;
+    });
+
+    const data = Object.entries(categoryMap).map(([key, value]) => ({
+      name: key.replace(/_/g, ' '),
+      value: value
+    })).sort((a, b) => b.value - a.value);
 
     return { success: true, data };
   } catch (error) {
@@ -105,20 +110,20 @@ export async function getServiceCategoryStats() {
 
 /**
  * Obtiene la distribución de servicios por Tipo de Evento
- * Analiza el array `tiposEventos` en los servicios
+ * Analiza el array `etiquetasEvento` en los servicios
  */
 export async function getServiceEventTypeStats() {
   try {
     const servicios = await prisma.servicio.findMany({
-      select: { tiposEventos: true }
+      select: { etiquetasEvento: true }
     });
 
     const counts: Record<string, number> = {};
     
-    // Almacenar el conteo dado que tiposEventos es un array escalar (string[])
+    // Almacenar el conteo dado que etiquetasEvento es un array de Enum (string[])
     servicios.forEach(s => {
-      if (Array.isArray(s.tiposEventos)) {
-        s.tiposEventos.forEach((tipo: string) => {
+      if (Array.isArray(s.etiquetasEvento)) {
+        s.etiquetasEvento.forEach((tipo: string) => {
           counts[tipo] = (counts[tipo] || 0) + 1;
         });
       }
