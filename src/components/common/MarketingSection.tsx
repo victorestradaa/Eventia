@@ -34,7 +34,6 @@ function FeatureCard({ title, description, image, icon: Icon, index }: FeatureCa
       )}
     >
       <div className="flex flex-col h-full items-center">
-        {/* Contenido de Texto e Icono Centrado */}
         <div className="p-8 pb-4 relative z-10 flex flex-col items-center text-center w-full">
           <div className="w-12 h-12 rounded-2xl bg-[#d4af37]/10 flex items-center justify-center text-[#d4af37] mb-6 group-hover:scale-110 transition-transform duration-500">
             <Icon size={24} />
@@ -42,8 +41,6 @@ function FeatureCard({ title, description, image, icon: Icon, index }: FeatureCa
           <h3 className="text-2xl font-serif text-[var(--color-texto)] mb-3 leading-tight w-full">{title}</h3>
           <p className="text-[var(--color-texto-suave)] text-sm leading-relaxed max-w-md mx-auto">{description}</p>
         </div>
-        
-        {/* Imagen de la tarjeta */}
         <div className={cn(
           "relative mt-auto pt-4 overflow-hidden mask-fade-top w-full",
           index % 3 === 0 ? "aspect-video" : "aspect-[4/5]"
@@ -119,15 +116,12 @@ export function MarketingSection() {
       {/* --- SELECTOR DE PESTAÑAS (FONDO BLANCO, PILL GRUESO) --- */}
       <div className="flex justify-center pt-4">
         <div className="relative p-1 bg-[var(--color-fondo-card)] rounded-full shadow-2xl flex items-center border-[2px] border-[var(--color-borde)] overflow-hidden scale-110">
-          
-          {/* Fondo deslizante GRUESO */}
           <div 
             className={cn(
               "absolute top-[3px] bottom-[3px] w-[calc(50%-4px)] bg-gradient-to-br from-[#f3cf6d] via-[#d4af37] to-[#b89547] rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-0 shadow-lg shadow-[#d4af37]/20",
               activeTab === 'CLIENTE' ? "left-[3px]" : "left-[calc(50%+1px)]"
             )}
           />
-          
           <button
             onClick={() => setActiveTab('CLIENTE')}
             className={cn(
@@ -138,7 +132,6 @@ export function MarketingSection() {
             <User size={18} fill={activeTab === 'CLIENTE' ? "black" : "none"} strokeWidth={activeTab === 'CLIENTE' ? 3 : 2} />
             Usuarios
           </button>
-          
           <button
             onClick={() => setActiveTab('PROVEEDOR')}
             className={cn(
@@ -152,7 +145,7 @@ export function MarketingSection() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-[1400px] px-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-[1200px] px-6">
         {(activeTab === 'CLIENTE' ? clienteFeatures : proveedorFeatures).map((feature, i) => (
           <FeatureCard 
             key={feature.title}
@@ -161,26 +154,28 @@ export function MarketingSection() {
           />
         ))}
 
-        {/* CTA Card (CENTRADA) */}
-        <div className="md:col-span-1 md:col-start-2 group relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#d4af37] to-[#b89547] p-10 flex flex-col items-center justify-between text-black shadow-2xl hover:scale-[1.02] transition-all duration-500 min-h-[400px] text-center">
-           <div className="space-y-4 flex flex-col items-center">
-              <Sparkles size={32} className="mb-4" />
-              <h3 className="text-4xl font-serif leading-tight">Empieza hoy mismo</h3>
-              <p className="text-black/80 text-sm font-bold uppercase tracking-widest">Es gratis y te tomará menos de un minuto.</p>
+        {/* CTA Card (MÁS COMPACTA Y CENTRADA) */}
+        <div className="md:col-span-1 md:col-start-2 group relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#d4af37] to-[#b89547] p-8 flex flex-col items-center justify-center text-black shadow-2xl hover:scale-[1.02] transition-all duration-500 text-center gap-8 border border-black/5">
+           <div className="space-y-3 flex flex-col items-center">
+              <Sparkles size={28} className="text-black" />
+              <h3 className="text-3xl font-serif leading-tight">Empieza hoy mismo</h3>
+              <p className="text-black/70 text-[10px] font-black uppercase tracking-[0.15em] px-4 max-w-xs">
+                ES GRATIS Y TE TOMARÁ MENOS DE UN MINUTO.
+              </p>
            </div>
            
            <div className="space-y-6 w-full flex flex-col items-center">
-              <ul className="space-y-3">
+              <ul className="grid grid-cols-1 gap-2">
                  {['Sin tarjetas de crédito', 'Acceso instantáneo', 'Soporte VIP'].map(text => (
-                   <li key={text} className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                      <CheckCircle2 size={14} /> {text}
+                   <li key={text} className="flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest text-black/60">
+                      <CheckCircle2 size={12} className="text-black" /> {text}
                    </li>
                  ))}
               </ul>
               
-              <Link href="/registro" className="group/btn flex items-center justify-between w-full max-w-xs bg-black text-white p-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-white hover:text-black transition-all shadow-xl">
+              <Link href="/registro" className="group/btn flex items-center justify-between w-full max-w-[240px] bg-black text-white px-6 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:translate-y-[-2px] transition-all shadow-xl">
                  Registrarme Ahora
-                 <ArrowRight className="group-hover/btn:translate-x-1 transition-transform" />
+                 <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
               </Link>
            </div>
         </div>
