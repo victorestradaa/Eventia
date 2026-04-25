@@ -125,22 +125,22 @@ export function MarketingSection() {
           <button
             onClick={() => setActiveTab('CLIENTE')}
             className={cn(
-              "relative z-10 px-3 py-3 sm:px-12 sm:py-5 rounded-full text-[8.5px] sm:text-[13px] font-bold uppercase tracking-tighter sm:tracking-widest transition-all duration-500 flex items-center justify-center gap-1.5 sm:gap-4 flex-1 sm:min-w-[280px]",
+              "relative z-10 px-4 py-4 sm:px-12 sm:py-5 rounded-full text-[11px] sm:text-[13px] font-black uppercase tracking-[0.1em] sm:tracking-widest transition-all duration-500 flex items-center justify-center gap-2 sm:gap-4 flex-1 sm:min-w-[280px]",
               activeTab === 'CLIENTE' ? "text-black" : "text-gray-600"
             )}
           >
-            <User size={14} className="sm:w-6 sm:h-6" stroke="currentColor" fill={activeTab === 'CLIENTE' ? "black" : "none"} />
-            <span className="whitespace-nowrap">Beneficios Usuarios</span>
+            <User size={18} className="sm:w-6 sm:h-6" stroke="currentColor" fill={activeTab === 'CLIENTE' ? "black" : "none"} />
+            <span className="whitespace-nowrap">Usuarios</span>
           </button>
           <button
             onClick={() => setActiveTab('PROVEEDOR')}
             className={cn(
-              "relative z-10 px-3 py-3 sm:px-12 sm:py-5 rounded-full text-[8.5px] sm:text-[13px] font-bold uppercase tracking-tighter sm:tracking-widest transition-all duration-500 flex items-center justify-center gap-1.5 sm:gap-4 flex-1 sm:min-w-[280px]",
+              "relative z-10 px-4 py-4 sm:px-12 sm:py-5 rounded-full text-[11px] sm:text-[13px] font-black uppercase tracking-[0.1em] sm:tracking-widest transition-all duration-500 flex items-center justify-center gap-2 sm:gap-4 flex-1 sm:min-w-[280px]",
               activeTab === 'PROVEEDOR' ? "text-black" : "text-gray-600"
             )}
           >
-            <Briefcase size={14} className="sm:w-6 sm:h-6" stroke="currentColor" fill={activeTab === 'PROVEEDOR' ? "black" : "none"} />
-            <span className="whitespace-nowrap">Beneficios Proveedores</span>
+            <Briefcase size={18} className="sm:w-6 sm:h-6" stroke="currentColor" fill={activeTab === 'PROVEEDOR' ? "black" : "none"} />
+            <span className="whitespace-nowrap">Proveedores</span>
           </button>
         </div>
       </div>
