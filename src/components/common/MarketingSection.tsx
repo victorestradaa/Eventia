@@ -114,34 +114,54 @@ export function MarketingSection() {
       </div>
 
       {/* --- SELECTOR DE PESTAÑAS (TAMAÑO REAL, SIN SCALE PARA EVITAR TRASLAPE) --- */}
-      <div className="flex justify-center pt-16 pb-20 md:pt-12 md:pb-16">
-        <div className="relative p-1 sm:p-2 bg-gray-50 dark:bg-black/20 backdrop-blur-xl rounded-full shadow-inner-2xl flex items-center border border-gray-200 dark:border-white/10 max-w-[95%] mx-auto overflow-hidden">
-          {/* Barra dorada activa con GLOW */}
-          <div 
-            className={cn(
-              "absolute top-[2px] bottom-[2px] w-[calc(50%-4px)] bg-gradient-to-r from-[#d4af37] via-[#f3cf6d] to-[#b89547] rounded-full transition-all duration-500 z-0 shadow-[0_0_20px_rgba(212,175,55,0.5)]",
-              activeTab === 'CLIENTE' ? "left-[2px]" : "left-[calc(50%+2px)]"
-            )}
-          />
+      <div className="flex justify-center pt-16 pb-20 md:pt-12 md:pb-16 px-4">
+        <div className="flex flex-row gap-4 w-full max-w-xl">
+          {/* BOTÓN USUARIOS (TARJETA) */}
           <button
             onClick={() => setActiveTab('CLIENTE')}
             className={cn(
-              "relative z-10 px-4 py-4 sm:px-12 sm:py-5 rounded-full text-[12px] sm:text-[14px] font-black uppercase tracking-[0.15em] transition-all duration-500 flex items-center justify-center gap-2 sm:gap-4 flex-1",
-              activeTab === 'CLIENTE' ? "text-black scale-105" : "text-gray-500 hover:text-gray-800"
+              "flex-1 relative overflow-hidden rounded-3xl p-6 transition-all duration-500 flex flex-col items-center justify-center gap-3 border-2",
+              activeTab === 'CLIENTE' 
+                ? "bg-gradient-to-br from-[#f3cf6d] via-[#d4af37] to-[#b89547] border-white/20 shadow-[0_20px_40px_rgba(212,175,55,0.3)] scale-105 z-10" 
+                : "bg-white/5 backdrop-blur-md border-white/10 text-gray-500 hover:bg-white/10"
             )}
           >
-            <User size={20} className={cn("transition-transform duration-500", activeTab === 'CLIENTE' && "scale-110")} stroke="currentColor" fill={activeTab === 'CLIENTE' ? "black" : "none"} />
-            <span className="whitespace-nowrap">Usuarios</span>
+            <div className={cn(
+              "p-3 rounded-2xl transition-all duration-500",
+              activeTab === 'CLIENTE' ? "bg-black text-[#d4af37] shadow-xl" : "bg-white/5 text-gray-400"
+            )}>
+              <User size={28} />
+            </div>
+            <span className={cn(
+              "text-[12px] sm:text-[15px] font-black uppercase tracking-[0.15em]",
+              activeTab === 'CLIENTE' ? "text-black" : "text-gray-400"
+            )}>
+              Usuarios
+            </span>
           </button>
+
+          {/* BOTÓN PROVEEDORES (TARJETA) */}
           <button
             onClick={() => setActiveTab('PROVEEDOR')}
             className={cn(
-              "relative z-10 px-4 py-4 sm:px-12 sm:py-5 rounded-full text-[12px] sm:text-[14px] font-black uppercase tracking-[0.15em] transition-all duration-500 flex items-center justify-center gap-2 sm:gap-4 flex-1",
-              activeTab === 'PROVEEDOR' ? "text-black scale-105" : "text-gray-500 hover:text-gray-800"
+              "flex-1 relative overflow-hidden rounded-3xl p-6 transition-all duration-500 flex flex-col items-center justify-center gap-3 border-2",
+              activeTab === 'PROVEEDOR' 
+                ? "bg-gradient-to-br from-[#f3cf6d] via-[#d4af37] to-[#b89547] border-white/20 shadow-[0_20px_40px_rgba(212,175,55,0.3)] scale-105 z-10" 
+                : "bg-white/5 backdrop-blur-md border-white/10 text-gray-500 hover:bg-white/10"
             )}
           >
-            <Briefcase size={20} className={cn("transition-transform duration-500", activeTab === 'PROVEEDOR' && "scale-110")} stroke="currentColor" fill={activeTab === 'PROVEEDOR' ? "black" : "none"} />
-            <span className="whitespace-nowrap">Proveedores</span>
+            <div className={cn(
+              "p-3 rounded-2xl transition-all duration-500",
+              activeTab === 'PROVEEDOR' ? "bg-black text-[#d4af37] shadow-xl" : "bg-white/5 text-gray-400"
+            )}>
+              <Briefcase size={28} />
+            </div>
+            <span className={cn(
+              "text-[12px] sm:text-[15px] font-black uppercase tracking-[0.15em]",
+              activeTab === 'PROVEEDOR' ? "text-black" : "text-gray-400"
+            )}>
+              Proveedores
+            </span>
           </button>
         </div>
       </div>
