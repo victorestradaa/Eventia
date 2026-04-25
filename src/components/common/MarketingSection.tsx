@@ -125,21 +125,21 @@ export function MarketingSection() {
           <button
             onClick={() => setActiveTab('CLIENTE')}
             className={cn(
-              "relative z-10 px-6 py-4 sm:px-12 sm:py-5 rounded-full text-[9px] sm:text-[13px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-2 sm:gap-4 min-w-[140px] sm:min-w-[280px]",
-              activeTab === 'CLIENTE' ? "!text-black" : "!text-gray-600 dark:!text-white/60 hover:!text-black dark:hover:!text-white"
+              "relative z-10 px-3 py-3 sm:px-12 sm:py-5 rounded-full text-[8.5px] sm:text-[13px] font-bold uppercase tracking-tighter sm:tracking-widest transition-all duration-500 flex items-center justify-center gap-1.5 sm:gap-4 flex-1 sm:min-w-[280px]",
+              activeTab === 'CLIENTE' ? "text-black" : "text-gray-600"
             )}
           >
-            <User size={18} className="sm:w-6 sm:h-6" fill={activeTab === 'CLIENTE' ? "black" : "none"} strokeWidth={activeTab === 'CLIENTE' ? 3 : 2} />
+            <User size={14} className="sm:w-6 sm:h-6" stroke="currentColor" fill={activeTab === 'CLIENTE' ? "black" : "none"} />
             <span className="whitespace-nowrap">Beneficios Usuarios</span>
           </button>
           <button
             onClick={() => setActiveTab('PROVEEDOR')}
             className={cn(
-              "relative z-10 px-6 py-4 sm:px-12 sm:py-5 rounded-full text-[9px] sm:text-[13px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-2 sm:gap-4 min-w-[140px] sm:min-w-[280px]",
-              activeTab === 'PROVEEDOR' ? "!text-black" : "!text-gray-600 dark:!text-white/60 hover:!text-black dark:hover:!text-white"
+              "relative z-10 px-3 py-3 sm:px-12 sm:py-5 rounded-full text-[8.5px] sm:text-[13px] font-bold uppercase tracking-tighter sm:tracking-widest transition-all duration-500 flex items-center justify-center gap-1.5 sm:gap-4 flex-1 sm:min-w-[280px]",
+              activeTab === 'PROVEEDOR' ? "text-black" : "text-gray-600"
             )}
           >
-            <Briefcase size={18} className="sm:w-6 sm:h-6" fill={activeTab === 'PROVEEDOR' ? "black" : "none"} strokeWidth={activeTab === 'PROVEEDOR' ? 3 : 2} />
+            <Briefcase size={14} className="sm:w-6 sm:h-6" stroke="currentColor" fill={activeTab === 'PROVEEDOR' ? "black" : "none"} />
             <span className="whitespace-nowrap">Beneficios Proveedores</span>
           </button>
         </div>
