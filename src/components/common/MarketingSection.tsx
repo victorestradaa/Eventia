@@ -113,34 +113,34 @@ export function MarketingSection() {
         </p>
       </div>
 
-      {/* --- SELECTOR DE PESTAÑAS (FONDO BLANCO, PILL GRUESO) --- */}
-      <div className="flex justify-center pt-4">
-        <div className="relative p-1 bg-[var(--color-fondo-card)] rounded-full shadow-2xl flex items-center border-[2px] border-[var(--color-borde)] overflow-hidden scale-110">
+      {/* --- SELECTOR DE PESTAÑAS (TAMAÑO REAL, SIN SCALE PARA EVITAR TRASLAPE) --- */}
+      <div className="flex justify-center pt-16 pb-20 md:pt-12 md:pb-16">
+        <div className="relative p-2 bg-[var(--color-fondo-card)] rounded-full shadow-2xl flex items-center border-[2px] border-[var(--color-borde)] overflow-hidden">
           <div 
             className={cn(
-              "absolute top-[3px] bottom-[3px] w-[calc(50%-4px)] bg-gradient-to-br from-[#f3cf6d] via-[#d4af37] to-[#b89547] rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-0 shadow-lg shadow-[#d4af37]/20",
-              activeTab === 'CLIENTE' ? "left-[3px]" : "left-[calc(50%+1px)]"
+              "absolute top-[2px] bottom-[2px] w-[calc(50%-4px)] bg-gradient-to-br from-[#f3cf6d] via-[#d4af37] to-[#b89547] rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-0 shadow-lg shadow-[#d4af37]/20",
+              activeTab === 'CLIENTE' ? "left-[2px]" : "left-[calc(50%+2px)]"
             )}
           />
           <button
             onClick={() => setActiveTab('CLIENTE')}
             className={cn(
-              "relative z-10 px-10 py-3.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-[0.25em] transition-all duration-500 flex items-center justify-center gap-3 min-w-[160px] sm:min-w-[200px]",
-              activeTab === 'CLIENTE' ? "text-black" : "text-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
+              "relative z-10 px-6 py-4 sm:px-12 sm:py-5 rounded-full text-[9px] sm:text-[13px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-2 sm:gap-4 min-w-[140px] sm:min-w-[280px]",
+              activeTab === 'CLIENTE' ? "text-black" : "text-white/40 hover:text-white"
             )}
           >
-            <User size={18} fill={activeTab === 'CLIENTE' ? "black" : "none"} strokeWidth={activeTab === 'CLIENTE' ? 3 : 2} />
-            Usuarios
+            <User size={18} className="sm:w-6 sm:h-6" fill={activeTab === 'CLIENTE' ? "black" : "none"} strokeWidth={activeTab === 'CLIENTE' ? 3 : 2} />
+            <span className="whitespace-nowrap">Beneficios Usuarios</span>
           </button>
           <button
             onClick={() => setActiveTab('PROVEEDOR')}
             className={cn(
-              "relative z-10 px-10 py-3.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-[0.25em] transition-all duration-500 flex items-center justify-center gap-3 min-w-[160px] sm:min-w-[200px]",
-              activeTab === 'PROVEEDOR' ? "text-black" : "text-[var(--color-texto-muted)] hover:text-[var(--color-texto)]"
+              "relative z-10 px-6 py-4 sm:px-12 sm:py-5 rounded-full text-[9px] sm:text-[13px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-2 sm:gap-4 min-w-[140px] sm:min-w-[280px]",
+              activeTab === 'PROVEEDOR' ? "text-black" : "text-white/40 hover:text-white"
             )}
           >
-            <Briefcase size={18} fill={activeTab === 'PROVEEDOR' ? "black" : "none"} strokeWidth={activeTab === 'PROVEEDOR' ? 3 : 2} />
-            Proveedores
+            <Briefcase size={18} className="sm:w-6 sm:h-6" fill={activeTab === 'PROVEEDOR' ? "black" : "none"} strokeWidth={activeTab === 'PROVEEDOR' ? 3 : 2} />
+            <span className="whitespace-nowrap">Beneficios Proveedores</span>
           </button>
         </div>
       </div>
@@ -154,28 +154,39 @@ export function MarketingSection() {
           />
         ))}
 
-        {/* CTA Card (MÁS COMPACTA Y CENTRADA) */}
-        <div className="md:col-span-1 md:col-start-2 group relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#d4af37] to-[#b89547] p-8 flex flex-col items-center justify-center text-black shadow-2xl hover:scale-[1.02] transition-all duration-500 text-center gap-8 border border-black/5">
-           <div className="space-y-3 flex flex-col items-center">
-              <Sparkles size={28} className="text-black" />
-              <h3 className="text-3xl font-serif leading-tight">Empieza hoy mismo</h3>
-              <p className="text-black/70 text-[10px] font-black uppercase tracking-[0.15em] px-4 max-w-xs">
-                ES GRATIS Y TE TOMARÁ MENOS DE UN MINUTO.
-              </p>
-           </div>
+        {/* BANNER CTA HORIZONTAL (OPTIMIZADO PARA MÓVIL: MENOS ALTO) */}
+        <div className="md:col-span-3 mt-12 group relative overflow-hidden rounded-[2.5rem] md:rounded-[3rem] bg-gradient-to-r from-[#d4af37] via-[#f3cf6d] to-[#b89547] p-6 md:p-12 flex flex-col md:flex-row items-center justify-between text-black shadow-glow-oro hover:shadow-2xl transition-all duration-700 border border-black/5 gap-6 md:gap-16">
+           {/* Decoración de fondo */}
+           <div className="absolute top-0 right-0 -mt-20 -mr-20 w-64 h-64 bg-white/20 rounded-full blur-3xl group-hover:bg-white/30 transition-colors duration-700" />
            
-           <div className="space-y-6 w-full flex flex-col items-center">
-              <ul className="grid grid-cols-1 gap-2">
-                 {['Sin tarjetas de crédito', 'Acceso instantáneo', 'Soporte VIP'].map(text => (
-                   <li key={text} className="flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest text-black/60">
-                      <CheckCircle2 size={12} className="text-black" /> {text}
+           <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 z-10 w-full md:w-auto">
+              <div className="shrink-0 w-12 h-12 md:w-20 md:h-20 rounded-full bg-black flex items-center justify-center shadow-xl group-hover:rotate-12 transition-transform duration-500">
+                <Sparkles size={24} className="md:w-10 md:h-10 text-[#d4af37]" />
+              </div>
+              <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-1 md:space-y-2">
+                 <h3 className="text-2xl md:text-5xl font-serif leading-tight">Empieza hoy mismo</h3>
+                 <p className="text-black/80 text-[8px] md:text-[12px] font-black uppercase tracking-[0.2em]">
+                   ES GRATIS Y TE TOMARÁ MENOS DE UN MINUTO.
+                 </p>
+              </div>
+           </div>
+
+           <div className="flex flex-col sm:flex-row items-center gap-6 md:gap-12 z-10 w-full md:w-auto">
+              <ul className="flex flex-row md:flex-col gap-4 md:gap-2.5">
+                 {['Sin tarjetas', 'Acceso total'].map(text => (
+                   <li key={text} className="flex items-center gap-2 text-[9px] md:text-[11px] font-black uppercase tracking-[0.15em] text-black/90">
+                      <CheckCircle2 size={10} className="text-black" />
+                      {text}
                    </li>
                  ))}
+                 <li className="hidden md:flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.15em] text-black/90">
+                    <CheckCircle2 size={10} className="text-black" /> Soporte VIP
+                 </li>
               </ul>
-              
-              <Link href="/registro" className="group/btn flex items-center justify-between w-full max-w-[240px] bg-black text-white px-6 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:translate-y-[-2px] transition-all shadow-xl">
+
+              <Link href="/registro" className="group/btn flex items-center justify-center gap-3 w-full sm:w-auto min-w-[200px] md:min-w-[240px] bg-black text-white px-6 md:px-10 py-3.5 md:py-5 rounded-xl md:rounded-2xl font-black uppercase text-[10px] md:text-[11px] tracking-[0.2em] hover:translate-y-[-5px] hover:scale-[1.03] transition-all shadow-2xl hover:shadow-black/40">
                  Registrarme Ahora
-                 <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                 <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover/btn:translate-x-2 transition-transform" />
               </Link>
            </div>
         </div>

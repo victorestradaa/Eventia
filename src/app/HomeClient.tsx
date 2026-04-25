@@ -94,11 +94,11 @@ export default function HomeClient() {
             La plataforma definitiva para organizar los eventos más importantes de tu vida con los mejores proveedores de México.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 w-full px-4">
-            <Link href="/registro" className="btn-oro px-8 py-4 sm:px-10 sm:py-5 rounded-2xl text-xs tracking-[0.1em] w-full sm:w-auto text-center">
-              EMPEZAR MI EVENTO
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8 w-full px-4">
+            <Link href="/registro" className="btn-hero-primary w-full sm:w-auto min-w-[240px]">
+              REGÍSTRATE
             </Link>
-            <Link href="/login" className="px-8 py-4 sm:px-10 sm:py-5 rounded-2xl text-xs tracking-[0.1em] font-bold border-2 border-[var(--color-texto)] text-[var(--color-texto)] hover:bg-[var(--color-texto)] hover:text-[var(--color-fondo)] transition-all w-full sm:w-auto text-center">
+            <Link href="/login" className="btn-hero-secondary w-full sm:w-auto min-w-[240px]">
               SOY UN PROVEEDOR
             </Link>
           </div>

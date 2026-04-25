@@ -241,6 +241,93 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 1rem;
 }
 
+/* --- Botones Hero Premium --- */
+.btn-hero-primary {
+  position: relative;
+  background: var(--gradiente-oro);
+  color: #111827;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  padding: 1.25rem 2.5rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 30px -10px rgba(189, 155, 101, 0.5);
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.btn-hero-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transition: all 0.6s;
+  z-index: -1;
+}
+
+.btn-hero-primary:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 20px 40px -10px rgba(189, 155, 101, 0.7);
+  filter: brightness(1.1);
+}
+
+.btn-hero-primary:hover::before {
+  left: 100%;
+}
+
+.btn-hero-secondary {
+  position: relative;
+  background: transparent;
+  color: var(--color-texto);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  padding: 1.25rem 2.5rem;
+  border-radius: 1rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid var(--color-texto);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.btn-hero-secondary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-texto);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+}
+
+.btn-hero-secondary:hover {
+  color: var(--color-fondo);
+  transform: translateY(-5px);
+  border-color: var(--color-texto);
+}
+
+.btn-hero-secondary:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
 /* --- Texturas y Patrones de Élite --- */
 .bg-marble {
   background-image: 
