@@ -126,7 +126,7 @@ export function MarketingSection() {
             onClick={() => setActiveTab('CLIENTE')}
             className={cn(
               "relative z-10 px-6 py-4 sm:px-12 sm:py-5 rounded-full text-[9px] sm:text-[13px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-2 sm:gap-4 min-w-[140px] sm:min-w-[280px]",
-              activeTab === 'CLIENTE' ? "text-black" : "text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white"
+              activeTab === 'CLIENTE' ? "text-black" : "text-gray-500 dark:text-white/50 hover:text-black dark:hover:text-white"
             )}
           >
             <User size={18} className="sm:w-6 sm:h-6" fill={activeTab === 'CLIENTE' ? "black" : "none"} strokeWidth={activeTab === 'CLIENTE' ? 3 : 2} />
@@ -136,7 +136,7 @@ export function MarketingSection() {
             onClick={() => setActiveTab('PROVEEDOR')}
             className={cn(
               "relative z-10 px-6 py-4 sm:px-12 sm:py-5 rounded-full text-[9px] sm:text-[13px] font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-2 sm:gap-4 min-w-[140px] sm:min-w-[280px]",
-              activeTab === 'PROVEEDOR' ? "text-black" : "text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white"
+              activeTab === 'PROVEEDOR' ? "text-black" : "text-gray-500 dark:text-white/50 hover:text-black dark:hover:text-white"
             )}
           >
             <Briefcase size={18} className="sm:w-6 sm:h-6" fill={activeTab === 'PROVEEDOR' ? "black" : "none"} strokeWidth={activeTab === 'PROVEEDOR' ? 3 : 2} />
