@@ -155,8 +155,8 @@ export default function HomeClient() {
           </p>
 
           <div className="flex items-center gap-8 text-[10px] uppercase tracking-widest font-black text-[var(--color-texto-muted)]">
-            <Link href="#" className="hover:text-[var(--color-acento)] transition-colors">Privacidad</Link>
-            <Link href="#" className="hover:text-[var(--color-acento)] transition-colors">Términos</Link>
+            <Link href="/privacidad" className="hover:text-[var(--color-acento)] transition-colors">Privacidad</Link>
+            <Link href="/terminos" className="hover:text-[var(--color-acento)] transition-colors">Términos</Link>
             <Link href="#" className="hover:text-[var(--color-acento)] transition-colors">Contacto</Link>
           </div>
         </div>

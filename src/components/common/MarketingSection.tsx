@@ -114,50 +114,50 @@ export function MarketingSection() {
       </div>
 
       {/* --- SELECTOR DE PESTAÑAS (TAMAÑO REAL, SIN SCALE PARA EVITAR TRASLAPE) --- */}
-      <div className="flex justify-center pt-16 pb-20 md:pt-12 md:pb-16 px-4">
-        <div className="flex flex-row gap-4 w-full max-w-xl">
-          {/* BOTÓN USUARIOS (TARJETA) */}
+      <div className="flex justify-center pt-16 pb-20 md:pt-12 md:pb-16 px-2 md:px-4">
+        <div className="grid grid-cols-2 gap-3 md:gap-8 w-full max-w-4xl">
+          {/* BOTÓN USUARIOS (TARJETA EQUILIBRADA) */}
           <button
             onClick={() => setActiveTab('CLIENTE')}
             className={cn(
-              "flex-1 relative overflow-hidden rounded-3xl p-6 transition-all duration-500 flex flex-col items-center justify-center gap-3 border-2",
+              "relative overflow-hidden rounded-[2rem] md:rounded-[3rem] h-28 md:h-44 transition-all duration-500 flex flex-col items-center justify-center gap-2 md:gap-4 border-2",
               activeTab === 'CLIENTE' 
-                ? "bg-gradient-to-br from-[#f3cf6d] via-[#d4af37] to-[#b89547] border-white/20 shadow-[0_20px_40px_rgba(212,175,55,0.3)] scale-105 z-10" 
+                ? "bg-gradient-to-br from-[#f3cf6d] via-[#d4af37] to-[#b89547] border-white/20 shadow-[0_20px_50px_rgba(212,175,55,0.4)] scale-[1.02] z-10" 
                 : "bg-white/5 backdrop-blur-md border-white/10 text-gray-500 hover:bg-white/10"
             )}
           >
             <div className={cn(
-              "p-3 rounded-2xl transition-all duration-500",
-              activeTab === 'CLIENTE' ? "bg-black text-[#d4af37] shadow-xl" : "bg-white/5 text-gray-400"
+              "p-2 md:p-4 rounded-xl md:rounded-2xl transition-all duration-500",
+              activeTab === 'CLIENTE' ? "bg-black text-[#d4af37] shadow-2xl" : "bg-white/5 text-gray-400"
             )}>
-              <User size={28} />
+              <User className="w-6 h-6 md:w-8 md:h-8" />
             </div>
             <span className={cn(
-              "text-[12px] sm:text-[15px] font-black uppercase tracking-[0.15em]",
+              "text-[12px] md:text-[18px] font-black uppercase tracking-tight md:tracking-widest",
               activeTab === 'CLIENTE' ? "text-black" : "text-gray-400"
             )}>
               Usuarios
             </span>
           </button>
 
-          {/* BOTÓN PROVEEDORES (TARJETA) */}
+          {/* BOTÓN PROVEEDORES (TARJETA EQUILIBRADA) */}
           <button
             onClick={() => setActiveTab('PROVEEDOR')}
             className={cn(
-              "flex-1 relative overflow-hidden rounded-3xl p-6 transition-all duration-500 flex flex-col items-center justify-center gap-3 border-2",
+              "relative overflow-hidden rounded-[2rem] md:rounded-[3rem] h-28 md:h-44 transition-all duration-500 flex flex-col items-center justify-center gap-2 md:gap-4 border-2",
               activeTab === 'PROVEEDOR' 
-                ? "bg-gradient-to-br from-[#f3cf6d] via-[#d4af37] to-[#b89547] border-white/20 shadow-[0_20px_40px_rgba(212,175,55,0.3)] scale-105 z-10" 
+                ? "bg-gradient-to-br from-[#f3cf6d] via-[#d4af37] to-[#b89547] border-white/20 shadow-[0_20px_50px_rgba(212,175,55,0.4)] scale-[1.02] z-10" 
                 : "bg-white/5 backdrop-blur-md border-white/10 text-gray-500 hover:bg-white/10"
             )}
           >
             <div className={cn(
-              "p-3 rounded-2xl transition-all duration-500",
-              activeTab === 'PROVEEDOR' ? "bg-black text-[#d4af37] shadow-xl" : "bg-white/5 text-gray-400"
+              "p-2 md:p-4 rounded-xl md:rounded-2xl transition-all duration-500",
+              activeTab === 'PROVEEDOR' ? "bg-black text-[#d4af37] shadow-2xl" : "bg-white/5 text-gray-400"
             )}>
-              <Briefcase size={28} />
+              <Briefcase className="w-6 h-6 md:w-8 md:h-8" />
             </div>
             <span className={cn(
-              "text-[12px] sm:text-[15px] font-black uppercase tracking-[0.15em]",
+              "text-[12px] md:text-[18px] font-black uppercase tracking-tight md:tracking-widest",
               activeTab === 'PROVEEDOR' ? "text-black" : "text-gray-400"
             )}>
               Proveedores

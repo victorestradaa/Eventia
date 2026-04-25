@@ -434,8 +434,8 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
             </p>
 
             <div className="flex items-center gap-8 text-[10px] uppercase tracking-widest font-black text-[var(--color-texto-muted)]">
-              <Link href="#" className="hover:text-black transition-colors">Privacidad</Link>
-              <Link href="#" className="hover:text-black transition-colors">Términos</Link>
+              <Link href="/privacidad" className="hover:text-black transition-colors">Privacidad</Link>
+              <Link href="/terminos" className="hover:text-black transition-colors">Términos</Link>
               <Link href="#" className="hover:text-black transition-colors">Contacto</Link>
             </div>
           </div>

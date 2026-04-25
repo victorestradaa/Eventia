@@ -28,12 +28,19 @@ export default function RegisterPage() {
   const [categoria, setCategoria] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
+  const [aceptaPrivacidad, setAceptaPrivacidad] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const cleanEmail = email.trim();
     if (!nombre.trim() || !cleanEmail || !password) return;
+    
+    if (!aceptaTerminos || !aceptaPrivacidad) {
+      setError('Debes aceptar los términos y confirmar la lectura del aviso de privacidad.');
+      return;
+    }
     
     if (rol === 'PROVEEDOR' && !categoria) {
       setError('Por favor selecciona una categoría para tu servicio.');
@@ -105,8 +112,6 @@ export default function RegisterPage() {
       setError(err?.message || 'Error inesperado al crear la cuenta.');
       setLoading(false);
     }
-
-
   }
 
   return (
@@ -224,10 +229,38 @@ export default function RegisterPage() {
             </div>
           )}
 
+          {/* CHECKBOXES LEGALES OBLIGATORIOS */}
+          <div className="space-y-3 pt-4 border-t border-[var(--color-borde-suave)]">
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input 
+                type="checkbox" 
+                className="mt-1 rounded border-[var(--color-borde-suave)] text-[var(--color-primario)] focus:ring-[var(--color-primario)]"
+                checked={aceptaTerminos}
+                onChange={e => setAceptaTerminos(e.target.checked)}
+                disabled={loading}
+              />
+              <span className="text-xs text-[var(--color-texto-suave)] group-hover:text-[var(--color-texto)] transition-colors leading-relaxed">
+                Acepto los <Link href="/terminos" className="text-[var(--color-primario-claro)] hover:underline font-bold" target="_blank">Términos y Condiciones</Link> de Eventia.
+              </span>
+            </label>
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input 
+                type="checkbox" 
+                className="mt-1 rounded border-[var(--color-borde-suave)] text-[var(--color-primario)] focus:ring-[var(--color-primario)]"
+                checked={aceptaPrivacidad}
+                onChange={e => setAceptaPrivacidad(e.target.checked)}
+                disabled={loading}
+              />
+              <span className="text-xs text-[var(--color-texto-suave)] group-hover:text-[var(--color-texto)] transition-colors leading-relaxed">
+                Confirmo que he leído y acepto el <Link href="/privacidad" className="text-[var(--color-primario-claro)] hover:underline font-bold" target="_blank">Aviso de Privacidad</Link>.
+              </span>
+            </label>
+          </div>
+
           <button 
             type="submit"
-            disabled={loading}
-            className="btn btn-primario w-full mt-4 disabled:opacity-60 disabled:cursor-not-allowed"
+            disabled={loading || !aceptaTerminos || !aceptaPrivacidad}
+            className="btn btn-primario w-full mt-4 disabled:opacity-40 disabled:grayscale disabled:cursor-not-allowed"
           >
             {loading ? 'Procesando...' : 'Crear Cuenta'}
           </button>
