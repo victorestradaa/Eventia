@@ -727,13 +727,13 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
                         <option value="FIESTA_INFANTIL">Fiesta Infantil</option>
                         <option value="FIESTA_GENERAL">Fiesta General</option>
                       </select>
-                      <div className="grid grid-cols-3 gap-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar p-1">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-3 max-h-96 sm:max-h-56 overflow-y-auto pr-2 custom-scrollbar p-1">
                         {fondosFiltrados.map((f) => (
                           <button 
                             key={f.id}
                             onClick={() => setFondoUrlActivo(f.url)}
                             className={cn(
-                              "relative rounded-xl border-2 transition-all duration-500 overflow-hidden aspect-[9/16] group/thumb shadow-md",
+                              "relative w-full rounded-xl border-2 transition-all duration-500 overflow-hidden aspect-[9/16] group/thumb shadow-md",
                               fondoUrlActivo === f.url 
                                 ? "border-[var(--color-acento)] ring-4 ring-[var(--color-acento)]/10 scale-[0.98] shadow-2xl shadow-[var(--color-acento)]/20" 
                                 : "border-[var(--color-borde-suave)] hover:border-[var(--color-acento)]/30 hover:scale-105"

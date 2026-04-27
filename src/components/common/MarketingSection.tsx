@@ -12,7 +12,9 @@ import {
   ArrowRight,
   Send,
   Briefcase,
-  User
+  User,
+  Calendar,
+  TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -84,6 +86,12 @@ export function MarketingSection() {
       description: "Tus invitados suben fotos en tiempo real que aparecen al instante en una galería compartida.",
       image: "/marketing/album.png",
       icon: QrCode
+    },
+    {
+      title: "Disponibilidad en Tiempo Real",
+      description: "Consulta el calendario de tus proveedores favoritos al instante y agenda tu evento con unos pocos clics.",
+      image: "/marketing/user_calendar.png",
+      icon: Calendar
     }
   ];
 
@@ -99,6 +107,18 @@ export function MarketingSection() {
       description: "Muestra la calidad de tu trabajo con galerías de alta resolución diseñadas para vender.",
       image: "/marketing/portfolio.png",
       icon: ImageIcon
+    },
+    {
+      title: "Calendario en Tiempo Real",
+      description: "Bloqueo de fechas, sincronización de eventos externos y disponibilidad inmediata para una organización perfecta.",
+      image: "/marketing/calendar_real.png",
+      icon: Calendar
+    },
+    {
+      title: "Finanzas y Ventas",
+      description: "Gestión de cuentas por cobrar, registro de ventas detallado y seguimiento de ingresos automatizado.",
+      image: "/marketing/finances.png",
+      icon: TrendingUp
     }
   ];
 
