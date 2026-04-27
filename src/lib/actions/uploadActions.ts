@@ -228,3 +228,50 @@ export async function uploadAvatar(formData: FormData): Promise<{ success: boole
     return { success: false, error: 'Fallo al procesar el avatar' };
   }
 }
+
+/**
+ * Sube un comprobante de pago a una carpeta específica por evento.
+ */
+export async function uploadComprobante(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const file = formData.get('file') as File;
+    const eventoId = formData.get('eventoId') as string;
+
+    if (!file || !eventoId) {
+      return { success: false, error: 'Falta el archivo o el ID del evento' };
+    }
+
+    await asegurarBucket();
+
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const fileName = `comprobantes/${eventoId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const { error } = await supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Error uploading receipt:', error);
+      return { success: false, error: 'Error al subir el comprobante' };
+    }
+
+    const { data: publicData } = supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(fileName);
+
+    return { 
+      success: true, 
+      url: publicData.publicUrl 
+    };
+
+  } catch (error) {
+    console.error('Receipt upload error:', error);
+    return { success: false, error: 'Fallo al procesar el comprobante' };
+  }
+}

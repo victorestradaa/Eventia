@@ -1,9 +1,10 @@
 import { getCurrentProfile } from '@/lib/actions/authActions';
-import { getReservasCalendario, getResumenProveedor } from '@/lib/actions/providerActions';
+import { getReservasCalendario, getResumenProveedor, autoCancelExpiredReservations } from '@/lib/actions/providerActions';
 import { redirect } from 'next/navigation';
 import CalendarioClient from './CalendarioClient';
 
 export default async function CalendarPage() {
+  await autoCancelExpiredReservations();
   const profileRes = await getCurrentProfile();
 
   if (!profileRes.success || !profileRes.data) {

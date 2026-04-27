@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { X, Calendar as CalendarIcon, DollarSign, AlertCircle, CheckCircle, RotateCcw, Plus, CalendarDays, Loader2 } from 'lucide-react';
-import { formatearMoneda, formatearFechaCorta } from '@/lib/utils';
+import { formatearMoneda, formatearFechaCorta, cn } from '@/lib/utils';
 import { updateReservaStatus, payTransaction, rescheduleReserva, updateManualClientName } from '@/lib/actions/salesActions';
-import { registrarAbono } from '@/lib/actions/paymentActions';
-import { Edit2, Check } from 'lucide-react';
+import { registrarAbono, aprobarTransaccion, rechazarTransaccion } from '@/lib/actions/paymentActions';
+import { Edit2, Check, Eye, CheckCircle2, XCircle } from 'lucide-react';
 
 interface Props {
   venta: any;
@@ -21,6 +21,7 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
   const [showAbonoForm, setShowAbonoForm] = useState(false);
   const [showRescheduleForm, setShowRescheduleForm] = useState(false);
   const [payConfirmData, setPayConfirmData] = useState<{ id: string, metodo: string } | null>(null);
+  const [confirmAprobarId, setConfirmAprobarId] = useState<string | null>(null);
   
   // Edit Name State
   const [isEditingName, setIsEditingName] = useState(false);
@@ -203,6 +204,36 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
     if (res.success) {
       setIsEditingName(false);
       onUpdate({ ...venta, nombreClienteExterno: editedName });
+    } else {
+      alert(res.error);
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleAprobarTransaccion = (id: string) => {
+    setConfirmAprobarId(id);
+  };
+
+  const confirmAprobarTransaccion = async () => {
+    if (!confirmAprobarId) return;
+    setIsSubmitting(true);
+    const res = await aprobarTransaccion(confirmAprobarId);
+    if (res.success) {
+      onUpdate(res.data);
+      setConfirmAprobarId(null);
+    } else {
+      alert(res.error);
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleRechazarTransaccion = async (id: string) => {
+    const motivo = prompt('Ingresa el motivo del rechazo (opcional):');
+    if (motivo === null) return;
+    setIsSubmitting(true);
+    const res = await rechazarTransaccion(id, motivo);
+    if (res.success) {
+      onUpdate(res.data);
     } else {
       alert(res.error);
     }
@@ -467,16 +498,40 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
                           {tx.metodoPago}
                         </td>
                         <td className="py-3 px-4 text-center">
-                           <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${tx.estado === 'PAGADO' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                           <span className={cn(
+                             "px-2 py-1 rounded-full text-[10px] font-bold",
+                             tx.estado === 'PAGADO' ? 'bg-emerald-100 text-emerald-700' : 
+                             tx.estado === 'RECHAZADO' ? 'bg-rose-100 text-rose-700' :
+                             'bg-amber-100 text-amber-700'
+                           )}>
                              {tx.estado}
                            </span>
                         </td>
-                        <td className="py-3 px-4 text-center">
-                          {tx.estado === 'PENDIENTE' ? (
-                            <button disabled={isSubmitting} onClick={() => handlePagarTransaccion(tx.id)} className="btn bg-[var(--color-primario)] text-white hover:opacity-90 py-1 px-3 text-xs w-full">Liquidar</button>
-                          ) : (
-                            <span className="text-[var(--color-texto-muted)] text-xs flex justify-center"><CheckCircle size={16} /></span>
-                          )}
+                        <td className="py-3 px-4">
+                          <div className="flex items-center justify-center gap-2">
+                             {tx.estado === 'PENDIENTE' ? (
+                               <>
+                                 {tx.comprobanteUrl && (
+                                   <a href={tx.comprobanteUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 bg-violet-500/10 text-violet-500 rounded-lg hover:bg-violet-500/20 transition-colors" title="Ver Comprobante">
+                                     <Eye size={16} />
+                                   </a>
+                                 )}
+                                 <button disabled={isSubmitting} onClick={() => handleAprobarTransaccion(tx.id)} className="p-1.5 bg-emerald-500/10 text-emerald-500 rounded-lg hover:bg-emerald-500/20 transition-colors" title="Aprobar">
+                                   <CheckCircle2 size={16} />
+                                 </button>
+                                 <button disabled={isSubmitting} onClick={() => handleRechazarTransaccion(tx.id)} className="p-1.5 bg-rose-500/10 text-rose-500 rounded-lg hover:bg-rose-500/20 transition-colors" title="Rechazar">
+                                   <XCircle size={16} />
+                                 </button>
+                                 {!tx.comprobanteUrl && (
+                                   <button disabled={isSubmitting} onClick={() => handlePagarTransaccion(tx.id)} className="btn bg-[var(--color-primario)] text-white hover:opacity-90 py-1 px-3 text-[10px] h-auto">Liquidar</button>
+                                 )}
+                               </>
+                             ) : tx.estado === 'RECHAZADO' ? (
+                               <XCircle size={16} className="text-rose-500 opacity-30" />
+                             ) : (
+                               <CheckCircle size={16} className="text-emerald-500" />
+                             )}
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -492,6 +547,41 @@ export default function SaleDetailsModal({ venta, onClose, onUpdate }: Props) {
 
         </div>
       </div>
+
+      {/* Confirmation Modal for Aprobar Transaccion */}
+      {confirmAprobarId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[var(--color-fondo-card)] w-full max-w-md rounded-3xl shadow-2xl border border-[var(--color-borde-suave)] p-8 animate-in zoom-in-95 duration-200">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center">
+                <AlertCircle size={32} className="text-amber-500" />
+              </div>
+            </div>
+            <h3 className="text-2xl font-black italic uppercase tracking-tighter text-center mb-2">Aprobar Abono</h3>
+            <p className="text-sm text-[var(--color-texto-suave)] text-center mb-6 leading-relaxed">
+              ¿Estás seguro de que deseas confirmar este pago? <br/><br/>
+              <span className="text-amber-500 font-bold uppercase tracking-widest text-[10px]">Recordatorio:</span><br/>
+              Asegúrate de haber verificado primero el comprobante de pago. Una vez aprobado, el monto se sumará al total pagado por el cliente.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                disabled={isSubmitting} 
+                onClick={() => setConfirmAprobarId(null)} 
+                className="btn btn-secundario flex-1 py-3 text-xs uppercase font-black tracking-widest"
+              >
+                Cancelar
+              </button>
+              <button 
+                disabled={isSubmitting} 
+                onClick={confirmAprobarTransaccion} 
+                className="btn btn-primario flex-1 py-3 text-xs uppercase font-black tracking-widest flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : 'Sí, Aprobar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation Modal for Liquidation */}
       {payConfirmData && (

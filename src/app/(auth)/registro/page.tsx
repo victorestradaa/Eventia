@@ -19,12 +19,16 @@ import { registrarUsuario } from '@/lib/actions/authActions';
 import { cn } from '@/lib/utils';
 import Logo from '@/components/common/Logo';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { MEXICO_LOCATIONS } from '@/lib/constants/locations';
 
 export default function RegisterPage() {
   const [rol, setRol] = useState<'CLIENTE' | 'PROVEEDOR'>('CLIENTE');
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [estado, setEstado] = useState('');
+  const [municipio, setMunicipio] = useState('');
   const [categoria, setCategoria] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -35,7 +39,7 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const cleanEmail = email.trim();
-    if (!nombre.trim() || !cleanEmail || !password) return;
+    if (!nombre.trim() || !cleanEmail || !password || !telefono.trim() || !estado || !municipio) return;
     
     if (!aceptaTerminos || !aceptaPrivacidad) {
       setError('Debes aceptar los términos y confirmar la lectura del aviso de privacidad.');
@@ -67,6 +71,9 @@ export default function RegisterPage() {
             rol,
             nombre: nombre.trim(),
             categoria: rol === 'PROVEEDOR' ? categoria : null,
+            telefono: telefono.trim(),
+            estado,
+            municipio
           }
         }
       });
@@ -86,7 +93,10 @@ export default function RegisterPage() {
         email: cleanEmail, 
         nombre: nombre.trim(), 
         rol,
-        categoria: categoria as any
+        categoria: categoria as any,
+        telefono: telefono.trim(),
+        estado,
+        municipio
       });
       
       // Timeout de 15 segundos para la DB
@@ -119,7 +129,9 @@ export default function RegisterPage() {
       <div className="card w-full max-w-md">
         <div className="flex flex-col items-center text-center mb-8">
           <div className="mb-4">
-            <Logo width={280} height={100} />
+            <Link href="/" className="inline-block transition-transform hover:scale-105" title="Volver al inicio">
+              <Logo width={280} height={100} />
+            </Link>
           </div>
           <h1 className="text-3xl font-bold mb-2">Crear Cuenta</h1>
           <p className="text-[var(--color-texto-suave)]">Únete a la mejor red de eventos</p>
@@ -185,20 +197,70 @@ export default function RegisterPage() {
               disabled={loading}
             />
           </div>
+
+          <div>
+            <label className="label">Teléfono / Celular</label>
+            <input 
+              type="tel" 
+              className="input" 
+              placeholder="10 dígitos" 
+              value={telefono}
+              onChange={e => setTelefono(e.target.value.replace(/\D/g, ''))}
+              maxLength={10}
+              required 
+              disabled={loading}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">Estado</label>
+              <select 
+                className="input cursor-pointer"
+                value={estado}
+                onChange={e => {
+                  setEstado(e.target.value);
+                  setMunicipio('');
+                }}
+                required
+                disabled={loading}
+              >
+                <option value="">Selecciona...</option>
+                {Object.keys(MEXICO_LOCATIONS).map(est => (
+                  <option key={est} value={est}>{est}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label">Municipio / Ciudad</label>
+              <select 
+                className="input cursor-pointer"
+                value={municipio}
+                onChange={e => setMunicipio(e.target.value)}
+                required
+                disabled={!estado || loading}
+              >
+                <option value="">Selecciona...</option>
+                {estado && MEXICO_LOCATIONS[estado]?.map(mun => (
+                  <option key={mun} value={mun}>{mun}</option>
+                ))}
+              </select>
+            </div>
+          </div>
           
           {rol === 'PROVEEDOR' && (
             <div className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
               <label className="label block">Categoría de Servicio *</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { id: 'SALON',      label: 'Salones',      icon: Building2   },
-                  { id: 'MUSICA',     label: 'Música',       icon: Music       },
-                  { id: 'COMIDA',     label: 'Banquetes',    icon: Utensils    },
-                  { id: 'ANIMACION',  label: 'Animación',    icon: PartyPopper },
-                  { id: 'FOTOGRAFIA', label: 'Foto & Video', icon: Camera      },
-                  { id: 'DECORACION', label: 'Decoración',   icon: Palette     },
-                  { id: 'RECUERDOS',  label: 'Recuerdos',    icon: Gift        },
-                  { id: 'MOBILIARIO', label: 'Inmobiliario', icon: Armchair    },
+                  { id: 'SALON',      label: 'Salones',      icon: Building2,   color: 'text-blue-500 dark:text-blue-400' },
+                  { id: 'MUSICA',     label: 'Música',       icon: Music,       color: 'text-purple-500 dark:text-purple-400' },
+                  { id: 'COMIDA',     label: 'Banquetes',    icon: Utensils,    color: 'text-orange-500 dark:text-orange-400' },
+                  { id: 'ANIMACION',  label: 'Animación',    icon: PartyPopper, color: 'text-pink-500 dark:text-pink-400' },
+                  { id: 'FOTOGRAFIA', label: 'Foto & Video', icon: Camera,      color: 'text-teal-500 dark:text-teal-400' },
+                  { id: 'DECORACION', label: 'Decoración',   icon: Palette,     color: 'text-yellow-500 dark:text-yellow-400' },
+                  { id: 'RECUERDOS',  label: 'Recuerdos',    icon: Gift,        color: 'text-rose-500 dark:text-rose-400' },
+                  { id: 'MOBILIARIO', label: 'Inmobiliario', icon: Armchair,    color: 'text-amber-600 dark:text-amber-500' },
                 ].map((item) => (
                   <button
                     key={item.id}
@@ -213,7 +275,7 @@ export default function RegisterPage() {
                   >
                     <div className={cn(
                       "w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-colors",
-                      categoria === item.id ? "bg-[var(--color-primario)] text-white" : "bg-[var(--color-fondo-card)] text-[var(--color-texto-muted)] group-hover:text-[var(--color-primario-claro)]"
+                      categoria === item.id ? "bg-[var(--color-primario)] text-white" : `bg-[var(--color-fondo-card)] ${item.color} group-hover:scale-110`
                     )}>
                       <item.icon size={20} strokeWidth={1.5} />
                     </div>

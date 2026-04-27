@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Download, Filter, Calendar as CalendarIcon, Plus, Gem, X, Loader2, UserPlus } from 'lucide-react';
+import { Search, Download, Filter, Calendar as CalendarIcon, Plus, Gem, X, Loader2, UserPlus, AlertCircle } from 'lucide-react';
 import { formatearMoneda, formatearFechaCorta } from '@/lib/utils';
 import SaleDetailsModal from './SaleDetailsModal';
 import { createManualReserva } from '@/lib/actions/salesActions';
@@ -46,6 +46,11 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
   const comisionRate = isElite ? 0 : 0.05;
   const comisiones = totalBruto * comisionRate;
   const neto = totalBruto - comisiones;
+
+  const pendingPaymentsCount = ventas.reduce((acc, v) => {
+    const pending = v.transacciones?.filter((t: any) => t.estado === 'PENDIENTE' && t.comprobanteUrl).length || 0;
+    return acc + pending;
+  }, 0);
 
   const getClienteName = (venta: any) => {
     if (venta.esManual) return venta.nombreClienteExterno || 'Cliente Externo';
@@ -112,6 +117,24 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
           </button>
         </div>
       </div>
+
+      {/* Alerta de Pagos Pendientes */}
+      {pendingPaymentsCount > 0 && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-center justify-between gap-4 animate-pulse">
+           <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+                 <AlertCircle size={20} className="text-amber-500" />
+              </div>
+              <div>
+                 <p className="text-sm font-bold text-amber-500">Tienes {pendingPaymentsCount} pago(s) por confirmar</p>
+                 <p className="text-xs text-amber-200/60">Los clientes han adjuntado comprobantes que requieren tu revisión.</p>
+              </div>
+           </div>
+           <div className="hidden md:block">
+              <span className="text-[10px] font-black uppercase text-amber-500/50 tracking-widest">Revisa el detalle de cada venta</span>
+           </div>
+        </div>
+      )}
 
       {/* Banner Elite */}
       {isElite && (
@@ -380,9 +403,16 @@ export default function VentasClient({ ventasIniciales, proveedorId, planProveed
                         {saldoVencido > 0 && <span className="text-[10px] text-red-400 block">{formatearMoneda(saldoVencido)} vencido</span>}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`badge badge-${venta.estado.toLowerCase()} text-[10px] shadow-sm`}>
-                          {venta.estado}
-                        </span>
+                        <div className="flex flex-col items-center gap-1">
+                           <span className={`badge badge-${venta.estado.toLowerCase()} text-[10px] shadow-sm`}>
+                             {venta.estado}
+                           </span>
+                           {venta.transacciones?.some((t:any) => t.estado === 'PENDIENTE' && t.comprobanteUrl) && (
+                             <span className="flex items-center gap-1 text-[8px] font-black text-amber-500 uppercase tracking-tighter bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                                <AlertCircle size={8} /> PAGO PENDIENTE
+                             </span>
+                           )}
+                        </div>
                       </td>
                     </tr>
                   );

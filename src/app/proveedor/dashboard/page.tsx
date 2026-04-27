@@ -1,9 +1,10 @@
 import { getCurrentProfile } from '@/lib/actions/authActions';
-import { getResumenProveedor } from '@/lib/actions/providerActions';
+import { getResumenProveedor, autoCancelExpiredReservations } from '@/lib/actions/providerActions';
 import DashboardProviderClient from './DashboardProviderClient';
 import { redirect } from 'next/navigation';
 
 export default async function ProviderDashboardPage() {
+  await autoCancelExpiredReservations();
   const profileRes = await getCurrentProfile();
 
   if (!profileRes.success || !profileRes.data) {

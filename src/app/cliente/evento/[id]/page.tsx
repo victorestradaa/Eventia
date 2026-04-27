@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
+import { autoCancelExpiredReservations } from '@/lib/actions/providerActions';
 import EventoDetailClient from './EventoDetailClient';
 
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,7 @@ interface Props {
 
 export default async function EventDetailPage({ params }: Props) {
   const { id } = await params;
+  await autoCancelExpiredReservations();
 
   const evento = await prisma.evento.findUnique({
     where: { id },
@@ -22,7 +24,9 @@ export default async function EventDetailPage({ params }: Props) {
         include: {
           servicio: {
             include: {
-              proveedor: true,
+              proveedor: {
+                include: { usuario: true }
+              },
             },
           },
           pagos: true,
@@ -32,7 +36,9 @@ export default async function EventDetailPage({ params }: Props) {
       reservas: {
         include: {
           servicio: true,
-          proveedor: true,
+          proveedor: {
+            include: { usuario: true }
+          },
           transacciones: true,
         },
         orderBy: { creadoEn: 'desc' },

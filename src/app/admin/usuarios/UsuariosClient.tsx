@@ -281,7 +281,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
               
               <div className="flex justify-between items-center">
                  <div>
-                    <h2 className="text-3xl font-black italic uppercase tracking-tighter text-[var(--color-texto)]">Editar Perfil de Usuario</h2>
+                    <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">Editar Perfil de Usuario</h2>
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d4af37] mt-1">Control de Administrador</p>
                  </div>
                  <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full text-[var(--color-texto-muted)] transition-colors"><X size={28} /></button>
@@ -305,6 +305,17 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
                          type="email" 
                          value={formData.email}
                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                         className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl px-5 py-4 text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all"
+                       />
+                    </div>
+
+                    <div className="space-y-1.5">
+                       <label className="text-[10px] font-black uppercase text-[#d4af37] tracking-widest ml-1">Teléfono / Celular</label>
+                       <input 
+                         type="tel" 
+                         value={formData.telefono}
+                         onChange={(e) => setFormData({...formData, telefono: e.target.value.replace(/\D/g, '')})}
+                         maxLength={10}
                          className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl px-5 py-4 text-[var(--color-texto)] outline-none focus:border-[#d4af37] transition-all"
                        />
                     </div>

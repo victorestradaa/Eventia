@@ -13,7 +13,8 @@ import {
   DollarSign,
   X,
   Bell,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Landmark
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getPendingTasksCount } from '@/lib/actions/providerActions';
@@ -31,6 +32,7 @@ const MENU_ITEMS = [
   { href: '/proveedor/ventas', label: 'Ventas', icon: TrendingUp },
   { href: '/proveedor/portafolio', label: 'Portafolio', icon: ImageIcon },
   { href: '/proveedor/planes', label: 'Mi Plan', icon: DollarSign },
+  { href: '/proveedor/datos-bancarios', label: 'Datos Bancarios', icon: Landmark },
 ];
 
 interface ProviderSidebarProps {

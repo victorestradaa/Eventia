@@ -1,6 +1,7 @@
 import { getCurrentProfile } from '@/lib/actions/authActions';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
+import { autoCancelExpiredReservations } from '@/lib/actions/providerActions';
 import VentasClient from '@/components/proveedor/VentasClient';
 
 export const metadata = {
@@ -9,6 +10,7 @@ export const metadata = {
 };
 
 export default async function SalesPage() {
+  await autoCancelExpiredReservations();
   const profileRes = await getCurrentProfile();
 
   if (!profileRes?.success || !profileRes.data || profileRes.data.rol !== 'PROVEEDOR') {

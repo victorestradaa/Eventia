@@ -51,7 +51,7 @@ export default function DashboardProviderClient({ resumen, perfil }: DashboardPr
     },
     { 
       label: 'Próximas Fechas', 
-      valor: resumen.reservas.length.toString(), 
+      valor: (resumen.proximasFechasCount || 0).toString(), 
       icon: CalendarIcon, 
       trend: 'Agenda activa' 
     },
@@ -67,6 +67,13 @@ export default function DashboardProviderClient({ resumen, perfil }: DashboardPr
       icon: Clock, 
       trend: resumen.tareasPendientes > 0 ? '¡Tienes solicitudes por revisar!' : 'Al día con tus tareas',
       alert: resumen.tareasPendientes > 0
+    },
+    { 
+      label: 'Eventos Cancelados', 
+      valor: resumen.canceladasCount?.toString() || '0', 
+      icon: Activity, 
+      trend: 'Por falta de confirmación',
+      isDanger: true
     },
   ];
 
@@ -84,29 +91,33 @@ export default function DashboardProviderClient({ resumen, perfil }: DashboardPr
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+        {stats.map((stat: any) => (
           <div key={stat.label} className={cn(
             "stat-card hover:bg-white/[0.02] transition-all cursor-default group border-l-4",
-            stat.alert ? "border-amber-500 bg-amber-500/5 shadow-[0_0_20px_rgba(245,158,11,0.05)]" : "border-transparent"
+            stat.alert ? "border-amber-500 bg-amber-500/5 shadow-[0_0_20px_rgba(245,158,11,0.05)]" : 
+            stat.isDanger ? "border-rose-500 bg-rose-500/5 shadow-[0_0_20px_rgba(244,63,94,0.05)]" : "border-transparent"
           )}>
             <div className="flex items-center justify-between mb-4">
               <span className={cn(
                 "text-[10px] font-black uppercase tracking-wider",
-                stat.alert ? "text-amber-400" : "text-[var(--color-texto-muted)]"
+                stat.alert ? "text-amber-400" : 
+                stat.isDanger ? "text-rose-400" : "text-[var(--color-texto-muted)]"
               )}>
                 {stat.label}
               </span>
               <div className={cn(
                 "p-2 rounded-xl group-hover:scale-110 transition-transform",
-                stat.alert ? "bg-amber-500/20 text-amber-500" : "bg-[var(--color-primario)]/10 text-[var(--color-primario-claro)]"
+                stat.alert ? "bg-amber-500/20 text-amber-500" : 
+                stat.isDanger ? "bg-rose-500/20 text-rose-500" : "bg-[var(--color-primario)]/10 text-[var(--color-primario-claro)]"
               )}>
                 <stat.icon size={18} />
               </div>
             </div>
             <div className={cn(
               "stat-valor text-2xl",
-              stat.alert && "text-amber-200"
+              stat.alert && "text-amber-200",
+              stat.isDanger && "text-rose-200"
             )}>{stat.valor}</div>
             <p className="text-[10px] font-bold text-[var(--color-texto-suave)] mt-2 italic">
               {stat.trend}
@@ -226,7 +237,9 @@ export default function DashboardProviderClient({ resumen, perfil }: DashboardPr
                       <td className="px-6 py-4">
                         <span className={`badge ${
                           res.estado === 'LIQUIDADO' ? 'badge-liquidado' : 
-                          res.estado === 'APARTADO' ? 'badge-apartado' : 'badge-temporal'
+                          res.estado === 'APARTADO' ? 'badge-apartado' : 
+                          res.estado === 'CANCELADO' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' :
+                          'badge-temporal'
                         }`}>
                           {res.estado}
                         </span>

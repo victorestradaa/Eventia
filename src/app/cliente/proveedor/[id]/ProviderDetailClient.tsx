@@ -373,8 +373,23 @@ export default function ProviderDetailClient({ data, activeEvent, canViewContact
         </div>
       )}
 
-      {confirmarReserva && <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-6"><div className="bg-white p-16 rounded-[4rem] text-center max-w-md"><h3 className="text-3xl font-black uppercase italic mb-8">¿Confirmar Reserva?</h3><div className="grid grid-cols-2 gap-4"><button disabled={solicitando} onClick={() => setConfirmarReserva(false)} className="py-4 bg-gray-100 rounded-2xl font-black uppercase italic">No</button><button disabled={solicitando} onClick={handleConfirmarBooking} className="py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase italic">Sí</button></div></div></div>}
-      {reservado && <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center"><div className="bg-white p-16 rounded-[4rem] text-center"><CheckCircle2 size={64} className="mx-auto text-emerald-500 mb-6" /><h3 className="text-3xl font-black uppercase italic">¡Solicitud Enviada!</h3><button onClick={() => setReservado(false)} className="mt-8 px-12 py-4 bg-black text-white rounded-2xl font-black uppercase italic">Aceptar</button></div></div>}
+      {confirmarReserva && <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-6"><div className="bg-white text-black p-16 rounded-[4rem] text-center max-w-md"><h3 className="text-3xl font-black uppercase italic mb-8">¿Confirmar Reserva?</h3><div className="grid grid-cols-2 gap-4"><button disabled={solicitando} onClick={() => setConfirmarReserva(false)} className="py-4 bg-gray-100 text-black rounded-2xl font-black uppercase italic hover:bg-gray-200 transition-colors">No</button><button disabled={solicitando} onClick={handleConfirmarBooking} className="py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase italic hover:bg-emerald-600 transition-colors">Sí</button></div></div></div>}
+      {reservado && (
+        <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-6">
+          <div className="bg-white text-black p-12 rounded-[4rem] text-center max-w-lg">
+            <CheckCircle2 size={64} className="mx-auto text-emerald-500 mb-6" />
+            <h3 className="text-3xl font-black uppercase italic mb-4">¡Solicitud Enviada!</h3>
+            <p className="text-gray-600 mb-8 font-medium">Tienes 48 horas para confirmar y finalizar el proceso de apartado de fecha con el proveedor.</p>
+            <Link 
+              href={`/cliente/evento/${activeEvent?.id}`} 
+              onClick={() => setReservado(false)} 
+              className="block w-full py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase italic hover:bg-emerald-600 transition-colors"
+            >
+              Contactar con tu proveedor
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

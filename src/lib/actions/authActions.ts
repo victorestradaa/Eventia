@@ -108,6 +108,9 @@ export async function registrarUsuario(data: {
   nombre: string;
   rol: 'CLIENTE' | 'PROVEEDOR';
   categoria?: CategoriaServicio;
+  telefono?: string;
+  estado?: string;
+  municipio?: string;
 }) {
   try {
     const usuario = await prisma.usuario.create({
@@ -115,15 +118,22 @@ export async function registrarUsuario(data: {
         email: data.email,
         nombre: data.nombre,
         rol: data.rol,
+        telefono: data.telefono,
         ...(data.rol === 'CLIENTE' ? {
-          cliente: { create: { plan: 'ORO' } }
+          cliente: { 
+            create: { 
+              plan: 'ORO',
+              estado: data.estado || 'Sin asignar',
+              ciudad: data.municipio || 'Sin asignar'
+            } 
+          }
         } : {
           proveedor: {
             create: {
               nombre: data.nombre,
               categoria: data.categoria || 'SALON',
-              ciudad: 'Sin asignar',
-              estado: 'Sin asignar',
+              ciudad: data.municipio || 'Sin asignar',
+              estado: data.estado || 'Sin asignar',
               plan: 'ELITE'
             }
           }

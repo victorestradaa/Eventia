@@ -147,6 +147,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
     mensaje: evento?.invitacion?.mensaje || 'Queremos compartir este día tan especial contigo. Tu presencia es nuestro mejor regalo.',
     vestimenta: evento?.invitacion?.vestimenta || 'Formal / Gala',
     lugar: evento?.invitacion?.lugarTexto || 'Sin asignar',
+    fechaEvento: evento?.fecha || '',
     direccion: evento?.invitacion?.direccion || '',
     horaCeremonia: '04:00 PM',
     horaCelebracion: '06:00 PM',
@@ -1095,17 +1096,19 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
             <div className="sticky top-8 flex justify-center">
                <div className="relative group">
                  <div className="absolute -inset-10 bg-[var(--color-primario)]/5 blur-[100px] rounded-full pointer-events-none group-hover:bg-[var(--color-primario)]/10 transition-all duration-1000" />
-                 <div ref={canvasRef} id="invitation-canvas-root" className="shadow-[0_0_100px_rgba(0,0,0,0.5)] rounded-2xl overflow-hidden transition-all duration-500 scale-95 hover:scale-100">
+                 <div ref={canvasRef} id="invitation-canvas-root-wrapper" className="shadow-[0_0_100px_rgba(0,0,0,0.5)] rounded-[40px] transition-all duration-500 scale-95 hover:scale-100">
                     <InvitationCanvas 
                       estilos={estilos} 
                       texto={texto} 
                       fondoUrlActivo={fondoUrlActivo} 
                       isEditing={tabActiva === 'BASIC'} 
                       onEstiloChange={(id, val) => setEstilos({...estilos, [id]: val})} 
+                      onTextoChange={(id, val) => setTexto({...texto, [id]: val})}
                       evento={evento}
                       archivoAdjuntoPropio={archivoAdjuntoBase64}
                       modoPropia={modoPropia}
                       config={configWeb}
+                      fuentes={fuentes}
                       onRSVPClick={() => alert('Esto abrirá el formulario RSVP para tu invitado')}
                     />
                  </div>

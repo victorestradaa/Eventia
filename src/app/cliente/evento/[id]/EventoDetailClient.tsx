@@ -23,7 +23,9 @@ import {
   DollarSign,
   Link as LinkIcon,
   Palette,
-  Sparkles
+  Sparkles,
+  Landmark,
+  Copy
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { formatearMoneda, formatearFechaCorta, cn, parseFechaLocal } from '@/lib/utils';
@@ -38,6 +40,8 @@ import {
 } from '@/lib/actions/eventActions';
 import { registrarAbono } from '@/lib/actions/paymentActions';
 import { sendInvitationEmail } from '@/lib/actions/emailActions';
+import { getCuentasBancarias } from '@/lib/actions/bancosActions';
+import { uploadComprobante } from '@/lib/actions/uploadActions';
 
 // Componente para los iconos de persona con diseño premium
 const PersonIcon = ({ tipo, className = "w-8 h-8" }: { tipo: string, className?: string }) => {
@@ -151,7 +155,48 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailToInvite, setEmailToInvite] = useState('');
 
+  // Nuevos estados para abonos con transferencia
+  const [metodoPago, setMetodoPago] = useState<'TRANSFERENCIA' | 'TARJETA' | null>(null);
+  const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([]);
+  const [cargandoCuentas, setCargandoCuentas] = useState(false);
+  const [comprobanteFile, setComprobanteFile] = useState<File | null>(null);
+  const [comprobantePreview, setComprobantePreview] = useState<string | null>(null);
+  const [copiadoId, setCopiadoId] = useState<string | null>(null);
+
   const eventTypes = ['Boda', 'XV Años', 'Fiesta Infantil', 'Graduación', 'Fiesta', 'Bautizo'];
+  const reservas = evento.reservas || [];
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (showPagoModal && showPagoModal.reservaId) {
+      const res = reservas.find((r: any) => r.id === showPagoModal.reservaId);
+      if (res?.proveedorId) {
+        setCargandoCuentas(true);
+        getCuentasBancarias(res.proveedorId).then(resBancos => {
+          if (resBancos.success) {
+            // @ts-ignore
+            setCuentasBancarias(resBancos.data || []);
+          }
+          setCargandoCuentas(false);
+        });
+      }
+    } else {
+      setMetodoPago(null);
+      setCuentasBancarias([]);
+      setComprobanteFile(null);
+      setComprobantePreview(null);
+    }
+  }, [showPagoModal, reservas]);
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiadoId(id);
+    setTimeout(() => setCopiadoId(null), 2000);
+  };
 
   useEffect(() => {
     setEvento(initialEvento);
@@ -171,7 +216,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   // Datos reales del evento
   const invitados = evento.invitados || [];
   const lineasPresupuesto = evento.lineasPresupuesto || [];
-  const reservas = evento.reservas || [];
+
 
   const invitadosConfirmados = invitados.filter((i: any) => i.rsvpEstado === 'CONFIRMADO').length;
   const invitadosPendientes = invitados.filter((i: any) => i.rsvpEstado === 'PENDIENTE').length;
@@ -188,6 +233,8 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
     return { 
       ...l, 
       reservaId: res?.id,
+      reservaEstado: res?.estado,
+      fechaExpiracion: res?.fechaExpiracion,
       // Si hay reserva, usamos su total real de transacciones. Si no hay (y es línea manual), usamos l.montoPagado
       montoPagado: res ? totalPagadoReal : (l.montoPagado || 0),
       pagos: res?.transacciones || l.pagos || []
@@ -204,6 +251,8 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
       lineasConReservas.push({
         id: `res-${res.id}`,
         reservaId: res.id,
+        reservaEstado: res.estado,
+        fechaExpiracion: res.fechaExpiracion,
         descripcion: res.servicio?.nombre || 'Servicio Apartado',
         montoTotal: res.montoTotal || 0,
         montoPagado: totalPagadoReal,
@@ -217,8 +266,17 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   });
 
   // Cálculos reales basados en la unión
-  const subtotalContratado = lineasConReservas.reduce((acc: number, l: any) => acc + Number(l.montoTotal), 0);
-  const totalPagado = lineasConReservas.reduce((acc: number, l: any) => acc + Number(l.montoPagado), 0);
+  const lineasConReservasActivas = lineasConReservas.filter((l: any) => {
+    if (l.reservaEstado === 'CANCELADO') return false;
+    if (l.reservaEstado === 'TEMPORAL' && l.fechaExpiracion) {
+      const isExpired = new Date(l.fechaExpiracion).getTime() - now.getTime() <= 0;
+      if (isExpired) return false;
+    }
+    return true;
+  });
+
+  const subtotalContratado = lineasConReservasActivas.reduce((acc: number, l: any) => acc + Number(l.montoTotal), 0);
+  const totalPagado = lineasConReservasActivas.reduce((acc: number, l: any) => acc + Number(l.montoPagado), 0);
   const presupuestoTotal = Number(evento.presupuestoTotal) || 0;
 
 
@@ -545,7 +603,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
             </div>
 
             {/* Proveedores contratados */}
-            {lineasConReservas.length > 0 && (
+            {lineasConReservasActivas.length > 0 && (
               <div className="card overflow-hidden p-0">
                  <div className="p-6 border-b border-[var(--color-borde-suave)] flex justify-between items-center">
                     <h3 className="font-bold">Proveedores del Evento</h3>
@@ -553,30 +611,48 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                  </div>
                  <table className="tabla">
                     <thead>
-                      <tr><th>Servicio</th><th>Total</th><th>Pagado</th><th>Saldo</th></tr>
+                      <tr><th>Servicio</th><th>Contacto</th><th>Total</th><th>Pagado</th><th>Saldo</th></tr>
                     </thead>
                     <tbody>
-                      {lineasConReservas.map((l: any) => (
-                        <tr key={l.id}>
-                          <td className="font-bold">
-                            {l.descripcion}
-                            {(l.servicio?.proveedor || l.proveedor) && (
-                              <span className="block text-[10px] font-normal text-[var(--color-texto-muted)]">
-                                {(l.servicio?.proveedor?.nombre || l.proveedor?.nombre)}
-                              </span>
-                            )}
-                          </td>
-                          <td>{formatearMoneda(l.montoTotal)}</td>
-                          <td className="text-emerald-400">{formatearMoneda(l.montoPagado)}</td>
-                          <td className="text-red-400">{formatearMoneda(Number(l.montoTotal) - Number(l.montoPagado))}</td>
-                        </tr>
-                      ))}
+                      {lineasConReservasActivas.map((l: any) => {
+                        const tel = l.servicio?.proveedor?.usuario?.telefono || l.proveedor?.usuario?.telefono;
+                        return (
+                          <tr key={l.id}>
+                            <td className="font-bold">
+                              {l.descripcion}
+                              {(l.servicio?.proveedor || l.proveedor) && (
+                                <span className="block text-[10px] font-normal text-[var(--color-texto-muted)]">
+                                  {(l.servicio?.proveedor?.nombre || l.proveedor?.nombre)}
+                                </span>
+                              )}
+                            </td>
+                            <td className="text-sm">
+                              {tel ? (
+                                <a 
+                                  href={`https://wa.me/${tel.replace(/\D/g, '')}`} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="text-[var(--color-primario-claro)] hover:underline flex items-center gap-1"
+                                  title="Contactar por WhatsApp"
+                                >
+                                  {tel}
+                                </a>
+                              ) : (
+                                <span className="text-[var(--color-texto-muted)] text-xs italic">Sin contacto</span>
+                              )}
+                            </td>
+                            <td>{formatearMoneda(l.montoTotal)}</td>
+                            <td className="text-emerald-400">{formatearMoneda(l.montoPagado)}</td>
+                            <td className="text-red-400">{formatearMoneda(Number(l.montoTotal) - Number(l.montoPagado))}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                  </table>
               </div>
             )}
 
-            {lineasConReservas.length === 0 && (
+            {lineasConReservasActivas.length === 0 && (
 
               <div className="card p-8 text-center border-dashed border-2">
                 <Wallet size={32} className="mx-auto text-[var(--color-texto-muted)] mb-3" />
@@ -647,9 +723,10 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                 </h3>
                 
                 <div className="grid grid-cols-1 gap-4">
-                   {lineasConReservas.filter((l:any) => Number(l.montoTotal) - Number(l.montoPagado) > 0).map((l:any) => (
-
-                     <div key={l.id} className="card hover:bg-white/[0.02] transition-all border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6 group overflow-hidden">
+                   {lineasConReservas.filter((l:any) => Number(l.montoTotal) - Number(l.montoPagado) > 0).map((l:any) => {
+                     const isCanceled = l.reservaEstado === 'CANCELADO' || (l.reservaEstado === 'TEMPORAL' && l.fechaExpiracion && (new Date(l.fechaExpiracion).getTime() - now.getTime()) <= 0);
+                     return (
+                     <div key={l.id} className={cn("card transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 group overflow-hidden border", isCanceled ? "opacity-60 grayscale border-rose-500/20 bg-rose-500/5" : "hover:bg-white/[0.02] border-white/5")}>
                         <div className="flex items-center gap-4">
                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--color-primario)]/20 to-transparent flex items-center justify-center text-[var(--color-primario-claro)] shadow-lg transition-transform group-hover:scale-110">
                               <Wallet size={24} />
@@ -672,15 +749,24 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                                <p className="text-[9px] font-black uppercase text-[var(--color-texto-muted)] mb-0.5 pr-1 tracking-widest leading-none">Saldo Pendiente</p>
                                <p className="text-xl font-black text-amber-500 tracking-tighter">{formatearMoneda(Number(l.montoTotal) - Number(l.montoPagado))}</p>
                             </div>
-                            <button 
-                              onClick={() => setShowPagoModal(l)}
-                              className="btn btn-primario py-3 px-8 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-500/20 active:scale-95 transition-all w-full md:w-auto italic"
-                            >
-                               Abonar ahora
-                            </button>
+                            {isCanceled ? (
+                              <button 
+                                disabled
+                                className="btn py-3 px-8 rounded-2xl text-[10px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-500 border border-rose-500/20 w-full md:w-auto italic cursor-not-allowed"
+                              >
+                                Cancelado
+                              </button>
+                            ) : (
+                              <button 
+                                onClick={() => setShowPagoModal(l)}
+                                className="btn btn-primario py-3 px-8 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-500/20 active:scale-95 transition-all w-full md:w-auto italic"
+                              >
+                                Abonar ahora
+                              </button>
+                            )}
                          </div>
                      </div>
-                   ))}
+                   )})}
                    {lineasConReservas.filter((l:any) => Number(l.montoTotal) - Number(l.montoPagado) > 0).length === 0 && (
 
                      <div className="card p-16 text-center border-dashed border-2 border-emerald-500/20 bg-emerald-500/5">
@@ -706,7 +792,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 font-medium">
-                          {lineasConReservas.flatMap((l:any) => (l.pagos || []).map((p:any) => ({...p, targetDesc: l.descripcion, parentLine: l}))).sort((a:any, b:any) => new Date(b.fechaPago || b.fechaVencimiento || b.fecha).getTime() - new Date(a.fechaPago || a.fechaVencimiento || a.fecha).getTime()).map((p:any, idx:number) => {
+                          {lineasConReservasActivas.flatMap((l:any) => (l.pagos || []).map((p:any) => ({...p, targetDesc: l.descripcion, parentLine: l}))).sort((a:any, b:any) => new Date(b.fechaPago || b.fechaVencimiento || b.fecha).getTime() - new Date(a.fechaPago || a.fechaVencimiento || a.fecha).getTime()).map((p:any, idx:number) => {
                             const isPending = p.estado === 'PENDIENTE';
                             return (
                                <tr 
@@ -734,13 +820,20 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                                       <div 
                                         onClick={(e) => {
                                            e.stopPropagation();
+                                           if (p.tipo === 'ABONO') return;
                                            setShowPagoModal(p.parentLine);
                                            setMontoAbono(p.monto.toString());
                                            setSelectedTransaccionId(p.id);
                                         }}
-                                        className="flex flex-col items-start hover:scale-105 transition-transform text-left group/pay"
+                                        className={cn("flex flex-col items-start text-left group/pay transition-transform", p.tipo !== 'ABONO' && "hover:scale-105")}
                                       >
                                         {(() => {
+                                           if (p.tipo === 'ABONO') {
+                                             return (
+                                               <span className="text-[10px] text-amber-500 font-black uppercase leading-none mb-1 opacity-90">Por Confirmar</span>
+                                             );
+                                           }
+
                                            const venceDate = new Date(p.fechaVencimiento || p.fecha);
                                            const hoy = new Date();
                                            hoy.setHours(0, 0, 0, 0);
@@ -757,7 +850,9 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                                              <span className="text-[9px] text-red-500 font-black uppercase leading-none mb-1 opacity-90">{label}</span>
                                            );
                                         })()}
-                                        <span className="text-xl font-black text-amber-500 leading-none group-hover:text-amber-400 transition-colors">PAGA HOY</span>
+                                        {p.tipo !== 'ABONO' && (
+                                          <span className="text-xl font-black text-amber-500 leading-none group-hover:text-amber-400 transition-colors">PAGA HOY</span>
+                                        )}
                                       </div>
                                     ) : (
                                       <span className="text-sm text-[var(--color-texto-suave)] font-bold">
@@ -809,11 +904,54 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
            {lineasConReservas.length > 0 ? (
              <div className="card p-0 overflow-hidden">
                <table className="tabla">
-                  <thead><tr><th>Servicio</th><th>Total</th><th>Pagado</th><th>Saldo</th></tr></thead>
+                  <thead><tr><th>Servicio</th><th>Contacto</th><th>Total</th><th>Pagado</th><th>Saldo</th><th>Estatus</th></tr></thead>
                   <tbody>
-                    {lineasConReservas.map((l: any) => (
-                      <tr key={l.id}>
-                        <td className="font-bold">
+                    {lineasConReservas.map((l: any) => {
+                      const tel = l.servicio?.proveedor?.usuario?.telefono || l.proveedor?.usuario?.telefono;
+                      const isPendiente = l.reservaEstado === 'TEMPORAL';
+                      
+                      let estadoTexto = "Desconocido";
+                      let estadoEstilo = "text-gray-400 border-gray-400 bg-gray-500/10";
+                      let timeRemaining = null;
+                      let timeRemainingColor = "text-amber-400/80";
+                      
+                      if (l.reservaEstado === 'TEMPORAL') {
+                        estadoTexto = "Pendiente de Confirmación";
+                        estadoEstilo = "text-amber-400 border-amber-400 bg-amber-500/10 shadow-lg shadow-amber-500/10";
+                        if (l.fechaExpiracion) {
+                          const expDate = new Date(l.fechaExpiracion);
+                          const diffMs = expDate.getTime() - now.getTime();
+                          if (diffMs > 0) {
+                            const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+                            const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                            timeRemaining = `Restan ${hrs} Hrs ${mins} min`;
+                          } else {
+                            estadoTexto = "Cancelado";
+                            estadoEstilo = "text-rose-400 border-rose-400 bg-rose-500/10";
+                            timeRemaining = "Falta de confirmación";
+                            timeRemainingColor = "text-rose-400/80";
+                          }
+                        }
+                      } else if (l.reservaEstado === 'APARTADO') {
+                        estadoTexto = "Apartado";
+                        estadoEstilo = "text-blue-400 border-blue-400 bg-blue-500/10";
+                      } else if (l.reservaEstado === 'LIQUIDADO') {
+                        estadoTexto = "Pagado";
+                        estadoEstilo = "text-emerald-400 border-emerald-400 bg-emerald-500/10";
+                      } else if (l.reservaEstado === 'CANCELADO') {
+                        estadoTexto = "Cancelado";
+                        estadoEstilo = "text-rose-400 border-rose-400 bg-rose-500/10";
+                        timeRemaining = "Falta de confirmación";
+                        timeRemainingColor = "text-rose-400/80";
+                      } else if (!l.reservaEstado) {
+                        estadoTexto = "Manual";
+                        estadoEstilo = "text-white/50 border-white/20 bg-white/5";
+                      }
+
+                      return (
+                      <tr key={l.id} className={isPendiente ? "bg-amber-500/5 relative" : ""}>
+                        <td className="font-bold relative">
+                          {isPendiente && <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />}
                           {l.descripcion}
                           {(l.servicio?.proveedor || l.proveedor) && (
                             <span className="block text-[10px] font-normal text-[var(--color-texto-muted)]">
@@ -821,11 +959,38 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                             </span>
                           )}
                         </td>
+                        <td className="text-sm">
+                          {tel ? (
+                            <a 
+                              href={`https://wa.me/${tel.replace(/\D/g, '')}`} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="text-[var(--color-primario-claro)] hover:underline flex items-center gap-1"
+                              title="Contactar por WhatsApp"
+                            >
+                              {tel}
+                            </a>
+                          ) : (
+                            <span className="text-[var(--color-texto-muted)] text-xs italic">Sin contacto</span>
+                          )}
+                        </td>
                         <td>{formatearMoneda(l.montoTotal)}</td>
                         <td className="text-emerald-400">{formatearMoneda(l.montoPagado || 0)}</td>
                         <td className="text-red-400">{formatearMoneda(Number(l.montoTotal) - Number(l.montoPagado || 0))}</td>
+                        <td>
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${estadoEstilo}`}>
+                              {estadoTexto}
+                            </span>
+                            {timeRemaining && (
+                              <span className={`text-[10px] font-bold italic tracking-tight ${timeRemainingColor}`}>
+                                {timeRemaining}
+                              </span>
+                            )}
+                          </div>
+                        </td>
                       </tr>
-                    ))}
+                    )})}
                   </tbody>
                </table>
              </div>
@@ -1311,101 +1476,194 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
              <div className="flex gap-4 pt-4">
                 <button onClick={() => setIsAddGuestModalOpen(false)} className="btn btn-secundario flex-1 py-4 uppercase font-black tracking-widest text-xs" disabled={saving}>Cancelar</button>
                 <button onClick={handleAddGuest} className="btn btn-primario flex-1 py-4 font-black uppercase tracking-widest text-xs shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2" disabled={saving}>
-                  {saving ? <Loader2 size={18} className="animate-spin" /> : 'Confirmar Registro'}
+                  {saving ? <Loader2 size={18} className="animate-spin" /> : 'Guardar Invitado'}
                 </button>
              </div>
           </div>
         </div>
       )}
-
-      {/* Modal de Pago (Simulado) */}
+              {/* Modal de Pago (Actualizado) */}
       {showPagoModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-3xl animate-in fade-in duration-500">
-           <div className="card max-w-md w-full p-10 border-[var(--color-primario)]/30 shadow-[0_0_80px_rgba(139,92,246,0.15)] animate-in zoom-in-95 duration-300 overflow-hidden relative">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-500 overflow-y-auto">
+           <div className="card max-w-xl w-full p-8 md:p-10 border-white/10 shadow-2xl animate-in zoom-in-95 duration-300 relative my-auto">
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-[var(--color-primario)] to-transparent" />
               
-              <div className="flex items-center justify-between mb-8">
-                 <h2 className="text-2xl font-black italic uppercase tracking-tighter">Realizar Abono</h2>
+              <div className="flex items-center justify-between mb-6">
+                 <div>
+                    <h2 className="text-2xl font-black italic uppercase tracking-tighter">Registrar Abono</h2>
+                    <p className="text-[10px] text-[var(--color-texto-muted)] font-black uppercase tracking-widest">{showPagoModal.descripcion}</p>
+                 </div>
                  <button onClick={() => setShowPagoModal(null)} className="p-2 rounded-full hover:bg-white/5 transition-colors"><X size={20} /></button>
               </div>
 
-              <div className="p-6 rounded-3xl bg-[var(--color-fondo-input)] border border-white/5 space-y-4 mb-8 shadow-inner">
-                 <p className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest leading-none">Servicio a Abonar</p>
-                 <p className="text-xl font-black text-[var(--color-texto-fuerte)]">{showPagoModal.descripcion}</p>
-                 <div className="flex justify-between items-center pt-4 border-t border-white/5">
-                    <span className="text-xs font-bold text-[var(--color-texto-muted)]">Pendiente:</span>
-                    <span className="text-2xl font-black text-amber-500 tracking-tight">{formatearMoneda(Number(showPagoModal.montoTotal) - Number(showPagoModal.montoPagado))}</span>
-                 </div>
-              </div>
-
               <div className="space-y-6">
-                 <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-2">Monto del Abono (MXN)</label>
-                    <div className="relative group">
+                 {/* Paso 1: Monto */}
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-2">Monto a abonar</label>
+                    <div className="relative">
                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-2xl font-black text-[var(--color-primario-claro)] opacity-40">$</span>
                        <input 
                          type="number" 
                          value={montoAbono}
                          onChange={(e) => setMontoAbono(e.target.value)}
                          placeholder="0.00"
-                         className="input w-full h-20 pl-12 text-3xl font-black text-[var(--color-primario-claro)] bg-white/5 border-2 border-white/5 focus:border-[var(--color-primario)]/50 transition-all placeholder:opacity-20"
-                         autoFocus
+                         className="input w-full h-16 !pl-16 text-2xl font-black text-[var(--color-primario-claro)] bg-white/5 border-2 border-white/5 focus:border-[var(--color-primario)]/50 transition-all"
                        />
                     </div>
                  </div>
 
-                 <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex gap-4">
-                    <AlertCircle size={20} className="text-amber-500 shrink-0" />
-                    <p className="text-[10px] text-amber-200/70 font-medium italic">
-                       PRUEBA: Este abono se autorizará automáticamente para sincronizar el presupuesto.
-                    </p>
+                 {/* Paso 2: Método de Pago */}
+                 <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-2">Selecciona método de pago</label>
+                    <div className="grid grid-cols-2 gap-3">
+                       <button 
+                         onClick={() => setMetodoPago('TRANSFERENCIA')}
+                         className={cn(
+                           "p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all",
+                           metodoPago === 'TRANSFERENCIA' 
+                             ? "border-[var(--color-primario-claro)] bg-[var(--color-primario)]/10" 
+                             : "border-white/5 bg-white/5 hover:border-white/10"
+                         )}
+                       >
+                          <Landmark size={24} className={metodoPago === 'TRANSFERENCIA' ? "text-[var(--color-primario-claro)]" : "text-white/40"} />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Transferencia</span>
+                       </button>
+                       <button 
+                         disabled
+                         className="p-4 rounded-2xl border-2 border-white/5 bg-white/5 opacity-40 cursor-not-allowed flex flex-col items-center gap-2"
+                       >
+                          <CreditCard size={24} className="text-white/40" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Tarjeta (Próximamente)</span>
+                       </button>
+                    </div>
                  </div>
+
+                 {/* Detalles de Transferencia */}
+                 {metodoPago === 'TRANSFERENCIA' && (
+                    <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
+                       <div className="p-5 rounded-2xl bg-violet-500/5 border border-violet-500/10 space-y-4">
+                          <p className="text-[10px] font-black uppercase text-[var(--color-primario-claro)] tracking-widest">Datos del Proveedor</p>
+                          
+                          {cargandoCuentas ? (
+                            <div className="flex items-center gap-2 text-xs text-[var(--color-texto-muted)]">
+                               <Loader2 size={14} className="animate-spin" /> Cargando cuentas...
+                            </div>
+                          ) : cuentasBancarias.length > 0 ? (
+                            <div className="space-y-3">
+                               {cuentasBancarias.map((cuenta: any) => (
+                                 <div key={cuenta.id} className="p-3 rounded-xl bg-white/5 border border-white/5 group relative overflow-hidden">
+                                    <div className="flex justify-between items-start mb-1">
+                                       <span className="text-[9px] font-black uppercase text-emerald-400">{cuenta.banco}</span>
+                                       <span className="text-[8px] font-black uppercase text-white/40">{cuenta.tipo}</span>
+                                    </div>
+                                    <div 
+                                      onClick={() => copyToClipboard(cuenta.numero, cuenta.id)}
+                                      className="flex items-center justify-between cursor-pointer hover:text-[var(--color-primario-claro)] transition-colors"
+                                    >
+                                       <p className="font-mono text-sm tracking-widest">{cuenta.numero}</p>
+                                       {copiadoId === cuenta.id ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />}
+                                    </div>
+                                    <p className="text-[9px] font-bold text-white/60 mt-1 uppercase">{cuenta.titular}</p>
+                                 </div>
+                               ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs italic text-amber-400/80">El proveedor aún no registra sus datos bancarios. Por favor contáctalo directamente.</p>
+                          )}
+                       </div>
+
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-2">Adjuntar comprobante (Obligatorio)</label>
+                          <div className="relative group">
+                             <input 
+                               type="file" 
+                               accept="image/*,.pdf"
+                               onChange={(e) => {
+                                 const file = e.target.files?.[0];
+                                 if (file) {
+                                   setComprobanteFile(file);
+                                   if (file.type.startsWith('image/')) {
+                                      const reader = new FileReader();
+                                      reader.onload = (ev) => setComprobantePreview(ev.target?.result as string);
+                                      reader.readAsDataURL(file);
+                                   }
+                                 }
+                               }}
+                               className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                             />
+                             <div className="w-full p-4 rounded-xl border-2 border-dashed border-white/10 bg-white/5 group-hover:border-[var(--color-primario-claro)]/40 group-hover:bg-[var(--color-primario)]/5 transition-all flex flex-col items-center justify-center gap-2">
+                                {comprobantePreview ? (
+                                   <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-white/10">
+                                      <img src={comprobantePreview} alt="Preview" className="w-full h-full object-cover" />
+                                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                         <Check size={20} className="text-white" />
+                                      </div>
+                                   </div>
+                                ) : (
+                                   <>
+                                      <Sparkles size={20} className="text-[var(--color-primario-claro)]" />
+                                      <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)]">Subir archivo</span>
+                                   </>
+                                )}
+                                <span className="text-[9px] text-[var(--color-texto-muted)]">{comprobanteFile ? comprobanteFile.name : 'Formatos: JPG, PNG, PDF'}</span>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 )}
 
                  <button 
                    onClick={async () => {
                      if (!montoAbono || isNaN(Number(montoAbono))) return;
+                     if (metodoPago === 'TRANSFERENCIA' && !comprobanteFile) {
+                        alert("Por favor adjunta el comprobante de pago.");
+                        return;
+                     }
                      setProcesandoPago(true);
                      
                      try {
-                       const payload: any = {
-                         reservaId: showPagoModal.reservaId || '',
-                         monto: Number(montoAbono),
-                         metodoPago: 'TARJETA (TEST)',
-                         tipo: 'ABONO',
-                         esCliente: true
-                       };
-                       if (selectedTransaccionId) payload.transaccionId = selectedTransaccionId;
+                        let comprobanteUrl = '';
+                        if (comprobanteFile) {
+                           const formData = new FormData();
+                           formData.append('file', comprobanteFile);
+                           formData.append('eventoId', evento.id);
+                           const uploadRes = await uploadComprobante(formData);
+                           if (uploadRes.success) comprobanteUrl = uploadRes.url || '';
+                        }
 
-                       const apiRes = await fetch('/api/abonos', {
-                         method: 'POST',
-                         headers: { 'Content-Type': 'application/json' },
-                         body: JSON.stringify(payload)
-                       });
-                       
-                       const res = await apiRes.json();
+                        const payload: any = {
+                          reservaId: showPagoModal.reservaId || '',
+                          monto: Number(montoAbono),
+                          metodoPago: metodoPago || 'EFECTIVO',
+                          tipo: 'ABONO',
+                          esCliente: true,
+                          estado: metodoPago === 'TRANSFERENCIA' ? 'PENDIENTE' : 'PAGADO',
+                          comprobanteUrl
+                        };
 
-                       if (res.success) {
-                         setMontoAbono('');
-                         setSelectedTransaccionId(null);
-                         setShowPagoModal(null);
-                         router.refresh();
-                       } else {
-                         alert(res.error || "Error al procesar el abono. Verifica el monto.");
-                       }
+                        const res = await registrarAbono(payload);
+
+                        if (res.success) {
+                          setMontoAbono('');
+                          setShowPagoModal(null);
+                          router.refresh();
+                        } else {
+                          alert(res.error || "Error al procesar el abono.");
+                        }
                      } catch (error: any) {
-                       console.error('Error en abono cliente:', error);
-                       alert(`Error de conexión al procesar el abono. Detalle: ${error?.message || JSON.stringify(error)}`);
+                        console.error('Error en abono cliente:', error);
+                        alert(`Error de conexión.`);
                      } finally {
-                       setProcesandoPago(false);
+                        setProcesandoPago(false);
                      }
                    }}
-                   disabled={procesandoPago || !montoAbono}
+                   disabled={procesandoPago || !montoAbono || !metodoPago}
                    className={cn(
-                     "btn btn-primario w-full py-6 rounded-2xl text-sm font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl transition-all shadow-violet-500/30",
-                     (procesandoPago || !montoAbono) ? "opacity-50 grayscale" : "hover:scale-[1.03] active:scale-95"
+                     "btn btn-primario w-full py-5 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3",
+                     (procesandoPago || !montoAbono || !metodoPago) ? "opacity-50 grayscale" : "hover:scale-[1.02] active:scale-95"
                    )}
                  >
-                   {procesandoPago ? <Loader2 className="animate-spin" size={20} /> : <><CreditCard size={20} /> Aplicar Abono</>}
+                    {procesandoPago ? <Loader2 className="animate-spin" size={18} /> : <><CheckCircle2 size={18} /> Confirmar Abono</>}
                  </button>
               </div>
            </div>
@@ -1429,9 +1687,12 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                        </div>
                        <span className={cn(
                           "badge text-[9px] font-black uppercase tracking-widest px-3 py-1",
-                          selectedAbono.estado === 'PAGADO' ? "badge-liquidado" : "badge-apartado"
+                          selectedAbono.estado === 'APROBADO' || selectedAbono.estado === 'PAGADO' ? "badge-liquidado" : 
+                          selectedAbono.estado === 'RECHAZADO' ? "bg-rose-500/20 text-rose-500 border border-rose-500/30" :
+                          "badge-apartado"
                        )}>
-                          {selectedAbono.estado || 'PAGADO'}
+                          {selectedAbono.estado === 'APROBADO' || selectedAbono.estado === 'PAGADO' ? 'Pagado' : 
+                           selectedAbono.estado === 'RECHAZADO' ? 'Rechazado' : 'Pendiente'}
                        </span>
                     </div>
 

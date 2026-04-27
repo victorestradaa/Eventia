@@ -4,6 +4,29 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { serializePrisma } from '@/lib/utils';
 
+/**
+ * Autocancela todas las reservas TEMPORALES cuya fechaExpiracion haya pasado.
+ * Se debe llamar en layout o pages clave para evaluación perezosa (lazy).
+ */
+export async function autoCancelExpiredReservations() {
+  try {
+    await prisma.reserva.updateMany({
+      where: {
+        estado: 'TEMPORAL',
+        fechaExpiracion: {
+          lt: new Date()
+        }
+      },
+      data: {
+        estado: 'CANCELADO',
+        notas: 'Cancelado automáticamente por falta de confirmación.'
+      }
+    });
+  } catch (error) {
+    console.error('Error auto-cancelando reservas expiradas:', error);
+  }
+}
+
 function processTrends(reservas: any[]) {
   const grouped: Record<string, any> = {};
   
@@ -44,7 +67,7 @@ function processMonthlyAccumulation(reservas: any[]) {
 
   reservas.forEach(r => {
     const date = new Date(r.creadoEn);
-    if (date.getFullYear() === currentYear) {
+    if (date.getFullYear() === currentYear && (r.estado === 'APARTADO' || r.estado === 'LIQUIDADO')) {
       monthlyCounts[date.getMonth()].count++;
     }
   });
@@ -57,7 +80,7 @@ function processMonthlyAccumulation(reservas: any[]) {
  */
 export async function getResumenProveedor(proveedorId: string) {
   try {
-    const [reservas, servicios, metricas, tareasPendientes, allReservas] = await Promise.all([
+    const [reservas, servicios, metricas, tareasPendientes, canceladasCount, allReservas, proximasFechasCount] = await Promise.all([
       prisma.reserva.findMany({
         where: { proveedorId },
         orderBy: { fechaEvento: 'asc' },
@@ -82,11 +105,17 @@ export async function getResumenProveedor(proveedorId: string) {
       prisma.reserva.count({
         where: { proveedorId, estado: 'TEMPORAL' }
       }),
+      prisma.reserva.count({
+        where: { proveedorId, estado: 'CANCELADO' }
+      }),
       // New: fetch all reservations for trends
       prisma.reserva.findMany({
         where: { proveedorId },
         select: { creadoEn: true, estado: true, montoTotal: true },
         orderBy: { creadoEn: 'asc' }
+      }),
+      prisma.reserva.count({
+        where: { proveedorId, estado: { not: 'CANCELADO' } }
       })
     ]);
 
@@ -111,6 +140,8 @@ export async function getResumenProveedor(proveedorId: string) {
         ingresosTotales: metricas._sum.montoTotal ? Number(metricas._sum.montoTotal) : 0,
         totalReservas: metricas._count.id,
         tareasPendientes: tareasPendientes,
+        canceladasCount,
+        proximasFechasCount,
         trends,
         monthlyTrends
       } 

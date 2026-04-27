@@ -17,6 +17,7 @@ export async function registrarAbono(data: {
   transaccionId?: string;         // Nuevo: ID de la transacción en caso de estar liquidando un pagaré
   notas?: string;
   esCliente?: boolean;
+  comprobanteUrl?: string;
 }) {
   try {
     const result = await prisma.$transaction(async (tx: any) => {
@@ -66,13 +67,32 @@ export async function registrarAbono(data: {
             estado: nuevoEstadoTx,
             fechaPago: esPagado ? new Date() : null,
             fechaVencimiento: data.fechaVencimiento ? new Date(data.fechaVencimiento) : null,
+            comprobanteUrl: data.comprobanteUrl || null,
             notas: data.notas || (data.esCliente ? 'Abono realizado por el cliente' : 'Abono registrado por el proveedor')
           }
         });
       }
 
-      // Si la transacción sigue siendo PENDIENTE (un nuevo pagaré), no actualizamos totales aún
-      if (!esPagado && !data.transaccionId) {
+      // Si la transacción sigue siendo PENDIENTE (un nuevo pagaré o abono por confirmar), no actualizamos totales aún
+      if (!esPagado) {
+         // Si es una línea de presupuesto, registrar el Pago PENDIENTE
+         if (reserva.eventoId && reserva.servicioId) {
+            const linea = await tx.lineaPresupuesto.findFirst({
+              where: { eventoId: reserva.eventoId, servicioId: reserva.servicioId }
+            });
+            if (linea) {
+              await tx.pago.create({
+                data: {
+                  lineaId: linea.id,
+                  monto: data.monto,
+                  estado: 'PENDIENTE',
+                  metodoPago: data.metodoPago,
+                  comprobanteUrl: data.comprobanteUrl || null,
+                  nota: data.notas || `Abono pendiente a ${reserva.servicio.nombre}`
+                }
+              });
+            }
+         }
          return JSON.parse(JSON.stringify({ reserva, transaccion }));
       }
 
@@ -121,6 +141,9 @@ export async function registrarAbono(data: {
             data: {
               lineaId: linea.id,
               monto: data.monto,
+              estado: 'APROBADO',
+              metodoPago: data.metodoPago,
+              comprobanteUrl: data.comprobanteUrl || null,
               nota: data.notas || `Abono a ${reserva.servicio.nombre}`
             }
           });
@@ -162,3 +185,301 @@ export async function registrarAbono(data: {
     });
   }
 }
+
+/**
+ * Aprueba un pago pendiente realizado por transferencia.
+ */
+export async function aprobarPago(pagoId: string) {
+  try {
+    const result = await prisma.$transaction(async (tx: any) => {
+      const pago = await tx.pago.findUnique({
+        where: { id: pagoId },
+        include: { 
+          linea: true
+        }
+      });
+
+      if (!pago || pago.estado !== 'PENDIENTE') {
+        throw new Error('Pago no encontrado o ya procesado');
+      }
+
+      // 1. Marcar pago como APROBADO
+      await tx.pago.update({
+        where: { id: pagoId },
+        data: { estado: 'APROBADO' }
+      });
+
+      // 2. Incrementar montoPagado en LineaPresupuesto
+      await tx.lineaPresupuesto.update({
+        where: { id: pago.lineaId },
+        data: {
+          montoPagado: { increment: pago.monto }
+        }
+      });
+
+      // 3. Buscar la transacción correspondiente y aprobarla
+      const linea = pago.linea;
+      if (linea.servicioId) {
+        const reserva = await tx.reserva.findFirst({
+           where: { 
+             eventoId: linea.eventoId, 
+             servicioId: linea.servicioId,
+             estado: { not: 'CANCELADO' }
+           }
+        });
+
+        if (reserva) {
+          // Buscar transacción PENDIENTE con mismo monto
+          const transaccion = await tx.transaccion.findFirst({
+            where: { 
+              reservaId: reserva.id, 
+              estado: 'PENDIENTE', 
+              monto: pago.monto 
+            },
+            orderBy: { creadoEn: 'desc' }
+          });
+
+          if (transaccion) {
+            await tx.transaccion.update({
+              where: { id: transaccion.id },
+              data: { estado: 'PAGADO', fechaPago: new Date() }
+            });
+          }
+
+          // Recalcular estado de la reserva
+          const todasLasTransacciones = await tx.transaccion.findMany({
+            where: { reservaId: reserva.id, estado: 'PAGADO' }
+          });
+          const totalPagado = todasLasTransacciones.reduce((sum: number, t: any) => sum + Number(t.monto), 0);
+
+          let nuevoEstadoReserva = reserva.estado;
+          if (totalPagado >= Number(reserva.montoTotal)) {
+            nuevoEstadoReserva = 'LIQUIDADO';
+          } else if (reserva.estado === 'TEMPORAL' && totalPagado > 0) {
+            nuevoEstadoReserva = 'APARTADO';
+          }
+
+          await tx.reserva.update({
+            where: { id: reserva.id },
+            data: { 
+              estado: nuevoEstadoReserva,
+              montoAnticipo: totalPagado > 0 ? totalPagado : reserva.montoAnticipo
+            }
+          });
+        }
+      }
+
+      return pago;
+    });
+
+    revalidatePath('/proveedor/ventas');
+    return { success: true, data: serializePrisma(result) };
+  } catch (error: any) {
+    console.error('Error aprobando pago:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Rechaza un pago pendiente.
+ */
+export async function rechazarPago(pagoId: string, motivo: string) {
+  try {
+    const result = await prisma.$transaction(async (tx: any) => {
+      const pago = await tx.pago.findUnique({
+        where: { id: pagoId },
+        include: { linea: true }
+      });
+
+      if (!pago || pago.estado !== 'PENDIENTE') {
+        throw new Error('Pago no encontrado o ya procesado');
+      }
+
+      await tx.pago.update({
+        where: { id: pagoId },
+        data: { 
+          estado: 'RECHAZADO',
+          nota: `${pago.nota || ''} - RECHAZADO: ${motivo}`.trim()
+        }
+      });
+
+      // También rechazar la transacción vinculada
+      if (pago.linea.servicioId) {
+        const reserva = await tx.reserva.findFirst({
+           where: { eventoId: pago.linea.eventoId, servicioId: pago.linea.servicioId }
+        });
+
+        if (reserva) {
+          const transaccion = await tx.transaccion.findFirst({
+            where: { reservaId: reserva.id, estado: 'PENDIENTE', monto: pago.monto },
+            orderBy: { creadoEn: 'desc' }
+          });
+
+          if (transaccion) {
+            await tx.transaccion.update({
+              where: { id: transaccion.id },
+              data: { 
+                estado: 'RECHAZADO',
+                notas: `${transaccion.notas || ''} - RECHAZADO: ${motivo}`.trim()
+              }
+            });
+          }
+        }
+      }
+
+      return true;
+    });
+
+    revalidatePath('/proveedor/ventas');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error rechazando pago:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Aprueba una transacción pendiente (visto desde el proveedor).
+ */
+export async function aprobarTransaccion(transaccionId: string) {
+  try {
+    const result = await prisma.$transaction(async (tx: any) => {
+      const transaccion = await tx.transaccion.findUnique({
+        where: { id: transaccionId },
+        include: { reserva: true }
+      });
+
+      if (!transaccion || transaccion.estado !== 'PENDIENTE') {
+        throw new Error('Transacción no encontrada o ya procesada');
+      }
+
+      // 1. Aprobar transacción
+      const updatedTx = await tx.transaccion.update({
+        where: { id: transaccionId },
+        data: { estado: 'PAGADO', fechaPago: new Date() }
+      });
+
+      // 2. Buscar el Pago vinculado y aprobarlo
+      const reserva = transaccion.reserva;
+      if (reserva.eventoId && reserva.servicioId) {
+        const linea = await tx.lineaPresupuesto.findFirst({
+           where: { eventoId: reserva.eventoId, servicioId: reserva.servicioId }
+        });
+
+        if (linea) {
+          const pago = await tx.pago.findFirst({
+             where: { lineaId: linea.id, estado: 'PENDIENTE', monto: transaccion.monto },
+             orderBy: { fecha: 'desc' }
+          });
+
+          if (pago) {
+            await tx.pago.update({
+              where: { id: pago.id },
+              data: { estado: 'APROBADO' }
+            });
+
+            await tx.lineaPresupuesto.update({
+              where: { id: linea.id },
+              data: { montoPagado: { increment: transaccion.monto } }
+            });
+          }
+        }
+      }
+
+      // 3. Recalcular estado de la reserva
+      const todasLasTransacciones = await tx.transaccion.findMany({
+        where: { reservaId: transaccion.reservaId, estado: 'PAGADO' }
+      });
+      const totalPagado = todasLasTransacciones.reduce((sum: number, t: any) => sum + Number(t.monto), 0);
+
+      let nuevoEstadoReserva = reserva.estado;
+      if (totalPagado >= Number(reserva.montoTotal)) {
+        nuevoEstadoReserva = 'LIQUIDADO';
+      } else if (reserva.estado === 'TEMPORAL' && totalPagado > 0) {
+        nuevoEstadoReserva = 'APARTADO';
+      }
+
+      const updatedReserva = await tx.reserva.update({
+        where: { id: reserva.id },
+        data: { 
+          estado: nuevoEstadoReserva,
+          montoAnticipo: totalPagado > 0 ? totalPagado : reserva.montoAnticipo
+        },
+        include: { transacciones: { orderBy: { creadoEn: 'asc' } }, cliente: { include: { usuario: true } }, servicio: true, evento: true }
+      });
+
+      return updatedReserva;
+    });
+
+    revalidatePath('/proveedor/ventas');
+    return { success: true, data: serializePrisma(result) };
+  } catch (error: any) {
+    console.error('Error aprobando transacción:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Rechaza una transacción pendiente.
+ */
+export async function rechazarTransaccion(transaccionId: string, motivo: string) {
+  try {
+    const result = await prisma.$transaction(async (tx: any) => {
+      const transaccion = await tx.transaccion.findUnique({
+        where: { id: transaccionId },
+        include: { reserva: true }
+      });
+
+      if (!transaccion || transaccion.estado !== 'PENDIENTE') {
+        throw new Error('Transacción no encontrada o ya procesada');
+      }
+
+      await tx.transaccion.update({
+        where: { id: transaccionId },
+        data: { 
+          estado: 'RECHAZADO',
+          notas: `${transaccion.notas || ''} - RECHAZADO: ${motivo}`.trim()
+        }
+      });
+
+      // También rechazar el Pago vinculado
+      const reserva = transaccion.reserva;
+      if (reserva.eventoId && reserva.servicioId) {
+        const linea = await tx.lineaPresupuesto.findFirst({
+           where: { eventoId: reserva.eventoId, servicioId: reserva.servicioId }
+        });
+
+        if (linea) {
+          const pago = await tx.pago.findFirst({
+             where: { lineaId: linea.id, estado: 'PENDIENTE', monto: transaccion.monto },
+             orderBy: { fecha: 'desc' }
+          });
+
+          if (pago) {
+            await tx.pago.update({
+              where: { id: pago.id },
+              data: { 
+                estado: 'RECHAZADO',
+                nota: `${pago.nota || ''} - RECHAZADO: ${motivo}`.trim()
+              }
+            });
+          }
+        }
+      }
+
+      const updatedReserva = await tx.reserva.findUnique({
+        where: { id: transaccion.reservaId },
+        include: { transacciones: { orderBy: { creadoEn: 'asc' } }, cliente: { include: { usuario: true } }, servicio: true, evento: true }
+      });
+
+      return updatedReserva;
+    });
+
+    revalidatePath('/proveedor/ventas');
+    return { success: true, data: serializePrisma(result) };
+  } catch (error: any) {
+    console.error('Error rechazando transacción:', error);
+    return { success: false, error: error.message };
+  }
+}
+
