@@ -28,6 +28,7 @@ const MENU_ITEMS = [
   { href: '/admin/eventos',       label: 'Eventos',               icon: Calendar },
   { href: '/admin/reportes',      label: 'Reportes',              icon: DollarSign },
   { href: '/admin/catalogo',      label: 'Catálogo Invitaciones', icon: FolderTree },
+  { href: '/admin/planes',        label: 'Planes y Precios',      icon: DollarSign },
 ];
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {

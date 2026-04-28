@@ -28,34 +28,36 @@ const PLANES = [
     color: 'border-white/10'
   },
   {
-    id: 'INTERMEDIO',
+    id: 'DESTACADO', // Cambiado de INTERMEDIO para coincidir con el nombre comercial
     nombre: 'Plan Destacado',
+    precioNormal: 299,
     precioMensual: 99,
     precioAnual: 990,
-    comision: '6%',
+    comision: '7%',
     descripcion: 'Mayor visibilidad y menores comisiones.',
     icon: Star,
     features: [
       'Perfil destacado en el buscador',
       'Fotos y videos en productos',
       'Analíticas de visitas',
-      'Comisión del 6% por evento',
+      'Comisión del 7% por evento',
       'Soporte prioritario',
       'Etiqueta de Verificado'
     ],
     color: 'border-blue-500/50 shadow-blue-500/10'
   },
   {
-    id: 'PREMIUM',
+    id: 'PRO', // Cambiado de PREMIUM
     nombre: 'Plan PRO',
+    precioNormal: 799,
     precioMensual: 399,
     precioAnual: 3990,
-    comision: '3%',
+    comision: '4%',
     descripcion: 'Dominio total del mercado local.',
     icon: Crown,
     features: [
       'Aparición en el Top de resultados',
-      'Mínima comisión del 3%',
+      'Mínima comisión del 4%',
       'Sello de Proveedor Premium',
       'Soporte 24/7 dedicado',
       'Publicidad en el Dashboard cliente',
@@ -67,8 +69,9 @@ const PLANES = [
   {
     id: 'ELITE',
     nombre: 'Plan Elite',
-    precioMensual: 599,
-    precioAnual: 5990,
+    precioNormal: 1499,
+    precioMensual: 999,
+    precioAnual: 9990,
     comision: '0%',
     descripcion: 'Sin comisiones. Libertad absoluta.',
     icon: Gem,
@@ -225,14 +228,21 @@ export default function PlanesClient({ planActual, proveedorId, planExpira }: Pl
               </div>
 
               <div className="mb-8 space-y-2">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black">${billingCycle === 'mensual' ? plan.precioMensual : plan.precioAnual}</span>
-                  <span className="text-sm text-[var(--color-texto-muted)] uppercase font-bold">/ {billingCycle === 'mensual' ? 'mes' : 'año'}</span>
+                <div className="flex flex-col">
+                  {plan.precioNormal && (
+                    <span className="text-sm text-[var(--color-texto-muted)] line-through decoration-red-500/50 decoration-2 font-bold mb-1">
+                      ${billingCycle === 'mensual' ? plan.precioNormal : plan.precioNormal * 12}
+                    </span>
+                  )}
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-black">${billingCycle === 'mensual' ? plan.precioMensual : plan.precioAnual}</span>
+                    <span className="text-sm text-[var(--color-texto-muted)] uppercase font-bold">/ {billingCycle === 'mensual' ? 'mes' : 'año'}</span>
+                  </div>
                 </div>
                 {billingCycle === 'anual' && plan.precioAnual > 0 && (
-                  <p className="text-[10px] font-bold text-emerald-400 italic">Equivale a ${Math.round(plan.precioAnual/12)}/mes</p>
+                  <p className="text-[10px] font-bold text-emerald-400 italic">Equivale a ${Math.round(plan.precioAnual/12)}/mes (Cobro de 10 meses)</p>
                 )}
-                <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
+                <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg w-fit">
                   <DollarSign size={14} />
                   <span>Comisión por evento: {plan.comision}</span>
                 </div>

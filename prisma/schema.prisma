@@ -411,3 +411,16 @@ enum EstadoRSVP {
   CONFIRMADO
   RECHAZADO
 }
+
+model PlanConfig {
+  id              String   @id @default(cuid())
+  planId          String   @unique // e.g., "DESTACADO", "PRO", "ELITE", "ORO", "PLANNER"
+  nombre          String
+  precioNormal    Float
+  precioPromo     Float?
+  promoDesde      DateTime?
+  promoHasta      DateTime?
+  comision        Float?   // Para proveedores
+  rol             String   // CLIENTE o PROVEEDOR
+  actualizadoEn   DateTime @updatedAt
+}

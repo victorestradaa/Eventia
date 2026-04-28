@@ -18,16 +18,20 @@ export async function POST(request: Request) {
     const user = profileRes.data;
     const rol = user.rol;
 
-    // Precios básicos para la prueba
-    const PRECIOS: any = {
-      ORO: 99,
-      PLANNER: billingCycle === 'anual' ? 2990 : 299,
-      INTERMEDIO: billingCycle === 'anual' ? 990 : 99,
-      PREMIUM: billingCycle === 'anual' ? 3990 : 399,
-      ELITE: billingCycle === 'anual' ? 5990 : 599
+    // Precios de promoción mensuales (Nuevos requisitos)
+    const PRECIOS_PROMO: any = {
+      DESTACADO: 99,
+      PRO: 399,
+      ELITE: 999,
+      PLANNER: 299,
+      ORO: 99
     };
 
-    const price = PRECIOS[planId] || 1;
+    // Si es anual, cobramos 10 meses del precio promo
+    const price = billingCycle === 'anual' 
+      ? (PRECIOS_PROMO[planId] || 0) * 10 
+      : (PRECIOS_PROMO[planId] || 0);
+
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
     const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
