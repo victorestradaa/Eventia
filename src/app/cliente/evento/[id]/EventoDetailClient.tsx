@@ -628,15 +628,22 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                             </td>
                             <td className="text-sm">
                               {tel ? (
-                                <a 
-                                  href={`https://wa.me/${tel.replace(/\D/g, '')}`} 
-                                  target="_blank" 
-                                  rel="noreferrer"
-                                  className="text-[var(--color-primario-claro)] hover:underline flex items-center gap-1"
-                                  title="Contactar por WhatsApp"
-                                >
-                                  {tel}
-                                </a>
+                                (() => {
+                                  const telLimpio = tel.replace(/\D/g, '');
+                                  const fechaEvento = evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' }) : 'por confirmar';
+                                  const msg = encodeURIComponent(`Hola! 👋 Le contacto a través de *Eventia*.\n\n📋 *Detalles de mi reserva:*\n• Evento: ${evento.nombre}\n• Fecha: ${fechaEvento}\n• Servicio: ${l.descripcion}\n• Precio pactado: ${formatearMoneda(l.montoTotal)}\n\nQuedo en espera de su confirmación. ¡Gracias!`);
+                                  return (
+                                    <a 
+                                      href={`https://wa.me/${telLimpio}?text=${msg}`} 
+                                      target="_blank" 
+                                      rel="noreferrer"
+                                      className="text-emerald-500 hover:text-emerald-400 hover:underline flex items-center gap-1 font-bold transition-colors"
+                                      title="Enviar mensaje por WhatsApp"
+                                    >
+                                      <span>📱</span> {tel}
+                                    </a>
+                                  );
+                                })()
                               ) : (
                                 <span className="text-[var(--color-texto-muted)] text-xs italic">Sin contacto</span>
                               )}
@@ -961,15 +968,22 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                         </td>
                         <td className="text-sm">
                           {tel ? (
-                            <a 
-                              href={`https://wa.me/${tel.replace(/\D/g, '')}`} 
-                              target="_blank" 
-                              rel="noreferrer"
-                              className="text-[var(--color-primario-claro)] hover:underline flex items-center gap-1"
-                              title="Contactar por WhatsApp"
-                            >
-                              {tel}
-                            </a>
+                            (() => {
+                              const telLimpio = tel.replace(/\D/g, '');
+                              const fechaEvento = evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' }) : 'por confirmar';
+                              const msg = encodeURIComponent(`Hola! 👋 Le contacto a través de *Eventia*.\n\n📋 *Detalles de mi reserva:*\n• Evento: ${evento.nombre}\n• Fecha: ${fechaEvento}\n• Servicio: ${l.descripcion}\n• Precio pactado: ${formatearMoneda(l.montoTotal)}\n\nQuedo en espera de su confirmación. ¡Gracias!`);
+                              return (
+                                <a 
+                                  href={`https://wa.me/${telLimpio}?text=${msg}`} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="text-emerald-500 hover:text-emerald-400 hover:underline flex items-center gap-1 font-bold transition-colors"
+                                  title="Enviar mensaje por WhatsApp"
+                                >
+                                  <span>📱</span> {tel}
+                                </a>
+                              );
+                            })()
                           ) : (
                             <span className="text-[var(--color-texto-muted)] text-xs italic">Sin contacto</span>
                           )}

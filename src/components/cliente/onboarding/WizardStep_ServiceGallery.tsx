@@ -206,45 +206,54 @@ export default function WizardStep_ServiceGallery({
 
       {/* ─── Modal de galería / detalle ─── */}
       {servicioActivo && (
-        <div className="fixed inset-0 z-[300] bg-black/90 flex flex-col p-4 md:p-8 animate-in fade-in duration-200">
-          <div className="max-w-3xl w-full mx-auto flex flex-col gap-4 h-full">
+        <div className="fixed inset-0 z-[300] flex flex-col animate-in fade-in duration-200"
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(12px)' }}
+        >
+          <div className="max-w-2xl w-full mx-auto flex flex-col h-full p-4 md:p-6 gap-3">
             {/* Header modal */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-black text-white text-lg">{servicioActivo.nombre}</p>
-                <p className="text-white/50 text-xs">{servicioActivo.proveedorNombre}</p>
+            <div className="flex items-center justify-between px-2">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[#d4af37]/20 flex items-center justify-center text-lg">
+                  {categoria.emoji}
+                </div>
+                <div>
+                  <p className="font-black text-white text-base leading-tight">{servicioActivo.nombre}</p>
+                  <p className="text-white/50 text-xs">{servicioActivo.proveedorNombre}</p>
+                </div>
               </div>
               <button
                 onClick={cerrarModal}
-                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors flex-shrink-0"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
             {/* Galería */}
-            <div className="relative flex-1 min-h-0 rounded-3xl overflow-hidden bg-black">
+            <div className="relative flex-1 min-h-0 rounded-2xl overflow-hidden bg-black/30 border border-white/10">
               {galeriaActiva.length > 0 ? (
                 <>
                   <img
                     key={galIdx}
                     src={galeriaActiva[galIdx]}
                     alt="Galería"
-                    className="w-full h-full object-contain animate-in fade-in duration-300"
+                    className="w-full h-full object-cover animate-in fade-in duration-300"
                   />
+                  {/* Overlay gradiente inferior */}
+                  <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
                   {galeriaActiva.length > 1 && (
                     <>
                       <button
                         onClick={() => setGalIdx(i => (i - 1 + galeriaActiva.length) % galeriaActiva.length)}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/70 flex items-center justify-center text-white transition-colors backdrop-blur-sm"
                       >
-                        <ChevronLeft size={24} />
+                        <ChevronLeft size={20} />
                       </button>
                       <button
                         onClick={() => setGalIdx(i => (i + 1) % galeriaActiva.length)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 flex items-center justify-center text-white transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/70 flex items-center justify-center text-white transition-colors backdrop-blur-sm"
                       >
-                        <ChevronRight size={24} />
+                        <ChevronRight size={20} />
                       </button>
                       {/* Indicadores */}
                       <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
@@ -252,27 +261,39 @@ export default function WizardStep_ServiceGallery({
                           <button
                             key={i}
                             onClick={() => setGalIdx(i)}
-                            className={`w-1.5 h-1.5 rounded-full transition-all ${i === galIdx ? 'bg-white w-4' : 'bg-white/40'}`}
+                            className={`h-1.5 rounded-full transition-all ${i === galIdx ? 'bg-white w-5' : 'bg-white/40 w-1.5'}`}
                           />
                         ))}
+                      </div>
+                      {/* Contador */}
+                      <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-white text-[10px] font-bold">
+                        {galIdx + 1} / {galeriaActiva.length}
                       </div>
                     </>
                   )}
                 </>
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-6xl opacity-20">
-                  {categoria.emoji}
+                <div className="w-full h-full flex flex-col items-center justify-center gap-3">
+                  <div className="text-5xl opacity-30">{categoria.emoji}</div>
+                  <p className="text-white/30 text-sm">Sin imágenes disponibles</p>
                 </div>
               )}
             </div>
 
-            {/* Descripción + precio */}
-            {servicioActivo.descripcion && (
-              <p className="text-white/70 text-sm line-clamp-2">{servicioActivo.descripcion}</p>
-            )}
+            {/* Info card */}
+            <div className="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-4 space-y-2">
+              {servicioActivo.descripcion && (
+                <p className="text-white/70 text-sm leading-relaxed line-clamp-2">{servicioActivo.descripcion}</p>
+              )}
+              {servicioActivo.ciudad && (
+                <p className="text-white/40 text-xs flex items-center gap-1">
+                  <MapPin size={10} /> {servicioActivo.ciudad}
+                </p>
+              )}
+            </div>
 
             {/* Footer de acción */}
-            <div className="space-y-3">
+            <div className="space-y-3 pb-2">
               {error && (
                 <div className="px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold">
                   {error}
@@ -299,16 +320,16 @@ export default function WizardStep_ServiceGallery({
               ) : confirmando ? (
                 /* Estado: confirmar */
                 <div className="space-y-3">
-                  <div className="text-center">
-                    <p className="text-white font-bold text-sm">¿Confirmas la reserva de</p>
-                    <p className="text-[#d4af37] font-black text-lg">{formatearMoneda(servicioActivo.precio)}</p>
-                    <p className="text-white/50 text-xs">con {servicioActivo.proveedorNombre}?</p>
+                  <div className="text-center rounded-2xl bg-white/5 border border-white/10 py-4 px-6">
+                    <p className="text-white/70 font-bold text-sm">¿Confirmas la reserva de</p>
+                    <p className="text-[#d4af37] font-black text-2xl">{formatearMoneda(servicioActivo.precio)}</p>
+                    <p className="text-white/40 text-xs">con {servicioActivo.proveedorNombre}?</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       onClick={() => setConfirmando(false)}
                       disabled={reservando}
-                      className="py-4 rounded-2xl bg-white/10 text-white font-black text-sm hover:bg-white/20 transition-colors disabled:opacity-50"
+                      className="py-4 rounded-2xl bg-white/10 text-white font-black text-sm hover:bg-white/20 transition-colors disabled:opacity-50 border border-white/10"
                     >
                       Cancelar
                     </button>
@@ -323,14 +344,14 @@ export default function WizardStep_ServiceGallery({
                 </div>
               ) : (
                 /* Estado: botón principal */
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="flex-1 flex flex-col justify-center">
+                <div className="flex gap-3 items-center rounded-2xl bg-white/5 border border-white/10 px-5 py-4">
+                  <div className="flex-1">
                     <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Precio</p>
                     <p className="text-2xl font-black text-white">{formatearMoneda(servicioActivo.precio)}</p>
                   </div>
                   <button
                     onClick={() => setConfirmando(true)}
-                    className="flex-1 py-4 rounded-2xl font-black uppercase text-sm tracking-widest text-black bg-gradient-to-b from-[#eadeba] to-[#c79a3b] shadow-lg hover:brightness-110 hover:scale-105 transition-all text-center"
+                    className="py-4 px-6 rounded-2xl font-black uppercase text-sm tracking-widest text-black bg-gradient-to-b from-[#eadeba] to-[#c79a3b] shadow-lg hover:brightness-110 hover:scale-105 transition-all"
                   >
                     🔖 ¡RESERVAR!
                   </button>
