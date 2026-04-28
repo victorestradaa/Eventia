@@ -166,15 +166,16 @@ export default function PlanesClient({ planActual, proveedorId, planExpira }: Pl
             <button
               onClick={() => setBillingCycle('anual')}
               className={cn(
-                "px-8 py-3 rounded-xl text-sm font-black transition-all duration-300 relative group",
+                "px-8 py-3 rounded-xl text-sm font-black transition-all duration-300 relative",
                 billingCycle === 'anual' 
                   ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] scale-105" 
                   : "text-[var(--color-texto-muted)] hover:text-white"
               )}
             >
               ANUAL
-              <span className="absolute -top-3 -right-3 bg-emerald-500 text-white text-[8px] px-2 py-1 rounded-md font-black shadow-lg animate-bounce">
+              <span className="absolute bottom-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[9px] px-3 py-1 rounded-full font-black shadow-lg animate-bounce whitespace-nowrap">
                 2 MESES GRATIS 🎁
+                <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-emerald-500"></span>
               </span>
             </button>
           </div>
