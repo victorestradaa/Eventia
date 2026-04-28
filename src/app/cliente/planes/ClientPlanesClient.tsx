@@ -3,7 +3,9 @@
 import { Check, Star, Zap, Crown, DollarSign, Loader2, Sparkles, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import { createCheckoutSession } from '@/lib/actions/stripeActions';
+import { createPlanPreference } from '@/lib/actions/mercadopagoActions';
+import { differenceInDays, format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const PLANES_CLIENTE = [
   {
@@ -58,18 +60,19 @@ const PLANES_CLIENTE = [
 
 interface ClientPlanesClientProps {
   planActual: string;
+  planExpira?: Date | string | null;
 }
 
-export default function ClientPlanesClient({ planActual }: ClientPlanesClientProps) {
+export default function ClientPlanesClient({ planActual, planExpira }: ClientPlanesClientProps) {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleUpgrade = async (planId: string) => {
     if (planId === 'FREE') return;
     
     setLoading(planId);
-    const stripePlanId = `CLIENTE_${planId}` as any;
-    
-    const res = await createCheckoutSession(stripePlanId);
+    // Para Clientes, ORO es 'unico' (13 meses) y PLANNER es 'mensual'
+    const cycle = planId === 'ORO' ? 'unico' : 'mensual';
+    const res = await createPlanPreference(planId, cycle);
     
     if (res.success && res.url) {
       window.location.href = res.url;
@@ -79,6 +82,9 @@ export default function ClientPlanesClient({ planActual }: ClientPlanesClientPro
     }
   };
 
+  const diasRestantes = planExpira ? differenceInDays(new Date(planExpira), new Date()) : null;
+  const expiraFormateada = planExpira ? format(new Date(planExpira), "d 'de' MMMM, yyyy", { locale: es }) : null;
+
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="text-center space-y-4">
@@ -86,7 +92,25 @@ export default function ClientPlanesClient({ planActual }: ClientPlanesClientPro
           Membresías Premium
         </div>
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Lleva tu organización al siguiente nivel</h1>
-        <p className="text-[var(--color-texto-suave)] max-w-2xl mx-auto text-lg">
+        
+        {planActual !== 'FREE' && planExpira && (
+          <div className="max-w-md mx-auto bg-[var(--color-primario)]/5 border border-[var(--color-primario)]/20 rounded-2xl p-4 mt-6 animate-in zoom-in duration-500">
+            <p className="text-sm font-bold">Plan Actual: <span className="text-[var(--color-primario-claro)]">{planActual}</span></p>
+            <div className="flex items-center justify-center gap-2 mt-1">
+              <Clock size={14} className={cn(diasRestantes && diasRestantes < 3 ? "text-red-400 animate-pulse" : "text-[var(--color-primario-claro)]")} />
+              <p className="text-xs font-medium">
+                {diasRestantes && diasRestantes > 0 
+                  ? `Te quedan ${diasRestantes} días de vigencia` 
+                  : diasRestantes !== null && diasRestantes <= 0 && diasRestantes >= -3
+                    ? `Tu plan venció, pero tienes ${3 + diasRestantes} días de gracia`
+                    : "Tu plan ha expirado"}
+              </p>
+            </div>
+            <p className="text-[10px] text-[var(--color-texto-muted)] mt-1">Vence el {expiraFormateada}</p>
+          </div>
+        )}
+
+        <p className="text-[var(--color-texto-suave)] max-w-2xl mx-auto text-lg mt-4">
           Desbloquea herramientas avanzadas y gestiona múltiples eventos sin límites.
         </p>
       </div>
@@ -190,7 +214,7 @@ export default function ClientPlanesClient({ planActual }: ClientPlanesClientPro
             </div>
             <div>
                <p className="font-bold text-sm">Pago Seguro</p>
-               <p className="text-[10px] text-[var(--color-texto-muted)]">Cifrado de 256 bits vía Stripe</p>
+               <p className="text-[10px] text-[var(--color-texto-muted)]">Cifrado de 256 bits vía Mercado Pago</p>
             </div>
          </div>
          <div className="flex items-center gap-3">

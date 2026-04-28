@@ -17,6 +17,9 @@ export default async function ClientPlanesPage() {
   }
 
   return (
-    <ClientPlanesClient planActual={perfil.cliente?.plan || 'FREE'} />
+    <ClientPlanesClient 
+      planActual={perfil.cliente?.plan || 'FREE'} 
+      planExpira={perfil.cliente?.planExpira}
+    />
   );
 }

@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { serializePrisma } from '@/lib/utils';
+import { serializePrisma, validarVigenciaPlan } from '@/lib/utils';
 
 /**
  * Autocancela todas las reservas TEMPORALES cuya fechaExpiracion haya pasado.
@@ -638,7 +638,7 @@ export async function getExplorarServicios() {
         precio: Number(s.precio),
         ciudad: s.proveedor.ciudad,
         capacidad: s.capacidadMax ? `${s.capacidadMin}-${s.capacidadMax}` : 'N/A',
-        premium: s.proveedor.plan === 'PREMIUM' || s.proveedor.plan === 'ELITE',
+        premium: (s.proveedor.plan === 'PREMIUM' || s.proveedor.plan === 'ELITE') && validarVigenciaPlan(s.proveedor.planExpira),
         img: s.imagenes[0] || s.proveedor.logoUrl || null,
         proveedorId: s.proveedorId,
         proveedorNombre: s.proveedor.nombre
@@ -714,7 +714,7 @@ export async function getExplorarServiciosByCategoria(categoria: string, ciudad?
         proveedorLogoUrl: s.proveedor.logoUrl || null,
         calificacion: promedio,
         ciudad: s.proveedor.ciudad,
-        premium: s.proveedor.plan === 'PREMIUM' || s.proveedor.plan === 'ELITE',
+        premium: (s.proveedor.plan === 'PREMIUM' || s.proveedor.plan === 'ELITE') && validarVigenciaPlan(s.proveedor.planExpira),
         esCiudadLocal: ciudad ? s.proveedor.ciudad === ciudad : true,
       };
     });

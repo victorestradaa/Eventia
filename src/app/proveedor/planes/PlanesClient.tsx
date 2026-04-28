@@ -3,15 +3,18 @@
 import { Check, Star, Zap, Crown, DollarSign, Loader2, Gem } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
-import { updateProviderPlan } from '@/lib/actions/settingsActions';
-import { useRouter } from 'next/navigation';
+import { createPlanPreference } from '@/lib/actions/mercadopagoActions';
+import { differenceInDays, format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import confetti from 'canvas-confetti';
+import { Clock } from 'lucide-react';
 
 const PLANES = [
   {
     id: 'GRATIS',
     nombre: 'Plan Básico',
-    precio: 0,
+    precioMensual: 0,
+    precioAnual: 0,
     comision: '10%',
     descripcion: 'Para proveedores que están empezando.',
     icon: Zap,
@@ -26,7 +29,8 @@ const PLANES = [
   {
     id: 'INTERMEDIO',
     nombre: 'Plan Destacado',
-    precio: 199,
+    precioMensual: 99,
+    precioAnual: 990,
     comision: '6%',
     descripcion: 'Mayor visibilidad y menores comisiones.',
     icon: Star,
@@ -43,7 +47,8 @@ const PLANES = [
   {
     id: 'PREMIUM',
     nombre: 'Plan PRO',
-    precio: 649,
+    precioMensual: 399,
+    precioAnual: 3990,
     comision: '3%',
     descripcion: 'Dominio total del mercado local.',
     icon: Crown,
@@ -61,7 +66,8 @@ const PLANES = [
   {
     id: 'ELITE',
     nombre: 'Plan Elite',
-    precio: 999,
+    precioMensual: 599,
+    precioAnual: 5990,
     comision: '0%',
     descripcion: 'Sin comisiones. Libertad absoluta.',
     icon: Gem,
@@ -81,44 +87,72 @@ const PLANES = [
 interface PlanesClientProps {
   planActual: string;
   proveedorId: string;
+  planExpira?: Date | string | null;
 }
 
-export default function PlanesClient({ planActual, proveedorId }: PlanesClientProps) {
+export default function PlanesClient({ planActual, proveedorId, planExpira }: PlanesClientProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState<'mensual' | 'anual'>('mensual');
   const router = useRouter();
 
   const handleUpgrade = async (planId: string) => {
-    if (planId === planActual) return;
-    
-    setLoading(planId);
-    
-    const res = await updateProviderPlan(proveedorId, planId as any);
-    
-    if (res.success) {
-      // Disparar Confeti de Celebración
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#7C3AED', '#A855F7', '#10B981', '#F59E0B']
-      });
+    if (planId === planActual && billingCycle === 'mensual') return; // Simplificado
+    if (planId === 'GRATIS') return;
 
-      setSuccess(planId);
-      setTimeout(() => {
-        setSuccess(null);
-        router.refresh();
-      }, 3000);
+    setLoading(planId);
+    const res = await createPlanPreference(planId, billingCycle);
+    
+    if (res.success && res.url) {
+      window.location.href = res.url;
     } else {
-      alert(res.error || 'No se pudo actualizar el plan.');
+      alert(res.error || 'No se pudo iniciar el proceso de pago.');
+      setLoading(null);
     }
-    setLoading(null);
   };
+
+  const diasRestantes = planExpira ? differenceInDays(new Date(planExpira), new Date()) : null;
+  const expiraFormateada = planExpira ? format(new Date(planExpira), "d 'de' MMMM, yyyy", { locale: es }) : null;
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-extrabold tracking-tight">Potencia tu Negocio</h1>
+        
+        {planActual !== 'GRATIS' && planExpira && (
+          <div className="max-w-md mx-auto bg-violet-500/5 border border-violet-500/20 rounded-2xl p-4 mt-6 animate-in zoom-in duration-500">
+            <p className="text-sm font-bold uppercase tracking-widest text-violet-400">Plan Actual: {planActual}</p>
+            <div className="flex items-center justify-center gap-2 mt-1">
+              <Clock size={14} className={cn(diasRestantes && diasRestantes < 3 ? "text-red-400 animate-pulse" : "text-emerald-400")} />
+              <p className="text-xs font-medium">
+                {diasRestantes && diasRestantes > 0 
+                  ? `Te quedan ${diasRestantes} días de vigencia` 
+                  : diasRestantes !== null && diasRestantes <= 0 && diasRestantes >= -3
+                    ? `Plan vencido (Periodo de gracia: ${3 + diasRestantes} días)`
+                    : "Tu suscripción ha expirado"}
+              </p>
+            </div>
+            <p className="text-[10px] text-[var(--color-texto-muted)] mt-1">Siguiente pago: {expiraFormateada}</p>
+          </div>
+        )}
+
+        <div className="flex items-center justify-center gap-4 py-4">
+          <span className={cn("text-sm font-bold", billingCycle === 'mensual' ? "text-white" : "text-[var(--color-texto-muted)]")}>Mensual</span>
+          <button 
+            onClick={() => setBillingCycle(prev => prev === 'mensual' ? 'anual' : 'mensual')}
+            className="w-14 h-7 bg-white/10 rounded-full relative p-1 transition-colors hover:bg-white/20"
+          >
+            <div className={cn(
+              "w-5 h-5 bg-[var(--color-primario-claro)] rounded-full transition-all duration-300",
+              billingCycle === 'anual' ? "translate-x-7" : "translate-x-0"
+            )} />
+          </button>
+          <div className="flex flex-col items-start">
+            <span className={cn("text-sm font-bold", billingCycle === 'anual' ? "text-white" : "text-[var(--color-texto-muted)]")}>Anual</span>
+            <span className="text-[9px] font-black text-emerald-400 uppercase tracking-tighter">2 Meses Gratis 🎁</span>
+          </div>
+        </div>
+
         <p className="text-[var(--color-texto-suave)] max-w-2xl mx-auto">
           Elige el plan que mejor se adapte a tu nivel de crecimiento. Más visibilidad significa más eventos.
         </p>
@@ -160,9 +194,12 @@ export default function PlanesClient({ planActual, proveedorId }: PlanesClientPr
 
               <div className="mb-8 space-y-2">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black">${plan.precio}</span>
-                  <span className="text-sm text-[var(--color-texto-muted)] uppercase font-bold">/ mes</span>
+                  <span className="text-4xl font-black">${billingCycle === 'mensual' ? plan.precioMensual : plan.precioAnual}</span>
+                  <span className="text-sm text-[var(--color-texto-muted)] uppercase font-bold">/ {billingCycle === 'mensual' ? 'mes' : 'año'}</span>
                 </div>
+                {billingCycle === 'anual' && plan.precioAnual > 0 && (
+                  <p className="text-[10px] font-bold text-emerald-400 italic">Equivale a ${Math.round(plan.precioAnual/12)}/mes</p>
+                )}
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
                   <DollarSign size={14} />
                   <span>Comisión por evento: {plan.comision}</span>

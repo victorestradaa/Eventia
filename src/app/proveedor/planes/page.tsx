@@ -19,6 +19,7 @@ export default async function ProviderPlanesPage() {
     <PlanesClient 
       planActual={perfil.proveedor.plan || 'GRATIS'} 
       proveedorId={perfil.proveedor.id} 
+      planExpira={perfil.proveedor.planExpira}
     />
   );
 }

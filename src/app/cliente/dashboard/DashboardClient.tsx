@@ -70,7 +70,7 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
   const proximoEvento = eventos.find(e => e.id === eventoId) || eventos[0] || null;
   
   // Cálculo de vigencia del evento
-  const mesesVigencia = isFree ? 3 : (isOro ? 12 : Infinity);
+  const mesesVigencia = isFree ? 3 : (isOro ? 13 : Infinity);
   
   let fechaExpiracion = new Date();
   if (proximoEvento) {

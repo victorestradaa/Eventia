@@ -121,3 +121,19 @@ export const ESTADOS_RESERVA_COLORES: Record<string, string> = {
   LIQUIDADO: '#10B981',  // Verde
   CANCELADO: '#6B7280',  // Gris
 }
+
+/**
+ * Verifica si un plan sigue vigente, considerando los 3 días de periodo de gracia.
+ */
+export function validarVigenciaPlan(planExpira: Date | string | null | undefined): boolean {
+  if (!planExpira) return true; // Si no tiene fecha, asumimos vigente (legacy o free)
+  
+  const fechaExp = new Date(planExpira);
+  const hoy = new Date();
+  
+  // Agregar 3 días de gracia
+  const fechaLimite = new Date(fechaExp);
+  fechaLimite.setDate(fechaLimite.getDate() + 3);
+  
+  return hoy <= fechaLimite;
+}
