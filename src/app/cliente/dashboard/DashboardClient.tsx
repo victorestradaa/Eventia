@@ -51,7 +51,11 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const yaCompleto = document.cookie.includes('onboardingCompleted=true');
-      if (params.get('nuevo') === 'true' && !yaCompleto) {
+      // Activar wizard si:
+      // 1. Viene de registro (?nuevo=true) y no ha completado el wizard, O
+      // 2. No tiene eventos aún y no ha completado el wizard
+      const debeVerWizard = (params.get('nuevo') === 'true' || initialEventos.length === 0) && !yaCompleto;
+      if (debeVerWizard) {
         window.history.replaceState({}, '', window.location.pathname);
         setShowWizard(true);
       }
