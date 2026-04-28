@@ -3,11 +3,12 @@
 import { Calendar, Users, Wallet, ChevronRight, Star, Clock, X, Loader2, Trash2, History } from 'lucide-react';
 import { formatearMoneda } from '@/lib/utils';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createEvento } from '@/lib/actions/eventActions';
 import { useRouter } from 'next/navigation';
 import ArchiveEventModal from '@/components/cliente/dashboard/ArchiveEventModal';
 import ProfileCompleteModal from '@/components/cliente/ProfileCompleteModal';
+import OnboardingWizard from '@/components/cliente/onboarding/OnboardingWizard';
 
 interface DashboardClientProps {
   initialEventos: any[];
@@ -43,7 +44,19 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
   });
 
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const perfilCompleto = !!(perfil.nombre && perfil.telefono && perfil.cliente?.estado && perfil.cliente?.ciudad);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const yaCompleto = document.cookie.includes('onboardingCompleted=true');
+      if (params.get('nuevo') === 'true' && !yaCompleto) {
+        window.history.replaceState({}, '', window.location.pathname);
+        setShowWizard(true);
+      }
+    }
+  }, []);
 
   const eventTypes = ['Boda', 'XV Años', 'Fiesta Infantil', 'Graduación', 'Fiesta', 'Bautizo'];
 
@@ -95,32 +108,46 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
   // Estado vacío: sin eventos
   if (eventos.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-[var(--color-fondo-hover)] flex items-center justify-center text-3xl">🎉</div>
-        <div className="space-y-2">
-          <h2 className="text-3xl font-bold">¡Bienvenido a Gestor de Eventos!</h2>
-          <p className="text-[var(--color-texto-suave)] max-w-md">Empieza creando tu primer evento para organizar cada detalle de tu gran día.</p>
-        </div>
-        <button 
-          onClick={() => setIsNewEventModalOpen(true)}
-          className="btn-oro px-8 py-4 font-bold shadow-xl"
-        >
-          Crear mi primer evento
-        </button>
-
-        {/* Modal siempre se renderiza aquí cuando está abierto */}
-        {isNewEventModalOpen && renderModal()}
-
-        {/* Modal perfil incompleto (también en estado vacío) */}
-        {showProfileModal && (
-          <ProfileCompleteModal
-            onClose={() => setShowProfileModal(false)}
+      <>
+        {/* Wizard de onboarding (nuevo usuario) */}
+        {showWizard && (
+          <OnboardingWizard
             perfil={perfil}
+            onComplete={() => {
+              setShowWizard(false);
+              router.refresh();
+            }}
           />
         )}
-      </div>
+
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center">
+          <div className="w-20 h-20 rounded-full bg-[var(--color-fondo-hover)] flex items-center justify-center text-3xl">🎉</div>
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold">¡Bienvenido a Gestor de Eventos!</h2>
+            <p className="text-[var(--color-texto-suave)] max-w-md">Empieza creando tu primer evento para organizar cada detalle de tu gran día.</p>
+          </div>
+          <button 
+            onClick={() => setIsNewEventModalOpen(true)}
+            className="btn-oro px-8 py-4 font-bold shadow-xl"
+          >
+            Crear mi primer evento
+          </button>
+
+          {/* Modal siempre se renderiza aquí cuando está abierto */}
+          {isNewEventModalOpen && renderModal()}
+
+          {/* Modal perfil incompleto (también en estado vacío) */}
+          {showProfileModal && (
+            <ProfileCompleteModal
+              onClose={() => setShowProfileModal(false)}
+              perfil={perfil}
+            />
+          )}
+        </div>
+      </>
     );
   }
+
 
   function renderModal() {
     return (
@@ -485,6 +512,17 @@ export default function DashboardClient({ initialEventos, perfil, proveedoresRec
         <ProfileCompleteModal 
           onClose={() => setShowProfileModal(false)} 
           perfil={perfil}
+        />
+      )}
+
+      {/* WIZARD DE ONBOARDING */}
+      {showWizard && (
+        <OnboardingWizard
+          perfil={perfil}
+          onComplete={() => {
+            setShowWizard(false);
+            router.refresh();
+          }}
         />
       )}
     </div>

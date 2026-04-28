@@ -112,7 +112,7 @@ export default function RegisterPage() {
 
       // 3. Redireccionar de forma forzada para evitar bloqueos de sesión en Next.js
       if (rol === 'CLIENTE') {
-        window.location.href = '/cliente/perfil';
+        window.location.href = '/cliente/dashboard?nuevo=true';
       } else {
         window.location.href = '/proveedor/configuracion';
       }
@@ -212,41 +212,47 @@ export default function RegisterPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="label">Estado</label>
+          <div className="flex flex-col gap-6 relative z-50">
+            <div className="w-full">
+              <label className="label font-bold mb-1.5 block text-[10px] uppercase tracking-widest text-[var(--color-texto-suave)]">
+                Estado de residencia *
+              </label>
               <select 
-                className="input cursor-pointer"
+                id="estado-select"
+                className="w-full h-12 px-4 rounded-xl border border-[var(--color-borde)] bg-[var(--color-fondo-input)] text-[var(--color-texto)] outline-none text-base cursor-pointer"
                 value={estado}
                 onChange={e => {
                   setEstado(e.target.value);
                   setMunicipio('');
                 }}
                 required
-                disabled={loading}
               >
-                <option value="">Selecciona...</option>
+                <option value="">Selecciona tu estado...</option>
                 {Object.keys(MEXICO_LOCATIONS).map(est => (
                   <option key={est} value={est}>{est}</option>
                 ))}
               </select>
             </div>
-            <div>
-              <label className="label">Municipio / Ciudad</label>
+            <div className="w-full">
+              <label className="label font-bold mb-1.5 block text-[10px] uppercase tracking-widest text-[var(--color-texto-suave)]">
+                Municipio / Ciudad *
+              </label>
               <select 
-                className="input cursor-pointer"
+                key={estado || 'sin-estado'}
+                id="municipio-select"
+                className="w-full h-12 px-4 rounded-xl border border-[var(--color-borde)] bg-[var(--color-fondo-input)] text-[var(--color-texto)] outline-none text-base cursor-pointer"
                 value={municipio}
                 onChange={e => setMunicipio(e.target.value)}
                 required
-                disabled={!estado || loading}
               >
-                <option value="">Selecciona...</option>
+                <option value="">{estado ? `Ciudad de ${estado}...` : '← Primero elige estado'}</option>
                 {estado && MEXICO_LOCATIONS[estado]?.map(mun => (
                   <option key={mun} value={mun}>{mun}</option>
                 ))}
               </select>
             </div>
           </div>
+
           
           {rol === 'PROVEEDOR' && (
             <div className="space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
@@ -328,16 +334,16 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="text-center mt-6 text-sm text-[var(--color-texto-suave)]">
+        <div className="flex justify-center mt-8 pt-4 border-t border-[var(--color-borde-suave)]">
+          <ThemeToggle />
+        </div>
+
+        <p className="text-center mt-6 text-sm text-[var(--color-texto-suave)] pb-10">
           ¿Ya tienes cuenta?{' '}
           <Link href="/login" className="text-[var(--color-primario-claro)] hover:underline">
             Inicia sesión
           </Link>
         </p>
-      </div>
-
-      <div className="fixed top-6 right-6">
-        <ThemeToggle />
       </div>
     </div>
   );

@@ -652,6 +652,81 @@ export async function getExplorarServicios() {
   }
 }
 
+/**
+ * Obtiene servicios de una categoría específica para el Wizard de Onboarding.
+ * Filtra primero por ciudad del evento; si no hay resultados, devuelve todos de la categoría.
+ */
+export async function getExplorarServiciosByCategoria(categoria: string, ciudad?: string) {
+  try {
+    const baseWhere = {
+      activo: true,
+      proveedor: { activo: true, categoria: categoria as any }
+    };
+
+    const includeConfig = {
+      proveedor: {
+        include: {
+          resenas: { select: { calificacion: true } },
+          portafolio: { orderBy: { orden: 'asc' as const }, take: 6 }
+        }
+      }
+    };
+
+    const orderByConfig = [
+      { proveedor: { plan: 'desc' as const } },
+      { creadoEn: 'desc' as const }
+    ];
+
+    // Buscar primero en la ciudad del evento
+    let servicios: any[] = [];
+    if (ciudad) {
+      servicios = await prisma.servicio.findMany({
+        where: { ...baseWhere, proveedor: { ...baseWhere.proveedor, ciudad } },
+        include: includeConfig,
+        orderBy: orderByConfig
+      });
+    }
+
+    // Fallback: si no hay servicios en esa ciudad, traer todos de la categoría
+    if (servicios.length === 0) {
+      servicios = await prisma.servicio.findMany({
+        where: baseWhere,
+        include: includeConfig,
+        orderBy: orderByConfig
+      });
+    }
+
+    const data = servicios.map((s: any) => {
+      const resenas = s.proveedor.resenas || [];
+      const promedio = resenas.length > 0
+        ? Math.round((resenas.reduce((acc: number, r: any) => acc + r.calificacion, 0) / resenas.length) * 10) / 10
+        : 0;
+
+      return {
+        id: s.id,
+        nombre: s.nombre,
+        descripcion: s.descripcion || '',
+        precio: Number(s.precio),
+        imagenes: s.imagenes || [],
+        portafolio: (s.proveedor.portafolio || []).map((p: any) => p.url),
+        proveedorId: s.proveedorId,
+        proveedorNombre: s.proveedor.nombre,
+        proveedorLogoUrl: s.proveedor.logoUrl || null,
+        calificacion: promedio,
+        ciudad: s.proveedor.ciudad,
+        premium: s.proveedor.plan === 'PREMIUM' || s.proveedor.plan === 'ELITE',
+        esCiudadLocal: ciudad ? s.proveedor.ciudad === ciudad : true,
+      };
+    });
+
+    return { success: true, data, esFallback: ciudad ? servicios.some(s => s.proveedor.ciudad !== ciudad) : false };
+  } catch (error) {
+    console.error('Error al obtener servicios por categoría:', error);
+    return { success: false, error: 'No se pudieron cargar los servicios.' };
+  }
+}
+
+
 export async function getDetalleProveedor(id: string) {
   try {
     const proveedor = await prisma.proveedor.findUnique({

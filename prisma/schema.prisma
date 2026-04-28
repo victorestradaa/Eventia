@@ -52,6 +52,7 @@ model Proveedor {
   resenas                 Resena[]
   reservas                Reserva[]
   servicios               Servicio[]
+  cuentasBancarias        CuentaBancaria[]
 }
 
 model Servicio {
@@ -112,6 +113,19 @@ model PortfolioItem {
   orden       Int       @default(0)
   creadoEn    DateTime  @default(now())
   proveedor   Proveedor @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+}
+
+model CuentaBancaria {
+  id              String    @id @default(cuid())
+  proveedorId     String
+  banco           String
+  tipo            String    // 'TARJETA', 'CUENTA', 'CLABE'
+  numero          String
+  titular         String
+  esPrincipal     Boolean   @default(false)
+  creadoEn        DateTime  @default(now())
+  actualizadoEn   DateTime  @updatedAt
+  proveedor       Proveedor @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
 }
 
 model Cliente {
@@ -186,12 +200,21 @@ model LineaPresupuesto {
 }
 
 model Pago {
-  id      String           @id @default(cuid())
-  lineaId String
-  monto   Decimal          @db.Decimal(10, 2)
-  nota    String?
-  fecha   DateTime         @default(now())
-  linea   LineaPresupuesto @relation(fields: [lineaId], references: [id], onDelete: Cascade)
+  id             String           @id @default(cuid())
+  lineaId        String
+  monto          Decimal          @db.Decimal(10, 2)
+  nota           String?
+  fecha          DateTime         @default(now())
+  estado         EstadoPago       @default(APROBADO)
+  metodoPago     String           @default("EFECTIVO")
+  comprobanteUrl String?
+  linea          LineaPresupuesto @relation(fields: [lineaId], references: [id], onDelete: Cascade)
+}
+
+enum EstadoPago {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
 }
 
 model Reserva {
@@ -236,6 +259,7 @@ model Transaccion {
   fechaPago        DateTime? @default(now())
   stripePaymentId  String?
   notas            String?
+  comprobanteUrl   String?
   creadoEn         DateTime  @default(now())
   reserva          Reserva   @relation(fields: [reservaId], references: [id], onDelete: Cascade)
 }

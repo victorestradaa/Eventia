@@ -40,15 +40,13 @@ export default function Logo({ width = 200, height = 60, className, forceWhite =
     );
   }
 
-  // Decisión de qué logo usar
-  // En SSR usamos la versión normal por defecto. 
-  // Importante: No podemos usar 'theme' directamente en el primer render para evitar desincronización de hidratación.
-  const isDark = mounted && theme === 'dark';
-  const logoSrc = isDark ? "/logo-blanco.png" : "/logo.png";
+  // Siempre mostrar logo.png por defecto (SSR y primer render)
+  // Solo cambiar a blanco si está montado Y el tema es oscuro
+  const logoSrc = (mounted && theme === 'dark') ? "/logo-blanco.png" : "/logo.png";
 
   return (
     <div 
-      className={cn("relative inline-flex items-center justify-center transition-opacity duration-300", className, !mounted ? "opacity-0" : "opacity-100")} 
+      className={cn("relative inline-flex items-center justify-center", className)} 
       style={{ 
         width: className?.includes('w-') ? undefined : width, 
         height: className?.includes('h-') ? undefined : height,
