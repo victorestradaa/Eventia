@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { mpClient } from '@/lib/mercadopago';
 import { Payment } from 'mercadopago';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: Request) {
   try {
