@@ -1,7 +1,6 @@
 'use server';
 
-import { mpClient } from '@/lib/mercadopago';
-import { Preference } from 'mercadopago';
+import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { getCurrentProfile } from './authActions';
 
 // Definición de Precios
@@ -31,17 +30,27 @@ export const PRECIOS_MP = {
  */
 export async function createPlanPreference(planId: string, billingCycle: 'mensual' | 'anual' | 'unico') {
   try {
-    if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
-      console.error('❌ MERCADOPAGO_ACCESS_TOKEN no configurado');
-      return { success: false, error: 'Configuración de pago incompleta en el servidor.' };
+    console.log('🚀 Iniciando creación de preferencia:', { planId, billingCycle });
+
+    const token = process.env.MERCADOPAGO_ACCESS_TOKEN;
+    if (!token) {
+      console.error('❌ MERCADOPAGO_ACCESS_TOKEN no encontrado en process.env');
+      return { success: false, error: 'Error interno: Token de pago no configurado.' };
     }
+
+    const client = new MercadoPagoConfig({
+      accessToken: token,
+      options: { timeout: 5000 }
+    });
+
     const profileRes = await getCurrentProfile();
     if (!profileRes.success || !profileRes.data) {
-      return { success: false, error: 'Sesión no válida' };
+      console.error('❌ Error al obtener perfil:', profileRes.error);
+      return { success: false, error: 'Sesión no válida o expirada.' };
     }
 
     const user = profileRes.data;
-    const rol = user.rol; // PROVEEDOR o CLIENTE
+    const rol = user.rol;
 
     let item: { title: string; unit_price: number; quantity: number } | null = null;
     let meses = 0;
@@ -59,7 +68,7 @@ export async function createPlanPreference(planId: string, billingCycle: 'mensua
       const plan = (PRECIOS_MP.PROVEEDOR as any)[planId];
       if (!plan) throw new Error('Plan de proveedor no válido');
       
-      const subPlan = plan[billingCycle === 'unico' ? 'mensual' : billingCycle]; // Fallback si es unico
+      const subPlan = plan[billingCycle === 'unico' ? 'mensual' : billingCycle];
       item = {
         title: subPlan.label,
         unit_price: subPlan.monto,
@@ -70,10 +79,12 @@ export async function createPlanPreference(planId: string, billingCycle: 'mensua
 
     if (!item) throw new Error('No se pudo determinar el plan');
 
-    const preference = new Preference(mpClient);
+    console.log('📦 Generando preferencia para:', item.title);
+
+    const preference = new Preference(client);
     
-    // URL base para los retornos (AWS o Local)
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const notificationUrl = process.env.WEBHOOK_URL || `${baseUrl}/api/webhooks/mercadopago`;
 
     const response = await preference.create({
       body: {
@@ -96,13 +107,14 @@ export async function createPlanPreference(planId: string, billingCycle: 'mensua
           meses: meses,
           billing_cycle: billingCycle
         },
-        notification_url: `${process.env.WEBHOOK_URL || (baseUrl + '/api/webhooks/mercadopago')}`
+        notification_url: notificationUrl
       }
     });
 
+    console.log('✅ Preferencia creada con éxito:', response.id);
     return { success: true, url: response.init_point };
   } catch (error: any) {
-    console.error('Error al crear preferencia de Mercado Pago:', error);
-    return { success: false, error: error.message || 'Error al procesar el pago' };
+    console.error('🔥 Error crítico en createPlanPreference:', error);
+    return { success: false, error: `Error de Mercado Pago: ${error.message || 'Desconocido'}` };
   }
 }
