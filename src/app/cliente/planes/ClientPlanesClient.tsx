@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Star, Zap, Crown, DollarSign, Loader2, Sparkles, Heart } from 'lucide-react';
+import { Check, Star, Zap, Crown, DollarSign, Loader2, Sparkles, Heart, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { createPlanPreference } from '@/lib/actions/mercadopagoActions';
