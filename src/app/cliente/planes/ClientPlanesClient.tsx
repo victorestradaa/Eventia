@@ -72,12 +72,24 @@ export default function ClientPlanesClient({ planActual, planExpira }: ClientPla
     setLoading(planId);
     // Para Clientes, ORO es 'unico' (13 meses) y PLANNER es 'mensual'
     const cycle = planId === 'ORO' ? 'unico' : 'mensual';
-    const res = await createPlanPreference(planId, cycle);
     
-    if (res.success && res.url) {
-      window.location.href = res.url;
-    } else {
-      alert(res.error || 'No se pudo iniciar el proceso de pago.');
+    try {
+      const response = await fetch('/api/pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId, billingCycle: cycle })
+      });
+      
+      const res = await response.json();
+      
+      if (res.success && res.url) {
+        window.location.href = res.url;
+      } else {
+        alert(res.error || 'No se pudo iniciar el proceso de pago.');
+        setLoading(null);
+      }
+    } catch (err) {
+      alert('Error de conexión al procesar el pago.');
       setLoading(null);
     }
   };

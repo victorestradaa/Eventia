@@ -3,6 +3,7 @@
 import { Check, Star, Zap, Crown, DollarSign, Loader2, Gem } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createPlanPreference } from '@/lib/actions/mercadopagoActions';
 import { differenceInDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -101,12 +102,24 @@ export default function PlanesClient({ planActual, proveedorId, planExpira }: Pl
     if (planId === 'GRATIS') return;
 
     setLoading(planId);
-    const res = await createPlanPreference(planId, billingCycle);
     
-    if (res.success && res.url) {
-      window.location.href = res.url;
-    } else {
-      alert(res.error || 'No se pudo iniciar el proceso de pago.');
+    try {
+      const response = await fetch('/api/pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId, billingCycle })
+      });
+      
+      const res = await response.json();
+      
+      if (res.success && res.url) {
+        window.location.href = res.url;
+      } else {
+        alert(res.error || 'No se pudo iniciar el proceso de pago.');
+        setLoading(null);
+      }
+    } catch (err) {
+      alert('Error de conexión al procesar el pago.');
       setLoading(null);
     }
   };
