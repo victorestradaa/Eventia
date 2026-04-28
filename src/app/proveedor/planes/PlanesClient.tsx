@@ -149,21 +149,39 @@ export default function PlanesClient({ planActual, proveedorId, planExpira }: Pl
           </div>
         )}
 
-        <div className="flex items-center justify-center gap-4 py-4">
-          <span className={cn("text-sm font-bold", billingCycle === 'mensual' ? "text-white" : "text-[var(--color-texto-muted)]")}>Mensual</span>
-          <button 
-            onClick={() => setBillingCycle(prev => prev === 'mensual' ? 'anual' : 'mensual')}
-            className="w-14 h-7 bg-white/10 rounded-full relative p-1 transition-colors hover:bg-white/20"
-          >
-            <div className={cn(
-              "w-5 h-5 bg-[var(--color-primario-claro)] rounded-full transition-all duration-300",
-              billingCycle === 'anual' ? "translate-x-7" : "translate-x-0"
-            )} />
-          </button>
-          <div className="flex flex-col items-start">
-            <span className={cn("text-sm font-bold", billingCycle === 'anual' ? "text-white" : "text-[var(--color-texto-muted)]")}>Anual</span>
-            <span className="text-[9px] font-black text-emerald-400 uppercase tracking-tighter">2 Meses Gratis 🎁</span>
+        {/* Selector de Ciclo de Facturación Premium */}
+        <div className="flex flex-col items-center gap-4 py-8">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-1.5 rounded-2xl flex items-center gap-2 shadow-2xl">
+            <button
+              onClick={() => setBillingCycle('mensual')}
+              className={cn(
+                "px-8 py-3 rounded-xl text-sm font-black transition-all duration-300",
+                billingCycle === 'mensual' 
+                  ? "bg-white text-black shadow-lg scale-105" 
+                  : "text-[var(--color-texto-muted)] hover:text-white"
+              )}
+            >
+              MENSUAL
+            </button>
+            <button
+              onClick={() => setBillingCycle('anual')}
+              className={cn(
+                "px-8 py-3 rounded-xl text-sm font-black transition-all duration-300 relative group",
+                billingCycle === 'anual' 
+                  ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] scale-105" 
+                  : "text-[var(--color-texto-muted)] hover:text-white"
+              )}
+            >
+              ANUAL
+              <span className="absolute -top-3 -right-3 bg-emerald-500 text-white text-[8px] px-2 py-1 rounded-md font-black shadow-lg animate-bounce">
+                2 MESES GRATIS 🎁
+              </span>
+            </button>
           </div>
+          <p className="text-xs font-bold text-emerald-400 flex items-center gap-2">
+            <Check size={14} />
+            Selecciona el plan anual y obtén un descuento masivo
+          </p>
         </div>
 
         <p className="text-[var(--color-texto-suave)] max-w-2xl mx-auto">

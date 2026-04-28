@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     // Precios básicos para la prueba
     const PRECIOS: any = {
       ORO: 99,
-      PLANNER: 299,
+      PLANNER: billingCycle === 'anual' ? 2990 : 299,
       INTERMEDIO: billingCycle === 'anual' ? 990 : 99,
       PREMIUM: billingCycle === 'anual' ? 3990 : 399,
       ELITE: billingCycle === 'anual' ? 5990 : 599

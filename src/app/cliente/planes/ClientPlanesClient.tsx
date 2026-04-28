@@ -42,7 +42,8 @@ const PLANES_CLIENTE = [
   {
     id: 'PLANNER',
     nombre: 'Plan Planner',
-    precio: 299,
+    precioMensual: 299,
+    precioAnual: 2990,
     descripcion: 'El estándar para profesionales.',
     icon: Crown,
     features: [
@@ -65,13 +66,14 @@ interface ClientPlanesClientProps {
 
 export default function ClientPlanesClient({ planActual, planExpira }: ClientPlanesClientProps) {
   const [loading, setLoading] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState<'mensual' | 'anual'>('mensual');
 
   const handleUpgrade = async (planId: string) => {
     if (planId === 'FREE') return;
     
     setLoading(planId);
-    // Para Clientes, ORO es 'unico' (13 meses) y PLANNER es 'mensual'
-    const cycle = planId === 'ORO' ? 'unico' : 'mensual';
+    // Para Clientes, ORO es siempre único. PLANNER depende del toggle.
+    const cycle = planId === 'ORO' ? 'unico' : billingCycle;
     
     try {
       const response = await fetch('/api/pay', {
@@ -105,6 +107,41 @@ export default function ClientPlanesClient({ planActual, planExpira }: ClientPla
         </div>
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Lleva tu organización al siguiente nivel</h1>
         
+        {/* Selector de Ciclo de Facturación Premium */}
+        <div className="flex flex-col items-center gap-4 py-8">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-1.5 rounded-2xl flex items-center gap-2 shadow-2xl">
+            <button
+              onClick={() => setBillingCycle('mensual')}
+              className={cn(
+                "px-8 py-3 rounded-xl text-sm font-black transition-all duration-300",
+                billingCycle === 'mensual' 
+                  ? "bg-white text-black shadow-lg scale-105" 
+                  : "text-[var(--color-texto-muted)] hover:text-white"
+              )}
+            >
+              MENSUAL
+            </button>
+            <button
+              onClick={() => setBillingCycle('anual')}
+              className={cn(
+                "px-8 py-3 rounded-xl text-sm font-black transition-all duration-300 relative group",
+                billingCycle === 'anual' 
+                  ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] scale-105" 
+                  : "text-[var(--color-texto-muted)] hover:text-white"
+              )}
+            >
+              ANUAL
+              <span className="absolute -top-3 -right-3 bg-emerald-500 text-white text-[8px] px-2 py-1 rounded-md font-black shadow-lg animate-bounce">
+                -2 MESES
+              </span>
+            </button>
+          </div>
+          <p className="text-xs font-bold text-emerald-400 flex items-center gap-2">
+            <Sparkles size={14} />
+            ¡Ahorra pagando anualmente y obtén 2 meses de regalo!
+          </p>
+        </div>
+
         {planActual !== 'FREE' && planExpira && (
           <div className="max-w-md mx-auto bg-[var(--color-primario)]/5 border border-[var(--color-primario)]/20 rounded-2xl p-4 mt-6 animate-in zoom-in duration-500">
             <p className="text-sm font-bold">Plan Actual: <span className="text-[var(--color-primario-claro)]">{planActual}</span></p>
@@ -170,12 +207,16 @@ export default function ClientPlanesClient({ planActual, planExpira }: ClientPla
 
               <div className="mb-8">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-black tracking-tighter">${plan.precio}</span>
-                  <span className="text-sm text-[var(--color-texto-muted)] uppercase font-extrabold">MXN</span>
+                  <span className="text-5xl font-black tracking-tighter">
+                    ${plan.id === 'ORO' ? plan.precio : (billingCycle === 'mensual' ? plan.precioMensual : plan.precioAnual)}
+                  </span>
+                  <span className="text-sm text-[var(--color-texto-muted)] uppercase font-extrabold">
+                    {plan.id === 'ORO' ? 'Pago Único' : (billingCycle === 'mensual' ? 'MXN/mes' : 'MXN/año')}
+                  </span>
                 </div>
-                {plan.precio > 0 && (
-                  <p className="text-[10px] text-[var(--color-primario-claro)] font-bold mt-1 uppercase tracking-widest">
-                    Pago único según vigencia
+                {plan.id === 'PLANNER' && billingCycle === 'anual' && (
+                  <p className="text-[10px] font-bold text-emerald-400 mt-2 flex items-center gap-1">
+                    <Check size={12} /> Equivale a ${Math.round(plan.precioAnual / 12)} / mes
                   </p>
                 )}
               </div>
