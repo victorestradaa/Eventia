@@ -1,6 +1,5 @@
 'use server';
 
-import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { getCurrentProfile } from './authActions';
 
 // Definición de Precios
@@ -30,23 +29,16 @@ export const PRECIOS_MP = {
  */
 export async function createPlanPreference(planId: string, billingCycle: 'mensual' | 'anual' | 'unico') {
   try {
-    console.log('🚀 Iniciando creación de preferencia:', { planId, billingCycle });
+    console.log('🚀 [Fetch] Iniciando creación de preferencia:', { planId, billingCycle });
 
     const token = process.env.MERCADOPAGO_ACCESS_TOKEN;
     if (!token) {
-      console.error('❌ MERCADOPAGO_ACCESS_TOKEN no encontrado en process.env');
-      return { success: false, error: 'Error interno: Token de pago no configurado.' };
+      return { success: false, error: 'Token de pago no configurado.' };
     }
-
-    const client = new MercadoPagoConfig({
-      accessToken: token,
-      options: { timeout: 5000 }
-    });
 
     const profileRes = await getCurrentProfile();
     if (!profileRes.success || !profileRes.data) {
-      console.error('❌ Error al obtener perfil:', profileRes.error);
-      return { success: false, error: 'Sesión no válida o expirada.' };
+      return { success: false, error: 'Sesión no válida.' };
     }
 
     const user = profileRes.data;
@@ -58,36 +50,28 @@ export async function createPlanPreference(planId: string, billingCycle: 'mensua
     if (rol === 'CLIENTE') {
       const plan = (PRECIOS_MP.CLIENTE as any)[planId];
       if (!plan) throw new Error('Plan de cliente no válido');
-      item = {
-        title: plan.label,
-        unit_price: plan.monto,
-        quantity: 1
-      };
+      item = { title: plan.label, unit_price: plan.monto, quantity: 1 };
       meses = plan.meses;
     } else if (rol === 'PROVEEDOR') {
       const plan = (PRECIOS_MP.PROVEEDOR as any)[planId];
       if (!plan) throw new Error('Plan de proveedor no válido');
-      
       const subPlan = plan[billingCycle === 'unico' ? 'mensual' : billingCycle];
-      item = {
-        title: subPlan.label,
-        unit_price: subPlan.monto,
-        quantity: 1
-      };
+      item = { title: subPlan.label, unit_price: subPlan.monto, quantity: 1 };
       meses = subPlan.meses;
     }
 
     if (!item) throw new Error('No se pudo determinar el plan');
 
-    console.log('📦 Generando preferencia para:', item.title);
-
-    const preference = new Preference(client);
-    
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const notificationUrl = process.env.WEBHOOK_URL || `${baseUrl}/api/webhooks/mercadopago`;
-
-    const response = await preference.create({
-      body: {
+    
+    // Crear preferencia vía Fetch Directo (más estable en Server Actions)
+    const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         items: [item],
         payer: {
           email: user.email,
@@ -107,14 +91,21 @@ export async function createPlanPreference(planId: string, billingCycle: 'mensua
           meses: meses,
           billing_cycle: billingCycle
         },
-        notification_url: notificationUrl
-      }
+        notification_url: process.env.WEBHOOK_URL || `${baseUrl}/api/webhooks/mercadopago`
+      })
     });
 
-    console.log('✅ Preferencia creada con éxito:', response.id);
-    return { success: true, url: response.init_point };
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('❌ Error API Mercado Pago:', data);
+      return { success: false, error: data.message || 'Error al crear preferencia' };
+    }
+
+    console.log('✅ Preferencia creada con éxito (Fetch):', data.id);
+    return { success: true, url: data.init_point };
   } catch (error: any) {
-    console.error('🔥 Error crítico en createPlanPreference:', error);
-    return { success: false, error: `Error de Mercado Pago: ${error.message || 'Desconocido'}` };
+    console.error('🔥 Error crítico (Fetch):', error);
+    return { success: false, error: `Error de conexión: ${error.message}` };
   }
 }
