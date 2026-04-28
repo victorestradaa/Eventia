@@ -6,7 +6,8 @@ frontend:
         - npm ci
     build:
       commands:
-        - env | grep -e DATABASE_URL -e DIRECT_URL -e STRIPE -e SUPABASE -e RESEND >> .env.production
+        - env | grep -e DATABASE_URL -e DIRECT_URL -e STRIPE -e SUPABASE -e RESEND -e MERCADOPAGO -e WEBHOOK -e NEXT_PUBLIC >> .env.production
+        - npx prisma generate
         - npm run build
   artifacts:
     baseDirectory: .next
