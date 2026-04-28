@@ -31,6 +31,10 @@ export const PRECIOS_MP = {
  */
 export async function createPlanPreference(planId: string, billingCycle: 'mensual' | 'anual' | 'unico') {
   try {
+    if (!process.env.MERCADOPAGO_ACCESS_TOKEN) {
+      console.error('❌ MERCADOPAGO_ACCESS_TOKEN no configurado');
+      return { success: false, error: 'Configuración de pago incompleta en el servidor.' };
+    }
     const profileRes = await getCurrentProfile();
     if (!profileRes.success || !profileRes.data) {
       return { success: false, error: 'Sesión no válida' };
