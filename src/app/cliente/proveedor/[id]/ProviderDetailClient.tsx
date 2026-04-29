@@ -26,7 +26,8 @@ import {
   Award,
   TrendingUp,
   Search,
-  CheckCircle
+  CheckCircle,
+  Phone
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { cn, formatearMoneda, parseFechaLocal } from '@/lib/utils';

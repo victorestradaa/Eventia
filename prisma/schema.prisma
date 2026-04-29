@@ -78,6 +78,7 @@ model Servicio {
   capacidadSimultanea Int                @default(1)
   bloquesHorario      String[]
   porcentajeAnticipo  Int                @default(30)
+  metodosPago         String[]           @default(["TARJETA"])
   activo              Boolean            @default(true)
   creadoEn            DateTime           @default(now())
   actualizadoEn       DateTime           @updatedAt

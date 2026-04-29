@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 interface EarningsCalculatorProps {
   planProveedor: 'GRATIS' | 'DESTACADO' | 'PRO' | 'ELITE';
   precioTotal: number;
+  metodosPagoSelected?: string[];
   onAdvanceChange?: (percentage: number, amount: number) => void;
 }
 
@@ -18,16 +19,19 @@ const PLAN_FEES = {
   ELITE: 0.00
 };
 
-export default function EarningsCalculator({ planProveedor, precioTotal, onAdvanceChange }: EarningsCalculatorProps) {
+export default function EarningsCalculator({ planProveedor, precioTotal, metodosPagoSelected = ['TARJETA'], onAdvanceChange }: EarningsCalculatorProps) {
   const [percentage, setPercentage] = useState<number>(30);
   
-  const eventiaFeePercent = PLAN_FEES[planProveedor] || 0.10;
+  const hasTarjeta = metodosPagoSelected.includes('TARJETA');
+  const eventiaFeePercent = PLAN_FEES[planProveedor] ?? 0.10;
   
+  // Si no hay tarjeta, no hay comisiones de pasarela ni de Eventia sobre el anticipo (cobro directo)
+  const currentMPFeePercent = hasTarjeta ? TARIFA_MP : 0;
+  const currentEventiaFeePercent = hasTarjeta ? eventiaFeePercent : 0;
+
   // Cálculo de Anticipo Mínimo Protegido
-  // Debe cubrir: Comisión Eventia (sobre el total) + Comisión MP (sobre el anticipo)
-  // Anticipo * (1 - TARIFA_MP) >= Total * eventiaFeePercent
-  const minAdvanceAmount = (precioTotal * eventiaFeePercent) / (1 - TARIFA_MP);
-  const minPercentage = Math.ceil((minAdvanceAmount / precioTotal) * 100);
+  const minAdvanceAmount = precioTotal > 0 ? (precioTotal * currentEventiaFeePercent) / (1 - currentMPFeePercent) : 0;
+  const minPercentage = precioTotal > 0 && currentEventiaFeePercent > 0 ? Math.ceil((minAdvanceAmount / precioTotal) * 100) : 10;
   
   // Ajustar porcentaje si baja del mínimo
   useEffect(() => {
@@ -37,15 +41,16 @@ export default function EarningsCalculator({ planProveedor, precioTotal, onAdvan
   }, [minPercentage, percentage]);
 
   const advanceAmount = (precioTotal * percentage) / 100;
-  const mpFee = advanceAmount * TARIFA_MP;
-  const eventiaFee = precioTotal * eventiaFeePercent;
+  const mpFee = hasTarjeta ? advanceAmount * TARIFA_MP : 0;
+  const eventiaFee = hasTarjeta ? precioTotal * eventiaFeePercent : 0;
   const netoHoy = advanceAmount - mpFee - eventiaFee;
   const pagoPendiente = precioTotal - advanceAmount;
   const gananciaTotalNeta = precioTotal - mpFee - eventiaFee;
 
   useEffect(() => {
     onAdvanceChange?.(percentage, advanceAmount);
-  }, [percentage, advanceAmount, onAdvanceChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [percentage, advanceAmount]);
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -56,7 +61,7 @@ export default function EarningsCalculator({ planProveedor, precioTotal, onAdvan
           </div>
           <div>
             <h3 className="text-xl font-black tracking-tight">Calculadora de Ganancias</h3>
-            <p className="text-[10px] text-white/40 uppercase font-bold tracking-widest">Plan Actual: <span className="text-emerald-400">{planProveedor}</span> ({eventiaFeePercent * 100}%)</p>
+            <p className="text-[10px] text-white/40 uppercase font-bold tracking-widest">Plan Actual: <span className="text-emerald-400">{planProveedor}</span> ({currentEventiaFeePercent * 100}%)</p>
           </div>
         </div>
 
@@ -95,7 +100,7 @@ export default function EarningsCalculator({ planProveedor, precioTotal, onAdvan
                   <span className="font-bold text-white">${advanceAmount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-xs text-red-400/80">
-                  <span className="flex items-center gap-1">Comisión MP (~4%) <Info size={10} /></span>
+                  <span className="flex items-center gap-1">Comisión Bancaria (~4%) <Info size={10} /></span>
                   <span className="font-bold">-${mpFee.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-xs text-red-400/80">
@@ -111,7 +116,7 @@ export default function EarningsCalculator({ planProveedor, precioTotal, onAdvan
 
             <div>
               <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <ArrowRight size={14} /> Pago Pendiente (Día del Evento)
+                <ArrowRight size={14} /> Pago Pendiente
               </p>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-white/60">Cobro directo al cliente</span>

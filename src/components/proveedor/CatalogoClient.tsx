@@ -54,6 +54,7 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
     capacidadSimultanea: '1',
     bloquesHorario: [] as string[],
     porcentajeAnticipo: 30,
+    metodosPago: ['TARJETA'] as string[],
   });
 
   const filteredServicios = servicios.filter(s => 
@@ -71,7 +72,7 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
       nombre: '', descripcion: '', precio: '', capacidadMin: '', capacidadMax: '', 
       etiquetasEvento: ['TODOS'], imagenes: [], diasDisponibles: [], variaciones: Array(12).fill(''),
       modalidad: 'DIA_COMPLETO', capacidadSimultanea: '1', bloquesHorario: [],
-      porcentajeAnticipo: 30
+      porcentajeAnticipo: 30, metodosPago: ['TARJETA']
     });
     setModalOpen(true);
   };
@@ -111,6 +112,7 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
       capacidadSimultanea: servicio.capacidadSimultanea?.toString() || '1',
       bloquesHorario: servicio.bloquesHorario || [],
       porcentajeAnticipo: servicio.porcentajeAnticipo || 30,
+      metodosPago: servicio.metodosPago || ['TARJETA'],
     });
     setModalOpen(true);
   };
@@ -220,6 +222,7 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
       capacidadSimultanea: formData.modalidad === 'POR_CANTIDAD' ? (parseInt(formData.capacidadSimultanea) || 1) : 1,
       bloquesHorario: formData.modalidad === 'POR_TURNOS' ? formData.bloquesHorario.filter(b => b.trim() !== '' && b !== '-') : [],
       porcentajeAnticipo: formData.porcentajeAnticipo,
+      metodosPago: formData.metodosPago,
     };
 
     let savedId = editingId;
@@ -448,11 +451,50 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
                   <input required value={formData.precio} onChange={e => setFormData({...formData, precio: e.target.value})} type="number" step="0.01" min="0" className="input w-full h-12" placeholder="Ej. 15000" />
                 </div>
 
+                {/* MÉTODOS DE PAGO */}
+                <div className="space-y-3 md:col-span-2 bg-[var(--color-fondo-input)] p-5 rounded-2xl border border-[var(--color-borde-suave)]">
+                  <label className="text-sm font-bold text-[var(--color-texto-suave)] flex justify-between items-center">
+                    <span className="flex items-center gap-2">💳 Métodos de Pago que aceptas</span>
+                  </label>
+                  <p className="text-xs text-[var(--color-texto-muted)] mb-2">
+                    Si desactivas "Tarjeta", el cliente no podrá pagar por la plataforma y tú deberás gestionar el cobro manualmente.
+                  </p>
+                  <div className="flex gap-3 flex-wrap">
+                    {['EFECTIVO', 'TRANSFERENCIA', 'TARJETA'].map((metodo) => {
+                      const isSelected = formData.metodosPago.includes(metodo);
+                      return (
+                        <button
+                          key={metodo}
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => {
+                              const current = [...prev.metodosPago];
+                              if (current.includes(metodo)) {
+                                if (current.length === 1) return prev; // Al menos uno
+                                return { ...prev, metodosPago: current.filter(m => m !== metodo) };
+                              }
+                              return { ...prev, metodosPago: [...current, metodo] };
+                            });
+                          }}
+                          className={`px-5 py-3 rounded-xl text-xs font-black transition-all border-2 ${
+                            isSelected 
+                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' 
+                              : 'bg-white/5 text-white/40 border-white/5 hover:border-emerald-500/30'
+                          }`}
+                        >
+                          {metodo}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* CALCULADORA DE GANANCIAS */}
                 <div className="md:col-span-2 py-4">
                   <EarningsCalculator 
                     planProveedor={proveedor.plan}
                     precioTotal={parseFloat(formData.precio) || 0}
+                    metodosPagoSelected={formData.metodosPago}
                     onAdvanceChange={(pct) => setFormData(prev => ({...prev, porcentajeAnticipo: pct}))}
                   />
                 </div>
