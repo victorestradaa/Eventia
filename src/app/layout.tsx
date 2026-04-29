@@ -31,8 +31,9 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} ${playfair.variable}`}>
       <head>
-        {/* Usamos una etiqueta script tradicional con suppressHydrationWarning para evitar el error en React 19 */}
         <script
+          id="theme-init"
+          key="theme-init"
           dangerouslySetInnerHTML={{
             __html: `
               try {
@@ -43,7 +44,6 @@ export default function RootLayout({
               } catch(e) {}
             `,
           }}
-          suppressHydrationWarning
         />
       </head>
       <body className="antialiased">

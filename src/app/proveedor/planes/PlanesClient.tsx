@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPlanPreference } from '@/lib/actions/mercadopagoActions';
+import { aplicarCupon } from '@/lib/actions/cuponActions';
 import { differenceInDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import confetti from 'canvas-confetti';
@@ -98,7 +99,27 @@ export default function PlanesClient({ planActual, proveedorId, planExpira }: Pl
   const [loading, setLoading] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'mensual' | 'anual'>('mensual');
+  const [couponCode, setCouponCode] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponMessage, setCouponMessage] = useState<{text: string, type: 'success' | 'error'} | null>(null);
   const router = useRouter();
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setCouponLoading(true);
+    setCouponMessage(null);
+    
+    const res = await aplicarCupon(couponCode, proveedorId);
+    
+    if (res.success) {
+      setCouponMessage({ text: res.message || 'Cupón aplicado con éxito.', type: 'success' });
+      setCouponCode('');
+      setTimeout(() => window.location.reload(), 2000);
+    } else {
+      setCouponMessage({ text: res.error || 'Error al aplicar cupón.', type: 'error' });
+    }
+    setCouponLoading(false);
+  };
 
   const handleUpgrade = async (planId: string) => {
     if (planId === planActual && billingCycle === 'mensual') return; // Simplificado
@@ -182,6 +203,37 @@ export default function PlanesClient({ planActual, proveedorId, planExpira }: Pl
               </span>
             </button>
           </div>
+
+          {/* Sección de Cupón */}
+          <div className="mt-8 w-full max-w-sm mx-auto">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-primario)] to-[var(--color-acento)] rounded-2xl blur opacity-10 group-focus-within:opacity-30 transition-opacity"></div>
+              <div className="relative bg-white/5 border border-white/10 rounded-2xl p-4 flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="¿Tienes un cupón?" 
+                  className="bg-transparent border-none focus:ring-0 text-sm font-bold placeholder:text-white/20 w-full uppercase"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                />
+                <button 
+                  onClick={handleApplyCoupon}
+                  disabled={!couponCode || couponLoading}
+                  className="btn btn-primario py-2 px-4 text-[10px] font-black uppercase tracking-widest whitespace-nowrap disabled:opacity-50"
+                >
+                  {couponLoading ? <Loader2 className="animate-spin" size={14} /> : 'Aplicar'}
+                </button>
+              </div>
+            </div>
+            {couponMessage && (
+              <p className={cn(
+                "text-[10px] font-black mt-2 text-center animate-in fade-in slide-in-from-top-1",
+                couponMessage.type === 'error' ? "text-red-400" : "text-emerald-400"
+              )}>
+                {couponMessage.text}
+              </p>
+            )}
+          </div>
           <p className="text-xs font-bold text-emerald-400 flex items-center gap-2">
             <Check size={14} />
             Selecciona el plan anual y obtén un descuento masivo
@@ -230,12 +282,15 @@ export default function PlanesClient({ planActual, proveedorId, planExpira }: Pl
               <div className="mb-8 space-y-2">
                 <div className="flex flex-col">
                   {plan.precioNormal && (
-                    <span className="text-sm text-[var(--color-texto-muted)] line-through decoration-red-500/50 decoration-2 font-bold mb-1">
-                      ${billingCycle === 'mensual' ? plan.precioNormal : plan.precioNormal * 12}
-                    </span>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-500/10 px-2 py-0.5 rounded">ANTES</span>
+                      <span className="text-xl text-[var(--color-texto-muted)] line-through decoration-red-500 decoration-2 font-bold opacity-70">
+                        ${billingCycle === 'mensual' ? plan.precioNormal : plan.precioNormal * 12}
+                      </span>
+                    </div>
                   )}
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-black">${billingCycle === 'mensual' ? plan.precioMensual : plan.precioAnual}</span>
+                    <span className="text-5xl font-black tracking-tight">${billingCycle === 'mensual' ? plan.precioMensual : plan.precioAnual}</span>
                     <span className="text-sm text-[var(--color-texto-muted)] uppercase font-bold">/ {billingCycle === 'mensual' ? 'mes' : 'año'}</span>
                   </div>
                 </div>

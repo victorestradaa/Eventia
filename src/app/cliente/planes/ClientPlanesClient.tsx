@@ -26,6 +26,7 @@ const PLANES_CLIENTE = [
   {
     id: 'ORO',
     nombre: 'Plan Oro',
+    precioNormal: 299,
     precio: 99,
     descripcion: 'Para quienes buscan la excelencia.',
     icon: Sparkles,
@@ -42,6 +43,7 @@ const PLANES_CLIENTE = [
   {
     id: 'PLANNER',
     nombre: 'Plan Planner',
+    precioNormal: 799,
     precioMensual: 299,
     precioAnual: 2990,
     descripcion: 'El estándar para profesionales.',
@@ -207,13 +209,23 @@ export default function ClientPlanesClient({ planActual, planExpira }: ClientPla
               </div>
 
               <div className="mb-8">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-black tracking-tighter">
-                    ${plan.id === 'ORO' ? plan.precio : (billingCycle === 'mensual' ? plan.precioMensual : plan.precioAnual)}
-                  </span>
-                  <span className="text-sm text-[var(--color-texto-muted)] uppercase font-extrabold">
-                    {plan.id === 'ORO' ? 'Pago Único' : (billingCycle === 'mensual' ? 'MXN/mes' : 'MXN/año')}
-                  </span>
+                <div className="flex flex-col mb-2">
+                  {(plan as any).precioNormal && (
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-500/10 px-2 py-0.5 rounded">ANTES</span>
+                      <span className="text-xl text-[var(--color-texto-muted)] line-through decoration-red-500 decoration-2 font-bold opacity-70">
+                        ${plan.id === 'ORO' ? (plan as any).precioNormal : (billingCycle === 'mensual' ? (plan as any).precioNormal : (plan as any).precioNormal * 12)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-5xl font-black tracking-tighter">
+                      ${plan.id === 'ORO' ? plan.precio : (billingCycle === 'mensual' ? plan.precioMensual : plan.precioAnual)}
+                    </span>
+                    <span className="text-sm text-[var(--color-texto-muted)] uppercase font-extrabold">
+                      {plan.id === 'ORO' ? 'MXN/único' : (billingCycle === 'mensual' ? 'MXN/mes' : 'MXN/año')}
+                    </span>
+                  </div>
                 </div>
                 {plan.id === 'PLANNER' && billingCycle === 'anual' && (
                   <p className="text-[10px] font-bold text-emerald-400 mt-2 flex items-center gap-1">

@@ -10,7 +10,8 @@ import {
   Settings, 
   FolderTree, 
   LogOut, 
-  X 
+  X,
+  Ticket
 } from 'lucide-react';
 import { cerrarSesion } from '@/lib/actions/authActions';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -29,6 +30,7 @@ const MENU_ITEMS = [
   { href: '/admin/reportes',      label: 'Reportes',              icon: DollarSign },
   { href: '/admin/catalogo',      label: 'Catálogo Invitaciones', icon: FolderTree },
   { href: '/admin/planes',        label: 'Planes y Precios',      icon: DollarSign },
+  { href: '/admin/cupones',       label: 'Cupones Regalo',        icon: Ticket },
 ];
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {

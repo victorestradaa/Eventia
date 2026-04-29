@@ -424,3 +424,23 @@ model PlanConfig {
   rol             String   // CLIENTE o PROVEEDOR
   actualizadoEn   DateTime @updatedAt
 }
+
+model Cupon {
+  id            String   @id @default(cuid())
+  codigo        String   @unique
+  mesesGratis   Int
+  maxUsos       Int?     // Opcional: límite de canjes totales
+  usosActuales  Int      @default(0)
+  fechaExpira   DateTime?
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now())
+  usos          UsoCupon[]
+}
+
+model UsoCupon {
+  id            String   @id @default(cuid())
+  cuponId       String
+  proveedorId   String
+  fechaUso      DateTime @default(now())
+  cupon         Cupon    @relation(fields: [cuponId], references: [id])
+}

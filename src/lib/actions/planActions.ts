@@ -5,6 +5,9 @@ import { revalidatePath } from 'next/cache';
 
 export async function getPlanConfigs() {
   try {
+    if (!(prisma as any).planConfig) {
+      throw new Error('El modelo PlanConfig no existe en el cliente de Prisma. Por favor, ejecuta "npx prisma generate" y reinicia el servidor.');
+    }
     const configs = await prisma.planConfig.findMany({
       orderBy: { rol: 'asc' }
     });
@@ -25,6 +28,9 @@ export async function updatePlanConfig(data: {
   rol: 'CLIENTE' | 'PROVEEDOR';
 }) {
   try {
+    if (!(prisma as any).planConfig) {
+      throw new Error('El modelo PlanConfig no existe en el cliente de Prisma.');
+    }
     const config = await prisma.planConfig.upsert({
       where: { planId: data.planId },
       update: {
@@ -59,6 +65,9 @@ export async function updatePlanConfig(data: {
  * Inicializa los planes con los valores actuales si no existen
  */
 export async function seedPlanConfigs() {
+  if (!(prisma as any).planConfig) {
+    throw new Error('El modelo PlanConfig no existe en el cliente de Prisma.');
+  }
   const planes = [
     // Proveedores
     { planId: 'DESTACADO', nombre: 'Plan Destacado', precioNormal: 299, precioPromo: 99, comision: 7, rol: 'PROVEEDOR' },
