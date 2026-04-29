@@ -1540,7 +1540,10 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                   {/* Paso 2: Método de Pago */}
                   <div className="space-y-3">
                     <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-2">Selecciona método de pago</label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className={cn(
+                      "grid gap-2",
+                      showPagoModal?.servicio?.proveedor?.mpVinculado ? "grid-cols-3" : "grid-cols-2"
+                    )}>
                        <button 
                          onClick={() => setMetodoPago('EFECTIVO')}
                          disabled={!showPagoModal?.servicio?.metodosPago?.includes('EFECTIVO')}
@@ -1569,20 +1572,22 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                           <Landmark size={20} className={metodoPago === 'TRANSFERENCIA' ? "text-[var(--color-primario-claro)]" : "text-white/40"} />
                           <span className="text-[9px] font-black uppercase tracking-widest">Transfer</span>
                        </button>
-                       <button 
-                         onClick={() => setMetodoPago('TARJETA')}
-                         disabled={!showPagoModal?.servicio?.metodosPago?.includes('TARJETA')}
-                         className={cn(
-                           "p-3 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all",
-                           metodoPago === 'TARJETA' 
-                             ? "border-[var(--color-primario-claro)] bg-[var(--color-primario)]/10" 
-                             : "border-white/5 bg-white/5 hover:border-white/10",
-                           !showPagoModal?.servicio?.metodosPago?.includes('TARJETA') && "opacity-20 cursor-not-allowed grayscale"
-                         )}
-                       >
-                          <CreditCard size={20} className={metodoPago === 'TARJETA' ? "text-[var(--color-primario-claro)]" : "text-white/40"} />
-                          <span className="text-[9px] font-black uppercase tracking-widest">Tarjeta</span>
-                       </button>
+                       {showPagoModal?.servicio?.proveedor?.mpVinculado && (
+                         <button 
+                           onClick={() => setMetodoPago('TARJETA')}
+                           disabled={!showPagoModal?.servicio?.metodosPago?.includes('TARJETA')}
+                           className={cn(
+                             "p-3 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all",
+                             metodoPago === 'TARJETA' 
+                               ? "border-[var(--color-primario-claro)] bg-[var(--color-primario)]/10" 
+                               : "border-white/5 bg-white/5 hover:border-white/10",
+                             !showPagoModal?.servicio?.metodosPago?.includes('TARJETA') && "opacity-20 cursor-not-allowed grayscale"
+                           )}
+                         >
+                            <CreditCard size={20} className={metodoPago === 'TARJETA' ? "text-[var(--color-primario-claro)]" : "text-white/40"} />
+                            <span className="text-[9px] font-black uppercase tracking-widest">Tarjeta</span>
+                         </button>
+                       )}
                     </div>
                  </div>
 
