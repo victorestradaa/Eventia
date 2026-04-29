@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Plus, Search, Edit2, Trash2, Camera, X, Loader2, UploadCloud, Star, Trash, CalendarDays, Package, CheckCircle2, Users } from 'lucide-react';
 import { ProfileCompleteModal } from './ProfileCompleteModal';
+import EarningsCalculator from './EarningsCalculator';
 import { CATEGORIAS_LABELS, TIPO_EVENTO_LABELS, formatearMoneda } from '@/lib/utils';
 import { createServicio, updateServicio, deleteServicio, upsertVariaciones, createComplemento, updateComplemento, deleteComplemento } from '@/lib/actions/providerActions';
 import { uploadServiceImage } from '@/lib/actions/uploadActions';
@@ -52,6 +53,7 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
     modalidad: 'DIA_COMPLETO' as 'DIA_COMPLETO' | 'POR_CANTIDAD' | 'POR_TURNOS',
     capacidadSimultanea: '1',
     bloquesHorario: [] as string[],
+    porcentajeAnticipo: 30,
   });
 
   const filteredServicios = servicios.filter(s => 
@@ -68,7 +70,8 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
     setFormData({ 
       nombre: '', descripcion: '', precio: '', capacidadMin: '', capacidadMax: '', 
       etiquetasEvento: ['TODOS'], imagenes: [], diasDisponibles: [], variaciones: Array(12).fill(''),
-      modalidad: 'DIA_COMPLETO', capacidadSimultanea: '1', bloquesHorario: []
+      modalidad: 'DIA_COMPLETO', capacidadSimultanea: '1', bloquesHorario: [],
+      porcentajeAnticipo: 30
     });
     setModalOpen(true);
   };
@@ -107,6 +110,7 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
       modalidad,
       capacidadSimultanea: servicio.capacidadSimultanea?.toString() || '1',
       bloquesHorario: servicio.bloquesHorario || [],
+      porcentajeAnticipo: servicio.porcentajeAnticipo || 30,
     });
     setModalOpen(true);
   };
@@ -215,6 +219,7 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
       // Interpretar según modalidad
       capacidadSimultanea: formData.modalidad === 'POR_CANTIDAD' ? (parseInt(formData.capacidadSimultanea) || 1) : 1,
       bloquesHorario: formData.modalidad === 'POR_TURNOS' ? formData.bloquesHorario.filter(b => b.trim() !== '' && b !== '-') : [],
+      porcentajeAnticipo: formData.porcentajeAnticipo,
     };
 
     let savedId = editingId;
@@ -441,6 +446,15 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-bold text-[var(--color-texto-suave)]">Precio Base (MXN) <span className="text-red-500">*</span></label>
                   <input required value={formData.precio} onChange={e => setFormData({...formData, precio: e.target.value})} type="number" step="0.01" min="0" className="input w-full h-12" placeholder="Ej. 15000" />
+                </div>
+
+                {/* CALCULADORA DE GANANCIAS */}
+                <div className="md:col-span-2 py-4">
+                  <EarningsCalculator 
+                    planProveedor={proveedor.plan}
+                    precioTotal={parseFloat(formData.precio) || 0}
+                    onAdvanceChange={(pct) => setFormData(prev => ({...prev, porcentajeAnticipo: pct}))}
+                  />
                 </div>
 
                 {/* DÍAS DISPONIBLES */}

@@ -47,6 +47,13 @@ model Proveedor {
   horasExpiracionTemporal Int               @default(24)
   creadoEn                DateTime          @default(now())
   actualizadoEn           DateTime          @updatedAt
+  
+  // Mercado Pago Connect (Split Payment)
+  mpAccessToken           String?
+  mpRefreshToken          String?
+  mpUserId                String?
+  mpVinculado             Boolean           @default(false)
+  
   complementos            Complemento[]
   portafolio              PortfolioItem[]
   usuario                 Usuario           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
@@ -70,6 +77,7 @@ model Servicio {
   videos              String[]
   capacidadSimultanea Int                @default(1)
   bloquesHorario      String[]
+  porcentajeAnticipo  Int                @default(30)
   activo              Boolean            @default(true)
   creadoEn            DateTime           @default(now())
   actualizadoEn       DateTime           @updatedAt
