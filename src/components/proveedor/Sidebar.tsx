@@ -14,7 +14,8 @@ import {
   X,
   Bell,
   Image as ImageIcon,
-  Landmark
+  Landmark,
+  CreditCard
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getPendingTasksCount } from '@/lib/actions/providerActions';
@@ -33,6 +34,7 @@ const MENU_ITEMS = [
   { href: '/proveedor/portafolio', label: 'Portafolio', icon: ImageIcon },
   { href: '/proveedor/planes', label: 'Mi Plan', icon: DollarSign },
   { href: '/proveedor/datos-bancarios', label: 'Datos Bancarios', icon: Landmark },
+  { href: '/proveedor/mercadopago', label: 'Mercado Pago', icon: CreditCard },
 ];
 
 interface ProviderSidebarProps {

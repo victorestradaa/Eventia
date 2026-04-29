@@ -42,6 +42,7 @@ import { registrarAbono } from '@/lib/actions/paymentActions';
 import { sendInvitationEmail } from '@/lib/actions/emailActions';
 import { getCuentasBancarias } from '@/lib/actions/bancosActions';
 import { uploadComprobante } from '@/lib/actions/uploadActions';
+import { createServicePreference } from '@/lib/actions/mercadopagoActions';
 
 // Componente para los iconos de persona con diseño premium
 const PersonIcon = ({ tipo, className = "w-8 h-8" }: { tipo: string, className?: string }) => {
@@ -765,7 +766,17 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                               </button>
                             ) : (
                               <button 
-                                onClick={() => setShowPagoModal(l)}
+                                onClick={() => {
+                                  setShowPagoModal(l);
+                                  if (Number(l.montoPagado || 0) === 0) {
+                                    const porcentaje = l.servicio?.porcentajeAnticipo || 30;
+                                    const anticipo = (Number(l.montoTotal) * porcentaje) / 100;
+                                    setMontoAbono(anticipo.toString());
+                                  } else {
+                                    const saldo = Number(l.montoTotal) - Number(l.montoPagado || 0);
+                                    setMontoAbono(saldo.toString());
+                                  }
+                                }}
                                 className="btn btn-primario py-3 px-8 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-violet-500/20 active:scale-95 transition-all w-full md:w-auto italic"
                               >
                                 Abonar ahora
@@ -1516,75 +1527,107 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                     <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-2">Monto a abonar</label>
                     <div className="relative">
                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-2xl font-black text-[var(--color-primario-claro)] opacity-40">$</span>
-                       <input 
-                         type="number" 
-                         value={montoAbono}
-                         onChange={(e) => setMontoAbono(e.target.value)}
-                         placeholder="0.00"
-                         className="input w-full h-16 !pl-16 text-2xl font-black text-[var(--color-primario-claro)] bg-white/5 border-2 border-white/5 focus:border-[var(--color-primario)]/50 transition-all"
-                       />
-                    </div>
-                 </div>
+                        <input 
+                          type="number" 
+                          value={montoAbono}
+                          onChange={(e) => setMontoAbono(e.target.value)}
+                          placeholder="0.00"
+                          className="input w-full h-16 !pl-16 text-2xl font-black text-[var(--color-primario-claro)] bg-white/5 border-2 border-white/5 focus:border-[var(--color-primario)]/50 transition-all"
+                        />
+                     </div>
+                  </div>
 
-                 {/* Paso 2: Método de Pago */}
-                 <div className="space-y-3">
+                  {/* Paso 2: Método de Pago */}
+                  <div className="space-y-3">
                     <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-2">Selecciona método de pago</label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-2">
                        <button 
-                         onClick={() => setMetodoPago('TRANSFERENCIA')}
+                         onClick={() => setMetodoPago('EFECTIVO')}
+                         disabled={!showPagoModal?.servicio?.metodosPago?.includes('EFECTIVO')}
                          className={cn(
-                           "p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all",
-                           metodoPago === 'TRANSFERENCIA' 
+                           "p-3 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all",
+                           metodoPago === 'EFECTIVO' 
                              ? "border-[var(--color-primario-claro)] bg-[var(--color-primario)]/10" 
-                             : "border-white/5 bg-white/5 hover:border-white/10"
+                             : "border-white/5 bg-white/5 hover:border-white/10",
+                           !showPagoModal?.servicio?.metodosPago?.includes('EFECTIVO') && "opacity-20 cursor-not-allowed grayscale"
                          )}
                        >
-                          <Landmark size={24} className={metodoPago === 'TRANSFERENCIA' ? "text-[var(--color-primario-claro)]" : "text-white/40"} />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Transferencia</span>
+                          <Wallet size={20} className={metodoPago === 'EFECTIVO' ? "text-[var(--color-primario-claro)]" : "text-white/40"} />
+                          <span className="text-[9px] font-black uppercase tracking-widest">Efectivo</span>
                        </button>
                        <button 
-                         disabled
-                         className="p-4 rounded-2xl border-2 border-white/5 bg-white/5 opacity-40 cursor-not-allowed flex flex-col items-center gap-2"
+                         onClick={() => setMetodoPago('TRANSFERENCIA')}
+                         disabled={!showPagoModal?.servicio?.metodosPago?.includes('TRANSFERENCIA')}
+                         className={cn(
+                           "p-3 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all",
+                           metodoPago === 'TRANSFERENCIA' 
+                             ? "border-[var(--color-primario-claro)] bg-[var(--color-primario)]/10" 
+                             : "border-white/5 bg-white/5 hover:border-white/10",
+                           !showPagoModal?.servicio?.metodosPago?.includes('TRANSFERENCIA') && "opacity-20 cursor-not-allowed grayscale"
+                         )}
                        >
-                          <CreditCard size={24} className="text-white/40" />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Tarjeta (Próximamente)</span>
+                          <Landmark size={20} className={metodoPago === 'TRANSFERENCIA' ? "text-[var(--color-primario-claro)]" : "text-white/40"} />
+                          <span className="text-[9px] font-black uppercase tracking-widest">Transfer</span>
+                       </button>
+                       <button 
+                         onClick={() => setMetodoPago('TARJETA')}
+                         disabled={!showPagoModal?.servicio?.metodosPago?.includes('TARJETA')}
+                         className={cn(
+                           "p-3 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all",
+                           metodoPago === 'TARJETA' 
+                             ? "border-[var(--color-primario-claro)] bg-[var(--color-primario)]/10" 
+                             : "border-white/5 bg-white/5 hover:border-white/10",
+                           !showPagoModal?.servicio?.metodosPago?.includes('TARJETA') && "opacity-20 cursor-not-allowed grayscale"
+                         )}
+                       >
+                          <CreditCard size={20} className={metodoPago === 'TARJETA' ? "text-[var(--color-primario-claro)]" : "text-white/40"} />
+                          <span className="text-[9px] font-black uppercase tracking-widest">Tarjeta</span>
                        </button>
                     </div>
                  </div>
 
-                 {/* Detalles de Transferencia */}
-                 {metodoPago === 'TRANSFERENCIA' && (
+                 {/* Detalles de Transferencia / Efectivo */}
+                 {(metodoPago === 'TRANSFERENCIA' || metodoPago === 'EFECTIVO') && (
                     <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
-                       <div className="p-5 rounded-2xl bg-violet-500/5 border border-violet-500/10 space-y-4">
-                          <p className="text-[10px] font-black uppercase text-[var(--color-primario-claro)] tracking-widest">Datos del Proveedor</p>
-                          
-                          {cargandoCuentas ? (
-                            <div className="flex items-center gap-2 text-xs text-[var(--color-texto-muted)]">
-                               <Loader2 size={14} className="animate-spin" /> Cargando cuentas...
-                            </div>
-                          ) : cuentasBancarias.length > 0 ? (
-                            <div className="space-y-3">
-                               {cuentasBancarias.map((cuenta: any) => (
-                                 <div key={cuenta.id} className="p-3 rounded-xl bg-white/5 border border-white/5 group relative overflow-hidden">
-                                    <div className="flex justify-between items-start mb-1">
-                                       <span className="text-[9px] font-black uppercase text-emerald-400">{cuenta.banco}</span>
-                                       <span className="text-[8px] font-black uppercase text-white/40">{cuenta.tipo}</span>
-                                    </div>
-                                    <div 
-                                      onClick={() => copyToClipboard(cuenta.numero, cuenta.id)}
-                                      className="flex items-center justify-between cursor-pointer hover:text-[var(--color-primario-claro)] transition-colors"
-                                    >
-                                       <p className="font-mono text-sm tracking-widest">{cuenta.numero}</p>
-                                       {copiadoId === cuenta.id ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />}
-                                    </div>
-                                    <p className="text-[9px] font-bold text-white/60 mt-1 uppercase">{cuenta.titular}</p>
-                                 </div>
-                               ))}
-                            </div>
-                          ) : (
-                            <p className="text-xs italic text-amber-400/80">El proveedor aún no registra sus datos bancarios. Por favor contáctalo directamente.</p>
-                          )}
+                       <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 flex items-start gap-3">
+                          <AlertCircle size={18} className="text-amber-500 shrink-0 mt-0.5" />
+                          <p className="text-[10px] text-amber-200/70 leading-relaxed font-medium">
+                            Este pago requiere validación manual. El proveedor tiene 48 horas para confirmar el recibo y apartar tu fecha formalmente.
+                          </p>
                        </div>
+
+                       {metodoPago === 'TRANSFERENCIA' && (
+                         <div className="p-5 rounded-2xl bg-violet-500/5 border border-violet-500/10 space-y-4">
+                            <p className="text-[10px] font-black uppercase text-[var(--color-primario-claro)] tracking-widest">Datos del Proveedor</p>
+                            
+                            {cargandoCuentas ? (
+                              <div className="flex items-center gap-2 text-xs text-[var(--color-texto-muted)]">
+                                 <Loader2 size={14} className="animate-spin" /> Cargando cuentas...
+                              </div>
+                            ) : cuentasBancarias.length > 0 ? (
+                              <div className="space-y-3">
+                                 {cuentasBancarias.map((cuenta: any) => (
+                                   <div key={cuenta.id} className="p-3 rounded-xl bg-white/5 border border-white/5 group relative overflow-hidden">
+                                      <div className="flex justify-between items-start mb-1">
+                                         <span className="text-[9px] font-black uppercase text-emerald-400">{cuenta.banco}</span>
+                                         <span className="text-[8px] font-black uppercase text-white/40">{cuenta.tipo}</span>
+                                      </div>
+                                      <div 
+                                        onClick={() => copyToClipboard(cuenta.numero, cuenta.id)}
+                                        className="flex items-center justify-between cursor-pointer hover:text-[var(--color-primario-claro)] transition-colors"
+                                      >
+                                         <p className="font-mono text-sm tracking-widest">{cuenta.numero}</p>
+                                         {copiadoId === cuenta.id ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />}
+                                      </div>
+                                      <p className="text-[9px] font-bold text-white/60 mt-1 uppercase">{cuenta.titular}</p>
+                                   </div>
+                                 ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs italic text-amber-400/80">El proveedor aún no registra sus datos bancarios. Por favor contáctalo directamente.</p>
+                            )}
+                         </div>
+                       )}
 
                        <div className="space-y-2">
                           <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-2">Adjuntar comprobante (Obligatorio)</label>
@@ -1629,6 +1672,23 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                  <button 
                    onClick={async () => {
                      if (!montoAbono || isNaN(Number(montoAbono))) return;
+                     if (metodoPago === 'TARJETA') {
+                       setProcesandoPago(true);
+                       try {
+                         const res = await createServicePreference(showPagoModal.reservaId);
+                         if (res.success && res.url) {
+                           window.location.href = res.url;
+                         } else {
+                           alert(res.error || "Error al generar el link de pago.");
+                         }
+                       } catch (error) {
+                         alert("Error de conexión con Mercado Pago.");
+                       } finally {
+                         setProcesandoPago(false);
+                       }
+                       return;
+                     }
+
                      if (metodoPago === 'TRANSFERENCIA' && !comprobanteFile) {
                         alert("Por favor adjunta el comprobante de pago.");
                         return;
@@ -1649,9 +1709,9 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                           reservaId: showPagoModal.reservaId || '',
                           monto: Number(montoAbono),
                           metodoPago: metodoPago || 'EFECTIVO',
-                          tipo: 'ABONO',
+                          tipo: Number(showPagoModal.montoPagado || 0) === 0 ? 'ANTICIPO' : 'ABONO',
                           esCliente: true,
-                          estado: metodoPago === 'TRANSFERENCIA' ? 'PENDIENTE' : 'PAGADO',
+                          estado: 'PENDIENTE',
                           comprobanteUrl
                         };
 
@@ -1677,7 +1737,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                      (procesandoPago || !montoAbono || !metodoPago) ? "opacity-50 grayscale" : "hover:scale-[1.02] active:scale-95"
                    )}
                  >
-                    {procesandoPago ? <Loader2 className="animate-spin" size={18} /> : <><CheckCircle2 size={18} /> Confirmar Abono</>}
+                    {procesandoPago ? <Loader2 className="animate-spin" size={18} /> : <><CheckCircle2 size={18} /> {metodoPago === 'TARJETA' ? 'Pagar con Tarjeta' : 'Confirmar Abono'}</>}
                  </button>
               </div>
            </div>

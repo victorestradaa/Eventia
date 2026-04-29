@@ -4,7 +4,7 @@ import { getCurrentProfile } from './authActions';
 import { prisma } from '@/lib/prisma';
 
 // Definición de Precios
-export const PRECIOS_MP = {
+const PRECIOS_MP = {
   CLIENTE: {
     ORO: { monto: 99, meses: 13, label: 'Plan Oro (13 meses)' },
     PLANNER: { monto: 299, meses: 1, label: 'Plan Planner (Mensual)' }
@@ -93,17 +93,49 @@ export async function createServicePreference(reservaId: string) {
     }
 
     // 3. Obtener la comisión según el plan del proveedor
-    // Usamos el PlanConfig de la BD si existe, o un fallback
-    const config = await prisma.planConfig.findUnique({
-      where: { planId: proveedor.plan }
-    });
+    // ELITE tiene 0% de comisión de Eventia
+    let commissionPercent = 0.10; // Default 10%
+    if (proveedor.plan === 'ELITE') {
+      commissionPercent = 0;
+    } else {
+      const config = await prisma.planConfig.findUnique({
+        where: { planId: proveedor.plan }
+      });
+      if (config?.comision) {
+        commissionPercent = config.comision / 100;
+      }
+    }
     
-    const commissionPercent = config?.comision ? config.comision / 100 : 0.10; // Default 10%
-    const marketplaceFee = Number(reserva.montoTotal) * commissionPercent;
+    // 4. Calcular el monto a cobrar (Anticipo si es el primero)
+    // Buscamos si ya tiene transacciones pagadas
+    const transaccionesPagadas = await prisma.transaccion.count({
+      where: { reservaId: reserva.id, estado: 'PAGADO' }
+    });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+    let montoACobrar = Number(reserva.montoTotal);
+    let isAnticipo = false;
 
-    // 4. Crear la preferencia de Marketplace
+    if (transaccionesPagadas === 0) {
+      // Es el primer pago, cobramos el anticipo según el porcentaje del servicio
+      const porcentaje = reserva.servicio.porcentajeAnticipo || 30;
+      montoACobrar = (Number(reserva.montoTotal) * porcentaje) / 100;
+      isAnticipo = true;
+    } else {
+      // Si ya hubo pagos, cobramos el saldo restante o lo que el usuario pida (aquí asumimos liquidación o abono)
+      // Para simplificar esta acción inicial, usaremos el montoTotal - montoPagado
+      const pagado = await prisma.transaccion.aggregate({
+        where: { reservaId: reserva.id, estado: 'PAGADO' },
+        _sum: { monto: true }
+      });
+      montoACobrar = Number(reserva.montoTotal) - Number(pagado._sum.monto || 0);
+    }
+
+    if (montoACobrar <= 0) return { success: false, error: 'La reserva ya está liquidada.' };
+
+    const marketplaceFee = montoACobrar * commissionPercent;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+    // 5. Crear la preferencia de Marketplace
     const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
@@ -114,34 +146,28 @@ export async function createServicePreference(reservaId: string) {
         items: [
           {
             id: reserva.id,
-            title: `Anticipo: ${reserva.servicio.nombre}`,
-            unit_price: Number(reserva.montoAnticipo), // Solo se cobra el anticipo por MP
+            title: `${isAnticipo ? 'Anticipo' : 'Abono'}: ${reserva.servicio.nombre}`,
+            unit_price: Math.round(montoACobrar * 100) / 100,
             quantity: 1,
             currency_id: 'MXN'
           }
         ],
-        marketplace_fee: marketplaceFee,
-        // El collector_id es el ID del proveedor en MP (Connect)
-        // NOTA: Para Marketplace se suele usar el access_token de la APP
-        // y el marketplace_fee se descuenta automáticamente.
-        payer: {
-          email: reserva.emailCliente // Si lo tenemos en la reserva
-        },
+        marketplace_fee: Math.round(marketplaceFee * 100) / 100,
         back_urls: {
-          success: `${baseUrl}/pago/exito?reserva=${reserva.id}`,
-          failure: `${baseUrl}/pago/error?reserva=${reserva.id}`,
+          success: `${baseUrl}/cliente/pago/exito?reservaId=${reserva.id}`,
+          failure: `${baseUrl}/cliente/pago/error?reservaId=${reserva.id}`,
+          pending: `${baseUrl}/cliente/pago/pendiente?reservaId=${reserva.id}`,
         },
         auto_return: 'approved',
         external_reference: reserva.id,
-        // Importante: Indicar que es para el proveedor vinculado
-        marketplace: 'MP-MARKETPLACE' // Opcional dependiendo de la versión de la API
+        notification_url: `${baseUrl}/api/webhooks/mercadopago`,
       })
     });
 
     const data = await response.json();
     if (!response.ok) {
       console.error('Error al crear preferencia Split:', data);
-      return { success: false, error: 'Error al generar el pago dividido.' };
+      return { success: false, error: 'Error al generar el pago en Mercado Pago.' };
     }
 
     return { success: true, url: data.init_point };
@@ -149,5 +175,30 @@ export async function createServicePreference(reservaId: string) {
   } catch (error: any) {
     console.error('Split Payment Error:', error);
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Desvincula la cuenta de Mercado Pago del proveedor.
+ */
+export async function desvincularMercadoPago() {
+  try {
+    const profile = await getCurrentProfile();
+    if (!profile.success || !profile.data?.proveedor) {
+      return { success: false, error: 'No autorizado.' };
+    }
+
+    await prisma.proveedor.update({
+      where: { id: profile.data.proveedor.id },
+      data: {
+        mpUserId: null,
+        mpVinculado: false
+      }
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error desvinculando MP:', error);
+    return { success: false, error: 'Error interno del servidor.' };
   }
 }
