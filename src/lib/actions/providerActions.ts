@@ -233,6 +233,8 @@ export async function createServicio(formData: {
   diasDisponibles?: number[];
   capacidadSimultanea?: number;
   bloquesHorario?: string[];
+  porcentajeAnticipo?: number;
+  metodosPago?: string[];
 }) {
   try {
     const nuevoServicio = await prisma.servicio.create({
@@ -248,6 +250,8 @@ export async function createServicio(formData: {
         diasDisponibles: formData.diasDisponibles || [],
         capacidadSimultanea: formData.capacidadSimultanea || 1,
         bloquesHorario: formData.bloquesHorario || [],
+        porcentajeAnticipo: formData.porcentajeAnticipo || 30,
+        metodosPago: formData.metodosPago || ['TARJETA'],
       }
     });
 
@@ -274,6 +278,8 @@ export async function updateServicio(id: string, formData: {
   diasDisponibles?: number[];
   capacidadSimultanea?: number;
   bloquesHorario?: string[];
+  porcentajeAnticipo?: number;
+  metodosPago?: string[];
 }) {
   try {
     const editado = await prisma.servicio.update({
@@ -289,6 +295,8 @@ export async function updateServicio(id: string, formData: {
         diasDisponibles: formData.diasDisponibles || [],
         capacidadSimultanea: formData.capacidadSimultanea || 1,
         bloquesHorario: formData.bloquesHorario || [],
+        porcentajeAnticipo: formData.porcentajeAnticipo || 30,
+        metodosPago: formData.metodosPago || ['TARJETA'],
       }
     });
 
