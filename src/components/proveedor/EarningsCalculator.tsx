@@ -108,7 +108,7 @@ export default function EarningsCalculator({ planProveedor, precioTotal, metodos
                   <span className="font-bold">-${eventiaFee.toFixed(2)}</span>
                 </div>
                 <div className="pt-3 border-t border-white/5 flex justify-between items-center">
-                  <span className="text-xs font-black uppercase text-white/40">Neto en tu MP</span>
+                  <span className="text-xs font-black uppercase text-white/40">NETO EN TU MERCADOPAGO</span>
                   <span className="text-xl font-black text-emerald-400">+${netoHoy.toLocaleString()}</span>
                 </div>
               </div>
