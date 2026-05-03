@@ -48,7 +48,7 @@ export default function MercadoPagoClient({ proveedor, authUrl }: MercadoPagoCli
         
         <div className={cn(
           "px-4 py-2 rounded-full flex items-center gap-2 text-[10px] font-black uppercase tracking-widest",
-          vinculado ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+           vinculado ? "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20" : "bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20"
         )}>
           {vinculado ? <><CheckCircle2 size={14} /> Cuenta Vinculada</> : <><AlertCircle size={14} /> Sin Vincular</>}
         </div>
@@ -123,12 +123,12 @@ export default function MercadoPagoClient({ proveedor, authUrl }: MercadoPagoCli
         </div>
 
         <div className="space-y-6">
-          <div className="card p-6 bg-amber-500/5 border border-amber-500/10 space-y-4">
-            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+           <div className="card p-6 bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/10 space-y-4">
+            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
               <AlertCircle size={20} />
               <h3 className="font-bold text-sm uppercase tracking-tight">Importante</h3>
             </div>
-            <p className="text-xs text-amber-900/70 dark:text-amber-200/60 leading-relaxed">
+            <p className="text-xs text-amber-800 dark:text-amber-200/60 leading-relaxed">
               Eventia utiliza el modelo de <strong>Marketplace</strong> de Mercado Pago. Al vincular tu cuenta, autorizas a la plataforma a procesar pagos en tu nombre y retener la comisión acordada según tu plan.
             </p>
           </div>

@@ -269,7 +269,7 @@ export default function PerfilClient({ perfil, conteoEventos }: PerfilClientProp
                         <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[var(--color-texto-suave)] group-hover:text-[#d4af37] group-hover:bg-[#d4af37]/10 transition-all">
                           <item.icon size={20} />
                         </div>
-                        <span className="font-bold text-sm tracking-tight text-white group-hover:translate-x-1 transition-transform">{item.label}</span>
+                         <span className="font-bold text-sm tracking-tight text-[var(--color-texto)] group-hover:translate-x-1 transition-transform">{item.label}</span>
                     </div>
                     <ChevronRight size={18} className="text-[var(--color-texto-muted)] group-hover:text-white transition-colors" />
                   </button>
@@ -515,28 +515,28 @@ export default function PerfilClient({ perfil, conteoEventos }: PerfilClientProp
                        <div className="p-3 bg-[#d4af37]/10 text-[#d4af37] rounded-xl"><User size={20} /></div>
                        <div>
                           <p className="text-[10px] font-black uppercase text-[#d4af37] tracking-widest">Nombre</p>
-                          <p className="text-white font-bold">{user.nombre}</p>
+                          <p className="text-[var(--color-texto)] font-bold">{user.nombre}</p>
                        </div>
                     </div>
                     <div className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-4">
                        <div className="p-3 bg-blue-500/10 text-blue-400 rounded-xl"><Settings size={20} /></div>
                        <div>
                           <p className="text-[10px] font-black uppercase text-blue-400 tracking-widest">Email</p>
-                          <p className="text-white font-bold">{user.email}</p>
+                          <p className="text-[var(--color-texto)] font-bold">{user.email}</p>
                        </div>
                     </div>
                     <div className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-4">
                        <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl"><Phone size={20} /></div>
                        <div>
                           <p className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">Teléfono</p>
-                          <p className="text-white font-bold">{perfil.telefono || 'Sin teléfono'}</p>
+                          <p className="text-[var(--color-texto)] font-bold">{perfil.telefono || 'Sin teléfono'}</p>
                        </div>
                     </div>
                     <div className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-4">
                        <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl"><MapPin size={20} /></div>
                        <div>
                           <p className="text-[10px] font-black uppercase text-purple-400 tracking-widest">Ubicación</p>
-                          <p className="text-white font-bold">{perfil.cliente?.ciudad}, {perfil.cliente?.estado}</p>
+                          <p className="text-[var(--color-texto)] font-bold">{perfil.cliente?.ciudad}, {perfil.cliente?.estado}</p>
                        </div>
                     </div>
                  </div>
