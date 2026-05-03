@@ -71,7 +71,7 @@ export default function MercadoPagoClient({ proveedor, authUrl }: MercadoPagoCli
               
               <div className="space-y-4 text-[var(--color-texto-suave)] text-sm leading-relaxed">
                 <p>
-                  Al vincular tu cuenta de Mercado Pago, permites que los clientes paguen sus anticipos y abonos con <strong>Tarjeta de Crédito o Débito</strong> directamente desde Eventia.
+                  Al vincular tu cuenta de Mercado Pago, permites que los clientes paguen sus anticipos y abonos con <strong>Tarjeta de Crédito o Débito</strong> directamente desde Eventium.
                 </p>
                 
                 <ul className="space-y-3">
@@ -133,7 +133,7 @@ export default function MercadoPagoClient({ proveedor, authUrl }: MercadoPagoCli
               <h3 className="font-bold text-sm uppercase tracking-tight">Importante</h3>
             </div>
             <p className="text-xs leading-relaxed" style={{ color: '#78350F' }}>
-              Eventia utiliza el modelo de <strong>Marketplace</strong> de Mercado Pago. Al vincular tu cuenta, autorizas a la plataforma a procesar pagos en tu nombre y retener la comisión acordada según tu plan.
+              Eventium utiliza el modelo de <strong>Marketplace</strong> de Mercado Pago. Al vincular tu cuenta, autorizas a la plataforma a procesar pagos en tu nombre y retener la comisión acordada según tu plan.
             </p>
           </div>
 

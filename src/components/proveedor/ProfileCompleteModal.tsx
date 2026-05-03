@@ -39,7 +39,7 @@ export function ProfileCompleteModal({ isOpen, onClose }: ProfileCompleteModalPr
             </h3>
             
             <p className="text-[var(--color-texto-suave)] text-sm leading-relaxed mb-8 max-w-sm mx-auto">
-               Para poder crear y publicar tus servicios en <span className="text-white font-bold">Eventia</span>, es necesario completar primero los datos básicos de tu negocio (Estado, Municipio, Dirección y Categoría).
+               Para poder crear y publicar tus servicios en <span className="text-white font-bold">Eventium</span>, es necesario completar primero los datos básicos de tu negocio (Estado, Municipio, Dirección y Categoría).
             </p>
 
             <div className="space-y-3 bg-[var(--color-fondo-input)]/50 p-6 rounded-3xl border border-[var(--color-borde-suave)] mb-8 text-left">

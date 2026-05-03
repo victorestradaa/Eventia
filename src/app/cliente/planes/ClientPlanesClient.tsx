@@ -6,6 +6,12 @@ import { useState } from 'react';
 import { createPlanPreference } from '@/lib/actions/mercadopagoActions';
 import { differenceInDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import {
+  MobilePageShell,
+  MobileTopBar,
+  MobileSection,
+  MobileCard,
+} from '@/components/cliente/mobile/primitives';
 
 const PLANES_CLIENTE = [
   {
@@ -102,7 +108,169 @@ export default function ClientPlanesClient({ planActual, planExpira }: ClientPla
   const expiraFormateada = planExpira ? format(new Date(planExpira), "d 'de' MMMM, yyyy", { locale: es }) : null;
 
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <>
+      {/* VISTA MÓVIL */}
+      <MobilePageShell>
+        <MobileTopBar
+          title="Mi plan"
+          backHref="/cliente/perfil"
+          subtitle={`Plan actual: ${planActual}`}
+        />
+
+        {/* Estado del plan actual */}
+        {planActual !== 'FREE' && planExpira && (
+          <MobileCard className="p-4 mb-5 bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">Plan vigente</p>
+            <p className="text-[18px] font-bold text-[var(--color-texto)] mb-1">{planActual}</p>
+            <div className="flex items-center gap-2 text-[12px] text-[var(--color-texto)]">
+              <Clock size={13} className={diasRestantes !== null && diasRestantes < 3 ? 'text-rose-600' : 'text-amber-700'} />
+              <span>
+                {diasRestantes && diasRestantes > 0
+                  ? `${diasRestantes} días de vigencia`
+                  : diasRestantes !== null && diasRestantes <= 0 && diasRestantes >= -3
+                  ? `Plan vencido — ${3 + diasRestantes} días de gracia`
+                  : 'Plan expirado'}
+              </span>
+            </div>
+            {expiraFormateada && (
+              <p className="text-[11px] text-[var(--color-texto-suave)] mt-1">Vence el {expiraFormateada}</p>
+            )}
+          </MobileCard>
+        )}
+
+        {/* Toggle de ciclo */}
+        <div className="bg-[var(--color-fondo-hover)] p-1 rounded-full grid grid-cols-2 mb-5">
+          <button
+            type="button"
+            onClick={() => setBillingCycle('mensual')}
+            className={cn(
+              'py-2 rounded-full text-[12px] font-semibold transition-all',
+              billingCycle === 'mensual' ? 'bg-white text-[var(--color-texto)] shadow-sm' : 'text-[var(--color-texto-suave)]',
+            )}
+          >
+            Mensual
+          </button>
+          <button
+            type="button"
+            onClick={() => setBillingCycle('anual')}
+            className={cn(
+              'py-2 rounded-full text-[12px] font-semibold transition-all',
+              billingCycle === 'anual' ? 'bg-emerald-500 text-white shadow-sm' : 'text-[var(--color-texto-suave)]',
+            )}
+          >
+            Anual · Ahorra 2 meses
+          </button>
+        </div>
+
+        <MobileSection title="Planes disponibles">
+          <div className="space-y-3">
+            {PLANES_CLIENTE.map((plan) => {
+              const isActual = planActual === plan.id;
+              const isLoadingThis = loading === plan.id;
+              const Icon = plan.icon;
+              const precioActual =
+                plan.id === 'FREE'
+                  ? 0
+                  : plan.id === 'ORO'
+                  ? plan.precio
+                  : billingCycle === 'mensual'
+                  ? plan.precioMensual
+                  : plan.precioAnual;
+              const cicloLabel =
+                plan.id === 'FREE'
+                  ? 'Sin costo'
+                  : plan.id === 'ORO'
+                  ? 'Pago único'
+                  : billingCycle === 'mensual'
+                  ? 'MXN / mes'
+                  : 'MXN / año';
+              return (
+                <MobileCard
+                  key={plan.id}
+                  className={cn(
+                    'p-5',
+                    isActual && 'ring-2 ring-amber-400 ring-offset-2 ring-offset-[var(--color-fondo)]',
+                    plan.popular && 'border-violet-200',
+                  )}
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <div
+                      className={cn(
+                        'w-12 h-12 rounded-2xl flex items-center justify-center shrink-0',
+                        plan.id === 'FREE' && 'bg-[var(--color-fondo-hover)] text-[var(--color-texto)]',
+                        plan.id === 'ORO' && 'bg-amber-50 text-amber-700',
+                        plan.id === 'PLANNER' && 'bg-violet-50 text-violet-700',
+                      )}
+                    >
+                      <Icon size={22} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-[16px] font-semibold text-[var(--color-texto)]">{plan.nombre}</h3>
+                        {plan.popular && (
+                          <span className="text-[9px] font-bold uppercase tracking-wider bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">
+                            Popular
+                          </span>
+                        )}
+                        {isActual && (
+                          <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                            Activo
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[12px] text-[var(--color-texto-suave)]">{plan.descripcion}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-baseline gap-1 mb-4">
+                    <span className="text-3xl font-bold text-[var(--color-texto)] tracking-tight">
+                      ${precioActual}
+                    </span>
+                    <span className="text-[12px] text-[var(--color-texto-suave)] font-semibold">{cicloLabel}</span>
+                  </div>
+
+                  <ul className="space-y-2 mb-4">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex items-start gap-2 text-[13px] text-[var(--color-texto)]">
+                        <Check size={14} className="text-emerald-600 mt-0.5 shrink-0" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <button
+                    type="button"
+                    onClick={() => handleUpgrade(plan.id)}
+                    disabled={isActual || !!loading}
+                    className={cn(
+                      'w-full py-3 rounded-xl text-[14px] font-semibold transition-all active:scale-[0.98]',
+                      isActual
+                        ? 'bg-[var(--color-fondo-hover)] text-[var(--color-texto-suave)] cursor-not-allowed'
+                        : 'bg-[var(--color-primario)] text-white shadow-sm',
+                      isLoadingThis && 'opacity-70',
+                    )}
+                  >
+                    {isLoadingThis ? (
+                      <Loader2 className="animate-spin mx-auto" size={18} />
+                    ) : isActual ? (
+                      'Plan activo'
+                    ) : (
+                      `Obtener ${plan.nombre}`
+                    )}
+                  </button>
+                </MobileCard>
+              );
+            })}
+          </div>
+        </MobileSection>
+
+        <p className="text-center text-[11px] text-[var(--color-texto-muted)] mt-2">
+          Pago seguro vía Mercado Pago · Activación instantánea
+        </p>
+      </MobilePageShell>
+
+      {/* VISTA ESCRITORIO */}
+      <div className="hidden md:block space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="text-center space-y-4">
         <div className="inline-block px-4 py-1 rounded-full bg-[var(--color-primario)]/10 text-[var(--color-primario-claro)] text-[10px] font-black uppercase tracking-widest mb-2">
           Membresías Premium
@@ -302,6 +470,7 @@ export default function ClientPlanesClient({ planActual, planExpira }: ClientPla
             </div>
          </div>
       </section>
-    </div>
+      </div>{/* fin desktop */}
+    </>
   );
 }

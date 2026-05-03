@@ -19,7 +19,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Eventia | Tu Marketplace de Eventos",
+  title: "Eventium | Tu Marketplace de Eventos",
   description: "La plataforma premium para conectar con los mejores proveedores de eventos sociales.",
 };
 

@@ -545,7 +545,26 @@ export default function SeatingPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#f1f5f9] text-slate-800">
+    <>
+      {/* MÓVIL — el planificador drag&drop no es práctico en pantalla pequeña */}
+      <div className="md:hidden bg-[var(--color-fondo)] -mx-6 -my-6 px-5 pt-12 pb-[calc(80px+env(safe-area-inset-bottom))] min-h-[calc(100vh-4rem)] flex flex-col items-center text-center">
+        <div className="w-16 h-16 rounded-full bg-[var(--color-fondo-hover)] text-[var(--color-texto-muted)] flex items-center justify-center mb-4">
+          <LayoutGrid size={28} />
+        </div>
+        <h2 className="text-[18px] font-semibold text-[var(--color-texto)] mb-1">Organizador de mesas</h2>
+        <p className="text-[13px] text-[var(--color-texto-suave)] leading-relaxed max-w-[280px] mb-6">
+          Esta herramienta drag-and-drop está optimizada para pantallas grandes. Te recomendamos abrirla desde una computadora o tablet horizontal.
+        </p>
+        <Link
+          href={`/cliente/evento/${eventoId}`}
+          className="px-6 py-3 rounded-full bg-[var(--color-primario)] text-white text-[13px] font-semibold active:scale-95 transition-all shadow-sm inline-flex items-center gap-2"
+        >
+          <ArrowLeft size={15} /> Volver al evento
+        </Link>
+      </div>
+
+      {/* ESCRITORIO — sin cambios */}
+      <div className="hidden md:flex flex-col h-screen bg-[#f1f5f9] text-slate-800">
 
       {/* ═══ ASSIGNMENT MODE BANNER ═══ */}
       {assigningGuest && (
@@ -1305,6 +1324,7 @@ export default function SeatingPage() {
            </div>
         </div>
       )}
-    </div>
+      </div>{/* fin desktop */}
+    </>
   );
 }

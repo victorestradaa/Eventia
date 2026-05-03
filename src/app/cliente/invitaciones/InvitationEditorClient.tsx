@@ -34,6 +34,7 @@ import PremiumInvitationView from '@/components/cliente/invitaciones/PremiumInvi
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { uploadInvitationAsset } from '@/lib/actions/uploadActions';
+import InvitationEditorMobile from '@/components/cliente/invitaciones/InvitationEditorMobile';
 
 interface InvitationEditorClientProps {
   evento: any;
@@ -584,8 +585,53 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
 
   if (!evento) return null; // Fallback de seguridad adicional, aunque ya se maneja arriba
 
+  // Total de invitados para mostrar en mobile
+  const totalInvitados = evento?.invitados?.length || 0;
+  const confirmados = (evento?.invitados || []).filter((i: any) => i.rsvpEstado === 'CONFIRMADO').length;
+
   return (
-    <div className="flex flex-col gap-8 pb-20">
+    <>
+      {/* VISTA MÓVIL — editor real con BÁSICA, PREMIUM y ENVIAR funcionales */}
+      <InvitationEditorMobile
+        evento={evento}
+        fondos={fondos}
+        fuentes={fuentes}
+        tabActiva={tabActiva}
+        setTabActiva={setTabActiva}
+        texto={texto}
+        setTexto={setTexto}
+        estilos={estilos}
+        setEstilos={setEstilos}
+        configWeb={configWeb}
+        setConfigWeb={setConfigWeb}
+        fondoUrlActivo={fondoUrlActivo}
+        setFondoUrlActivo={setFondoUrlActivo}
+        filtroCategoria={filtroCategoria}
+        setFiltroCategoria={setFiltroCategoria}
+        fondosFiltrados={fondosFiltrados}
+        modoPropia={modoPropia}
+        setModoPropia={setModoPropia}
+        archivoAdjuntoBase64={archivoAdjuntoBase64}
+        setArchivoAdjuntoBase64={setArchivoAdjuntoBase64}
+        tipoInvitacion={tipoInvitacion}
+        setTipoInvitacion={setTipoInvitacion}
+        saving={saving}
+        onSave={handleSave}
+        onFileUpload={handleFileUpload}
+        onShareWhatsApp={handleShareWhatsApp}
+        onCopyLink={copyToClipboard}
+      />
+
+      {/* Definiciones de fuentes — fuera del wrapper desktop para que el editor móvil también las cargue */}
+      <style dangerouslySetInnerHTML={{__html: fuentes.map(f => `
+        @font-face {
+          font-family: '${f.nombre}';
+          src: url('${f.url}');
+        }
+      `).join('\n')}} />
+
+      {/* VISTA ESCRITORIO — sin cambios funcionales */}
+      <div className="hidden md:flex md:flex-col gap-8 pb-20">
       <style dangerouslySetInnerHTML={{__html: fuentes.map(f => `
         @font-face {
           font-family: '${f.nombre}';
@@ -1117,6 +1163,7 @@ export default function InvitationEditorClient({ evento, fondos = [], fuentes = 
           )}
         </div>
       </div>
-    </div>
+      </div>{/* fin desktop */}
+    </>
   );
 }

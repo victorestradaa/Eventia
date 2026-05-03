@@ -415,7 +415,7 @@ export default function CalendarioClient({ reservas: initialReservas, proveedor,
                             )}
                           </div>
                           <p className="font-bold text-sm truncate">
-                            {r.esManual ? (r.nombreClienteExterno || 'Manual') : (r.cliente?.usuario?.nombre || 'Cliente Eventia')}
+                            {r.esManual ? (r.nombreClienteExterno || 'Manual') : (r.cliente?.usuario?.nombre || 'Cliente Eventium')}
                           </p>
                           <p className="text-xs text-[var(--color-texto-muted)]">{r.servicio?.nombre}</p>
                           <p className="text-xs text-[var(--color-texto-muted)] mt-1">

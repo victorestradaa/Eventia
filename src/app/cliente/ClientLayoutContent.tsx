@@ -16,6 +16,7 @@ interface ClientLayoutContentProps {
 }
 
 import Logo from '@/components/common/Logo';
+import MobileBottomNav from '@/components/cliente/mobile/MobileBottomNav';
 
 export default function ClientLayoutContent({ children, initialEventos, perfil }: ClientLayoutContentProps) {
   const pathname = usePathname();
@@ -201,8 +202,9 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
             </button>
 
             
-            <button 
-              className="md:hidden text-[var(--color-texto)] p-2 -mr-2 relative z-10 pointer-events-auto"
+            {/* En móvil la navegación primaria vive en la tab bar inferior; ocultamos la hamburguesa. */}
+            <button
+              className="hidden text-[var(--color-texto)] p-2 -mr-2 relative z-10 pointer-events-auto"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -251,9 +253,12 @@ export default function ClientLayoutContent({ children, initialEventos, perfil }
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto p-6 md:py-10">
+      <main className="max-w-7xl mx-auto p-6 md:py-10 bg-[var(--color-fondo)] md:bg-transparent pb-[calc(80px+env(safe-area-inset-bottom))] md:pb-10">
         {children}
       </main>
+
+      {/* Tab bar inferior — solo móvil */}
+      <MobileBottomNav activeEventId={activeEventId} />
     </div>
   );
 }

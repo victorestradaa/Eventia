@@ -14,7 +14,7 @@ interface LogoProps {
 
 /**
  * Componente de Logotipo inteligente.
- * Cambia automáticamente entre la versión oscura y la versión blanca (logo-blanco.png)
+ * Cambia automáticamente entre la versión a color y la versión blanca (logo-blanco.png)
  * dependiendo del tema detectado por el context.
  */
 export default function Logo({ width = 200, height = 60, className, forceWhite = false }: LogoProps) {
@@ -31,7 +31,7 @@ export default function Logo({ width = 200, height = 60, className, forceWhite =
       <div className={cn("relative inline-flex items-center justify-center", className)} style={{ width, height }}>
         <Image 
           src="/logo-blanco.png" 
-          alt="Eventia Logo" 
+          alt="Eventium Logo" 
           fill
           className="object-contain" 
           priority 
@@ -56,7 +56,7 @@ export default function Logo({ width = 200, height = 60, className, forceWhite =
     >
         <Image 
           src={logoSrc} 
-          alt="Eventia Logo" 
+          alt="Eventium Logo" 
           fill
           className="object-contain" 
           priority 

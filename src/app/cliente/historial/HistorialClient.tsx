@@ -5,6 +5,13 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { restoreEvento, deleteEventoPermanently } from '@/lib/actions/eventActions';
+import {
+  MobilePageShell,
+  MobileTopBar,
+  MobileSection,
+  MobileCard,
+  MobileEmpty,
+} from '@/components/cliente/mobile/primitives';
 
 interface HistorialClientProps {
   eventos: any[];
@@ -38,8 +45,109 @@ export default function HistorialClient({ eventos }: HistorialClientProps) {
     setLoadingId(null);
   };
 
+  const completados = eventos.filter((e: any) => e.estado === 'COMPLETADO').length;
+
   return (
-    <div className="space-y-8 max-w-5xl mx-auto px-4 pb-20 mt-10">
+    <>
+      {/* VISTA MÓVIL */}
+      <MobilePageShell>
+        <MobileTopBar title="Historial" backHref="/cliente/dashboard" subtitle={`${eventos.length} eventos · ${completados} completados`} />
+
+        {eventos.length === 0 ? (
+          <MobileEmpty
+            icon={Archive}
+            title="Sin historial"
+            description="Aquí aparecerán los eventos archivados o completados."
+          />
+        ) : (
+          <MobileSection>
+            <div className="space-y-3">
+              {eventos.map((evt: any) => (
+                <MobileCard key={evt.id} className="p-4 relative overflow-hidden">
+                  {confirmDeleteId === evt.id && (
+                    <div className="absolute inset-0 bg-rose-600/95 backdrop-blur-sm z-10 flex flex-col items-center justify-center text-white text-center p-4">
+                      <AlertCircle size={24} className="mb-2" />
+                      <p className="font-semibold mb-1 text-[14px]">¿Eliminar evento?</p>
+                      <p className="text-[11px] opacity-90 mb-3 max-w-[230px]">Borrarás invitados y configuración. No se puede deshacer.</p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="px-4 py-2 rounded-full bg-white/15 text-[12px] font-semibold active:scale-95 transition-transform"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(evt.id)}
+                          disabled={loadingId === evt.id}
+                          className="px-4 py-2 rounded-full bg-white text-rose-700 text-[12px] font-semibold active:scale-95 transition-transform disabled:opacity-60"
+                        >
+                          {loadingId === evt.id ? <Loader2 size={12} className="animate-spin" /> : 'Eliminar'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-700">
+                        {evt.tipo}
+                      </p>
+                      <h3 className="text-[15px] font-semibold text-[var(--color-texto)] truncate">{evt.nombre}</h3>
+                    </div>
+                    {evt.estado === 'COMPLETADO' ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full whitespace-nowrap">
+                        <CheckCircle2 size={10} /> Completado
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full whitespace-nowrap">
+                        <Archive size={10} /> Archivado
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 text-[12px] text-[var(--color-texto-suave)] mb-3">
+                    <span className="inline-flex items-center gap-1">
+                      <Calendar size={13} />
+                      {evt.fecha
+                        ? new Date(evt.fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : 'Sin fecha'}
+                    </span>
+                    {evt.numInvitados ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Users size={13} />
+                        {evt.numInvitados}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleRestore(evt.id)}
+                      disabled={loadingId === evt.id}
+                      className="col-span-2 flex items-center justify-center gap-1 py-2 rounded-xl bg-[var(--color-primario)] text-white text-[12px] font-semibold active:scale-[0.98] transition-all disabled:opacity-60"
+                    >
+                      {loadingId === evt.id ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />} Reactivar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteId(evt.id)}
+                      disabled={loadingId === evt.id}
+                      className="flex items-center justify-center py-2 rounded-xl bg-rose-50 text-rose-600 active:scale-[0.98] transition-all disabled:opacity-60"
+                      aria-label="Eliminar"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </MobileCard>
+              ))}
+            </div>
+          </MobileSection>
+        )}
+      </MobilePageShell>
+
+      {/* VISTA ESCRITORIO */}
+      <div className="hidden md:block space-y-8 max-w-5xl mx-auto px-4 pb-20 mt-10">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
@@ -183,6 +291,7 @@ export default function HistorialClient({ eventos }: HistorialClientProps) {
           ))}
         </div>
       )}
-    </div>
+      </div>{/* fin desktop */}
+    </>
   );
 }

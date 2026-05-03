@@ -25,13 +25,13 @@ export default function EarningsCalculator({ planProveedor, precioTotal, metodos
   const hasTarjeta = metodosPagoSelected.includes('TARJETA');
   const eventiaFeePercent = PLAN_FEES[planProveedor] ?? 0.10;
   
-  // Si no hay tarjeta, no hay comisiones de pasarela ni de Eventia sobre el anticipo (cobro directo)
+  // Si no hay tarjeta, no hay comisiones de pasarela ni de Eventium sobre el anticipo (cobro directo)
   const currentMPFeePercent = hasTarjeta ? TARIFA_MP : 0;
-  const currentEventiaFeePercent = hasTarjeta ? eventiaFeePercent : 0;
+  const currentEventiumFeePercent = hasTarjeta ? eventiaFeePercent : 0;
 
   // Cálculo de Anticipo Mínimo Protegido
-  const minAdvanceAmount = precioTotal > 0 ? (precioTotal * currentEventiaFeePercent) / (1 - currentMPFeePercent) : 0;
-  const minPercentage = precioTotal > 0 && currentEventiaFeePercent > 0 ? Math.ceil((minAdvanceAmount / precioTotal) * 100) : 10;
+  const minAdvanceAmount = precioTotal > 0 ? (precioTotal * currentEventiumFeePercent) / (1 - currentMPFeePercent) : 0;
+  const minPercentage = precioTotal > 0 && currentEventiumFeePercent > 0 ? Math.ceil((minAdvanceAmount / precioTotal) * 100) : 10;
   
   // Ajustar porcentaje si baja del mínimo
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function EarningsCalculator({ planProveedor, precioTotal, metodos
           </div>
           <div>
             <h3 className="text-xl font-black tracking-tight">Calculadora de Ganancias</h3>
-            <p className="text-[10px] text-white/40 uppercase font-bold tracking-widest">Plan Actual: <span className="text-emerald-400">{planProveedor}</span> ({currentEventiaFeePercent * 100}%)</p>
+            <p className="text-[10px] text-white/40 uppercase font-bold tracking-widest">Plan Actual: <span className="text-emerald-400">{planProveedor}</span> ({currentEventiumFeePercent * 100}%)</p>
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export default function EarningsCalculator({ planProveedor, precioTotal, metodos
           <div className="bg-gradient-to-br from-white/[0.03] to-transparent border border-white/5 rounded-3xl p-6 space-y-6">
             <div>
               <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <Wallet size={14} /> Cobro Hoy (Vía Eventia)
+                <Wallet size={14} /> Cobro Hoy (Vía Eventium)
               </p>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
@@ -104,7 +104,7 @@ export default function EarningsCalculator({ planProveedor, precioTotal, metodos
                   <span className="font-bold">-${mpFee.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-xs text-red-400/80">
-                  <span className="flex items-center gap-1">Comisión Eventia ({eventiaFeePercent * 100}%)</span>
+                  <span className="flex items-center gap-1">Comisión Eventium ({eventiaFeePercent * 100}%)</span>
                   <span className="font-bold">-${eventiaFee.toFixed(2)}</span>
                 </div>
                 <div className="pt-3 border-t border-white/5 flex justify-between items-center">

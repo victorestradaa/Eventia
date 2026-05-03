@@ -198,7 +198,7 @@ export default function InvitacionPublica() {
               </div>
             </>
           )}
-          <p className="text-[10px] font-bold uppercase tracking-[0.5em] opacity-20 pt-6">Eventia · 2026</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.5em] opacity-20 pt-6">Eventium · 2026</p>
         </div>
       </div>
     );

@@ -20,6 +20,13 @@ import { QRCodeSVG } from 'qrcode.react';
 import { getOrCreateAlbum, updateAlbumConfig, deleteAlbumMedia } from '@/lib/actions/albumActions';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import {
+  MobilePageShell,
+  MobileTopBar,
+  MobileSection,
+  MobileCard,
+  MobileEmpty,
+} from '@/components/cliente/mobile/primitives';
 
 export default function AlbumDashboardPage() {
   const { id: eventoId } = useParams();
@@ -119,8 +126,152 @@ export default function AlbumDashboardPage() {
   const publicUrl = `${window.location.origin}/album/${album.slug}`;
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8 animate-in fade-in duration-700">
-      
+    <>
+      {/* VISTA MÓVIL */}
+      <MobilePageShell>
+        <MobileTopBar title="Álbum digital" backHref={`/cliente/evento/${eventoId}`} subtitle={`${album.media.length} recuerdos`} />
+
+        <MobileCard className="p-5 mb-5 text-center">
+          <div className="inline-block p-3 bg-[var(--color-fondo)] rounded-2xl border border-[var(--color-borde-suave)] mb-4">
+            <QRCodeSVG
+              id="album-qr-mobile"
+              value={publicUrl}
+              size={180}
+              level="H"
+              includeMargin
+              className="rounded-lg"
+            />
+          </div>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-texto-suave)] mb-1">Link compartible</p>
+          <p className="text-[12px] text-[var(--color-texto)] font-medium truncate mb-4">{publicUrl}</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={downloadQR}
+              className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[var(--color-primario)] text-white text-[13px] font-semibold active:scale-[0.98] transition-all"
+            >
+              <Download size={16} /> Descargar QR
+            </button>
+            <a
+              href={publicUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[var(--color-fondo-hover)] text-[var(--color-texto)] text-[13px] font-semibold active:scale-[0.98] transition-all"
+            >
+              <ExternalLink size={16} /> Vista invitados
+            </a>
+          </div>
+        </MobileCard>
+
+        <MobileCard className="p-4 mb-5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={cn(
+                'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
+                album.activo ? 'bg-emerald-50 text-emerald-700' : 'bg-[var(--color-fondo-hover)] text-[var(--color-texto-suave)]',
+              )}>
+                {album.activo ? <Unlock size={18} /> : <Lock size={18} />}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[14px] font-semibold text-[var(--color-texto)]">
+                  {album.activo ? 'Álbum activo' : 'Álbum pausado'}
+                </p>
+                <p className="text-[12px] text-[var(--color-texto-suave)] truncate">
+                  {album.activo ? 'Tus invitados pueden subir contenido.' : 'Solo se permite ver el álbum.'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleActive}
+              disabled={isSaving}
+              className={cn(
+                'px-4 py-2 rounded-full text-[12px] font-semibold transition-all active:scale-95 shrink-0',
+                album.activo ? 'bg-[var(--color-primario)] text-white' : 'bg-[var(--color-fondo-hover)] text-[var(--color-texto)]',
+              )}
+            >
+              {isSaving ? <Loader2 className="animate-spin" size={14} /> : album.activo ? 'Pausar' : 'Activar'}
+            </button>
+          </div>
+        </MobileCard>
+
+        <MobileSection
+          title="PIN de seguridad"
+          action={
+            <button
+              type="button"
+              onClick={() => setShowConfig(!showConfig)}
+              className="text-[11px] font-semibold text-[var(--color-texto)] active:text-[var(--color-texto)]"
+            >
+              {showConfig ? 'Cerrar' : 'Configurar'}
+            </button>
+          }
+        >
+          {showConfig && (
+            <MobileCard className="p-4">
+              <p className="text-[12px] text-[var(--color-texto-suave)] leading-relaxed mb-3">
+                Si quieres mayor privacidad, configura un PIN de 4 dígitos. Déjalo en blanco para acceso libre.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholder="••••"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                  className="flex-1 px-4 py-3 bg-[var(--color-fondo)] border border-[var(--color-borde)] rounded-xl text-center text-[18px] font-bold tracking-[0.3em] outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleUpdatePin}
+                  disabled={isSaving}
+                  className="px-5 rounded-xl bg-[var(--color-primario)] text-white text-[13px] font-semibold active:scale-95 transition-all disabled:opacity-60"
+                >
+                  {isSaving ? <Loader2 className="animate-spin" size={14} /> : 'Guardar'}
+                </button>
+              </div>
+            </MobileCard>
+          )}
+        </MobileSection>
+
+        <MobileSection title={`Galería (${album.media.length})`}>
+          {album.media.length === 0 ? (
+            <MobileEmpty
+              icon={Images}
+              title="Aún sin recuerdos"
+              description="Comparte el QR con tus invitados para que suban sus mejores momentos."
+            />
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {album.media.map((item: any) => (
+                <div
+                  key={item.id}
+                  className="relative aspect-square rounded-2xl overflow-hidden bg-[var(--color-fondo-hover)] shadow-sm border border-[var(--color-borde-suave)] group"
+                >
+                  {item.tipo === 'IMAGE' ? (
+                    <img src={item.url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <video src={item.url} className="w-full h-full object-cover" />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteMedia(item.id)}
+                    aria-label="Eliminar"
+                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 backdrop-blur text-rose-600 flex items-center justify-center shadow-sm active:scale-90 transition-transform"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </MobileSection>
+      </MobilePageShell>
+
+      {/* VISTA ESCRITORIO — sin cambios */}
+      <div className="hidden md:block max-w-6xl mx-auto p-6 space-y-8 animate-in fade-in duration-700">
+
       {/* Botón Volver */}
       <Link 
         href={`/cliente/evento/${eventoId}`}
@@ -289,5 +440,6 @@ export default function AlbumDashboardPage() {
       </div>
 
     </div>
+    </>
   );
 }

@@ -17,7 +17,7 @@ export async function sendInvitationEmail(data: {
     }
 
     const { data: emailData, error } = await resend.emails.send({
-      from: 'Eventia <onboarding@resend.dev>', // En producción usar un dominio verificado
+      from: 'Eventium <onboarding@resend.dev>', // En producción usar un dominio verificado
       to: [data.to],
       subject: `¡Te invitamos a ${data.eventName}!`,
       html: `
@@ -36,7 +36,7 @@ export async function sendInvitationEmail(data: {
           </p>
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #eaeaea;" />
           <p style="font-size: 12px; color: #666; text-align: center;">
-            Enviado desde Eventia - Tu gestor de eventos premium.
+            Enviado desde Eventium - Tu gestor de eventos premium.
           </p>
         </div>
       `,

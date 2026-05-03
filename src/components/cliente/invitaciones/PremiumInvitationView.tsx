@@ -197,7 +197,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
   const handleAddToCalendar = () => {
     const title = encodeURIComponent(evento.nombre);
     const date = new Date(config.fechaEventoExacta || evento.fecha).toISOString().replace(/-|:|\.\d\d\d/g, "");
-    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${date}/${date}&details=Invitación via Eventia`;
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${date}/${date}&details=Invitación via Eventium`;
     window.open(url, '_blank');
   };
 
@@ -840,7 +840,7 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
          "fixed bottom-4 left-0 w-full text-center transition-opacity duration-500 z-40",
          currentPage === sections.length - 1 ? "opacity-20" : "opacity-0"
        )}>
-          <p className="text-[8px] font-black uppercase tracking-[0.5em]">Eventia · 2026</p>
+          <p className="text-[8px] font-black uppercase tracking-[0.5em]">Eventium · 2026</p>
        </div>
     </div>
   );

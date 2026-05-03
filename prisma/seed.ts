@@ -12,7 +12,7 @@ async function main() {
   console.log('🌱 Iniciando seedeo de base de datos...');
 
   const usersToCreate = [
-    { email: 'admin@eventia.com', password: 'admin', role: 'ADMIN', name: 'Administrador Eventia' },
+    { email: 'admin@eventia.com', password: 'admin', role: 'ADMIN', name: 'Administrador Eventium' },
     { email: 'pamela@gmail.com', password: 'pamela', role: 'CLIENTE', name: 'Pamela' },
     { email: 'mariachi@gmail.com', password: 'pamela', role: 'PROVEEDOR', name: 'Mariachi Loco' },
   ];

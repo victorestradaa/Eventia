@@ -42,7 +42,7 @@ export default function PrivacidadPage() {
         <div className="bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-[2.5rem] p-8 md:p-12 shadow-sm">
           <div className="prose prose-lg prose-gray dark:prose-invert max-w-none">
             <p className="lead font-medium text-lg leading-relaxed mb-12 text-[var(--color-texto)]">
-              En Eventia, valoramos tu privacidad y la seguridad de tu información. Este Aviso de Privacidad explica cómo recopilamos, utilizamos, compartimos y protegemos tus datos personales cuando utilizas nuestra plataforma web y servicios asociados, operando desde Mazatlán, Sinaloa, México.
+              En Eventium, valoramos tu privacidad y la seguridad de tu información. Este Aviso de Privacidad explica cómo recopilamos, utilizamos, compartimos y protegemos tus datos personales cuando utilizas nuestra plataforma web y servicios asociados, operando desde Mazatlán, Sinaloa, México.
             </p>
 
             {/* Section 1 */}
@@ -70,7 +70,7 @@ export default function PrivacidadPage() {
                 <li className="flex gap-3">
                   <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#d4af37] shrink-0" />
                   <span className="bg-[#d4af37]/5 p-4 rounded-2xl border border-[#d4af37]/20">
-                    <strong className="text-[var(--color-texto)] font-black">Información de Pago:</strong> Utilizamos Mercado Pago como pasarela de pago segura. Eventia no almacena ni tiene acceso a los números de tu tarjeta de crédito o débito, ni a tus contraseñas bancarias. Solo recibimos confirmaciones de transacción y tokens de seguridad.
+                    <strong className="text-[var(--color-texto)] font-black">Información de Pago:</strong> Utilizamos Mercado Pago como pasarela de pago segura. Eventium no almacena ni tiene acceso a los números de tu tarjeta de crédito o débito, ni a tus contraseñas bancarias. Solo recibimos confirmaciones de transacción y tokens de seguridad.
                   </span>
                 </li>
               </ul>
@@ -119,7 +119,7 @@ export default function PrivacidadPage() {
                   <h4 className="font-bold mb-2 text-[var(--color-texto)]">Procesadores de Pago:</h4>
                   <p className="text-sm">Compartimos los datos de transacción necesarios con Mercado Pago para procesar los cobros y transferencias de manera segura.</p>
                 </div>
-                <p className="font-bold text-[#d4af37] italic">Eventia no vende, alquila ni comercializa tu información personal a terceros para fines publicitarios externos.</p>
+                <p className="font-bold text-[#d4af37] italic">Eventium no vende, alquila ni comercializa tu información personal a terceros para fines publicitarios externos.</p>
               </div>
             </section>
 
@@ -153,7 +153,7 @@ export default function PrivacidadPage() {
                 <span>privacidad@eventia.com</span>
               </div>
               <p className="text-sm text-[var(--color-texto-muted)] italic">
-                Eventia se reserva el derecho de modificar este Aviso de Privacidad en cualquier momento. Notificaremos a nuestros usuarios sobre cambios significativos.
+                Eventium se reserva el derecho de modificar este Aviso de Privacidad en cualquier momento. Notificaremos a nuestros usuarios sobre cambios significativos.
               </p>
             </footer>
           </div>

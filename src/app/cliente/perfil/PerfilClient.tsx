@@ -27,6 +27,7 @@ import { cerrarSesion, actualizarPassword } from '@/lib/actions/authActions';
 import { updateClientProfile } from '@/lib/actions/settingsActions';
 import { uploadAvatar } from '@/lib/actions/uploadActions';
 import { MEXICO_LOCATIONS } from '@/lib/constants/locations';
+import PerfilMobile from '@/components/cliente/perfil/PerfilMobile';
 
 interface PerfilClientProps {
   perfil: any;
@@ -150,7 +151,30 @@ export default function PerfilClient({ perfil, conteoEventos }: PerfilClientProp
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-12 pb-20 animate-in fade-in duration-700">
+    <>
+      {/* VISTA MÓVIL */}
+      <PerfilMobile
+        perfil={perfil}
+        user={user}
+        uploading={uploading}
+        isLoggingOut={isLoggingOut}
+        onPickAvatar={() => fileInputRef.current?.click()}
+        onEditProfile={() => setIsEditModalOpen(true)}
+        onOpenMyData={() => setIsMyDataModalOpen(true)}
+        onOpenSecurity={() => setIsSecurityModalOpen(true)}
+        onLogout={handleLogout}
+      />
+      {/* Input de archivo compartido entre móvil y escritorio */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={handleFileChange}
+      />
+
+      {/* VISTA ESCRITORIO */}
+      <div className="hidden md:block max-w-5xl mx-auto space-y-12 pb-20 animate-in fade-in duration-700">
       {/* Profile Header */}
       <div className="relative">
         <div className="h-48 rounded-3xl bg-gradient-to-r from-[#111] via-[#1a1a1a] to-[#0a0a0a] border border-[#d4af37]/20 shadow-2xl relative overflow-hidden group">
@@ -174,20 +198,14 @@ export default function PerfilClient({ perfil, conteoEventos }: PerfilClientProp
                       <Loader2 className="animate-spin text-[#d4af37]" />
                     </div>
                   )}
-                  <button 
+                  <button
                     onClick={() => fileInputRef.current?.click()}
                     className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
                   >
                     <Camera className="text-white" />
                   </button>
                </div>
-               <input 
-                 type="file" 
-                 ref={fileInputRef} 
-                 className="hidden" 
-                 accept="image/*" 
-                 onChange={handleFileChange} 
-               />
+               {/* input file ahora vive a nivel raíz para que sirva tanto a la vista móvil como a la de escritorio */}
             </div>
             <div className="pb-2">
                <div className="flex items-center gap-3 justify-center md:justify-start">
@@ -329,102 +347,106 @@ export default function PerfilClient({ perfil, conteoEventos }: PerfilClientProp
            </div>
         </div>
       </div>
+      </div>{/* fin desktop wrapper — modales accesibles en móvil */}
 
       {/* Edit Modal */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-           <div className="bg-[#111] border border-[#d4af37]/20 max-w-lg w-full p-10 space-y-8 rounded-[3rem] shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent" />
-              
-              <div className="flex justify-between items-center">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-5 md:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="bg-[var(--color-fondo-card)] text-[var(--color-texto)] border border-[var(--color-borde-suave)] max-w-md w-full p-6 md:p-8 space-y-6 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-start gap-3">
                  <div>
-                    <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">Editar Perfil</h2>
-                    <p className="text-[var(--color-texto-suave)] text-xs font-bold uppercase tracking-widest mt-1">Información Personal</p>
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight text-[var(--color-texto)]">Editar perfil</h2>
+                    <p className="text-[12px] text-[var(--color-texto-suave)] mt-0.5">Información personal</p>
                  </div>
-                 <button onClick={() => setIsEditModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full text-[var(--color-texto-muted)] transition-colors"><X size={24} /></button>
+                 <button
+                   type="button"
+                   onClick={() => setIsEditModalOpen(false)}
+                   className="w-9 h-9 rounded-full bg-[var(--color-fondo-hover)] text-[var(--color-texto)] flex items-center justify-center active:scale-95 transition-transform"
+                   aria-label="Cerrar"
+                 >
+                   <X size={18} />
+                 </button>
               </div>
 
-              <form onSubmit={handleUpdateProfile} className="space-y-6">
-                 <div className="space-y-5">
-                    <div className="space-y-1.5">
-                       <label className="text-[10px] font-black uppercase text-[#d4af37] tracking-widest ml-1">Nombre Completo</label>
-                       <input 
-                         type="text" 
-                         value={formData.nombre}
-                         onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#d4af37] transition-all"
-                         placeholder="Tu nombre completo"
-                         required
-                       />
-                    </div>
+              <form onSubmit={handleUpdateProfile} className="space-y-4">
+                 <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold uppercase text-[var(--color-texto-suave)] tracking-wider ml-1">Nombre completo</label>
+                    <input
+                      type="text"
+                      value={formData.nombre}
+                      onChange={(e) => setFormData({...formData, nombre: e.target.value})}
+                      className="w-full bg-[var(--color-fondo-hover)] border border-[var(--color-borde-suave)] rounded-2xl px-4 py-3 text-[14px] text-[var(--color-texto)] placeholder:text-[var(--color-texto-muted)] outline-none focus:border-[var(--color-acento)] transition-all"
+                      placeholder="Tu nombre completo"
+                      required
+                    />
+                 </div>
 
-                    <div className="space-y-1.5">
-                       <label className="text-[10px] font-black uppercase text-[#d4af37] tracking-widest ml-1">Teléfono / Celular</label>
-                       <input 
-                         type="tel" 
-                         value={formData.telefono}
-                         onChange={(e) => setFormData({...formData, telefono: e.target.value})}
-                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#d4af37] transition-all"
-                         placeholder="Número de contacto"
-                         required
-                       />
-                    </div>
+                 <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold uppercase text-[var(--color-texto-suave)] tracking-wider ml-1">Teléfono / Celular</label>
+                    <input
+                      type="tel"
+                      value={formData.telefono}
+                      onChange={(e) => setFormData({...formData, telefono: e.target.value})}
+                      className="w-full bg-[var(--color-fondo-hover)] border border-[var(--color-borde-suave)] rounded-2xl px-4 py-3 text-[14px] text-[var(--color-texto)] placeholder:text-[var(--color-texto-muted)] outline-none focus:border-[var(--color-acento)] transition-all"
+                      placeholder="Número de contacto"
+                      required
+                    />
+                 </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                       <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase text-[#d4af37] tracking-widest ml-1">Estado</label>
-                          <select 
-                            value={formData.estado}
-                            onChange={(e) => {
-                              const nuevoEstado = e.target.value;
-                              setFormData({
-                                ...formData, 
-                                estado: nuevoEstado,
-                                ciudad: MEXICO_LOCATIONS[nuevoEstado]?.[0] || ''
-                              });
-                            }}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#d4af37] transition-all text-sm appearance-none"
-                            required
-                          >
-                            <option value="" disabled className="bg-[#111]">Selecciona un estado</option>
-                            {Object.keys(MEXICO_LOCATIONS).sort().map(estado => (
-                              <option key={estado} value={estado} className="bg-[#111]">{estado}</option>
-                            ))}
-                          </select>
-                       </div>
-                       <div className="space-y-1.5">
-                          <label className="text-[10px] font-black uppercase text-[#d4af37] tracking-widest ml-1">Ciudad</label>
-                          <select 
-                            value={formData.ciudad}
-                            onChange={(e) => setFormData({...formData, ciudad: e.target.value})}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#d4af37] transition-all text-sm appearance-none"
-                            required
-                            disabled={!formData.estado}
-                          >
-                            <option value="" disabled className="bg-[#111]">Selecciona una ciudad</option>
-                            {formData.estado && MEXICO_LOCATIONS[formData.estado]?.map(ciudad => (
-                              <option key={ciudad} value={ciudad} className="bg-[#111]">{ciudad}</option>
-                            ))}
-                          </select>
-                       </div>
+                 <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                       <label className="text-[11px] font-semibold uppercase text-[var(--color-texto-suave)] tracking-wider ml-1">Estado</label>
+                       <select
+                         value={formData.estado}
+                         onChange={(e) => {
+                           const nuevoEstado = e.target.value;
+                           setFormData({
+                             ...formData,
+                             estado: nuevoEstado,
+                             ciudad: MEXICO_LOCATIONS[nuevoEstado]?.[0] || ''
+                           });
+                         }}
+                         className="w-full bg-[var(--color-fondo-hover)] border border-[var(--color-borde-suave)] rounded-2xl px-3 py-3 text-[14px] text-[var(--color-texto)] outline-none focus:border-[var(--color-acento)] transition-all"
+                         required
+                       >
+                         <option value="" disabled>Selecciona…</option>
+                         {Object.keys(MEXICO_LOCATIONS).sort().map(estado => (
+                           <option key={estado} value={estado}>{estado}</option>
+                         ))}
+                       </select>
+                    </div>
+                    <div className="space-y-1.5">
+                       <label className="text-[11px] font-semibold uppercase text-[var(--color-texto-suave)] tracking-wider ml-1">Ciudad</label>
+                       <select
+                         value={formData.ciudad}
+                         onChange={(e) => setFormData({...formData, ciudad: e.target.value})}
+                         className="w-full bg-[var(--color-fondo-hover)] border border-[var(--color-borde-suave)] rounded-2xl px-3 py-3 text-[14px] text-[var(--color-texto)] outline-none focus:border-[var(--color-acento)] transition-all disabled:opacity-50"
+                         required
+                         disabled={!formData.estado}
+                       >
+                         <option value="" disabled>Selecciona…</option>
+                         {formData.estado && MEXICO_LOCATIONS[formData.estado]?.map(ciudad => (
+                           <option key={ciudad} value={ciudad}>{ciudad}</option>
+                         ))}
+                       </select>
                     </div>
                  </div>
 
-                 <div className="flex gap-4 pt-4">
-                    <button 
-                      type="button" 
+                 <div className="flex flex-col-reverse md:flex-row gap-3 pt-2 border-t border-[var(--color-borde-suave)] mt-2">
+                    <button
+                      type="button"
                       onClick={() => setIsEditModalOpen(false)}
-                      className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-[var(--color-texto-muted)] hover:text-white transition-colors"
+                      className="flex-1 py-3 rounded-xl bg-[var(--color-fondo-hover)] text-[var(--color-texto)] uppercase font-bold tracking-wider text-xs hover:bg-[var(--color-borde)] transition-colors"
                       disabled={loading}
                     >
                       Cancelar
                     </button>
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       disabled={loading}
-                      className="flex-1 bg-[#d4af37] text-black py-4 rounded-2xl font-black uppercase italic text-sm shadow-xl shadow-[#d4af37]/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                      className="btn-oro flex-1 py-3 rounded-xl font-bold uppercase text-xs tracking-wider shadow-md flex items-center justify-center gap-2"
                     >
-                      {loading ? <Loader2 className="animate-spin" size={20} /> : <><Check size={20} strokeWidth={3} /> Guardar Cambios</>}
+                      {loading ? <Loader2 className="animate-spin" size={18} /> : <><Check size={16} strokeWidth={3} /> Guardar</>}
                     </button>
                  </div>
               </form>
@@ -434,60 +456,63 @@ export default function PerfilClient({ perfil, conteoEventos }: PerfilClientProp
 
       {/* Security / Password Modal */}
       {isSecurityModalOpen && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-           <div className="bg-[#111] border border-[#d4af37]/20 max-w-lg w-full p-10 space-y-8 rounded-[3rem] shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent" />
-              
-              <div className="flex justify-between items-center">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-5 md:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="bg-[var(--color-fondo-card)] text-[var(--color-texto)] border border-[var(--color-borde-suave)] max-w-md w-full p-6 md:p-8 space-y-6 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
+              <div className="flex justify-between items-start gap-3">
                  <div>
-                    <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">Seguridad</h2>
-                    <p className="text-[var(--color-texto-suave)] text-xs font-bold uppercase tracking-widest mt-1">Cambiar Contraseña</p>
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight text-[var(--color-texto)]">Seguridad</h2>
+                    <p className="text-[12px] text-[var(--color-texto-suave)] mt-0.5">Cambiar contraseña</p>
                  </div>
-                 <button onClick={() => setIsSecurityModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full text-[var(--color-texto-muted)] transition-colors"><X size={24} /></button>
+                 <button
+                   type="button"
+                   onClick={() => setIsSecurityModalOpen(false)}
+                   className="w-9 h-9 rounded-full bg-[var(--color-fondo-hover)] text-[var(--color-texto)] flex items-center justify-center active:scale-95 transition-transform"
+                   aria-label="Cerrar"
+                 >
+                   <X size={18} />
+                 </button>
               </div>
 
-              <form onSubmit={handleUpdatePassword} className="space-y-6">
-                 <div className="space-y-5">
-                    <div className="space-y-1.5">
-                       <label className="text-[10px] font-black uppercase text-[#d4af37] tracking-widest ml-1">Nueva Contraseña</label>
-                       <input 
-                         type="password" 
-                         value={passwordData.newPassword}
-                         onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#d4af37] transition-all"
-                         placeholder="Mínimo 6 caracteres"
-                         required
-                       />
-                    </div>
-
-                    <div className="space-y-1.5">
-                       <label className="text-[10px] font-black uppercase text-[#d4af37] tracking-widest ml-1">Confirmar Contraseña</label>
-                       <input 
-                         type="password" 
-                         value={passwordData.confirmPassword}
-                         onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white outline-none focus:border-[#d4af37] transition-all"
-                         placeholder="Repite la contraseña"
-                         required
-                       />
-                    </div>
+              <form onSubmit={handleUpdatePassword} className="space-y-4">
+                 <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold uppercase text-[var(--color-texto-suave)] tracking-wider ml-1">Nueva contraseña</label>
+                    <input
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                      className="w-full bg-[var(--color-fondo-hover)] border border-[var(--color-borde-suave)] rounded-2xl px-4 py-3 text-[14px] text-[var(--color-texto)] placeholder:text-[var(--color-texto-muted)] outline-none focus:border-[var(--color-acento)] transition-all"
+                      placeholder="Mínimo 6 caracteres"
+                      required
+                    />
                  </div>
 
-                 <div className="flex gap-4 pt-4">
-                    <button 
-                      type="button" 
+                 <div className="space-y-1.5">
+                    <label className="text-[11px] font-semibold uppercase text-[var(--color-texto-suave)] tracking-wider ml-1">Confirmar contraseña</label>
+                    <input
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                      className="w-full bg-[var(--color-fondo-hover)] border border-[var(--color-borde-suave)] rounded-2xl px-4 py-3 text-[14px] text-[var(--color-texto)] placeholder:text-[var(--color-texto-muted)] outline-none focus:border-[var(--color-acento)] transition-all"
+                      placeholder="Repite la contraseña"
+                      required
+                    />
+                 </div>
+
+                 <div className="flex flex-col-reverse md:flex-row gap-3 pt-2 border-t border-[var(--color-borde-suave)] mt-2">
+                    <button
+                      type="button"
                       onClick={() => setIsSecurityModalOpen(false)}
-                      className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-[var(--color-texto-muted)] hover:text-white transition-colors"
+                      className="flex-1 py-3 rounded-xl bg-[var(--color-fondo-hover)] text-[var(--color-texto)] uppercase font-bold tracking-wider text-xs hover:bg-[var(--color-borde)] transition-colors"
                       disabled={passwordLoading}
                     >
                       Cancelar
                     </button>
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       disabled={passwordLoading}
-                      className="flex-1 bg-white text-black py-4 rounded-2xl font-black uppercase italic text-sm shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                      className="btn-oro flex-1 py-3 rounded-xl font-bold uppercase text-xs tracking-wider shadow-md flex items-center justify-center gap-2"
                     >
-                      {passwordLoading ? <Loader2 className="animate-spin" size={20} /> : 'Actualizar'}
+                      {passwordLoading ? <Loader2 className="animate-spin" size={18} /> : 'Actualizar'}
                     </button>
                  </div>
               </form>
@@ -497,63 +522,66 @@ export default function PerfilClient({ perfil, conteoEventos }: PerfilClientProp
 
       {/* Mis Datos Modal */}
       {isMyDataModalOpen && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-           <div className="bg-[#111] border border-[#d4af37]/20 max-w-lg w-full p-10 space-y-8 rounded-[3rem] shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#d4af37]/5 blur-3xl rounded-full -mr-16 -mt-16" />
-              
-              <div className="flex justify-between items-center">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-5 md:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="bg-[var(--color-fondo-card)] text-[var(--color-texto)] border border-[var(--color-borde-suave)] max-w-md w-full p-6 md:p-8 space-y-6 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
+              <div className="flex justify-between items-start gap-3">
                  <div>
-                    <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">Mis Datos</h2>
-                    <p className="text-[var(--color-texto-suave)] text-xs font-bold uppercase tracking-widest mt-1">Información de Contacto</p>
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight text-[var(--color-texto)]">Mis datos</h2>
+                    <p className="text-[12px] text-[var(--color-texto-suave)] mt-0.5">Información de contacto</p>
                  </div>
-                 <button onClick={() => setIsMyDataModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full text-[var(--color-texto-muted)] transition-colors"><X size={24} /></button>
-              </div>
-
-              <div className="space-y-6">
-                 <div className="space-y-4">
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-4">
-                       <div className="p-3 bg-[#d4af37]/10 text-[#d4af37] rounded-xl"><User size={20} /></div>
-                       <div>
-                          <p className="text-[10px] font-black uppercase text-[#d4af37] tracking-widest">Nombre</p>
-                          <p className="text-[var(--color-texto)] font-bold">{user.nombre}</p>
-                       </div>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-4">
-                       <div className="p-3 bg-blue-500/10 text-blue-400 rounded-xl"><Settings size={20} /></div>
-                       <div>
-                          <p className="text-[10px] font-black uppercase text-blue-400 tracking-widest">Email</p>
-                          <p className="text-[var(--color-texto)] font-bold">{user.email}</p>
-                       </div>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-4">
-                       <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl"><Phone size={20} /></div>
-                       <div>
-                          <p className="text-[10px] font-black uppercase text-emerald-400 tracking-widest">Teléfono</p>
-                          <p className="text-[var(--color-texto)] font-bold">{perfil.telefono || 'Sin teléfono'}</p>
-                       </div>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-4">
-                       <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl"><MapPin size={20} /></div>
-                       <div>
-                          <p className="text-[10px] font-black uppercase text-purple-400 tracking-widest">Ubicación</p>
-                          <p className="text-[var(--color-texto)] font-bold">{perfil.cliente?.ciudad}, {perfil.cliente?.estado}</p>
-                       </div>
-                    </div>
-                 </div>
-
-                 <button 
-                   onClick={() => {
-                     setIsMyDataModalOpen(false);
-                     setIsEditModalOpen(true);
-                   }}
-                   className="w-full bg-[#d4af37] text-black py-4 rounded-2xl font-black uppercase italic text-sm shadow-xl hover:scale-[1.01] transition-all"
+                 <button
+                   type="button"
+                   onClick={() => setIsMyDataModalOpen(false)}
+                   className="w-9 h-9 rounded-full bg-[var(--color-fondo-hover)] text-[var(--color-texto)] flex items-center justify-center active:scale-95 transition-transform"
+                   aria-label="Cerrar"
                  >
-                   Editar Información
+                   <X size={18} />
                  </button>
               </div>
+
+              <div className="space-y-3">
+                 <div className="p-4 rounded-2xl bg-[var(--color-fondo-hover)] border border-[var(--color-borde-suave)] flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0"><User size={18} /></div>
+                    <div className="min-w-0 flex-1">
+                       <p className="text-[10px] font-semibold uppercase text-[var(--color-texto-suave)] tracking-wider">Nombre</p>
+                       <p className="text-[14px] font-semibold text-[var(--color-texto)] truncate">{user.nombre}</p>
+                    </div>
+                 </div>
+                 <div className="p-4 rounded-2xl bg-[var(--color-fondo-hover)] border border-[var(--color-borde-suave)] flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0"><Settings size={18} /></div>
+                    <div className="min-w-0 flex-1">
+                       <p className="text-[10px] font-semibold uppercase text-[var(--color-texto-suave)] tracking-wider">Email</p>
+                       <p className="text-[14px] font-semibold text-[var(--color-texto)] truncate">{user.email}</p>
+                    </div>
+                 </div>
+                 <div className="p-4 rounded-2xl bg-[var(--color-fondo-hover)] border border-[var(--color-borde-suave)] flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0"><Phone size={18} /></div>
+                    <div className="min-w-0 flex-1">
+                       <p className="text-[10px] font-semibold uppercase text-[var(--color-texto-suave)] tracking-wider">Teléfono</p>
+                       <p className="text-[14px] font-semibold text-[var(--color-texto)] truncate">{perfil.telefono || 'Sin teléfono'}</p>
+                    </div>
+                 </div>
+                 <div className="p-4 rounded-2xl bg-[var(--color-fondo-hover)] border border-[var(--color-borde-suave)] flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-700 flex items-center justify-center shrink-0"><MapPin size={18} /></div>
+                    <div className="min-w-0 flex-1">
+                       <p className="text-[10px] font-semibold uppercase text-[var(--color-texto-suave)] tracking-wider">Ubicación</p>
+                       <p className="text-[14px] font-semibold text-[var(--color-texto)] truncate">{perfil.cliente?.ciudad}, {perfil.cliente?.estado}</p>
+                    </div>
+                 </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setIsMyDataModalOpen(false);
+                  setIsEditModalOpen(true);
+                }}
+                className="btn-oro w-full py-3.5 rounded-2xl font-bold uppercase text-[13px] tracking-wider shadow-md"
+              >
+                Editar información
+              </button>
            </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

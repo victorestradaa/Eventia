@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 
 export const metadata = {
-  title: 'Explorar Proveedores | Eventia',
+  title: 'Explorar Proveedores | Eventium',
   description: 'Descubre los mejores proveedores para tu evento en México. Salones, banquetes, música y más.',
 };
 

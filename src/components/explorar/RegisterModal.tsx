@@ -46,7 +46,7 @@ export function RegisterModal({ isOpen, onClose, providerName }: RegisterModalPr
                 ¡Descubre todo lo que <span className="text-[#b89547] italic">{providerName}</span> tiene para ti!
               </h3>
               <p className="text-[var(--color-texto-suave)] text-sm leading-relaxed">
-                Regístrate gratis en <span className="font-bold text-[var(--color-texto)]">Eventia</span> para acceder a toda la información exclusiva y organizar tu evento sin estrés.
+                Regístrate gratis en <span className="font-bold text-[var(--color-texto)]">Eventium</span> para acceder a toda la información exclusiva y organizar tu evento sin estrés.
               </p>
             </div>
 

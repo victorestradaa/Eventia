@@ -40,6 +40,7 @@ import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { getReservasCalendario, solicitarReserva } from '@/lib/actions/providerActions';
+import ProviderDetailMobile from '@/components/cliente/proveedor/ProviderDetailMobile';
 
 const locales = {
   'es': es,
@@ -91,6 +92,13 @@ export default function ProviderDetailClient({ data, activeEvent, canViewContact
       setSelectedServiceId(packageParam);
     }
   }, [packageParam, data.servicios]);
+
+  // Auto-abrir el calendario si se entra con ?showAvailability=true (deep link desde la tarjeta de Explorar)
+  useEffect(() => {
+    if (searchParams?.get('showAvailability') === 'true') {
+      setMostrarCalendario(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (mostrarCalendario) {
@@ -169,8 +177,26 @@ export default function ProviderDetailClient({ data, activeEvent, canViewContact
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-fondo)] pb-20 overflow-x-hidden transition-colors duration-300">
-      
+    <>
+      {/* VISTA MÓVIL */}
+      <ProviderDetailMobile
+        data={p}
+        selectedServiceId={selectedServiceId}
+        setSelectedServiceId={setSelectedServiceId}
+        selectedService={selectedService}
+        galeria={galeriaReal as string[]}
+        canViewContact={canViewContact}
+        activeEvent={activeEvent}
+        onSolicitarReserva={() => setConfirmarReserva(true)}
+        reservado={reservado}
+        solicitando={solicitando}
+        errorSolicitud={errorSolicitud}
+        onToggleCalendario={() => setMostrarCalendario(true)}
+      />
+
+      {/* VISTA ESCRITORIO — sin cambios */}
+      <div className="hidden md:block min-h-screen bg-[var(--color-fondo)] pb-20 overflow-x-hidden transition-colors duration-300">
+
       {/* 1. TOP ACTIONS */}
       <div className="max-w-[1400px] mx-auto px-6 py-6 flex items-center justify-between">
         <Link href="/cliente/explorar" className="group flex items-center gap-2 text-[var(--color-texto-muted)] hover:text-[var(--color-texto)] transition-all text-sm font-bold">
@@ -316,7 +342,7 @@ export default function ProviderDetailClient({ data, activeEvent, canViewContact
                </div>
 
                <div className="flex flex-col items-center gap-8">
-                  <div className="w-36 h-36 rounded-full border-8 border-[var(--color-fondo-card)] bg-white p-1 shadow-2xl cursor-zoom-in" onClick={() => setZoomLogo(true)}>
+                  <div className="w-36 h-36 rounded-full border-8 border-[var(--color-fondo-card)] bg-[var(--color-fondo-card)] p-1 shadow-2xl cursor-zoom-in" onClick={() => setZoomLogo(true)}>
                      <img src={p.logoUrl || '/logo.png'} className="w-full h-full object-contain rounded-full" alt="Logo" />
                   </div>
                   <div className="text-center space-y-2">
@@ -358,39 +384,124 @@ export default function ProviderDetailClient({ data, activeEvent, canViewContact
         </div>
       )}
 
+      </div>{/* fin desktop */}
+
+      {/* Modal de calendario — accesible tanto desde móvil como escritorio */}
       {mostrarCalendario && (
-        <div className="fixed inset-0 z-[600] bg-black/90 flex items-center justify-center p-6">
-           <div className="bg-[var(--color-fondo-card)] w-full max-w-4xl max-h-[90vh] rounded-[3rem] overflow-hidden flex flex-col">
-              <header className="p-10 border-b border-[var(--color-borde-suave)] flex justify-between items-center">
-                 <h2 className="text-2xl font-black italic uppercase text-[var(--color-texto)]">Agenda</h2>
-                 <X size={32} className="cursor-pointer" onClick={() => setMostrarCalendario(false)} />
+        <div className="fixed inset-0 z-[600] bg-black/80 backdrop-blur-sm md:flex md:items-center md:justify-center md:p-6">
+           <div className="absolute bottom-0 left-0 right-0 md:relative md:bottom-auto md:left-auto md:right-auto bg-[var(--color-fondo-card)] w-full md:max-w-3xl rounded-t-3xl md:rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl"
+                style={{ height: 'min(85dvh, 720px)' }}>
+              <header className="px-5 py-4 md:px-8 md:py-6 border-b border-[var(--color-borde-suave)] flex justify-between items-center shrink-0">
+                 <div className="min-w-0">
+                   <h2 className="text-lg md:text-2xl font-bold tracking-tight text-[var(--color-texto)]">Disponibilidad</h2>
+                   <p className="text-[12px] text-[var(--color-texto-suave)]">Calendario del proveedor</p>
+                 </div>
+                 <button
+                   type="button"
+                   onClick={() => setMostrarCalendario(false)}
+                   className="w-9 h-9 rounded-full bg-[var(--color-fondo-hover)] text-[var(--color-texto)] flex items-center justify-center active:scale-95 transition-transform shrink-0 ml-2"
+                   aria-label="Cerrar"
+                 >
+                   <X size={18} />
+                 </button>
               </header>
-              <div className="flex-1 p-8 overflow-auto">
-                 <div className="h-[500px]">
-                    <Calendar localizer={localizer} events={calendarEvents} culture="es" date={calendarDate} onNavigate={d => setCalendarDate(d)} messages={{next: "Sig.", previous: "Ant.", today: "Hoy", month: "Mes", week: "Semana", day: "Día", agenda: "Agenda"}} />
+              <div className="flex-1 min-h-0 px-4 py-4 md:px-8 md:py-6 flex flex-col gap-3 overflow-hidden">
+                 <div className="cal-skin flex-1 min-h-0">
+                    <Calendar
+                      localizer={localizer}
+                      events={calendarEvents}
+                      culture="es"
+                      date={calendarDate}
+                      onNavigate={d => setCalendarDate(d)}
+                      views={['month']}
+                      defaultView="month"
+                      components={{ toolbar: ({ label, onNavigate }: any) => (
+                        <div className="flex items-center justify-between mb-3 px-1">
+                          <button
+                            type="button"
+                            onClick={() => onNavigate('PREV')}
+                            aria-label="Anterior"
+                            className="w-9 h-9 rounded-full bg-[var(--color-fondo-hover)] text-[var(--color-texto)] flex items-center justify-center active:scale-95 transition-transform"
+                          >
+                            <ChevronLeft size={18} />
+                          </button>
+                          <span className="text-[15px] md:text-base font-semibold tracking-tight text-[var(--color-texto)] capitalize">{label}</span>
+                          <button
+                            type="button"
+                            onClick={() => onNavigate('NEXT')}
+                            aria-label="Siguiente"
+                            className="w-9 h-9 rounded-full bg-[var(--color-fondo-hover)] text-[var(--color-texto)] flex items-center justify-center active:scale-95 transition-transform"
+                          >
+                            <ChevronRight size={18} />
+                          </button>
+                        </div>
+                      )}}
+                      eventPropGetter={() => ({
+                        className: 'cal-event-reserved',
+                      })}
+                      messages={{ next: 'Sig.', previous: 'Ant.', today: 'Hoy', month: 'Mes', week: 'Semana', day: 'Día', agenda: 'Agenda' }}
+                    />
+                 </div>
+                 <div className="flex items-center justify-center gap-4 text-[12px] text-[var(--color-texto-suave)] shrink-0 pb-[env(safe-area-inset-bottom)]">
+                   <span className="inline-flex items-center gap-1.5">
+                     <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-acento)]" /> Disponible
+                   </span>
+                   <span className="inline-flex items-center gap-1.5">
+                     <span className="w-2.5 h-2.5 rounded-full bg-rose-400" /> Reservado
+                   </span>
                  </div>
               </div>
            </div>
         </div>
       )}
 
-      {confirmarReserva && <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-6"><div className="bg-white text-black p-16 rounded-[4rem] text-center max-w-md"><h3 className="text-3xl font-black uppercase italic mb-8">¿Confirmar Reserva?</h3><div className="grid grid-cols-2 gap-4"><button disabled={solicitando} onClick={() => setConfirmarReserva(false)} className="py-4 bg-gray-100 text-black rounded-2xl font-black uppercase italic hover:bg-gray-200 transition-colors">No</button><button disabled={solicitando} onClick={handleConfirmarBooking} className="py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase italic hover:bg-emerald-600 transition-colors">Sí</button></div></div></div>}
+      {/* Modales de reserva — disponibles tanto en móvil como escritorio */}
+      {confirmarReserva && (
+        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-5 md:p-6">
+          <div className="bg-[var(--color-fondo-card)] text-[var(--color-texto)] w-full max-w-sm md:max-w-md rounded-3xl md:rounded-[2.5rem] p-6 md:p-12 text-center shadow-2xl">
+            <h3 className="text-xl md:text-3xl font-bold mb-2 md:mb-4">¿Confirmar reserva?</h3>
+            <p className="text-[13px] md:hidden text-[var(--color-texto-suave)] mb-5">
+              Apartarás la fecha con este proveedor. Tienes 48 horas para confirmar el pago.
+            </p>
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
+              <button
+                type="button"
+                disabled={solicitando}
+                onClick={() => setConfirmarReserva(false)}
+                className="py-3 md:py-4 bg-[var(--color-fondo-hover)] text-[var(--color-texto)] rounded-xl md:rounded-2xl font-semibold md:font-black md:uppercase md:italic hover:bg-[var(--color-borde)] transition-colors"
+              >
+                No
+              </button>
+              <button
+                type="button"
+                disabled={solicitando}
+                onClick={handleConfirmarBooking}
+                className="py-3 md:py-4 bg-emerald-500 text-white rounded-xl md:rounded-2xl font-semibold md:font-black md:uppercase md:italic hover:bg-emerald-600 transition-colors"
+              >
+                {solicitando ? 'Procesando…' : 'Sí, apartar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {reservado && (
-        <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-6">
-          <div className="bg-white text-black p-12 rounded-[4rem] text-center max-w-lg">
-            <CheckCircle2 size={64} className="mx-auto text-emerald-500 mb-6" />
-            <h3 className="text-3xl font-black uppercase italic mb-4">¡Solicitud Enviada!</h3>
-            <p className="text-gray-600 mb-8 font-medium">Tienes 48 horas para confirmar y finalizar el proceso de apartado de fecha con el proveedor.</p>
-            <Link 
-              href={`/cliente/evento/${activeEvent?.id}`} 
-              onClick={() => setReservado(false)} 
-              className="block w-full py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase italic hover:bg-emerald-600 transition-colors"
+        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-5 md:p-6">
+          <div className="bg-[var(--color-fondo-card)] text-[var(--color-texto)] w-full max-w-sm md:max-w-lg rounded-3xl md:rounded-[4rem] p-6 md:p-12 text-center shadow-2xl">
+            <CheckCircle2 size={56} className="mx-auto text-emerald-500 mb-4 md:mb-6" />
+            <h3 className="text-xl md:text-3xl font-bold mb-2 md:mb-4">¡Solicitud enviada!</h3>
+            <p className="text-[var(--color-texto-suave)] text-[13px] md:text-base mb-6 md:mb-8">
+              Tienes 48 horas para confirmar y finalizar el apartado de fecha con el proveedor.
+            </p>
+            <Link
+              href={`/cliente/evento/${activeEvent?.id}`}
+              onClick={() => setReservado(false)}
+              className="block w-full py-3.5 md:py-4 bg-emerald-500 text-white rounded-xl md:rounded-2xl font-semibold md:font-black md:uppercase md:italic hover:bg-emerald-600 transition-colors"
             >
               Contactar con tu proveedor
             </Link>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

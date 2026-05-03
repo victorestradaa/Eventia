@@ -308,7 +308,7 @@ export default function RegisterPage() {
                 disabled={loading}
               />
               <span className="text-xs text-[var(--color-texto-suave)] group-hover:text-[var(--color-texto)] transition-colors leading-relaxed">
-                Acepto los <Link href="/terminos" className="text-[var(--color-primario-claro)] hover:underline font-bold" target="_blank">Términos y Condiciones</Link> de Eventia.
+                Acepto los <Link href="/terminos" className="text-[var(--color-primario-claro)] hover:underline font-bold" target="_blank">Términos y Condiciones</Link> de Eventium.
               </span>
             </label>
             <label className="flex items-start gap-3 cursor-pointer group">

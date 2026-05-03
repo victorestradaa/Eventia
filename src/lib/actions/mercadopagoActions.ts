@@ -93,7 +93,7 @@ export async function createServicePreference(reservaId: string) {
     }
 
     // 3. Obtener la comisión según el plan del proveedor
-    // ELITE tiene 0% de comisión de Eventia
+    // ELITE tiene 0% de comisión de Eventium
     let commissionPercent = 0.10; // Default 10%
     if (proveedor.plan === 'ELITE') {
       commissionPercent = 0;

@@ -22,6 +22,7 @@ import { RegisterModal } from './RegisterModal';
 import { useSearchParams } from 'next/navigation';
 import Logo from '@/components/common/Logo';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import ExploreMobile from './ExploreMobile';
 
 const CATEGORIAS = [
   'Todos', 'Salones', 'Música', 'Banquetes', 'Animación', 'Foto & Video', 'Decoración', 'Recuerdos', 'Mobiliario'
@@ -117,13 +118,42 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
     return cumpleCat && cumpleSearch && cumplrePrecio && cumpleCapacidad && cumpleUbicacion;
   });
 
+  const handleClearFilters = () => {
+    setFiltros({ precioMax: 500000, capacidadMin: 0, fecha: '', ubicacion: '' });
+    setCatActiva('Todos');
+    setSearchQuery('');
+  };
+
   return (
-    <div className={cn("flex flex-col min-h-screen font-sans bg-[var(--color-fondo)] text-[var(--color-texto)]", isPublic ? "" : "pb-10")}>
-      <RegisterModal 
-        isOpen={isRegisterModalOpen} 
-        onClose={() => setIsRegisterModalOpen(false)} 
+    <div className={cn("flex flex-col min-h-screen font-sans bg-[var(--color-fondo)] md:bg-[var(--color-fondo)] text-[var(--color-texto)]", isPublic ? "" : "pb-10")}>
+      <RegisterModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
         providerName={selectedProviderName}
       />
+
+      {/* VISTA MÓVIL — solo cuando es vista privada (cliente logueado) */}
+      {!isPublic && (
+        <ExploreMobile
+          isPublic={isPublic}
+          loading={loading}
+          servicios={serviciosFiltrados as any}
+          catActiva={catActiva}
+          setCatActiva={setCatActiva}
+          categorias={CATEGORIAS}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          filtros={filtros}
+          setFiltros={setFiltros}
+          showAdvanced={showAdvanced}
+          setShowAdvanced={setShowAdvanced}
+          onCardClick={handleCardClick}
+          onClearFilters={handleClearFilters}
+        />
+      )}
+
+      {/* Wrapper desktop: oculto en móvil cuando es vista privada (cliente). En vista pública mostramos el original. */}
+      <div className={cn(!isPublic && 'hidden md:flex md:flex-col md:flex-1')}>
 
       {/* ──────────── Public Header ──────────── */}
       {isPublic && (
@@ -157,7 +187,7 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
           <p className="text-[var(--color-texto-suave)] flex items-center gap-2 text-xs font-bold uppercase tracking-widest leading-loose">
             {isPublic 
               ? "Encuentra la inspiración perfecta para tu próximo gran evento" 
-              : <>Catálogo real de servicios en <span className="font-black text-black px-2 bg-[#d4af37]/20 rounded">Eventia</span></>
+              : <>Catálogo real de servicios en <span className="font-black text-black px-2 bg-[#d4af37]/20 rounded">Eventium</span></>
             }
           </p>
         </div>
@@ -430,7 +460,7 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
             </div>
 
             <p className="text-[11px] text-[var(--color-texto-muted)] font-bold uppercase tracking-widest">
-              &copy; {new Date().getFullYear()} Eventia. Hecho con ❤️ para momentos especiales.
+              &copy; {new Date().getFullYear()} Eventium. Hecho con ❤️ para momentos especiales.
             </p>
 
             <div className="flex items-center gap-8 text-[10px] uppercase tracking-widest font-black text-[var(--color-texto-muted)]">
@@ -441,6 +471,7 @@ export default function ExploreClient({ isPublic = false }: ExploreClientProps) 
           </div>
         </footer>
       )}
+      </div>{/* fin wrapper desktop */}
     </div>
   );
 }

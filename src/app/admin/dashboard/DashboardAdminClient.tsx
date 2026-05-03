@@ -46,7 +46,7 @@ export default function DashboardAdminClient({ stats, analytics }: DashboardAdmi
         <div>
            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d4af37] mb-1">Sistema de Gestión</p>
            <h1 className="text-3xl font-black italic tracking-tighter uppercase text-[var(--color-texto)]">Admin Panel</h1>
-           <p className="text-[var(--color-texto-suave)] text-sm">Analítica y Control de Plataforma (Eventia)</p>
+           <p className="text-[var(--color-texto-suave)] text-sm">Analítica y Control de Plataforma (Eventium)</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

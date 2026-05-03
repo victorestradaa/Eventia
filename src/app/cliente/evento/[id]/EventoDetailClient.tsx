@@ -30,7 +30,10 @@ import {
 import { useState, useEffect } from 'react';
 import { formatearMoneda, formatearFechaCorta, cn, parseFechaLocal } from '@/lib/utils';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+const TABS_VALIDAS = ['resumen', 'invitados', 'pagos', 'proveedores', 'mesas'] as const;
+type TabValida = typeof TABS_VALIDAS[number];
 import { 
   updateEvento, 
   addInvitado, 
@@ -43,6 +46,7 @@ import { sendInvitationEmail } from '@/lib/actions/emailActions';
 import { getCuentasBancarias } from '@/lib/actions/bancosActions';
 import { uploadComprobante } from '@/lib/actions/uploadActions';
 import { createServicePreference } from '@/lib/actions/mercadopagoActions';
+import EventoDetailMobile from '@/components/cliente/evento/EventoDetailMobile';
 
 // Componente para los iconos de persona con diseño premium
 const PersonIcon = ({ tipo, className = "w-8 h-8" }: { tipo: string, className?: string }) => {
@@ -96,8 +100,18 @@ interface EventoDetailClientProps {
 
 export default function EventoDetailClient({ evento: initialEvento }: EventoDetailClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams?.get('tab');
+  const tabInicial: TabValida = TABS_VALIDAS.includes(tabFromUrl as TabValida) ? (tabFromUrl as TabValida) : 'resumen';
   const [evento, setEvento] = useState(initialEvento);
-  const [tabActiva, setTabActiva] = useState('resumen');
+  const [tabActiva, setTabActiva] = useState<string>(tabInicial);
+
+  // Mantener sincronía si el usuario navega con ?tab=... entre vistas (deep links del MobileGrid)
+  useEffect(() => {
+    if (tabFromUrl && TABS_VALIDAS.includes(tabFromUrl as TabValida) && tabFromUrl !== tabActiva) {
+      setTabActiva(tabFromUrl);
+    }
+  }, [tabFromUrl]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [invitacion, setInvitacion] = useState(initialEvento.invitacion);
   const [savingTemplate, setSavingTemplate] = useState(false);
@@ -487,8 +501,62 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
     }
   };
 
+  // Días restantes hasta el evento (para hero móvil)
+  const diasRestantes = evento.fecha
+    ? Math.max(
+        0,
+        Math.ceil((new Date(evento.fecha).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)),
+      )
+    : null;
+
+  // Handlers que la vista móvil necesita
+  const handleEditEventoOpen = () => {
+    setTempEvento({
+      nombre: evento.nombre,
+      fecha: evento.fecha ? new Date(evento.fecha).toISOString().split('T')[0] : '',
+      tipo: evento.tipo,
+      numInvitados: evento.numInvitados || 0,
+      presupuestoTotal: Number(evento.presupuestoTotal) || 0,
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleAbonarLinea = (l: any) => {
+    setShowPagoModal(l);
+    if (Number(l.montoPagado || 0) === 0) {
+      const porcentaje = l.servicio?.porcentajeAnticipo || 30;
+      setMontoAbono(((Number(l.montoTotal) * porcentaje) / 100).toString());
+    } else {
+      setMontoAbono((Number(l.montoTotal) - Number(l.montoPagado || 0)).toString());
+    }
+  };
+
   return (
-    <div className="space-y-10">
+    <>
+      {/* VISTA MÓVIL — `block md:hidden` aplicado dentro del componente */}
+      <EventoDetailMobile
+        evento={evento}
+        fechaFormateada={fechaFormateada}
+        diasRestantes={diasRestantes}
+        tabActiva={tabActiva as any}
+        setTabActiva={setTabActiva as any}
+        invitados={invitados}
+        invitadosConfirmados={invitadosConfirmados}
+        invitadosPendientes={invitadosPendientes}
+        invitadosRechazados={invitadosRechazados}
+        lineasConReservas={lineasConReservas}
+        lineasConReservasActivas={lineasConReservasActivas}
+        subtotalContratado={subtotalContratado}
+        totalPagado={totalPagado}
+        presupuestoTotal={presupuestoTotal}
+        onEditEvento={handleEditEventoOpen}
+        onAbonar={handleAbonarLinea}
+        onAddInvitado={() => setIsAddGuestModalOpen(true)}
+        onUpdateRSVP={handleUpdateRSVP}
+      />
+
+      {/* VISTA ESCRITORIO — sin cambios respecto a la versión previa */}
+      <div className="hidden md:block space-y-10">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <Link href="/cliente/dashboard" className="flex items-center gap-2 text-sm text-[var(--color-texto-muted)] hover:text-white transition-colors w-fit">
@@ -632,7 +700,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                                 (() => {
                                   const telLimpio = tel.replace(/\D/g, '');
                                   const fechaEvento = evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' }) : 'por confirmar';
-                                  const msg = encodeURIComponent(`Hola! 👋 Le contacto a través de *Eventia*.\n\n📋 *Detalles de mi reserva:*\n• Evento: ${evento.nombre}\n• Fecha: ${fechaEvento}\n• Servicio: ${l.descripcion}\n• Precio pactado: ${formatearMoneda(l.montoTotal)}\n\nQuedo en espera de su confirmación. ¡Gracias!`);
+                                  const msg = encodeURIComponent(`Hola! 👋 Le contacto a través de *Eventium*.\n\n📋 *Detalles de mi reserva:*\n• Evento: ${evento.nombre}\n• Fecha: ${fechaEvento}\n• Servicio: ${l.descripcion}\n• Precio pactado: ${formatearMoneda(l.montoTotal)}\n\nQuedo en espera de su confirmación. ¡Gracias!`);
                                   return (
                                     <a 
                                       href={`https://wa.me/${telLimpio}?text=${msg}`} 
@@ -982,7 +1050,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                             (() => {
                               const telLimpio = tel.replace(/\D/g, '');
                               const fechaEvento = evento.fecha ? new Date(evento.fecha).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' }) : 'por confirmar';
-                              const msg = encodeURIComponent(`Hola! 👋 Le contacto a través de *Eventia*.\n\n📋 *Detalles de mi reserva:*\n• Evento: ${evento.nombre}\n• Fecha: ${fechaEvento}\n• Servicio: ${l.descripcion}\n• Precio pactado: ${formatearMoneda(l.montoTotal)}\n\nQuedo en espera de su confirmación. ¡Gracias!`);
+                              const msg = encodeURIComponent(`Hola! 👋 Le contacto a través de *Eventium*.\n\n📋 *Detalles de mi reserva:*\n• Evento: ${evento.nombre}\n• Fecha: ${fechaEvento}\n• Servicio: ${l.descripcion}\n• Precio pactado: ${formatearMoneda(l.montoTotal)}\n\nQuedo en espera de su confirmación. ¡Gracias!`);
                               return (
                                 <a 
                                   href={`https://wa.me/${telLimpio}?text=${msg}`} 
@@ -1259,6 +1327,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
            <Link href={`/cliente/evento/${evento.id}/mesas`}><button className="btn btn-primario px-10">Abrir Plano Interactivo</button></Link>
         </div>
       )}
+      </div>{/* fin desktop */}
 
       {/* MODAL EDITAR EVENTO */}
       {isEditModalOpen && (
@@ -1385,13 +1454,13 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                 )}
 
                 {/* ── GRUPO FAMILIAR ─────────────────────────────────────── */}
-                <div className="md:col-span-2 space-y-3 pt-2 border-t border-white/5">
+                <div className="md:col-span-2 space-y-3 pt-2 border-t border-[var(--color-borde-suave)]">
                   <div className="flex items-center gap-2">
                     <Users size={14} className="text-violet-400" />
                     <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest">Grupo Familiar (Opcional)</label>
                   </div>
-                  <p className="text-[10px] text-white/30 leading-relaxed">
-                    Agrupa invitados que comparten una sola invitación. El <strong className="text-white/50">Titular</strong> recibe el link y confirma por todo el grupo.
+                  <p className="text-[11px] text-[var(--color-texto-suave)] leading-relaxed">
+                    Agrupa invitados que comparten una sola invitación. El <strong className="text-[var(--color-texto)]">Titular</strong> recibe el link y confirma por todo el grupo.
                   </p>
 
                   {/* Option A: Este es el titular (nuevo grupo) */}
@@ -1403,13 +1472,13 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                     className={cn(
                       'w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left',
                       newGuest.esGrupoTitular
-                        ? 'border-violet-500/50 bg-violet-500/10 text-white'
-                        : 'border-white/5 bg-white/5 text-white/40 hover:border-white/10'
+                        ? 'border-violet-500/50 bg-violet-500/10 text-[var(--color-texto)]'
+                        : 'border-[var(--color-borde-suave)] bg-[var(--color-fondo-hover)] text-[var(--color-texto-suave)] hover:border-[var(--color-borde)]'
                     )}
                   >
                     <div className={cn(
                       'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
-                      newGuest.esGrupoTitular ? 'border-violet-400 bg-violet-500' : 'border-white/20'
+                      newGuest.esGrupoTitular ? 'border-violet-400 bg-violet-500' : 'border-[var(--color-borde)]'
                     )}>
                       {newGuest.esGrupoTitular && <div className="w-2 h-2 rounded-full bg-white" />}
                     </div>
@@ -1498,9 +1567,19 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                 </div>
              </div>
 
-             <div className="flex gap-4 pt-4">
-                <button onClick={() => setIsAddGuestModalOpen(false)} className="btn btn-secundario flex-1 py-4 uppercase font-black tracking-widest text-xs" disabled={saving}>Cancelar</button>
-                <button onClick={handleAddGuest} className="btn btn-primario flex-1 py-4 font-black uppercase tracking-widest text-xs shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2" disabled={saving}>
+             <div className="flex flex-col-reverse md:flex-row gap-3 md:gap-4 pt-4 border-t border-[var(--color-borde-suave)]">
+                <button
+                  onClick={() => setIsAddGuestModalOpen(false)}
+                  className="flex-1 py-3.5 rounded-xl bg-[var(--color-fondo-hover)] text-[var(--color-texto)] uppercase font-bold tracking-wider text-xs hover:bg-[var(--color-borde)] transition-colors"
+                  disabled={saving}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAddGuest}
+                  className="flex-1 py-3.5 rounded-xl btn-oro font-bold uppercase tracking-wider text-xs shadow-lg flex items-center justify-center gap-2"
+                  disabled={saving}
+                >
                   {saving ? <Loader2 size={18} className="animate-spin" /> : 'Guardar Invitado'}
                 </button>
              </div>
@@ -2016,6 +2095,6 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
            </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

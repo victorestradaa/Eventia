@@ -151,7 +151,7 @@ export default function HomeClient() {
           </div>
 
           <p className="text-[11px] text-[var(--color-texto-muted)] font-medium">
-            &copy; {new Date().getFullYear()} Eventia. Hecho con ❤️ para momentos especiales.
+            &copy; {new Date().getFullYear()} Eventium. Hecho con ❤️ para momentos especiales.
           </p>
 
           <div className="flex items-center gap-8 text-[10px] uppercase tracking-widest font-black text-[var(--color-texto-muted)]">
