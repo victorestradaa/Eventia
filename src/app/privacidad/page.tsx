@@ -150,7 +150,7 @@ export default function PrivacidadPage() {
             <footer className="border-t border-[var(--color-borde-suave)] pt-12 text-center">
               <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#d4af37] text-black font-bold mb-8 shadow-lg shadow-[#d4af37]/20">
                 <Mail size={18} />
-                <span>privacidad@eventia.com</span>
+                <span>contacto@eventium.mx</span>
               </div>
               <p className="text-sm text-[var(--color-texto-muted)] italic">
                 Eventium se reserva el derecho de modificar este Aviso de Privacidad en cualquier momento. Notificaremos a nuestros usuarios sobre cambios significativos.

@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import {
   MobilePageShell,
@@ -165,6 +165,7 @@ export default function InvitationEditorMobile({
           texto={texto}
           setTexto={setTexto}
           estilos={estilos}
+          setEstilos={setEstilos}
           configWeb={configWeb}
           fondoUrlActivo={fondoUrlActivo}
           setFondoUrlActivo={setFondoUrlActivo}
@@ -232,6 +233,7 @@ function BasicaEditor({
   texto,
   setTexto,
   estilos,
+  setEstilos,
   configWeb,
   fondoUrlActivo,
   setFondoUrlActivo,
@@ -246,10 +248,25 @@ function BasicaEditor({
   setColorTextoGlobal,
   onFileUpload,
 }: any) {
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  // Cuando se selecciona un elemento, hacer scroll para que el preview quede visible arriba del sheet
+  useEffect(() => {
+    if (selectedElementId && previewRef.current) {
+      previewRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedElementId]);
+
+  // Setter de estilo individual de un elemento (para uso del canvas en modo móvil)
+  const handleEstiloChange = (id: string, newEstilo: any) => {
+    setEstilos((prev: any) => ({ ...prev, [id]: newEstilo }));
+  };
+
   return (
     <>
       {/* Preview — InvitationCanvas mide 400×700, la escalamos al 62% para encajar en el mockup */}
-      <div className="flex justify-center mb-5">
+      <div ref={previewRef} className="flex justify-center mb-5 scroll-mt-4">
         <div
           className="relative bg-zinc-900 rounded-[2rem] shadow-xl"
           style={{ width: 248, height: 434, overflow: 'hidden' }}
@@ -274,10 +291,31 @@ function BasicaEditor({
               archivoAdjuntoPropio={archivoAdjuntoBase64}
               modoPropia={modoPropia}
               fuentes={fuentes}
+              onElementClick={(id) => setSelectedElementId(id)}
+              selectedElementId={selectedElementId}
+              onEstiloChange={handleEstiloChange}
             />
           </div>
         </div>
       </div>
+
+      {/* Hint de uso */}
+      <p className="text-center text-[11px] text-[var(--color-texto-suave)] -mt-3 mb-4 px-4 leading-relaxed">
+        Toca un texto del preview para seleccionarlo. <strong className="text-[var(--color-texto)]">Arrástralo con un dedo</strong> para moverlo y <strong className="text-[var(--color-texto)]">pellizca con dos dedos</strong> para cambiar su tamaño.
+      </p>
+
+      {/* Bottom sheet de edición de elemento */}
+      {selectedElementId && (
+        <ElementEditorSheet
+          elementId={selectedElementId}
+          texto={texto}
+          setTexto={setTexto}
+          estilos={estilos}
+          setEstilos={setEstilos}
+          fuentes={fuentes}
+          onClose={() => setSelectedElementId(null)}
+        />
+      )}
 
       <Accordion title="Plantilla" defaultOpen icon={ImageIcon}>
         {/* Toggle modo propia */}
@@ -949,5 +987,218 @@ function ToggleRow({
         />
       </span>
     </button>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// ElementEditorSheet — bottom sheet para editar texto/color/fuente/tamaño de un elemento
+// ──────────────────────────────────────────────────────────────────────────────
+const ELEMENT_LABELS: Record<string, string> = {
+  titulo: 'Título',
+  nombres: 'Nombres',
+  mensaje: 'Mensaje',
+  lugar: 'Lugar',
+  vestimenta: 'Vestimenta',
+  horaCeremonia: 'Hora ceremonia',
+  horaCelebracion: 'Hora celebración',
+  regalos: 'Regalos',
+  boton: 'Botón RSVP',
+  mapPin: 'Ícono mapa',
+};
+
+// Elementos cuyo texto es directamente editable desde el campo `texto`
+const TEXT_EDITABLE_IDS = new Set(['titulo', 'mensaje', 'lugar', 'vestimenta', 'horaCeremonia', 'horaCelebracion']);
+
+function ElementEditorSheet({
+  elementId,
+  texto,
+  setTexto,
+  estilos,
+  setEstilos,
+  fuentes,
+  onClose,
+}: {
+  elementId: string;
+  texto: any;
+  setTexto: (t: any) => void;
+  estilos: any;
+  setEstilos: (e: any) => void;
+  fuentes: any[];
+  onClose: () => void;
+}) {
+  const estilo = estilos?.[elementId] || {};
+  const isTextEditable = TEXT_EDITABLE_IDS.has(elementId);
+  const label = ELEMENT_LABELS[elementId] || elementId;
+
+  const updateEstilo = (patch: any) => {
+    setEstilos((prev: any) => ({
+      ...prev,
+      [elementId]: { ...(prev?.[elementId] || {}), ...patch },
+    }));
+  };
+
+  const updateTexto = (value: string) => {
+    setTexto({ ...texto, [elementId]: value });
+  };
+
+  const fontSize = estilo.fontSize || 16;
+  const color = estilo.color || '#ffffff';
+  const fuente = estilo.fuente || '';
+
+  return (
+    // Sin backdrop opaco para que el preview siga visible. El usuario cierra con el botón "Listo" o con la X.
+    <div className="fixed inset-x-0 bottom-0 z-[200] flex items-end pointer-events-none">
+      <div
+        className="w-full bg-[var(--color-fondo-card)] rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.18)] pb-[env(safe-area-inset-bottom)] animate-in slide-in-from-bottom duration-300 pointer-events-auto border-t border-[var(--color-borde-suave)] flex flex-col"
+        style={{ maxHeight: '50dvh' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-2 shrink-0">
+          <div className="w-10 h-1 rounded-full bg-[var(--color-borde)]" />
+        </div>
+
+        {/* Header */}
+        <div className="px-5 py-2.5 flex items-center justify-between border-b border-[var(--color-borde-suave)] shrink-0">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-texto-suave)] leading-none">
+              Editar elemento
+            </p>
+            <h3 className="text-[15px] font-bold text-[var(--color-texto)]">{label}</h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="w-9 h-9 rounded-full bg-[var(--color-fondo-hover)] text-[var(--color-texto)] flex items-center justify-center active:scale-95 transition-transform"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="flex-1 min-h-0 px-5 py-3 space-y-3.5 overflow-y-auto">
+          {/* Texto editable */}
+          {isTextEditable && (
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--color-texto-suave)] mb-1.5 ml-1">
+                Texto
+              </label>
+              {elementId === 'mensaje' ? (
+                <textarea
+                  value={texto[elementId] || ''}
+                  onChange={(e) => updateTexto(e.target.value)}
+                  rows={3}
+                  className="invitation-input resize-none"
+                  autoFocus
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={texto[elementId] || ''}
+                  onChange={(e) => updateTexto(e.target.value)}
+                  className="invitation-input"
+                  autoFocus
+                />
+              )}
+            </div>
+          )}
+
+          {/* Color */}
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--color-texto-suave)] mb-1.5 ml-1">
+              Color del texto
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => updateEstilo({ color: e.target.value })}
+                className="w-14 h-12 rounded-xl border border-[var(--color-borde)] cursor-pointer"
+              />
+              <span className="text-[13px] font-mono text-[var(--color-texto-suave)]">{color}</span>
+            </div>
+          </div>
+
+          {/* Fuente */}
+          {fuentes && fuentes.length > 0 && (
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--color-texto-suave)] mb-1.5 ml-1">
+                Tipo de letra
+              </label>
+              <select
+                value={fuente}
+                onChange={(e) => updateEstilo({ fuente: e.target.value })}
+                className="invitation-input"
+                style={{ fontFamily: fuente || 'inherit' }}
+              >
+                <option value="">— Predeterminada —</option>
+                {fuentes.map((f: any) => (
+                  <option key={f.id} value={f.nombre} style={{ fontFamily: f.nombre }}>
+                    {f.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Tamaño de letra */}
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--color-texto-suave)] mb-1.5 ml-1">
+              Tamaño de letra
+            </label>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => updateEstilo({ fontSize: Math.max(8, fontSize - 2) })}
+                className="w-11 h-11 rounded-xl bg-[var(--color-fondo-hover)] text-[var(--color-texto)] text-xl font-bold flex items-center justify-center active:scale-95 transition-transform"
+                aria-label="Disminuir"
+              >
+                −
+              </button>
+              <div className="flex-1 text-center">
+                <span className="text-[20px] font-bold text-[var(--color-texto)] tabular-nums">{Math.round(fontSize)}</span>
+                <span className="text-[12px] text-[var(--color-texto-suave)] ml-1">px</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => updateEstilo({ fontSize: fontSize + 2 })}
+                className="w-11 h-11 rounded-xl bg-[var(--color-fondo-hover)] text-[var(--color-texto)] text-xl font-bold flex items-center justify-center active:scale-95 transition-transform"
+                aria-label="Aumentar"
+              >
+                +
+              </button>
+            </div>
+            {/* Slider para ajuste fino */}
+            <input
+              type="range"
+              min={8}
+              max={72}
+              step={1}
+              value={fontSize}
+              onChange={(e) => updateEstilo({ fontSize: parseInt(e.target.value) })}
+              className="w-full mt-3 accent-[var(--color-acento)]"
+            />
+          </div>
+
+          {/* Visibilidad */}
+          <ToggleRow
+            label="Mostrar este elemento"
+            checked={estilo.visible !== false}
+            onChange={(v) => updateEstilo({ visible: v })}
+          />
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-[var(--color-borde-suave)] shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn-oro w-full py-3 rounded-xl font-bold uppercase text-[12px] tracking-wider"
+          >
+            Listo
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

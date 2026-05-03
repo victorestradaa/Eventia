@@ -45,11 +45,11 @@ export default function ConfiguracionPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="label">Nombre del Sitio</label>
-            <input type="text" className="input" defaultValue="Gestor de Eventos Premium" />
+            <input type="text" className="input" defaultValue="Eventium" />
           </div>
           <div>
             <label className="label">Email de Soporte</label>
-            <input type="email" className="input" defaultValue="soporte@gestor.com" />
+            <input type="email" className="input" defaultValue="contacto@eventium.mx" />
           </div>
           <div className="md:col-span-2">
             <label className="label">Descripción de Meta SEO</label>

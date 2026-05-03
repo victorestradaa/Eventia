@@ -17,8 +17,12 @@ interface InvitationCanvasProps {
   onRSVPClick?: () => void;
   config?: any;
   fuentes?: any[];
+  /** Si se provee, en modo solo-lectura los elementos son tappables y disparan este callback con el id del elemento. */
+  onElementClick?: (id: string) => void;
+  /** ID del elemento actualmente seleccionado (control externo). En modo móvil resalta y habilita pinch-to-resize. */
+  selectedElementId?: string | null;
 }
- import { useState, useEffect, forwardRef } from 'react';
+ import { useState, useEffect, useRef, forwardRef } from 'react';
  import { Gift, CreditCard, Copy, Check } from 'lucide-react';
  
  const InvitationCanvas = forwardRef<HTMLDivElement, InvitationCanvasProps>(({ 
@@ -33,11 +37,142 @@ interface InvitationCanvasProps {
    modoPropia = false,
    onRSVPClick,
    config = {},
-   fuentes = []
+   fuentes = [],
+   onElementClick,
+   selectedElementId = null,
  }, ref) => {
    const [copiado, setCopiado] = useState(false);
    const [selectedId, setSelectedId] = useState<string | null>(null);
    const [editingTextId, setEditingTextId] = useState<string | null>(null);
+
+   // Refs para handlers de pinch-to-resize en modo móvil (solo cuando hay onElementClick)
+   const estilosRef = useRef(estilos);
+   estilosRef.current = estilos;
+   const onEstiloChangeRef = useRef(onEstiloChange);
+   onEstiloChangeRef.current = onEstiloChange;
+   const selectedIdRef = useRef(selectedElementId);
+   selectedIdRef.current = selectedElementId;
+
+   useEffect(() => {
+     // Solo en modo móvil tappable y cuando hay un elemento seleccionado externamente
+     if (!onElementClick) return;
+     const root = document.getElementById('invitation-canvas-root');
+     if (!root) return;
+
+     // Estado de pinch (2 dedos → cambio de tamaño). Mantiene el último valor para commit en touchend.
+     let pinch: { initialDist: number; initialFontSize: number; targetId: string; latestSize: number } | null = null;
+     // Estado de drag (1 dedo → mover elemento)
+     let drag: { startX: number; startY: number; initialX: number; initialY: number; targetId: string; moved: boolean; latestX: number; latestY: number } | null = null;
+
+     const distance = (t1: Touch, t2: Touch) =>
+       Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+
+     // Encuentra el botón móvil del elemento por su data-attribute
+     const findElementButton = (id: string): HTMLElement | null =>
+       root.querySelector(`button[data-element-id="${id}"]`) as HTMLElement | null;
+
+     const handleTouchStart = (e: TouchEvent) => {
+       const sid = selectedIdRef.current;
+       if (e.touches.length === 2 && sid) {
+         // Pinch
+         e.preventDefault();
+         drag = null;
+         const fs = estilosRef.current?.[sid]?.fontSize || 16;
+         pinch = {
+           initialDist: distance(e.touches[0], e.touches[1]),
+           initialFontSize: fs,
+           targetId: sid,
+           latestSize: fs,
+         };
+       } else if (e.touches.length === 1 && sid) {
+         // Drag (1 dedo) — solo arrastra el elemento ya seleccionado
+         pinch = null;
+         const prevEstilo = estilosRef.current?.[sid] || {};
+         const ix = prevEstilo.x || 0;
+         const iy = prevEstilo.y || 0;
+         drag = {
+           startX: e.touches[0].clientX,
+           startY: e.touches[0].clientY,
+           initialX: ix,
+           initialY: iy,
+           targetId: sid,
+           moved: false,
+           latestX: ix,
+           latestY: iy,
+         };
+       }
+     };
+
+     const handleTouchMove = (e: TouchEvent) => {
+       if (e.touches.length === 2 && pinch) {
+         // Resize por pinch — UPDATE DIRECTO AL DOM (bypass React) para máxima fluidez
+         e.preventDefault();
+         const newDist = distance(e.touches[0], e.touches[1]);
+         const ratio = newDist / pinch.initialDist;
+         const newSize = Math.max(8, Math.min(200, pinch.initialFontSize * ratio));
+         pinch.latestSize = newSize;
+
+         const btn = findElementButton(pinch.targetId);
+         if (btn) {
+           // Ajustar fontSize del primer hijo de texto (h1, h2, h3, p, span, etc.)
+           const inner = btn.firstElementChild as HTMLElement | null;
+           if (inner) inner.style.fontSize = `${newSize}px`;
+         }
+       } else if (e.touches.length === 1 && drag) {
+         // Drag por 1 dedo — solo si se ha movido más allá del threshold
+         const t = e.touches[0];
+         const dxScreen = t.clientX - drag.startX;
+         const dyScreen = t.clientY - drag.startY;
+         if (!drag.moved && Math.hypot(dxScreen, dyScreen) < 3) return;
+         drag.moved = true;
+         e.preventDefault();
+
+         // Convertir delta pantalla → coordenadas internas del canvas (layout 400×700)
+         const rect = root.getBoundingClientRect();
+         const scaleX = rect.width / 400;
+         const scaleY = rect.height / 700;
+         const dxCanvas = scaleX > 0 ? dxScreen / scaleX : dxScreen;
+         const dyCanvas = scaleY > 0 ? dyScreen / scaleY : dyScreen;
+
+         const newX = Math.max(-50, Math.min(450, drag.initialX + dxCanvas));
+         const newY = Math.max(-50, Math.min(750, drag.initialY + dyCanvas));
+         drag.latestX = newX;
+         drag.latestY = newY;
+
+         // UPDATE DIRECTO AL DOM (bypass React) — solo cambia transform = compositing GPU puro
+         const btn = findElementButton(drag.targetId);
+         if (btn) {
+           btn.style.transform = `translate3d(${newX}px, ${newY}px, 0)`;
+         }
+       }
+     };
+
+     const handleTouchEnd = () => {
+       // Commit del valor final a React state (esto sincroniza el sheet y persiste el cambio)
+       if (pinch) {
+         const prev = estilosRef.current?.[pinch.targetId] || {};
+         onEstiloChangeRef.current?.(pinch.targetId, { ...prev, fontSize: pinch.latestSize });
+       }
+       if (drag && drag.moved) {
+         const prev = estilosRef.current?.[drag.targetId] || {};
+         onEstiloChangeRef.current?.(drag.targetId, { ...prev, x: drag.latestX, y: drag.latestY });
+       }
+       pinch = null;
+       drag = null;
+     };
+
+     root.addEventListener('touchstart', handleTouchStart, { passive: false });
+     root.addEventListener('touchmove', handleTouchMove, { passive: false });
+     root.addEventListener('touchend', handleTouchEnd);
+     root.addEventListener('touchcancel', handleTouchEnd);
+
+     return () => {
+       root.removeEventListener('touchstart', handleTouchStart);
+       root.removeEventListener('touchmove', handleTouchMove);
+       root.removeEventListener('touchend', handleTouchEnd);
+       root.removeEventListener('touchcancel', handleTouchEnd);
+     };
+   }, [onElementClick]);
 
    // Deseleccionar al hacer click fuera
    useEffect(() => {
@@ -193,13 +328,55 @@ interface InvitationCanvasProps {
       );
     }
 
+    // Si hay callback de click, el elemento se vuelve tappable (modo móvil)
+    if (onElementClick) {
+      const isExtSelected = selectedElementId === id;
+      return (
+        <button
+          type="button"
+          data-element-id={id}
+          onClick={(e) => {
+            e.stopPropagation();
+            onElementClick(id);
+          }}
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            // Posicionamiento con transform para movimiento GPU-accelerated y subpixel fluido
+            transform: `translate3d(${estilo?.x || 0}px, ${estilo?.y || 0}px, 0)`,
+            willChange: isExtSelected ? 'transform' : undefined,
+            width: estilo?.width || '100%',
+            height: estilo?.height || 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: isExtSelected ? 'rgba(212,175,55,0.12)' : 'transparent',
+            border: isExtSelected
+              ? '2px dashed var(--color-acento)'
+              : '1px dashed transparent',
+            cursor: 'pointer',
+            padding: 0,
+            outline: 'none',
+            boxShadow: isExtSelected ? '0 0 0 4px rgba(212,175,55,0.18)' : 'none',
+          }}
+          className={cn(
+            'rounded-md',
+            !isExtSelected && 'hover:border-white/40 active:border-[var(--color-acento)] active:bg-[var(--color-acento)]/10',
+          )}
+        >
+          {content}
+        </button>
+      );
+    }
+
     return (
-      <div 
-        style={{ 
-          position: 'absolute', 
-          left: estilo?.x || 0, 
-          top: estilo?.y || 0, 
-          width: estilo?.width || '100%', 
+      <div
+        style={{
+          position: 'absolute',
+          left: estilo?.x || 0,
+          top: estilo?.y || 0,
+          width: estilo?.width || '100%',
           height: estilo?.height || 'auto',
           display: 'flex',
           alignItems: 'center',
@@ -238,12 +415,13 @@ interface InvitationCanvasProps {
   }
  
    return (
-     <div 
+     <div
        ref={ref}
        id="invitation-canvas-root"
        className="w-[400px] h-[700px] max-w-full rounded-[40px] shadow-2xl border-[8px] border-zinc-900 relative transition-all duration-500"
        style={{
          backgroundColor: fondoUrlActivo ? 'transparent' : '#1a1a1a',
+         touchAction: onElementClick ? 'none' : undefined,
        }}
      >
        {/* Capa de Fondo (Aplica Encudre Manual). Envuelto en div con overflow-hidden para mantener bordes redondeados */}
