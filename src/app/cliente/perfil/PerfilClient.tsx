@@ -191,7 +191,7 @@ export default function PerfilClient({ perfil, conteoEventos }: PerfilClientProp
             </div>
             <div className="pb-2">
                <div className="flex items-center gap-3 justify-center md:justify-start">
-                  <h1 className="text-4xl font-black tracking-tighter uppercase italic text-white">{user.nombre}</h1>
+                  <h1 className="text-4xl font-black tracking-tighter uppercase italic text-[var(--color-texto)]">{user.nombre}</h1>
                   <span className="px-3 py-1 rounded-full bg-[#d4af37]/10 border border-[#d4af37]/20 text-[10px] font-black text-[#d4af37] uppercase tracking-widest">Plan {perfil.cliente?.plan}</span>
                </div>
                <p className="text-[var(--color-texto-suave)] text-sm font-bold flex items-center justify-center md:justify-start gap-2 mt-1">
@@ -225,7 +225,7 @@ export default function PerfilClient({ perfil, conteoEventos }: PerfilClientProp
               <div className={cn("p-4 rounded-2xl", stat.bg, stat.color)}>
                  <stat.icon size={28} />
               </div>
-              <p className="text-3xl font-black text-white tracking-tighter">{stat.value}</p>
+              <p className="text-3xl font-black text-[var(--color-texto)] tracking-tighter">{stat.value}</p>
               <p className="text-[10px] uppercase font-bold text-[var(--color-texto-muted)] tracking-[0.2em]">{stat.label}</p>
            </div>
          ))}
@@ -259,7 +259,7 @@ export default function PerfilClient({ perfil, conteoEventos }: PerfilClientProp
                         <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[var(--color-texto-suave)] group-hover:text-[#d4af37] group-hover:bg-[#d4af37]/10 transition-all">
                           <item.icon size={20} />
                         </div>
-                        <span className="font-bold text-sm tracking-tight text-white group-hover:translate-x-1 transition-transform">{item.label}</span>
+                        <span className="font-bold text-sm tracking-tight text-[var(--color-texto)] group-hover:translate-x-1 transition-transform">{item.label}</span>
                     </div>
                     <ChevronRight size={18} className="text-[var(--color-texto-muted)] group-hover:text-white transition-colors" />
                   </Link>
@@ -297,7 +297,7 @@ export default function PerfilClient({ perfil, conteoEventos }: PerfilClientProp
            <div className="card p-10 bg-gradient-to-br from-[#111] to-[#0a0a0a] border-[#d4af37]/30 shadow-2xl relative overflow-hidden group">
               <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
                  <div className="text-center md:text-left">
-                    <h3 className="text-3xl font-black italic uppercase tracking-tighter text-white">Próximo Gran Evento</h3>
+                    <h3 className="text-3xl font-black italic uppercase tracking-tighter text-[var(--color-texto)]">Próximo Gran Evento</h3>
                     <p className="text-[var(--color-texto-suave)] text-sm mt-3 max-w-sm leading-relaxed">Configura tus preferencias para recibir recomendaciones personalizadas de nuestros proveedores élite.</p>
                  </div>
                  <Link href="/cliente/dashboard" className="btn bg-white text-black font-black px-10 py-4 rounded-2xl hover:bg-[#d4af37] transition-all shadow-2xl uppercase tracking-widest text-xs">Ir al Dashboard</Link>
@@ -311,7 +311,7 @@ export default function PerfilClient({ perfil, conteoEventos }: PerfilClientProp
                  <div className="flex items-center gap-4">
                     <div className="p-3 bg-blue-500/10 text-blue-400 rounded-xl"><MapPin size={24} /></div>
                     <div>
-                       <p className="text-white font-bold">{perfil.cliente?.ciudad || 'No definida'}</p>
+                       <p className="text-[var(--color-texto)] font-bold">{perfil.cliente?.ciudad || 'No definida'}</p>
                        <p className="text-[10px] uppercase font-bold text-[var(--color-texto-muted)]">{perfil.cliente?.estado || 'No definido'}</p>
                     </div>
                  </div>
@@ -321,7 +321,7 @@ export default function PerfilClient({ perfil, conteoEventos }: PerfilClientProp
                  <div className="flex items-center gap-4">
                     <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl"><Phone size={24} /></div>
                     <div>
-                       <p className="text-white font-bold">{user.email}</p>
+                       <p className="text-[var(--color-texto)] font-bold">{user.email}</p>
                        <p className="text-[10px] uppercase font-bold text-[var(--color-texto-muted)]">{perfil.telefono || 'Sin teléfono'}</p>
                     </div>
                  </div>

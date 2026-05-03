@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Settings, Building2, User, Shield, Gem, Crown, Star, Zap, Save, Loader2, CheckCircle, MapPin, FileText, Clock, Phone } from 'lucide-react';
+import { Settings, Building2, User, Shield, Gem, Crown, Star, Zap, Save, Loader2, CheckCircle, MapPin, FileText, Clock, Phone, Lock } from 'lucide-react';
 import { updateProviderProfile, updateProviderCredentials, updateProviderAvailability } from '@/lib/actions/settingsActions';
+import { actualizarPassword } from '@/lib/actions/authActions';
 import { MEXICO_LOCATIONS } from '@/lib/constants/locations';
 import { uploadServiceImage } from '@/lib/actions/uploadActions';
 import { CATEGORIAS_LABELS } from '@/lib/utils';
@@ -56,6 +57,14 @@ export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) 
   });
   const [savingAvail, setSavingAvail] = useState(false);
   const [availSaved, setAvailSaved] = useState(false);
+
+  // Password State
+  const [passwordData, setPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordSaved, setPasswordSaved] = useState(false);
 
   const planData = PLAN_INFO[proveedor.plan] || PLAN_INFO.GRATIS;
   const PlanIcon = planData.icon;
@@ -121,6 +130,30 @@ export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) 
       alert(res.error);
     }
     setSavingAvail(false);
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      alert('Las contraseñas no coinciden');
+      return;
+    }
+    if (passwordData.newPassword.length < 6) {
+      alert('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    setSavingPassword(true);
+    setPasswordSaved(false);
+    const res = await actualizarPassword(passwordData.newPassword);
+    if (res.success) {
+      setPasswordSaved(true);
+      setPasswordData({ newPassword: '', confirmPassword: '' });
+      setTimeout(() => setPasswordSaved(false), 3000);
+    } else {
+      alert(res.error);
+    }
+    setSavingPassword(false);
   };
 
   return (
@@ -405,6 +438,49 @@ export default function ConfigClient({ proveedor, usuario }: ConfigClientProps) 
           <div className="flex justify-end pt-2 border-t border-[var(--color-borde-suave)]">
             <button type="submit" disabled={savingCreds} className="btn btn-primario h-11 px-6 gap-2 shadow-lg shadow-[var(--color-primario)]/20">
               {savingCreds ? <Loader2 size={18} className="animate-spin" /> : credsSaved ? <><CheckCircle size={18} /> Guardado</> : <><Save size={18} /> Actualizar Credenciales</>}
+            </button>
+          </div>
+        </div>
+      </form>
+
+      {/* Security Section */}
+      <form onSubmit={handleUpdatePassword} className="card p-0 overflow-hidden border border-[var(--color-borde-suave)] shadow-lg">
+        <div className="px-6 py-5 border-b border-[var(--color-borde-suave)] bg-[var(--color-fondo-input)]/50 flex items-center gap-3">
+          <Shield size={20} className="text-[var(--color-primario-claro)]" />
+          <div>
+            <h2 className="text-lg font-bold">Seguridad</h2>
+            <p className="text-xs text-[var(--color-texto-muted)]">Cambia tu contraseña de acceso.</p>
+          </div>
+        </div>
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-[var(--color-texto-suave)] flex items-center gap-1"><Lock size={14} /> Nueva Contraseña</label>
+              <input 
+                required
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                type="password"
+                className="input w-full h-12"
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-[var(--color-texto-suave)] flex items-center gap-1"><Lock size={14} /> Confirmar Contraseña</label>
+              <input 
+                required
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                type="password"
+                className="input w-full h-12"
+                placeholder="Repite la contraseña"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2 border-t border-[var(--color-borde-suave)]">
+            <button type="submit" disabled={savingPassword} className="btn btn-primario h-11 px-6 gap-2 shadow-lg shadow-[var(--color-primario)]/20">
+              {savingPassword ? <Loader2 size={18} className="animate-spin" /> : passwordSaved ? <><CheckCircle size={18} /> Contraseña Actualizada</> : <><Lock size={18} /> Cambiar Contraseña</>}
             </button>
           </div>
         </div>

@@ -40,7 +40,7 @@ export default function MercadoPagoClient({ proveedor, authUrl }: MercadoPagoCli
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black italic uppercase tracking-tighter text-white">Mercado Pago Connect</h1>
+          <h1 className="text-3xl font-black italic uppercase tracking-tighter text-[var(--color-texto)]">Mercado Pago Connect</h1>
           <p className="text-[var(--color-texto-suave)] font-medium">
             Vincula tu cuenta para recibir pagos directos con tarjeta.
           </p>
@@ -62,7 +62,7 @@ export default function MercadoPagoClient({ proveedor, authUrl }: MercadoPagoCli
             </div>
             
             <div className="relative space-y-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <h2 className="text-xl font-bold text-[var(--color-texto)] flex items-center gap-2">
                 {vinculado ? '¡Todo listo!' : '¿Por qué vincular tu cuenta?'}
               </h2>
               
@@ -95,7 +95,7 @@ export default function MercadoPagoClient({ proveedor, authUrl }: MercadoPagoCli
                         <CheckCircle2 size={20} />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-white">Cuenta vinculada correctamente</p>
+                        <p className="text-xs font-bold text-[var(--color-texto)]">Cuenta vinculada correctamente</p>
                         <p className="text-[10px] text-emerald-400/60 uppercase font-black">ID MP: {proveedor.mpUserId || 'Oculto'}</p>
                       </div>
                     </div>
@@ -124,17 +124,17 @@ export default function MercadoPagoClient({ proveedor, authUrl }: MercadoPagoCli
 
         <div className="space-y-6">
           <div className="card p-6 bg-amber-500/5 border border-amber-500/10 space-y-4">
-            <div className="flex items-center gap-2 text-amber-400">
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
               <AlertCircle size={20} />
               <h3 className="font-bold text-sm uppercase tracking-tight">Importante</h3>
             </div>
-            <p className="text-xs text-amber-200/60 leading-relaxed">
+            <p className="text-xs text-amber-900/70 dark:text-amber-200/60 leading-relaxed">
               Eventia utiliza el modelo de <strong>Marketplace</strong> de Mercado Pago. Al vincular tu cuenta, autorizas a la plataforma a procesar pagos en tu nombre y retener la comisión acordada según tu plan.
             </p>
           </div>
 
           <div className="card p-6 bg-white/5 border border-white/5 space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-widest text-white/40">Ayuda</h3>
+            <h3 className="text-xs font-black uppercase tracking-widest text-[var(--color-texto-muted)]">Ayuda</h3>
             <p className="text-xs text-[var(--color-texto-muted)] leading-relaxed">
               ¿No tienes una cuenta de Mercado Pago? <a href="https://www.mercadopago.com.mx/" target="_blank" className="text-[var(--color-primario-claro)] hover:underline">Crea una aquí</a> en pocos minutos.
             </p>
