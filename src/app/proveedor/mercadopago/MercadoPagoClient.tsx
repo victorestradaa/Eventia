@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { CreditCard, CheckCircle2, AlertCircle, ExternalLink, Unlink, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { desvincularMercadoPago } from '@/lib/actions/mercadopagoActions';
@@ -46,9 +46,12 @@ export default function MercadoPagoClient({ proveedor, authUrl }: MercadoPagoCli
           </p>
         </div>
         
+        {/* Badge: usa variables CSS, no dark: prefix */}
         <div className={cn(
-          "px-4 py-2 rounded-full flex items-center gap-2 text-[10px] font-black uppercase tracking-widest",
-           vinculado ? "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20" : "bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20"
+          "px-4 py-2 rounded-full flex items-center gap-2 text-[10px] font-black uppercase tracking-widest border",
+          vinculado
+            ? "bg-emerald-500/10 text-emerald-600 border-emerald-400/30"
+            : "bg-amber-500/10 text-amber-600 border-amber-400/30"
         )}>
           {vinculado ? <><CheckCircle2 size={14} /> Cuenta Vinculada</> : <><AlertCircle size={14} /> Sin Vincular</>}
         </div>
@@ -56,7 +59,7 @@ export default function MercadoPagoClient({ proveedor, authUrl }: MercadoPagoCli
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <div className="card p-8 bg-white/5 border-white/10 space-y-6 relative overflow-hidden">
+          <div className="card p-8 space-y-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-5">
               <CreditCard size={120} />
             </div>
@@ -89,20 +92,20 @@ export default function MercadoPagoClient({ proveedor, authUrl }: MercadoPagoCli
 
               <div className="pt-4">
                 {vinculado ? (
-                  <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-between gap-4">
+                  <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                      <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-600">
                         <CheckCircle2 size={20} />
                       </div>
                       <div>
                         <p className="text-xs font-bold text-[var(--color-texto)]">Cuenta vinculada correctamente</p>
-                        <p className="text-[10px] text-emerald-400/60 uppercase font-black">ID MP: {proveedor.mpUserId || 'Oculto'}</p>
+                        <p className="text-[10px] text-emerald-600/60 uppercase font-black">ID MP: {proveedor.mpUserId || 'Oculto'}</p>
                       </div>
                     </div>
                     <button 
                       onClick={handleDesvincular}
                       disabled={loading}
-                      className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors group relative flex items-center justify-center min-w-[40px] min-h-[40px]"
+                      className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-colors group relative flex items-center justify-center min-w-[40px] min-h-[40px]"
                       title="Desvincular cuenta"
                     >
                       {loading ? <Loader2 size={20} className="animate-spin" /> : <Unlink size={20} />}
@@ -111,7 +114,7 @@ export default function MercadoPagoClient({ proveedor, authUrl }: MercadoPagoCli
                 ) : (
                   <a 
                     href={authUrl}
-                    className="btn btn-primario py-4 px-8 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl shadow-violet-500/20 hover:scale-[1.02] active:scale-95 transition-all w-fit"
+                    className="btn btn-primario py-4 px-8 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:scale-[1.02] active:scale-95 transition-all w-fit"
                   >
                     Vincular con Mercado Pago
                     <ExternalLink size={18} />
@@ -123,20 +126,21 @@ export default function MercadoPagoClient({ proveedor, authUrl }: MercadoPagoCli
         </div>
 
         <div className="space-y-6">
-           <div className="card p-6 bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/10 space-y-4">
-            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+          {/* Cuadro IMPORTANTE: usa border y fondo con variable, texto oscuro fijo */}
+          <div className="card p-6 border-2 border-amber-400/40 space-y-3" style={{ backgroundColor: 'rgba(245, 158, 11, 0.08)' }}>
+            <div className="flex items-center gap-2" style={{ color: '#B45309' }}>
               <AlertCircle size={20} />
               <h3 className="font-bold text-sm uppercase tracking-tight">Importante</h3>
             </div>
-            <p className="text-xs text-amber-800 dark:text-amber-200/60 leading-relaxed">
+            <p className="text-xs leading-relaxed" style={{ color: '#78350F' }}>
               Eventia utiliza el modelo de <strong>Marketplace</strong> de Mercado Pago. Al vincular tu cuenta, autorizas a la plataforma a procesar pagos en tu nombre y retener la comisión acordada según tu plan.
             </p>
           </div>
 
-          <div className="card p-6 bg-white/5 border border-white/5 space-y-4">
+          <div className="card p-6 space-y-3">
             <h3 className="text-xs font-black uppercase tracking-widest text-[var(--color-texto-muted)]">Ayuda</h3>
-            <p className="text-xs text-[var(--color-texto-muted)] leading-relaxed">
-              ¿No tienes una cuenta de Mercado Pago? <a href="https://www.mercadopago.com.mx/" target="_blank" className="text-[var(--color-primario-claro)] hover:underline">Crea una aquí</a> en pocos minutos.
+            <p className="text-xs text-[var(--color-texto-suave)] leading-relaxed">
+              ¿No tienes una cuenta de Mercado Pago? <a href="https://www.mercadopago.com.mx/" target="_blank" className="text-[var(--color-acento)] font-bold hover:underline">Crea una aquí</a> en pocos minutos.
             </p>
           </div>
         </div>
