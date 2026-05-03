@@ -208,11 +208,11 @@ export default function PlanesClient({ planActual, proveedorId, planExpira }: Pl
           <div className="mt-8 w-full max-w-sm mx-auto">
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-primario)] to-[var(--color-acento)] rounded-2xl blur opacity-10 group-focus-within:opacity-30 transition-opacity"></div>
-              <div className="relative bg-white/5 border border-white/10 rounded-2xl p-4 flex gap-2">
+              <div className="relative bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-2xl p-4 flex gap-2">
                 <input 
                   type="text" 
                   placeholder="¿Tienes un cupón?" 
-                  className="bg-transparent border-none focus:ring-0 text-sm font-bold placeholder:text-white/20 w-full uppercase"
+                  className="bg-transparent border-none focus:ring-0 text-sm font-bold text-[var(--color-texto)] placeholder:text-[var(--color-texto-muted)] w-full uppercase outline-none"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                 />
