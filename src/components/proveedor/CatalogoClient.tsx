@@ -485,9 +485,9 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
                             });
                           }}
                           className={`px-5 py-3 rounded-xl text-xs font-black transition-all border-2 ${
-                            isSelected 
-                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' 
-                              : 'bg-white/5 text-white/40 border-white/5 hover:border-emerald-500/30'
+                            isSelected
+                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
+                              : 'bg-[var(--color-fondo-card)] text-[var(--color-texto-suave)] border-[var(--color-borde-suave)] hover:border-emerald-500/40 hover:text-[var(--color-texto)]'
                           }`}
                         >
                           {metodo}
