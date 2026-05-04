@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { crearCupon, eliminarCupon } from '@/lib/actions/cuponActions';
-import { Ticket, Plus, Trash2, Calendar, Users, Percent, Sparkles, Loader2 } from 'lucide-react';
+import { crearCupon, eliminarCupon, actualizarCupon } from '@/lib/actions/cuponActions';
+import { Ticket, Plus, Trash2, Calendar, Users, Percent, Sparkles, Loader2, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -26,40 +26,76 @@ export default function CuponAdminClient({ initialCupones }: CuponAdminClientPro
   const [cupones, setCupones] = useState<Cupon[]>(initialCupones);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Form state
   const [newCupon, setNewCupon] = useState({
     codigo: '',
     mesesGratis: 1,
     maxUsos: '',
-    fechaExpira: ''
+    fechaExpira: '',
+    activo: true,
   });
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const resetForm = () => {
+    setNewCupon({ codigo: '', mesesGratis: 1, maxUsos: '', fechaExpira: '', activo: true });
+    setEditingId(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const res = await crearCupon({
-      codigo: newCupon.codigo,
-      mesesGratis: Number(newCupon.mesesGratis),
-      maxUsos: newCupon.maxUsos ? Number(newCupon.maxUsos) : undefined,
-      fechaExpira: newCupon.fechaExpira ? new Date(newCupon.fechaExpira) : null
-    });
-
-    if (res.success) {
-      setCupones([res.data as any, ...cupones]);
-      setShowForm(false);
-      setNewCupon({ codigo: '', mesesGratis: 1, maxUsos: '', fechaExpira: '' });
-      alert('Cupón creado con éxito.');
+    if (editingId) {
+      const res = await actualizarCupon(editingId, {
+        codigo: newCupon.codigo,
+        mesesGratis: Number(newCupon.mesesGratis),
+        maxUsos: newCupon.maxUsos ? Number(newCupon.maxUsos) : null,
+        fechaExpira: newCupon.fechaExpira ? new Date(newCupon.fechaExpira) : null,
+        activo: newCupon.activo,
+      });
+      if (res.success) {
+        setCupones(cupones.map(c => c.id === editingId ? (res.data as any) : c));
+        setShowForm(false);
+        resetForm();
+      } else {
+        alert(`Error: ${res.error}`);
+      }
     } else {
-      alert(`Error: ${res.error}`);
+      const res = await crearCupon({
+        codigo: newCupon.codigo,
+        mesesGratis: Number(newCupon.mesesGratis),
+        maxUsos: newCupon.maxUsos ? Number(newCupon.maxUsos) : undefined,
+        fechaExpira: newCupon.fechaExpira ? new Date(newCupon.fechaExpira) : null,
+      });
+      if (res.success) {
+        setCupones([res.data as any, ...cupones]);
+        setShowForm(false);
+        resetForm();
+        alert('Cupón creado con éxito.');
+      } else {
+        alert(`Error: ${res.error}`);
+      }
     }
-    setLoading(null as any);
+    setLoading(false);
+  };
+
+  const handleEdit = (cupon: Cupon) => {
+    setEditingId(cupon.id);
+    setNewCupon({
+      codigo: cupon.codigo,
+      mesesGratis: cupon.mesesGratis,
+      maxUsos: cupon.maxUsos != null ? String(cupon.maxUsos) : '',
+      fechaExpira: cupon.fechaExpira ? new Date(cupon.fechaExpira).toISOString().split('T')[0] : '',
+      activo: cupon.activo,
+    });
+    setShowForm(true);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('¿Estás seguro de eliminar este cupón?')) return;
-    
+
     const res = await eliminarCupon(id);
     if (res.success) {
       setCupones(cupones.filter(c => c.id !== id));
@@ -75,8 +111,16 @@ export default function CuponAdminClient({ initialCupones }: CuponAdminClientPro
           <h2 className="text-3xl font-black tracking-tight">Gestión de Cupones</h2>
           <p className="text-[var(--color-texto-suave)] text-sm">Crea incentivos de meses gratis para tus proveedores.</p>
         </div>
-        <button 
-          onClick={() => setShowForm(!showForm)}
+        <button
+          onClick={() => {
+            if (showForm) {
+              setShowForm(false);
+              resetForm();
+            } else {
+              resetForm();
+              setShowForm(true);
+            }
+          }}
           className="btn btn-primario flex items-center gap-2"
         >
           {showForm ? 'Cancelar' : <><Plus size={18} /> Nuevo Cupón</>}
@@ -85,7 +129,12 @@ export default function CuponAdminClient({ initialCupones }: CuponAdminClientPro
 
       {showForm && (
         <div className="card p-8 border-[var(--color-primario-claro)]/30 bg-[var(--color-primario)]/[0.02] animate-in slide-in-from-top-4 duration-300">
-          <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {editingId && (
+            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primario-claro)] mb-4">
+              Editando cupón
+            </p>
+          )}
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Código del Cupón</label>
               <input 
@@ -126,13 +175,40 @@ export default function CuponAdminClient({ initialCupones }: CuponAdminClientPro
                 onChange={e => setNewCupon({...newCupon, fechaExpira: e.target.value})}
               />
             </div>
-            <div className="md:col-span-2 lg:col-span-4 flex justify-end pt-2">
-              <button 
-                type="submit" 
+            {editingId && (
+              <div className="md:col-span-2 lg:col-span-4 flex items-center gap-3 pt-2">
+                <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={newCupon.activo}
+                    onChange={(e) => setNewCupon({ ...newCupon, activo: e.target.checked })}
+                    className="w-4 h-4 accent-emerald-500"
+                  />
+                  <span className="text-xs font-bold text-[var(--color-texto-suave)]">
+                    Cupón activo
+                  </span>
+                </label>
+                <span className="text-[10px] text-[var(--color-texto-muted)]">
+                  Desactívalo para que ya no se pueda canjear sin necesidad de eliminarlo.
+                </span>
+              </div>
+            )}
+            <div className="md:col-span-2 lg:col-span-4 flex justify-end pt-2 gap-3">
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={() => { setShowForm(false); resetForm(); }}
+                  className="px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)] transition-colors"
+                >
+                  Cancelar
+                </button>
+              )}
+              <button
+                type="submit"
                 disabled={loading}
                 className="btn btn-primario px-10 py-3 font-black uppercase tracking-widest text-xs"
               >
-                {loading ? <Loader2 className="animate-spin" /> : 'Generar Cupón Oficial'}
+                {loading ? <Loader2 className="animate-spin" /> : (editingId ? 'Guardar Cambios' : 'Generar Cupón Oficial')}
               </button>
             </div>
           </form>
@@ -141,24 +217,44 @@ export default function CuponAdminClient({ initialCupones }: CuponAdminClientPro
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {cupones.map(cupon => (
-          <div key={cupon.id} className="card p-6 border-white/5 relative group hover:border-[var(--color-primario-claro)]/30 transition-all">
+          <div key={cupon.id} className={cn(
+            "card p-6 border-white/5 relative group hover:border-[var(--color-primario-claro)]/30 transition-all",
+            !cupon.activo && "opacity-60"
+          )}>
             <div className="flex justify-between items-start mb-6">
               <div className="w-12 h-12 rounded-2xl bg-[var(--color-primario)]/10 flex items-center justify-center text-[var(--color-primario-claro)]">
                 <Ticket size={24} />
               </div>
-              <button 
-                onClick={() => handleDelete(cupon.id)}
-                className="p-2 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
-              >
-                <Trash2 size={18} />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleEdit(cupon)}
+                  aria-label="Editar cupón"
+                  title="Editar cupón"
+                  className="p-2 text-[var(--color-texto-suave)] hover:text-[var(--color-primario-claro)] hover:bg-[var(--color-primario)]/10 rounded-xl transition-all"
+                >
+                  <Pencil size={18} />
+                </button>
+                <button
+                  onClick={() => handleDelete(cupon.id)}
+                  aria-label="Eliminar cupón"
+                  title="Eliminar cupón"
+                  className="p-2 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
             </div>
 
             <h4 className="text-2xl font-black tracking-tight mb-1">{cupon.codigo}</h4>
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
               <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
                 {cupon.mesesGratis} MESES GRATIS
               </span>
+              {!cupon.activo && (
+                <span className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest">
+                  Inactivo
+                </span>
+              )}
             </div>
 
             <div className="space-y-3 pt-4 border-t border-white/5">

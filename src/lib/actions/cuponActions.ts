@@ -56,6 +56,34 @@ export async function eliminarCupon(id: string) {
   }
 }
 
+export async function actualizarCupon(id: string, data: {
+  codigo: string;
+  mesesGratis: number;
+  maxUsos?: number | null;
+  fechaExpira?: Date | null;
+  activo?: boolean;
+}) {
+  try {
+    const cupon = await prisma.cupon.update({
+      where: { id },
+      data: {
+        codigo: data.codigo.toUpperCase(),
+        mesesGratis: data.mesesGratis,
+        maxUsos: data.maxUsos ?? null,
+        fechaExpira: data.fechaExpira ?? null,
+        ...(data.activo !== undefined ? { activo: data.activo } : {}),
+      },
+    });
+    revalidatePath('/admin/cupones');
+    return { success: true, data: cupon };
+  } catch (error: any) {
+    if (error.code === 'P2002') {
+      return { success: false, error: 'Ya existe un cupón con este código.' };
+    }
+    return { success: false, error: error.message };
+  }
+}
+
 /**
  * Acciones para el Proveedor
  */
