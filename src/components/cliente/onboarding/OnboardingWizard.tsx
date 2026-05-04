@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react';
 import { X, Building2, Music, Utensils, PartyPopper, Camera, Palette, Gift, Armchair } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { getExplorarServiciosByCategoria } from '@/lib/actions/providerActions';
 
 import WizardStep_CreateEvent from './WizardStep_CreateEvent';
@@ -10,7 +9,6 @@ import WizardStep_ChooseMode from './WizardStep_ChooseMode';
 import WizardStep_CategoryQuestion from './WizardStep_CategoryQuestion';
 import WizardStep_ServiceGallery from './WizardStep_ServiceGallery';
 import WizardStep_Summary from './WizardStep_Summary';
-import Logo from '@/components/common/Logo';
 
 // ─── Configuración de Categorías del Asistente ────────────────────────────────
 const WIZARD_CATEGORIES = [
@@ -18,8 +16,8 @@ const WIZARD_CATEGORIES = [
     id: 'SALON',
     label: 'Salón',
     emoji: '🏛️',
-    pregunta: '¿Necesitas un Salón o Venue para tu evento?',
-    descripcion: 'Encontramos los mejores salones y venues disponibles en tu ciudad.',
+    pregunta: '¿Necesitas un Salón para tu evento?',
+    descripcion: 'Encontramos los mejores salones disponibles en tu ciudad.',
     icon: Building2,
   },
   {
@@ -197,40 +195,72 @@ export default function OnboardingWizard({ perfil, onComplete }: OnboardingWizar
     onComplete();
   }, [onComplete]);
 
-  return (
-    <div className="fixed inset-0 z-[200] flex flex-col bg-[var(--color-fondo)] overflow-y-auto">
-      {/* ─── Top Bar ─────────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-10 bg-[var(--color-fondo)]/80 backdrop-blur-xl border-b border-[var(--color-borde-suave)] px-6 py-3 flex items-center gap-4">
-        <Logo width={100} height={36} />
+  // Etiqueta dinámica del paso actual para el header
+  const stepLabel = (() => {
+    if (mode === 'CREATE_EVENT') return 'Crea tu evento';
+    if (mode === 'CHOOSE_MODE') return 'Elige cómo organizar';
+    if (mode === 'CATEGORY_QUESTION' || mode === 'SERVICE_GALLERY') return categoriaActual?.label || '';
+    if (mode === 'SUMMARY') return '¡Listo!';
+    return '';
+  })();
 
-        {/* Barra de progreso */}
-        <div className="flex-1 h-1.5 bg-[var(--color-fondo-input)] rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-[#eadeba] to-[#c79a3b] rounded-full transition-all duration-700 ease-out"
-            style={{ width: `${progreso}%` }}
-          />
+  // Index de categoría para el contador "X de N"
+  const stepCounter = (() => {
+    if (mode === 'CATEGORY_QUESTION' || mode === 'SERVICE_GALLERY') {
+      return `${categoriaIndex + 1} de ${WIZARD_CATEGORIES.length}`;
+    }
+    return null;
+  })();
+
+  return (
+    <div className="fixed inset-0 z-[200] flex flex-col bg-[var(--color-fondo)] overflow-hidden">
+      {/* ─── Top Bar nativa ─────────────────────────────────────────────────── */}
+      <header
+        className="shrink-0 bg-[var(--color-fondo)]/95 backdrop-blur-md border-b border-[var(--color-borde-suave)] px-4 py-3 flex items-center gap-3"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 12px)' }}
+      >
+        {/* Cerrar / Saltar */}
+        {mode !== 'SUMMARY' ? (
+          <button
+            type="button"
+            onClick={handleSkipWizard}
+            aria-label="Cerrar"
+            className="w-9 h-9 rounded-full bg-[var(--color-fondo-hover)] text-[var(--color-texto)] flex items-center justify-center active:scale-95 transition-transform"
+          >
+            <X size={18} />
+          </button>
+        ) : (
+          <div className="w-9 h-9" />
+        )}
+
+        {/* Título central */}
+        <div className="flex-1 text-center min-w-0">
+          <p className="text-[15px] font-semibold text-[var(--color-texto)] truncate">{stepLabel}</p>
+          {stepCounter && (
+            <p className="text-[11px] text-[var(--color-texto-suave)]">{stepCounter}</p>
+          )}
         </div>
 
-        <span className="text-[10px] font-black text-[var(--color-texto-muted)] whitespace-nowrap">
-          {progreso}%
-        </span>
+        {/* Espaciador derecha (simétrico con el botón izquierdo) */}
+        <div className="w-9 h-9" />
+      </header>
 
-        {/* Skip */}
-        {mode !== 'SUMMARY' && (
-          <button
-            onClick={handleSkipWizard}
-            className="text-[10px] font-bold text-[var(--color-texto-muted)] hover:text-[var(--color-texto)] transition-colors underline underline-offset-2 flex items-center gap-1 whitespace-nowrap"
-          >
-            <X size={12} /> Saltar
-          </button>
-        )}
+      {/* ─── Barra de progreso fina, justo debajo del header ─────────────────── */}
+      <div className="shrink-0 h-1 bg-[var(--color-fondo-hover)]">
+        <div
+          className="h-full bg-gradient-to-r from-[#eadeba] via-[#d4af37] to-[#c79a3b] rounded-r-full transition-all duration-700 ease-out"
+          style={{ width: `${progreso}%` }}
+        />
       </div>
 
-      {/* ─── Contenido del paso actual ────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
+      {/* ─── Contenido del paso actual ─────────────────────────────────────── */}
+      <main
+        className="flex-1 overflow-y-auto"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
         <div
           key={`${mode}-${categoriaIndex}`}
-          className="w-full animate-in fade-in slide-in-from-right-4 duration-400"
+          className="w-full px-5 py-6 animate-in fade-in slide-in-from-right-4 duration-300"
         >
           {/* PASO 1: Crear evento */}
           {mode === 'CREATE_EVENT' && (
@@ -267,7 +297,7 @@ export default function OnboardingWizard({ perfil, onComplete }: OnboardingWizar
                 <div className="w-16 h-16 rounded-full bg-[#d4af37]/10 flex items-center justify-center">
                   <div className="w-8 h-8 border-4 border-[#d4af37] border-t-transparent rounded-full animate-spin" />
                 </div>
-                <p className="text-sm font-bold text-[var(--color-texto-suave)]">Buscando los mejores proveedores...</p>
+                <p className="text-sm font-medium text-[var(--color-texto-suave)]">Buscando proveedores…</p>
               </div>
             ) : (
               <WizardStep_ServiceGallery
@@ -294,24 +324,7 @@ export default function OnboardingWizard({ perfil, onComplete }: OnboardingWizar
             />
           )}
         </div>
-      </div>
-
-      {/* ─── Indicadores de categoría (dots) cuando estamos en el asistente ─── */}
-      {(mode === 'CATEGORY_QUESTION' || mode === 'SERVICE_GALLERY') && (
-        <div className="pb-6 flex justify-center gap-1.5">
-          {WIZARD_CATEGORIES.map((_, i) => (
-            <div
-              key={i}
-              className={cn(
-                'h-1.5 rounded-full transition-all duration-300',
-                i < categoriaIndex ? 'w-6 bg-[#d4af37]'
-                  : i === categoriaIndex ? 'w-6 bg-[#d4af37]'
-                  : 'w-1.5 bg-[var(--color-borde-suave)]'
-              )}
-            />
-          ))}
-        </div>
-      )}
+      </main>
     </div>
   );
 }

@@ -87,3 +87,29 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    await prisma.invitado.updateMany({
+      where: { grupoTitularId: id },
+      data: { grupoTitularId: null },
+    });
+
+    await prisma.invitado.delete({ where: { id } });
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('--- ERROR DELETING GUEST ---');
+    console.error('Message:', error.message);
+    if (error.code) console.error('Prisma Code:', error.code);
+    return NextResponse.json(
+      { success: false, error: error.message || 'Error interno del servidor' },
+      { status: 500 }
+    );
+  }
+}

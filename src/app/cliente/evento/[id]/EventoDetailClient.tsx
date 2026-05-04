@@ -171,7 +171,7 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
   const [emailToInvite, setEmailToInvite] = useState('');
 
   // Nuevos estados para abonos con transferencia
-  const [metodoPago, setMetodoPago] = useState<'TRANSFERENCIA' | 'TARJETA' | null>(null);
+  const [metodoPago, setMetodoPago] = useState<'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | null>(null);
   const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([]);
   const [cargandoCuentas, setCargandoCuentas] = useState(false);
   const [comprobanteFile, setComprobanteFile] = useState<File | null>(null);
@@ -385,6 +385,23 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
     }
   };
 
+  const handleDeleteInvitado = async (invitado: any) => {
+    const ok = window.confirm(`¿Eliminar a ${invitado.nombre}? Esta acción no se puede deshacer.`);
+    if (!ok) return;
+    try {
+      const response = await fetch(`/api/invitado/${invitado.id}`, { method: 'DELETE' });
+      const res = await response.json();
+      if (!res.success) {
+        alert(res.error || 'Error al eliminar invitado');
+        return;
+      }
+      router.refresh();
+    } catch (error: any) {
+      console.error('Error al eliminar invitado:', error);
+      alert('Error de conexión al eliminar invitado');
+    }
+  };
+
   const handleUpdateTemplate = async (plantilla: string) => {
     // Feedback instantáneo local optimista
     const oldInvitacion = invitacion;
@@ -553,6 +570,19 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
         onAbonar={handleAbonarLinea}
         onAddInvitado={() => setIsAddGuestModalOpen(true)}
         onUpdateRSVP={handleUpdateRSVP}
+        onEditInvitado={(i: any) => {
+          setGuestToEdit(i);
+          setEditGuestForm({
+            nombre: i.nombre,
+            email: i.email || '',
+            telefono: i.telefono || '',
+            categoria: i.categoria || 'AMIGOS',
+            tipoPersona: i.tipoPersona || 'HOMBRE',
+            lado: i.lado || '',
+          });
+          setIsEditGuestModalOpen(true);
+        }}
+        onDeleteInvitado={handleDeleteInvitado}
       />
 
       {/* VISTA ESCRITORIO — sin cambios respecto a la versión previa */}
@@ -878,11 +908,23 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 font-medium">
-                          {lineasConReservasActivas.flatMap((l:any) => (l.pagos || []).map((p:any) => ({...p, targetDesc: l.descripcion, parentLine: l}))).sort((a:any, b:any) => new Date(b.fechaPago || b.fechaVencimiento || b.fecha).getTime() - new Date(a.fechaPago || a.fechaVencimiento || a.fecha).getTime()).map((p:any, idx:number) => {
+                          {(() => {
+                            // Dedupe por id de pago: si dos líneas comparten reserva, los pagos vienen duplicados
+                            const seen = new Set<string>();
+                            return lineasConReservasActivas
+                              .flatMap((l:any) => (l.pagos || []).map((p:any) => ({...p, targetDesc: l.descripcion, parentLine: l})))
+                              .filter((p:any) => {
+                                if (!p.id) return true;
+                                if (seen.has(p.id)) return false;
+                                seen.add(p.id);
+                                return true;
+                              })
+                              .sort((a:any, b:any) => new Date(b.fechaPago || b.fechaVencimiento || b.fecha).getTime() - new Date(a.fechaPago || a.fechaVencimiento || a.fecha).getTime());
+                          })().map((p:any, idx:number) => {
                             const isPending = p.estado === 'PENDIENTE';
                             return (
-                               <tr 
-                                 key={p.id || idx} 
+                               <tr
+                                 key={`hist-${p.id || idx}-${idx}`}
                                  onClick={() => {
                                    setSelectedAbono({...p, concepto: `${(p.tipo || 'ABONO').toUpperCase()} - ${p.targetDesc}`});
                                    setIsAbonoDetailModalOpen(true);
@@ -1395,7 +1437,22 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Teléfono (WhatsApp)</label>
-                  <input type="text" value={newGuest.telefono} onChange={(e) => setNewGuest({...newGuest, telefono: e.target.value})} className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all" placeholder="+52 ..." />
+                  <div className="flex gap-2">
+                    <div className="flex items-center px-3 py-3 rounded-xl bg-[var(--color-fondo-hover)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] font-bold select-none">
+                      +52
+                    </div>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      value={(newGuest.telefono || '').replace(/^\+52/, '')}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '');
+                        setNewGuest({...newGuest, telefono: digits ? `+52${digits}` : ''});
+                      }}
+                      className="flex-1 min-w-0 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario-claro)] transition-all"
+                      placeholder="10 dígitos"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-1 md:col-span-2">
@@ -1587,88 +1644,168 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
         </div>
       )}
               {/* Modal de Pago (Actualizado) */}
-      {showPagoModal && (
+      {showPagoModal && (() => {
+        // Reglas de negocio del modal de abono
+        const esPrimerAbono = Number(showPagoModal.montoPagado || 0) === 0;
+        const planProveedor = showPagoModal.servicio?.proveedor?.plan as string | undefined;
+        const mpVinculado = !!showPagoModal.servicio?.proveedor?.mpVinculado;
+        const esElite = planProveedor === 'ELITE';
+        // En el primer abono (anticipo): si NO es Elite, sólo se acepta TARJETA (split de Eventium)
+        const soloTarjetaParaAnticipo = esPrimerAbono && !esElite;
+        // Si el proveedor no es Elite y no tiene MP vinculado, no se puede registrar el anticipo
+        const bloqueoPorFaltaMP = soloTarjetaParaAnticipo && !mpVinculado;
+
+        // Anticipo fijo según el porcentaje configurado por el proveedor
+        const porcentajeAnticipo = showPagoModal.servicio?.porcentajeAnticipo || 30;
+        const montoAnticipoFijo = (Number(showPagoModal.montoTotal) * porcentajeAnticipo) / 100;
+        const proveedorNombre = showPagoModal.servicio?.proveedor?.nombre || showPagoModal.proveedor?.nombre || '';
+
+        return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-500 overflow-y-auto">
            <div className="card max-w-xl w-full p-8 md:p-10 border-white/10 shadow-2xl animate-in zoom-in-95 duration-300 relative my-auto">
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-[var(--color-primario)] to-transparent" />
-              
+
               <div className="flex items-center justify-between mb-6">
                  <div>
-                    <h2 className="text-2xl font-black italic uppercase tracking-tighter">Registrar Abono</h2>
+                    <h2 className="text-2xl font-black italic uppercase tracking-tighter">{esPrimerAbono ? 'Apartar Fecha' : 'Registrar Abono'}</h2>
                     <p className="text-[10px] text-[var(--color-texto-muted)] font-black uppercase tracking-widest">{showPagoModal.descripcion}</p>
                  </div>
                  <button onClick={() => setShowPagoModal(null)} className="p-2 rounded-full hover:bg-white/5 transition-colors"><X size={20} /></button>
               </div>
 
+              {bloqueoPorFaltaMP ? (
+                /* ── Bloqueo: proveedor no-Elite sin MP vinculado ── */
+                <div className="space-y-5 py-2">
+                  <div className="rounded-2xl bg-amber-50 border border-amber-200 p-5 text-amber-900">
+                    <p className="font-bold text-[14px] mb-2">Aún no podemos procesar tu anticipo</p>
+                    <p className="text-[13px] leading-relaxed">
+                      <strong>{proveedorNombre || 'Este proveedor'}</strong> tiene un plan <strong>{planProveedor || 'no Elite'}</strong>, lo que requiere que su anticipo se cobre con tarjeta vía Mercado Pago para asegurar la comisión de la plataforma.
+                    </p>
+                    <p className="text-[13px] leading-relaxed mt-2">
+                      El proveedor todavía no ha vinculado su cuenta de Mercado Pago. Te avisaremos en cuanto lo haga.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPagoModal(null)}
+                    className="btn btn-primario w-full py-4 rounded-2xl text-xs font-black uppercase tracking-widest"
+                  >
+                    Entendido
+                  </button>
+                </div>
+              ) : (
               <div className="space-y-6">
+                 {/* Aviso del anticipo fijo (sólo en primer abono) */}
+                 {esPrimerAbono && (
+                   <div className="rounded-2xl bg-[var(--color-acento)]/10 border border-[var(--color-acento)]/30 p-4">
+                     <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-acento-claro)] mb-1">Anticipo para apartar fecha</p>
+                     <p className="text-[12px] text-[var(--color-texto-suave)] leading-relaxed">
+                       El proveedor configuró un anticipo del <strong className="text-[var(--color-texto)]">{porcentajeAnticipo}%</strong> ({formatearMoneda(montoAnticipoFijo)}). Este monto es fijo y no puede modificarse.
+                     </p>
+                   </div>
+                 )}
+
                  {/* Paso 1: Monto */}
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-2">Monto a abonar</label>
+                    <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-2">{esPrimerAbono ? 'Monto del anticipo' : 'Monto a abonar'}</label>
                     <div className="relative">
                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-2xl font-black text-[var(--color-primario-claro)] opacity-40">$</span>
-                        <input 
-                          type="number" 
+                        <input
+                          type="number"
                           value={montoAbono}
-                          onChange={(e) => setMontoAbono(e.target.value)}
+                          // Hard lock: en el primer abono no permitimos cambios al monto.
+                          // Triple guarda: readOnly + onChange ignora + inputMode none (no abre teclado en iOS).
+                          onChange={(e) => {
+                            if (esPrimerAbono) return;
+                            setMontoAbono(e.target.value);
+                          }}
+                          onKeyDown={(e) => {
+                            if (esPrimerAbono) e.preventDefault();
+                          }}
                           placeholder="0.00"
-                          className="input w-full h-16 !pl-16 text-2xl font-black text-[var(--color-primario-claro)] bg-white/5 border-2 border-white/5 focus:border-[var(--color-primario)]/50 transition-all"
+                          readOnly={esPrimerAbono}
+                          inputMode={esPrimerAbono ? 'none' : 'decimal'}
+                          tabIndex={esPrimerAbono ? -1 : 0}
+                          className={cn(
+                            "input w-full h-16 !pl-16 text-2xl font-black text-[var(--color-primario-claro)] border-2 transition-all",
+                            esPrimerAbono
+                              ? "bg-[var(--color-fondo-hover)] border-[var(--color-acento)]/40 cursor-not-allowed pointer-events-none"
+                              : "bg-white/5 border-white/5 focus:border-[var(--color-primario)]/50"
+                          )}
                         />
+                        {esPrimerAbono && (
+                          <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-wider text-[var(--color-acento-claro)]">🔒 Bloqueado</span>
+                        )}
                      </div>
                   </div>
 
                   {/* Paso 2: Método de Pago */}
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-2">Selecciona método de pago</label>
-                    <div className={cn(
-                      "grid gap-2",
-                      showPagoModal?.servicio?.proveedor?.mpVinculado ? "grid-cols-3" : "grid-cols-2"
-                    )}>
-                       <button 
-                         onClick={() => setMetodoPago('EFECTIVO')}
-                         disabled={!showPagoModal?.servicio?.metodosPago?.includes('EFECTIVO')}
-                         className={cn(
-                           "p-3 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all",
-                           metodoPago === 'EFECTIVO' 
-                             ? "border-[var(--color-primario-claro)] bg-[var(--color-primario)]/10" 
-                             : "border-white/5 bg-white/5 hover:border-white/10",
-                           !showPagoModal?.servicio?.metodosPago?.includes('EFECTIVO') && "opacity-20 cursor-not-allowed grayscale"
-                         )}
-                       >
-                          <Wallet size={20} className={metodoPago === 'EFECTIVO' ? "text-[var(--color-primario-claro)]" : "text-white/40"} />
-                          <span className="text-[9px] font-black uppercase tracking-widest">Efectivo</span>
-                       </button>
-                       <button 
-                         onClick={() => setMetodoPago('TRANSFERENCIA')}
-                         disabled={!showPagoModal?.servicio?.metodosPago?.includes('TRANSFERENCIA')}
-                         className={cn(
-                           "p-3 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all",
-                           metodoPago === 'TRANSFERENCIA' 
-                             ? "border-[var(--color-primario-claro)] bg-[var(--color-primario)]/10" 
-                             : "border-white/5 bg-white/5 hover:border-white/10",
-                           !showPagoModal?.servicio?.metodosPago?.includes('TRANSFERENCIA') && "opacity-20 cursor-not-allowed grayscale"
-                         )}
-                       >
-                          <Landmark size={20} className={metodoPago === 'TRANSFERENCIA' ? "text-[var(--color-primario-claro)]" : "text-white/40"} />
-                          <span className="text-[9px] font-black uppercase tracking-widest">Transfer</span>
-                       </button>
-                       {showPagoModal?.servicio?.proveedor?.mpVinculado && (
-                         <button 
-                           onClick={() => setMetodoPago('TARJETA')}
-                           disabled={!showPagoModal?.servicio?.metodosPago?.includes('TARJETA')}
-                           className={cn(
-                             "p-3 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all",
-                             metodoPago === 'TARJETA' 
-                               ? "border-[var(--color-primario-claro)] bg-[var(--color-primario)]/10" 
-                               : "border-white/5 bg-white/5 hover:border-white/10",
-                             !showPagoModal?.servicio?.metodosPago?.includes('TARJETA') && "opacity-20 cursor-not-allowed grayscale"
-                           )}
-                         >
-                            <CreditCard size={20} className={metodoPago === 'TARJETA' ? "text-[var(--color-primario-claro)]" : "text-white/40"} />
-                            <span className="text-[9px] font-black uppercase tracking-widest">Tarjeta</span>
-                         </button>
-                       )}
-                    </div>
-                 </div>
+                    <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-2">
+                      {soloTarjetaParaAnticipo ? 'El anticipo se cobra con tarjeta' : 'Selecciona método de pago'}
+                    </label>
+                    {soloTarjetaParaAnticipo && (
+                      <p className="text-[11px] text-[var(--color-texto-suave)] -mt-1 px-2 leading-relaxed">
+                        Por ser plan <strong>{planProveedor}</strong>, el anticipo se procesa con tarjeta vía Mercado Pago para garantizar la comisión de Eventium. Después podrás abonar en cualquier método.
+                      </p>
+                    )}
+                    {(() => {
+                      // EFECTIVO y TRANSFERENCIA: solo permitidos cuando NO es primer abono O cuando el proveedor es Elite
+                      const aceptaEfectivo = !soloTarjetaParaAnticipo;
+                      const aceptaTransferencia = !soloTarjetaParaAnticipo;
+                      // TARJETA: si el proveedor tiene MP vinculado (siempre que hay MP, también para Elite)
+                      const aceptaTarjeta = mpVinculado;
+
+                      const baseBtn = "p-3 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all min-h-[88px]";
+                      const inactive = "border-[var(--color-borde-suave)] bg-[var(--color-fondo-hover)] text-[var(--color-texto)]";
+                      const active = "border-[var(--color-acento)] bg-[var(--color-acento)]/15 text-[var(--color-texto)] shadow-md";
+                      const disabledCls = "opacity-40 cursor-not-allowed";
+
+                      return (
+                        <div className={cn("grid gap-2", aceptaTarjeta ? "grid-cols-3" : "grid-cols-2")}>
+                          <button
+                            type="button"
+                            onClick={() => setMetodoPago('EFECTIVO')}
+                            disabled={!aceptaEfectivo}
+                            className={cn(
+                              baseBtn,
+                              metodoPago === 'EFECTIVO' ? active : inactive,
+                              !aceptaEfectivo && disabledCls
+                            )}
+                          >
+                            <Wallet size={22} className={cn(metodoPago === 'EFECTIVO' ? "text-[var(--color-acento-claro)]" : "text-[var(--color-texto-suave)]")} />
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Efectivo</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setMetodoPago('TRANSFERENCIA')}
+                            disabled={!aceptaTransferencia}
+                            className={cn(
+                              baseBtn,
+                              metodoPago === 'TRANSFERENCIA' ? active : inactive,
+                              !aceptaTransferencia && disabledCls
+                            )}
+                          >
+                            <Landmark size={22} className={cn(metodoPago === 'TRANSFERENCIA' ? "text-[var(--color-acento-claro)]" : "text-[var(--color-texto-suave)]")} />
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Transfer.</span>
+                          </button>
+                          {aceptaTarjeta && (
+                            <button
+                              type="button"
+                              onClick={() => setMetodoPago('TARJETA')}
+                              className={cn(
+                                baseBtn,
+                                metodoPago === 'TARJETA' ? active : inactive
+                              )}
+                            >
+                              <CreditCard size={22} className={cn(metodoPago === 'TARJETA' ? "text-[var(--color-acento-claro)]" : "text-[var(--color-texto-suave)]")} />
+                              <span className="text-[10px] font-bold uppercase tracking-wider">Tarjeta</span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
 
                  {/* Detalles de Transferencia / Efectivo */}
                  {(metodoPago === 'TRANSFERENCIA' || metodoPago === 'EFECTIVO') && (
@@ -1824,9 +1961,11 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                     {procesandoPago ? <Loader2 className="animate-spin" size={18} /> : <><CheckCircle2 size={18} /> {metodoPago === 'TARJETA' ? 'Pagar con Tarjeta' : 'Confirmar Abono'}</>}
                  </button>
               </div>
+              )}
            </div>
         </div>
-      )}
+        );
+      })()}
       {/* MODAL DETALLE DE ABONO */}
       {isAbonoDetailModalOpen && selectedAbono && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
@@ -1933,13 +2072,22 @@ export default function EventoDetailClient({ evento: initialEvento }: EventoDeta
                   </div>
                   <div className="space-y-2">
                      <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest pl-1">Teléfono (WhatsApp)</label>
-                     <input 
-                       type="text" 
-                       value={editGuestForm.telefono} 
-                       onChange={(e) => setEditGuestForm({...editGuestForm, telefono: e.target.value})} 
-                       className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario)] transition-all font-bold" 
-                       placeholder="+52 ..." 
-                     />
+                     <div className="flex gap-2">
+                       <div className="flex items-center px-3 py-3 rounded-xl bg-[var(--color-fondo-hover)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] font-bold select-none">
+                         +52
+                       </div>
+                       <input
+                         type="tel"
+                         inputMode="numeric"
+                         value={(editGuestForm.telefono || '').replace(/^\+52/, '')}
+                         onChange={(e) => {
+                           const digits = e.target.value.replace(/\D/g, '');
+                           setEditGuestForm({...editGuestForm, telefono: digits ? `+52${digits}` : ''});
+                         }}
+                         className="flex-1 min-w-0 bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] text-[var(--color-texto)] rounded-xl px-4 py-3 outline-none focus:border-[var(--color-primario)] transition-all font-bold"
+                         placeholder="10 dígitos"
+                       />
+                     </div>
                   </div>
                 </div>
 

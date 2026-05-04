@@ -63,22 +63,23 @@ export default function WizardStep_CreateEvent({ perfil, onCreated }: Props) {
   };
 
   return (
-    <div className="space-y-8 max-w-lg mx-auto">
-      <div className="text-center space-y-2">
-        <div className="text-5xl mb-2">🎉</div>
-        <h2 className="text-2xl font-bold text-[var(--color-texto)]">
+    <div className="max-w-lg mx-auto">
+      {/* Hero */}
+      <div className="text-center space-y-2 mb-8">
+        <div className="text-5xl mb-3">🎉</div>
+        <h1 className="text-[26px] font-bold tracking-tight text-[var(--color-texto)] leading-tight">
           Cuéntanos sobre tu evento
-        </h2>
-        <p className="text-[var(--color-texto-suave)] text-sm">
-          Solo tardará un momento. Empieza aquí.
+        </h1>
+        <p className="text-[14px] text-[var(--color-texto-suave)] max-w-xs mx-auto">
+          Tus datos básicos para empezar a organizar tu gran día.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Nombre */}
-        <div className="space-y-1">
-          <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest">
-            Nombre del Evento *
+        <div className="space-y-1.5">
+          <label className="text-[12px] font-semibold text-[var(--color-texto)] ml-1">
+            Nombre del evento
           </label>
           <input
             type="text"
@@ -86,157 +87,151 @@ export default function WizardStep_CreateEvent({ perfil, onCreated }: Props) {
             autoFocus
             value={form.nombre}
             onChange={e => setForm({ ...form, nombre: e.target.value })}
-            placeholder="Ej: Boda de Laura y David"
+            placeholder="Boda de Laura y David"
             disabled={loading}
-            className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#d4af37] transition-all text-[var(--color-texto)]"
+            className="w-full bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-2xl px-4 py-4 text-[15px] outline-none focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/20 transition-all text-[var(--color-texto)] shadow-sm"
           />
         </div>
 
-        {/* Tipo */}
-        <div className="space-y-1">
-          <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest">
-            Tipo de Evento *
+        {/* Tipo — chips horizontales */}
+        <div className="space-y-1.5">
+          <label className="text-[12px] font-semibold text-[var(--color-texto)] ml-1">
+            ¿Qué tipo de evento es?
           </label>
-          <div className="grid grid-cols-3 gap-2">
-            {EVENT_TYPES.map(tipo => (
+          <div className="-mx-1 px-1 overflow-x-auto no-scrollbar pb-1">
+            <div className="inline-flex gap-2 min-w-max">
+              {EVENT_TYPES.map(tipo => (
+                <button
+                  key={tipo}
+                  type="button"
+                  onClick={() => setForm({ ...form, tipo })}
+                  disabled={loading}
+                  className={cn(
+                    'px-4 py-2.5 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all border active:scale-95',
+                    form.tipo === tipo
+                      ? 'bg-[var(--color-primario)] text-white border-[var(--color-primario)] shadow-md'
+                      : 'bg-[var(--color-fondo-card)] text-[var(--color-texto)] border-[var(--color-borde)] shadow-sm'
+                  )}
+                >
+                  {tipo}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Fecha + Invitados — grid 2 col */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-[12px] font-semibold text-[var(--color-texto)] ml-1">
+              Fecha
+            </label>
+            <input
+              type="date"
+              required
+              value={form.fecha}
+              onChange={e => setForm({ ...form, fecha: e.target.value })}
+              disabled={loading}
+              min={new Date().toISOString().split('T')[0]}
+              className="w-full bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-2xl px-4 py-4 text-[14px] outline-none focus:border-[#d4af37] transition-all text-[var(--color-texto)] shadow-sm"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[12px] font-semibold text-[var(--color-texto)] ml-1">
+              Invitados
+            </label>
+            <input
+              type="number"
+              required
+              min="1"
+              value={form.invitados}
+              onChange={e => setForm({ ...form, invitados: e.target.value })}
+              placeholder="150"
+              disabled={loading}
+              className="w-full bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-2xl px-4 py-4 text-[14px] outline-none focus:border-[#d4af37] transition-all text-[var(--color-texto)] shadow-sm"
+            />
+          </div>
+        </div>
+
+        {/* ─── ¿Dónde será tu evento? ─── */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 ml-1">
+            <MapPin size={14} className="text-[#d4af37]" />
+            <span className="text-[12px] font-semibold text-[var(--color-texto)]">¿Dónde será?</span>
+          </div>
+
+          <div className="space-y-2">
+            {ciudadPerfil && (
               <button
-                key={tipo}
                 type="button"
-                onClick={() => setForm({ ...form, tipo })}
-                disabled={loading}
+                onClick={() => setUsaCiudadPerfil(true)}
                 className={cn(
-                  'py-2 px-3 rounded-xl border-2 text-xs font-bold transition-all',
-                  form.tipo === tipo
-                    ? 'bg-[#d4af37]/20 border-[#d4af37] text-[#d4af37]'
-                    : 'border-[var(--color-borde-suave)] text-[var(--color-texto-suave)] hover:border-[#d4af37]/40'
+                  'w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border-2 transition-all text-left active:scale-[0.99]',
+                  usaCiudadPerfil
+                    ? 'bg-[#d4af37]/10 border-[#d4af37] text-[var(--color-texto)] shadow-sm'
+                    : 'border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] text-[var(--color-texto)]'
                 )}
               >
-                {tipo}
+                <div className="min-w-0">
+                  <p className="text-[14px] font-semibold">En {ciudadPerfil}</p>
+                  <p className="text-[11px] text-[var(--color-texto-suave)]">{estadoPerfil} · Tu ciudad de perfil</p>
+                </div>
+                {usaCiudadPerfil && <CheckCircle2 size={20} className="text-[#d4af37] flex-shrink-0" />}
               </button>
-            ))}
-          </div>
-        </div>
+            )}
 
-        {/* Fecha — OBLIGATORIA */}
-        <div className="space-y-1">
-          <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest flex items-center gap-1">
-            Fecha del Evento *
-            <span className="text-[#d4af37] text-[9px] font-bold">(Requerida)</span>
-          </label>
-          <input
-            type="date"
-            required
-            value={form.fecha}
-            onChange={e => setForm({ ...form, fecha: e.target.value })}
-            disabled={loading}
-            min={new Date().toISOString().split('T')[0]}
-            className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#d4af37] transition-all text-[var(--color-texto)]"
-          />
-        </div>
-
-        {/* No. Invitados */}
-        <div className="space-y-1">
-          <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-widest">
-            Número de Invitados *
-          </label>
-          <input
-            type="number"
-            required
-            min="1"
-            value={form.invitados}
-            onChange={e => setForm({ ...form, invitados: e.target.value })}
-            placeholder="Ej: 150"
-            disabled={loading}
-            className="w-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#d4af37] transition-all text-[var(--color-texto)]"
-          />
-        </div>
-
-        {/* ─── Ciudad del evento ─── */}
-        <div className="space-y-3 p-4 rounded-2xl bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)]">
-          <div className="flex items-center gap-2 text-[var(--color-texto-suave)]">
-            <MapPin size={16} className="text-[#d4af37]" />
-            <span className="text-xs font-bold">¿Dónde será tu evento?</span>
-          </div>
-
-          {/* Botón: ciudad del perfil */}
-          {ciudadPerfil && (
             <button
               type="button"
-              onClick={() => setUsaCiudadPerfil(true)}
+              onClick={() => setUsaCiudadPerfil(false)}
               className={cn(
-                'w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all text-left',
-                usaCiudadPerfil
-                  ? 'bg-[#d4af37]/15 border-[#d4af37] text-[var(--color-texto)]'
-                  : 'border-[var(--color-borde-suave)] hover:border-[#d4af37]/40 text-[var(--color-texto-suave)]'
+                'w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border-2 transition-all text-left active:scale-[0.99]',
+                !usaCiudadPerfil
+                  ? 'bg-[#d4af37]/10 border-[#d4af37] text-[var(--color-texto)] shadow-sm'
+                  : 'border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] text-[var(--color-texto)]'
               )}
             >
-              <div>
-                <p className="text-xs font-black">En {ciudadPerfil}, {estadoPerfil}</p>
-                <p className="text-[10px] opacity-60">Ciudad registrada en tu perfil</p>
+              <div className="min-w-0">
+                <p className="text-[14px] font-semibold">Otra ciudad</p>
+                <p className="text-[11px] text-[var(--color-texto-suave)]">El evento es en un lugar distinto</p>
               </div>
-              {usaCiudadPerfil && <CheckCircle2 size={18} className="text-[#d4af37] flex-shrink-0" />}
+              {!usaCiudadPerfil && <CheckCircle2 size={20} className="text-[#d4af37] flex-shrink-0" />}
             </button>
-          )}
+          </div>
 
-          {/* Botón: otra ciudad */}
-          <button
-            type="button"
-            onClick={() => setUsaCiudadPerfil(false)}
-            className={cn(
-              'w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all text-left',
-              !usaCiudadPerfil
-                ? 'bg-[#d4af37]/15 border-[#d4af37] text-[var(--color-texto)]'
-                : 'border-[var(--color-borde-suave)] hover:border-[#d4af37]/40 text-[var(--color-texto-suave)]'
-            )}
-          >
-            <div>
-              <p className="text-xs font-black">Elegir otra ciudad</p>
-              <p className="text-[10px] opacity-60">El evento es en un lugar diferente</p>
-            </div>
-            {!usaCiudadPerfil && <CheckCircle2 size={18} className="text-[#d4af37] flex-shrink-0" />}
-          </button>
-
-          {/* Selectores estado/ciudad si eligió otra */}
           {!usaCiudadPerfil && (
-            <div className="grid grid-cols-2 gap-3 pt-1 animate-in fade-in slide-in-from-top-2 duration-300">
-              <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-wider">Estado</label>
-                <div className="relative">
-                  <select
-                    required={!usaCiudadPerfil}
-                    value={estadoEvento}
-                    onInput={e => { 
-                      setEstadoEvento((e.target as HTMLSelectElement).value); 
-                      setCiudadEvento(''); 
-                    }}
-                    disabled={loading}
-                    className="w-full appearance-none bg-[var(--color-fondo)] border border-[var(--color-borde-suave)] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#d4af37] text-[var(--color-texto)] cursor-pointer"
-                  >
-                    <option value="">Selecciona estado...</option>
-                    {Object.keys(MEXICO_LOCATIONS).map(est => (
-                      <option key={est} value={est}>{est}</option>
-                    ))}
-                  </select>
-                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)] pointer-events-none" />
-                </div>
+            <div className="grid grid-cols-2 gap-3 pt-1 animate-in fade-in slide-in-from-top-1 duration-300">
+              <div className="relative">
+                <select
+                  required={!usaCiudadPerfil}
+                  value={estadoEvento}
+                  onChange={e => {
+                    setEstadoEvento(e.target.value);
+                    setCiudadEvento('');
+                  }}
+                  disabled={loading}
+                  className="w-full appearance-none bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-2xl pl-4 pr-9 py-3.5 text-[14px] outline-none focus:border-[#d4af37] text-[var(--color-texto)] cursor-pointer shadow-sm"
+                >
+                  <option value="">Estado…</option>
+                  {Object.keys(MEXICO_LOCATIONS).map(est => (
+                    <option key={est} value={est}>{est}</option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)] pointer-events-none" />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)] tracking-wider">Ciudad</label>
-                <div className="relative">
-                  <select
-                    required={!usaCiudadPerfil}
-                    value={ciudadEvento}
-                    onInput={e => setCiudadEvento((e.target as HTMLSelectElement).value)}
-                    disabled={loading || !estadoEvento}
-                    className="w-full appearance-none bg-[var(--color-fondo)] border border-[var(--color-borde-suave)] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#d4af37] text-[var(--color-texto)] cursor-pointer"
-                  >
-                    <option value="">Selecciona ciudad...</option>
-                    {estadoEvento && MEXICO_LOCATIONS[estadoEvento]?.map(mun => (
-                      <option key={mun} value={mun}>{mun}</option>
-                    ))}
-                  </select>
-                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)] pointer-events-none" />
-                </div>
+              <div className="relative">
+                <select
+                  required={!usaCiudadPerfil}
+                  value={ciudadEvento}
+                  onChange={e => setCiudadEvento(e.target.value)}
+                  disabled={loading || !estadoEvento}
+                  className="w-full appearance-none bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-2xl pl-4 pr-9 py-3.5 text-[14px] outline-none focus:border-[#d4af37] text-[var(--color-texto)] cursor-pointer shadow-sm disabled:opacity-50"
+                >
+                  <option value="">Ciudad…</option>
+                  {estadoEvento && MEXICO_LOCATIONS[estadoEvento]?.map(mun => (
+                    <option key={mun} value={mun}>{mun}</option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)] pointer-events-none" />
               </div>
             </div>
           )}
@@ -244,7 +239,7 @@ export default function WizardStep_CreateEvent({ perfil, onCreated }: Props) {
 
         {/* Error */}
         {error && (
-          <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold">
+          <div className="px-4 py-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-[13px] font-medium">
             {error}
           </div>
         )}
@@ -253,9 +248,9 @@ export default function WizardStep_CreateEvent({ perfil, onCreated }: Props) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 rounded-2xl font-black uppercase text-sm tracking-widest text-black bg-gradient-to-b from-[#eadeba] to-[#c79a3b] shadow-lg hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full py-4 rounded-2xl font-bold uppercase text-[14px] tracking-wider text-black bg-gradient-to-b from-[#eadeba] to-[#c79a3b] shadow-lg active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2 mt-2"
         >
-          {loading ? <><Loader2 className="animate-spin" size={18} /> Creando evento...</> : '¡Vamos! Crear mi evento →'}
+          {loading ? <><Loader2 className="animate-spin" size={18} /> Creando…</> : <>Continuar →</>}
         </button>
       </form>
     </div>

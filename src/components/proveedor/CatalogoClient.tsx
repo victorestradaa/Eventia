@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Search, Edit2, Trash2, Camera, X, Loader2, UploadCloud, Star, Trash, CalendarDays, Package, CheckCircle2, Users } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, Search, Edit2, Trash2, Camera, X, Loader2, UploadCloud, Star, Trash, CalendarDays, Package, CheckCircle2, Users, ShieldCheck } from 'lucide-react';
 import { ProfileCompleteModal } from './ProfileCompleteModal';
 import EarningsCalculator from './EarningsCalculator';
 import { CATEGORIAS_LABELS, TIPO_EVENTO_LABELS, formatearMoneda } from '@/lib/utils';
@@ -35,6 +36,7 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [mpRequiredModalOpen, setMpRequiredModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
@@ -67,9 +69,15 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
       setProfileModalOpen(true);
       return;
     }
+    // Si el proveedor no es Elite y no tiene Mercado Pago vinculado, no puede aceptar anticipos.
+    // Mostramos un aviso explicando que necesita vincular MP o cambiar al plan Elite.
+    if (proveedor?.plan !== 'ELITE' && !proveedor?.mpVinculado) {
+      setMpRequiredModalOpen(true);
+      return;
+    }
     setEditingId(null);
-    setFormData({ 
-      nombre: '', descripcion: '', precio: '', capacidadMin: '', capacidadMax: '', 
+    setFormData({
+      nombre: '', descripcion: '', precio: '', capacidadMin: '', capacidadMax: '',
       etiquetasEvento: ['TODOS'], imagenes: [], diasDisponibles: [], variaciones: Array(12).fill(''),
       modalidad: 'DIA_COMPLETO', capacidadSimultanea: '1', bloquesHorario: [],
       porcentajeAnticipo: 30, metodosPago: ['TARJETA']
@@ -801,10 +809,64 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
         proveedorId={proveedor.id}
       />
 
-      <ProfileCompleteModal 
-        isOpen={profileModalOpen} 
-        onClose={() => setProfileModalOpen(false)} 
+      <ProfileCompleteModal
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
       />
+
+      {/* ─── Modal: requiere vincular MP o cambiar a Elite ─── */}
+      {mpRequiredModalOpen && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-5 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-[var(--color-fondo-card)] text-[var(--color-texto)] border border-[var(--color-borde-suave)] max-w-md w-full p-6 md:p-8 space-y-5 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="flex items-start gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                <ShieldCheck size={24} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-[18px] font-bold text-[var(--color-texto)] leading-tight">Configura cómo recibirás los anticipos</h3>
+                <p className="text-[12px] text-[var(--color-texto-suave)] mt-0.5">Plan actual: <strong className="text-[var(--color-texto)]">{proveedor?.plan || 'Sin plan'}</strong></p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-[var(--color-fondo-hover)] border border-[var(--color-borde-suave)] p-4 space-y-2">
+              <p className="text-[13px] text-[var(--color-texto)] leading-relaxed">
+                Por estar en plan <strong>{proveedor?.plan === 'GRATIS' ? 'Gratis' : proveedor?.plan === 'INTERMEDIO' ? 'Destacado' : proveedor?.plan === 'PREMIUM' ? 'Premium' : proveedor?.plan}</strong>, los <strong>anticipos de tus clientes se cobran con tarjeta vía Mercado Pago</strong> para que Eventium reciba su comisión automáticamente. Por eso necesitas <strong>vincular tu cuenta de Mercado Pago</strong> antes de publicar servicios.
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-gradient-to-br from-[#fdf6e1] to-[#f4e4b9] border border-[#d4af37]/40 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[#a87a2a] mb-1">¿Prefieres no vincular Mercado Pago?</p>
+              <p className="text-[12px] text-[#6b4d12] leading-relaxed">
+                Cámbiate al plan <strong>Elite</strong> y disfruta <strong>0% de comisión</strong>, recibos en efectivo o transferencia sin restricciones, y más beneficios premium.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-1">
+              <Link
+                href="/proveedor/mercadopago"
+                onClick={() => setMpRequiredModalOpen(false)}
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-2xl bg-[var(--color-primario)] text-white text-[13px] font-semibold active:scale-[0.98] transition-all"
+              >
+                Vincular Mercado Pago
+              </Link>
+              <Link
+                href="/proveedor/planes"
+                onClick={() => setMpRequiredModalOpen(false)}
+                className="btn-oro w-full text-center py-3 rounded-2xl font-bold uppercase text-[12px] tracking-wider"
+              >
+                Cambiarme al plan Elite
+              </Link>
+              <button
+                type="button"
+                onClick={() => setMpRequiredModalOpen(false)}
+                className="w-full py-2 text-[12px] font-medium text-[var(--color-texto-suave)] active:text-[var(--color-texto)] transition-colors"
+              >
+                Después
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

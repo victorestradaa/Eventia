@@ -26,6 +26,7 @@ import {
 } from '@/components/cliente/mobile/primitives';
 import InvitationCanvas from './InvitationCanvas';
 import PremiumInvitationView from './PremiumInvitationView';
+import { uploadInvitationAsset } from '@/lib/actions/uploadActions';
 
 type TabKey = 'BASIC' | 'PREMIUM' | 'ENVIAR';
 
@@ -630,18 +631,11 @@ function PremiumEditor({ evento, configWeb, setConfigWeb, fuentes }: any) {
       </Accordion>
 
       <Accordion title="Portada" icon={ImageIcon}>
-        <Field label="URL de imagen de portada">
-          <input
-            type="url"
-            value={configWeb.coverUrl || ''}
-            onChange={(e) => update({ coverUrl: e.target.value })}
-            placeholder="https://..."
-            className="invitation-input"
-          />
-          <p className="text-[11px] text-[var(--color-texto-muted)] mt-1">
-            Usa una URL pública de imagen. Para subir desde tu galería, hazlo desde una computadora.
-          </p>
-        </Field>
+        <CoverImageUploader
+          eventoId={evento.id}
+          coverUrl={configWeb.coverUrl}
+          onChange={(url) => update({ coverUrl: url })}
+        />
         <ToggleRow
           label="Mostrar contador de días"
           checked={!!configWeb.mostrarContador}
@@ -1199,6 +1193,125 @@ function ElementEditorSheet({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// CoverImageUploader — preview + subida desde celular o URL pública
+// ──────────────────────────────────────────────────────────────────────────────
+function CoverImageUploader({
+  eventoId,
+  coverUrl,
+  onChange,
+}: {
+  eventoId: string;
+  coverUrl?: string;
+  onChange: (url: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setError('La imagen pesa más de 10 MB. Elige una más liviana.');
+      return;
+    }
+    setUploading(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('eventoId', eventoId);
+      const res = await uploadInvitationAsset(formData);
+      if (res.success && res.url) {
+        onChange(res.url);
+      } else {
+        setError(res.error || 'No se pudo subir la imagen.');
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Error inesperado al subir.');
+    } finally {
+      setUploading(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      {/* Preview */}
+      <div className="relative aspect-[3/4] max-w-[200px] mx-auto rounded-2xl overflow-hidden border border-[var(--color-borde-suave)] bg-[var(--color-fondo-hover)]">
+        {coverUrl ? (
+          <>
+            <img src={coverUrl} alt="Portada" className="w-full h-full object-cover" />
+            <button
+              type="button"
+              onClick={() => onChange('')}
+              aria-label="Quitar"
+              className="absolute top-2 right-2 w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-md active:scale-90 transition-transform"
+            >
+              <X size={14} />
+            </button>
+          </>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-[var(--color-texto-muted)]">
+            <ImageIcon size={32} />
+            <p className="text-[11px] mt-1.5 px-2 text-center">Sin imagen de portada</p>
+          </div>
+        )}
+        {uploading && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <Loader2 className="text-white animate-spin" size={28} />
+          </div>
+        )}
+      </div>
+
+      {/* Botón principal: subir desde celular */}
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploading}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[var(--color-primario)] text-white text-[13px] font-semibold active:scale-[0.98] transition-all disabled:opacity-60"
+      >
+        <Upload size={16} />
+        {coverUrl ? 'Cambiar imagen' : 'Subir desde mi celular'}
+      </button>
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        onChange={handleFile}
+        className="hidden"
+      />
+
+      {/* Toggle URL pública (alternativa) */}
+      <button
+        type="button"
+        onClick={() => setShowUrlInput((v) => !v)}
+        className="w-full text-center text-[11px] text-[var(--color-texto-suave)] underline underline-offset-2 active:text-[var(--color-texto)]"
+      >
+        {showUrlInput ? 'Ocultar URL' : 'O usar una URL pública'}
+      </button>
+
+      {showUrlInput && (
+        <div>
+          <input
+            type="url"
+            value={coverUrl || ''}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="https://..."
+            className="invitation-input"
+          />
+        </div>
+      )}
+
+      {error && (
+        <p className="text-[12px] text-rose-600 font-semibold text-center">{error}</p>
+      )}
     </div>
   );
 }

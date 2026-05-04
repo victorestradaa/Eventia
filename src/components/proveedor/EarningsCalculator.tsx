@@ -1,29 +1,44 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { DollarSign, Percent, TrendingUp, Info, ShieldCheck, Wallet, ArrowRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
+import { TrendingUp, Info, ShieldCheck, Wallet, ArrowRight } from 'lucide-react';
 
 interface EarningsCalculatorProps {
-  planProveedor: 'GRATIS' | 'DESTACADO' | 'PRO' | 'ELITE';
+  // Acepta el enum del schema (GRATIS/INTERMEDIO/PREMIUM/ELITE) o nombres legacy.
+  planProveedor: 'GRATIS' | 'INTERMEDIO' | 'PREMIUM' | 'ELITE' | 'DESTACADO' | 'PRO';
   precioTotal: number;
   metodosPagoSelected?: string[];
   onAdvanceChange?: (percentage: number, amount: number) => void;
 }
 
 const TARIFA_MP = 0.04; // 4% estimado de pasarela
-const PLAN_FEES = {
+// Comisiones por plan. Acepta tanto los nombres del schema (INTERMEDIO/PREMIUM)
+// como los legacy (DESTACADO/PRO) por compatibilidad.
+const PLAN_FEES: Record<string, number> = {
   GRATIS: 0.10,
-  DESTACADO: 0.07,
-  PRO: 0.04,
-  ELITE: 0.00
+  INTERMEDIO: 0.07,   // schema
+  DESTACADO: 0.07,    // alias legacy
+  PREMIUM: 0.04,      // schema
+  PRO: 0.04,          // alias legacy
+  ELITE: 0.00,
+};
+
+// Etiqueta visible en UI según el plan
+const PLAN_LABELS: Record<string, string> = {
+  GRATIS: 'Gratis',
+  INTERMEDIO: 'Destacado',
+  DESTACADO: 'Destacado',
+  PREMIUM: 'Premium',
+  PRO: 'Premium',
+  ELITE: 'Elite',
 };
 
 export default function EarningsCalculator({ planProveedor, precioTotal, metodosPagoSelected = ['TARJETA'], onAdvanceChange }: EarningsCalculatorProps) {
   const [percentage, setPercentage] = useState<number>(30);
-  
+
   const hasTarjeta = metodosPagoSelected.includes('TARJETA');
   const eventiaFeePercent = PLAN_FEES[planProveedor] ?? 0.10;
+  const planLabel = PLAN_LABELS[planProveedor] ?? planProveedor;
   
   // Si no hay tarjeta, no hay comisiones de pasarela ni de Eventium sobre el anticipo (cobro directo)
   const currentMPFeePercent = hasTarjeta ? TARIFA_MP : 0;
@@ -61,7 +76,7 @@ export default function EarningsCalculator({ planProveedor, precioTotal, metodos
           </div>
           <div>
             <h3 className="text-xl font-black tracking-tight">Calculadora de Ganancias</h3>
-            <p className="text-[10px] text-white/40 uppercase font-bold tracking-widest">Plan Actual: <span className="text-emerald-400">{planProveedor}</span> ({currentEventiumFeePercent * 100}%)</p>
+            <p className="text-[10px] text-white/40 uppercase font-bold tracking-widest">Plan Actual: <span className="text-emerald-400">{planLabel}</span> ({currentEventiumFeePercent * 100}%)</p>
           </div>
         </div>
 

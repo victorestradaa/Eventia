@@ -134,7 +134,7 @@ export default function WizardStep_ServiceGallery({
       ) : (
         <>
           {/* Grid de servicios */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto pr-1 scrollbar-style">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {servicios.map((s) => (
               <button
                 key={s.id}

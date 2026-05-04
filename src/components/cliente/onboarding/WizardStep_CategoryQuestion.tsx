@@ -1,7 +1,5 @@
 'use client';
 
-import { cn } from '@/lib/utils';
-
 interface CategoryInfo {
   id: string;
   label: string;
@@ -30,51 +28,44 @@ export default function WizardStep_CategoryQuestion({
   const esUltima = categoriaIndex === totalCategorias - 1;
 
   return (
-    <div className="space-y-8 max-w-lg mx-auto">
-      <div className="text-center space-y-3">
-        <div className="text-6xl">{categoria.emoji}</div>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)]">
-          <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)]">
-            Categoría {categoriaIndex + 1} de {totalCategorias}
-          </span>
-        </div>
-        <h2 className="text-2xl font-bold text-[var(--color-texto)]">
+    <div className="max-w-lg mx-auto">
+      {/* Hero */}
+      <div className="text-center mb-8">
+        <div className="text-7xl mb-5">{categoria.emoji}</div>
+        <h1 className="text-[24px] font-bold tracking-tight text-[var(--color-texto)] leading-snug px-2">
           {categoria.pregunta}
-        </h2>
-        <p className="text-[var(--color-texto-suave)] text-sm max-w-xs mx-auto">
+        </h1>
+        <p className="text-[14px] text-[var(--color-texto-suave)] max-w-xs mx-auto mt-2 leading-relaxed">
           {categoria.descripcion}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
-        {/* SÍ */}
+      {/* Botones de respuesta */}
+      <div className="space-y-3">
         <button
           type="button"
           onClick={onSi}
-          className="group relative overflow-hidden flex items-center justify-center gap-3 p-5 rounded-3xl border-2 border-emerald-500/40 bg-emerald-500/5 hover:bg-emerald-500/15 hover:border-emerald-500 transition-all duration-300 font-black text-emerald-400 text-lg hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(16,185,129,0.2)]"
+          className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-emerald-500 text-white text-[15px] font-bold shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all"
         >
-          <span className="text-2xl">✅</span>
-          <span>Sí, quiero ver opciones</span>
+          <span className="text-xl">✓</span>
+          Sí, quiero ver opciones
         </button>
 
-        {/* NO */}
         <button
           type="button"
           onClick={onNo}
-          className="group flex items-center justify-center gap-3 p-4 rounded-3xl border-2 border-[var(--color-borde-suave)] bg-[var(--color-fondo-input)] hover:border-[var(--color-primario-claro)]/40 hover:bg-[var(--color-fondo-card)] transition-all duration-300 font-bold text-[var(--color-texto-suave)] text-base"
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-[var(--color-fondo-card)] border border-[var(--color-borde)] text-[var(--color-texto)] text-[15px] font-semibold shadow-sm active:scale-[0.98] transition-all"
         >
-          <span className="text-xl">➡️</span>
-          <span>{esUltima ? 'No, finalizar' : 'No, siguiente categoría'}</span>
+          {esUltima ? 'No, finalizar' : 'No, siguiente categoría'}
         </button>
 
-        {/* Terminar ya */}
         {!esUltima && (
           <button
             type="button"
             onClick={onTerminar}
-            className="text-xs font-bold text-[var(--color-texto-muted)] hover:text-[var(--color-texto)] transition-colors underline underline-offset-4 text-center pt-1"
+            className="w-full text-center pt-2 text-[12px] font-medium text-[var(--color-texto-suave)] active:text-[var(--color-texto)] underline underline-offset-2"
           >
-            Ya terminé de elegir, ver mi resumen
+            Ya terminé, ver mi resumen
           </button>
         )}
       </div>

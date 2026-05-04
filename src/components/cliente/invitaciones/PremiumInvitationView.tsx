@@ -762,10 +762,12 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
   };
 
   return (
-    <div 
+    <div
       className={cn(
-        "h-screen w-full selection:bg-[var(--color-acento)]/30 overflow-hidden relative", 
-        themeStyles.bg, 
+        // En preview usamos h-full para que llene el contenedor (mockup móvil) en lugar del viewport completo
+        isPreview ? "h-full w-full" : "h-screen w-full",
+        "selection:bg-[var(--color-acento)]/30 overflow-hidden relative",
+        themeStyles.bg,
         themeStyles.text
       )}
       onTouchStart={onTouchStart}
@@ -785,9 +787,12 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,900;1,400;1,900&display=swap" rel="stylesheet" />
 
        {/* --- FONDO GLOBAL TENUE --- */}
-       <div 
-         className="fixed inset-0 z-0 opacity-[0.16] blur-[2px] pointer-events-none transition-opacity duration-1000"
-         style={{ 
+       <div
+         className={cn(
+           isPreview ? "absolute inset-0" : "fixed inset-0",
+           "z-0 opacity-[0.16] blur-[2px] pointer-events-none transition-opacity duration-1000"
+         )}
+         style={{
            backgroundImage: `url(${config.coverUrl || evento.invitacion?.fondoUrl})`,
            backgroundSize: 'cover',
            backgroundPosition: 'center',
@@ -820,7 +825,10 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
        </div>
 
        {/* --- INDICADORES LATERALES (DOTS) --- */}
-       <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3">
+       <div className={cn(
+         isPreview ? "absolute right-2" : "fixed right-6",
+         "top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3"
+       )}>
           {sections.map((_, idx) => (
             <button
               key={idx}
@@ -837,7 +845,8 @@ export default function PremiumInvitationView({ evento, invitado, status, onRSVP
 
        {/* --- FOOTER (FIJO O EN LA ÚLTIMA PÁGINA) --- */}
        <div className={cn(
-         "fixed bottom-4 left-0 w-full text-center transition-opacity duration-500 z-40",
+         isPreview ? "absolute bottom-2" : "fixed bottom-4",
+         "left-0 w-full text-center transition-opacity duration-500 z-40",
          currentPage === sections.length - 1 ? "opacity-20" : "opacity-0"
        )}>
           <p className="text-[8px] font-black uppercase tracking-[0.5em]">Eventium · 2026</p>
