@@ -66,6 +66,52 @@ export async function getGlobalEventos() {
   }
 }
 
+/**
+ * Devuelve un evento con todas sus relaciones para el modal de detalle del admin.
+ */
+export async function getEventoDetalleAdmin(eventoId: string) {
+  try {
+    const evento = await prisma.evento.findUnique({
+      where: { id: eventoId },
+      include: {
+        cliente: { include: { usuario: true } },
+        invitados: { orderBy: { creadoEn: 'desc' }, take: 100 },
+        lineasPresupuesto: { include: { pagos: true, servicio: true } },
+        reservas: { include: { proveedor: true, servicio: true } },
+        invitacion: true,
+        album: true,
+      },
+    });
+    if (!evento) return { success: false, error: 'Evento no encontrado' };
+    return { success: true, data: serializePrisma(evento) };
+  } catch (error: any) {
+    console.error('Error al obtener detalle de evento:', error);
+    return { success: false, error: error.message || 'Error del servidor' };
+  }
+}
+
+/**
+ * Elimina un evento desde el panel admin.
+ * Las relaciones con Cascade (invitados, lineasPresupuesto, invitacion, album, disposicionMesas)
+ * se eliminan en cadena. Reserva.eventoId no tiene cascade, así que se desvincula primero.
+ */
+export async function eliminarEventoAdmin(eventoId: string) {
+  try {
+    await prisma.$transaction([
+      prisma.reserva.updateMany({
+        where: { eventoId },
+        data: { eventoId: null },
+      }),
+      prisma.evento.delete({ where: { id: eventoId } }),
+    ]);
+    revalidatePath('/admin/eventos');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error al eliminar evento:', error);
+    return { success: false, error: error.message || 'Error del servidor' };
+  }
+}
+
 export async function getCatalogoAssets(tipo?: string, categoria?: string) {
   try {
     const where: any = {};
