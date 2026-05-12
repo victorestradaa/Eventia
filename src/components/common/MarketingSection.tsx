@@ -64,32 +64,32 @@ export function MarketingSection() {
 
   const clienteFeatures = [
     {
-      title: "Invitación Digital Premium",
-      description: "Crea experiencias interactivas que enamoran a tus invitados desde el primer clic.",
+      title: "Invitaciones digitales",
+      description: "Diseña, comparte por WhatsApp y recibe confirmaciones en tiempo real.",
       image: "/marketing/invitation.png",
       icon: Send
     },
     {
-      title: "Confirmación 100% Digital",
-      description: "Gestiona tu lista de invitados con RSVP en tiempo real y asignación de mesas inteligente.",
+      title: "Lista de invitados sin caos",
+      description: "RSVP, asignación de mesas y categorías desde un mismo panel.",
       image: "/marketing/guests.png",
       icon: Users
     },
     {
-      title: "Control de Presupuesto",
-      description: "Lleva el control de cada abono y pago a proveedores sin complicaciones ni sorpresas.",
+      title: "Presupuesto y abonos a la vista",
+      description: "Sabes cuánto llevas pagado y cuánto te falta con cada proveedor.",
       image: "/marketing/payments.png",
       icon: CreditCard
     },
     {
-      title: "Álbum QR Interactivo",
-      description: "Tus invitados suben fotos en tiempo real que aparecen al instante en una galería compartida.",
+      title: "Álbum con QR para invitados",
+      description: "Suben fotos durante el evento y se publican al instante en una galería compartida.",
       image: "/marketing/album.png",
       icon: QrCode
     },
     {
-      title: "Disponibilidad en Tiempo Real",
-      description: "Consulta el calendario de tus proveedores favoritos al instante y agenda tu evento con unos pocos clics.",
+      title: "Disponibilidad real",
+      description: "Consulta la agenda de cada proveedor antes de reservar. Sin llamadas para preguntar.",
       image: "/marketing/user_calendar.png",
       icon: Calendar
     }
@@ -97,26 +97,26 @@ export function MarketingSection() {
 
   const proveedorFeatures = [
     {
-      title: "Panel de Gestión Profesional",
-      description: "Controla tus reservas, calendario y finanzas desde un centro de mando intuitivo.",
+      title: "Tu negocio en un panel",
+      description: "Reservas, calendario, ventas e ingresos en una misma vista.",
       image: "/marketing/provider_dashboard.png",
       icon: LayoutDashboard
     },
     {
-      title: "Portafolio de Élite",
-      description: "Muestra la calidad de tu trabajo con galerías de alta resolución diseñadas para vender.",
+      title: "Catálogo que vende solo",
+      description: "Galerías HD, paquetes y precios claros. Tu portafolio listo para que el cliente decida.",
       image: "/marketing/portfolio.png",
       icon: ImageIcon
     },
     {
-      title: "Calendario en Tiempo Real",
-      description: "Bloqueo de fechas, sincronización de eventos externos y disponibilidad inmediata para una organización perfecta.",
+      title: "Calendario sin sobreventas",
+      description: "Bloqueas fechas, sincronizas eventos externos y atiendes solo lo que puedes cumplir.",
       image: "/marketing/calendar_real.png",
       icon: Calendar
     },
     {
-      title: "Finanzas y Ventas",
-      description: "Gestión de cuentas por cobrar, registro de ventas detallado y seguimiento de ingresos automatizado.",
+      title: "Cobro y comisión transparente",
+      description: "Mercado Pago dispersa el pago a tu cuenta tras descontar la comisión. Sin pasos manuales.",
       image: "/marketing/finances.png",
       icon: TrendingUp
     }
@@ -125,11 +125,12 @@ export function MarketingSection() {
   return (
     <section className="w-full pt-8 pb-24 space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 flex flex-col items-center">
       <div className="w-full text-center max-w-4xl mx-auto space-y-6 flex flex-col items-center px-4">
+        <span className="inline-block text-[10px] uppercase tracking-[0.3em] font-black text-[#d4af37]">Funciones</span>
         <h2 className="text-5xl md:text-6xl font-serif text-[var(--color-texto)] tracking-tight italic">
-          Todo lo que necesitas para tu <span className="text-[#d4af37]">momento especial</span>
+          Diseñado para los <span className="text-[#d4af37]">dos lados de la mesa.</span>
         </h2>
         <p className="text-[var(--color-texto-suave)] text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-          La plataforma más completa para organizar eventos y hacer crecer tu negocio de servicios.
+          Si organizas un evento o si vives de organizarlos, hay un panel que te quita el caos del medio.
         </p>
       </div>
 
@@ -205,28 +206,28 @@ export function MarketingSection() {
                 <Sparkles size={24} className="md:w-10 md:h-10 text-[#d4af37]" />
               </div>
               <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-1 md:space-y-2">
-                 <h3 className="text-2xl md:text-5xl font-serif leading-tight">Empieza hoy mismo</h3>
+                 <h3 className="text-2xl md:text-5xl font-serif leading-tight">Crea tu cuenta</h3>
                  <p className="text-black/80 text-[8px] md:text-[12px] font-black uppercase tracking-[0.2em]">
-                   ES GRATIS Y TE TOMARÁ MENOS DE UN MINUTO.
+                   ES GRATIS · MENOS DE UN MINUTO · CANCELA CUANDO QUIERAS
                  </p>
               </div>
            </div>
 
            <div className="flex flex-col sm:flex-row items-center gap-6 md:gap-12 z-10 w-full md:w-auto">
               <ul className="flex flex-row md:flex-col gap-4 md:gap-2.5">
-                 {['Sin tarjetas', 'Acceso total'].map(text => (
+                 {['Sin tarjeta', 'Acceso completo'].map(text => (
                    <li key={text} className="flex items-center gap-2 text-[9px] md:text-[11px] font-black uppercase tracking-[0.15em] text-black/90">
                       <CheckCircle2 size={10} className="text-black" />
                       {text}
                    </li>
                  ))}
                  <li className="hidden md:flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.15em] text-black/90">
-                    <CheckCircle2 size={10} className="text-black" /> Soporte VIP
+                    <CheckCircle2 size={10} className="text-black" /> Soporte por correo
                  </li>
               </ul>
 
               <Link href="/registro" className="group/btn flex items-center justify-center gap-3 w-full sm:w-auto min-w-[200px] md:min-w-[240px] bg-black text-white px-6 md:px-10 py-3.5 md:py-5 rounded-xl md:rounded-2xl font-black uppercase text-[10px] md:text-[11px] tracking-[0.2em] hover:translate-y-[-5px] hover:scale-[1.03] transition-all shadow-2xl hover:shadow-black/40">
-                 Registrarme Ahora
+                 Crear cuenta gratis
                  <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover/btn:translate-x-2 transition-transform" />
               </Link>
            </div>

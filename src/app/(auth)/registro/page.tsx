@@ -20,9 +20,14 @@ import { cn } from '@/lib/utils';
 import Logo from '@/components/common/Logo';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { MEXICO_LOCATIONS } from '@/lib/constants/locations';
+import { track, identify } from '@/lib/analytics';
 
 export default function RegisterPage() {
-  const [rol, setRol] = useState<'CLIENTE' | 'PROVEEDOR'>('CLIENTE');
+  const [rol, setRol] = useState<'CLIENTE' | 'PROVEEDOR'>(() => {
+    if (typeof window === 'undefined') return 'CLIENTE';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('rol') === 'PROVEEDOR' ? 'PROVEEDOR' : 'CLIENTE';
+  });
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,23 +44,34 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const cleanEmail = email.trim();
+
+    // Atribución: from= viene del CTA que originó el clic
+    const fromParam = typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('from') || 'direct'
+      : 'direct';
+
+    track('register_started', { rol, from: fromParam });
+
     if (!nombre.trim() || !cleanEmail || !password || !telefono.trim() || !estado || !municipio) return;
-    
+
     if (!aceptaTerminos || !aceptaPrivacidad) {
       setError('Debes aceptar los términos y confirmar la lectura del aviso de privacidad.');
+      track('register_failed', { reason: 'missing_legal_consent', rol });
       return;
     }
-    
+
     if (rol === 'PROVEEDOR' && !categoria) {
       setError('Por favor selecciona una categoría para tu servicio.');
+      track('register_failed', { reason: 'missing_category', rol });
       return;
     }
-    
+
     if (password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres.');
+      track('register_failed', { reason: 'short_password', rol });
       return;
     }
-    
+
     setLoading(true);
     setError('');
 
@@ -110,16 +126,24 @@ export default function RegisterPage() {
         throw new Error(res.error);
       }
 
+      // Atribución y conversión final
+      try {
+        const userId = (authData as any)?.user?.id;
+        if (userId) identify(userId, { rol, ciudad: municipio, estado, from: fromParam });
+        track('register_completed', { rol, from: fromParam, ciudad: municipio, estado });
+      } catch {}
+
       // 3. Redireccionar de forma forzada para evitar bloqueos de sesión en Next.js
       if (rol === 'CLIENTE') {
         window.location.href = '/cliente/dashboard?nuevo=true';
       } else {
         window.location.href = '/proveedor/configuracion';
       }
-      
+
     } catch (err: any) {
       console.error('Registration error:', err);
       setError(err?.message || 'Error inesperado al crear la cuenta.');
+      track('register_failed', { reason: 'server_error', message: err?.message, rol });
       setLoading(false);
     }
   }
