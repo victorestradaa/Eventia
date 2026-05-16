@@ -1,9 +1,11 @@
 'use client';
 
-import { Check, Star, Zap, Crown, DollarSign, Loader2, Sparkles, Heart, Clock } from 'lucide-react';
+import { Check, Star, Zap, Crown, DollarSign, Loader2, Sparkles, Heart, Clock, X, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createPlanPreference } from '@/lib/actions/mercadopagoActions';
+import { cancelarSuscripcionCliente, reactivarSuscripcionCliente } from '@/lib/actions/suscripcionActions';
 import { differenceInDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -69,12 +71,40 @@ const PLANES_CLIENTE = [
 
 interface ClientPlanesClientProps {
   planActual: string;
+  clienteId: string;
   planExpira?: Date | string | null;
+  planCancelado?: boolean;
 }
 
-export default function ClientPlanesClient({ planActual, planExpira }: ClientPlanesClientProps) {
+export default function ClientPlanesClient({ planActual, clienteId, planExpira, planCancelado = false }: ClientPlanesClientProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'mensual' | 'anual'>('mensual');
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const router = useRouter();
+
+  const handleCancelarSuscripcion = async () => {
+    setCancelLoading(true);
+    const res = await cancelarSuscripcionCliente(clienteId);
+    setCancelLoading(false);
+    if (res.success) {
+      setShowCancelConfirm(false);
+      router.refresh();
+    } else {
+      alert(res.error || 'Error al cancelar la suscripción.');
+    }
+  };
+
+  const handleReactivarSuscripcion = async () => {
+    setCancelLoading(true);
+    const res = await reactivarSuscripcionCliente(clienteId);
+    setCancelLoading(false);
+    if (res.success) {
+      router.refresh();
+    } else {
+      alert(res.error || 'Error al reactivar la suscripción.');
+    }
+  };
 
   const handleUpgrade = async (planId: string) => {
     if (planId === 'FREE') return;
@@ -119,8 +149,18 @@ export default function ClientPlanesClient({ planActual, planExpira }: ClientPla
 
         {/* Estado del plan actual */}
         {planActual !== 'FREE' && planExpira && (
-          <MobileCard className="p-4 mb-5 bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">Plan vigente</p>
+          <MobileCard className={cn(
+            "p-4 mb-5",
+            planCancelado
+              ? "bg-gradient-to-br from-amber-50 to-orange-100 border-orange-200"
+              : "bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200"
+          )}>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">Plan vigente</p>
+              {planCancelado && (
+                <span className="text-[9px] font-black uppercase tracking-wider bg-orange-500/20 text-orange-700 px-2 py-0.5 rounded-full">Cancelado</span>
+              )}
+            </div>
             <p className="text-[18px] font-bold text-[var(--color-texto)] mb-1">{planActual}</p>
             <div className="flex items-center gap-2 text-[12px] text-[var(--color-texto)]">
               <Clock size={13} className={diasRestantes !== null && diasRestantes < 3 ? 'text-rose-600' : 'text-amber-700'} />
@@ -133,9 +173,70 @@ export default function ClientPlanesClient({ planActual, planExpira }: ClientPla
               </span>
             </div>
             {expiraFormateada && (
-              <p className="text-[11px] text-[var(--color-texto-suave)] mt-1">Vence el {expiraFormateada}</p>
+              <p className="text-[11px] text-[var(--color-texto-suave)] mt-1">
+                {planCancelado
+                  ? `Termina el ${expiraFormateada}. Disfrutas todo hasta entonces.`
+                  : `Vence el ${expiraFormateada}`}
+              </p>
             )}
+            <div className="mt-3 pt-3 border-t border-amber-200/60">
+              {planCancelado ? (
+                <button
+                  type="button"
+                  onClick={handleReactivarSuscripcion}
+                  disabled={cancelLoading}
+                  className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 hover:text-emerald-600 transition-colors disabled:opacity-50"
+                >
+                  {cancelLoading ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
+                  Reactivar renovación
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowCancelConfirm(true)}
+                  className="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-800 hover:text-rose-600 transition-colors"
+                >
+                  <X size={12} />
+                  Cancelar suscripción
+                </button>
+              )}
+            </div>
           </MobileCard>
+        )}
+
+        {/* Modal de confirmación de cancelación */}
+        {showCancelConfirm && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md" onClick={() => setShowCancelConfirm(false)}>
+            <div onClick={(e) => e.stopPropagation()} className="bg-[var(--color-fondo-card)] rounded-3xl max-w-md w-full p-6 text-center space-y-4">
+              <div className="mx-auto w-14 h-14 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500">
+                <X size={28} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold">¿Cancelar suscripción?</h3>
+                <p className="text-sm text-[var(--color-texto-suave)] mt-2">
+                  Seguirás disfrutando todos los beneficios del <strong className="text-[var(--color-texto)]">Plan {planActual}</strong> hasta el <strong className="text-[var(--color-texto)]">{expiraFormateada}</strong>. Después tu cuenta pasará al Plan Básico (FREE).
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCancelConfirm(false)}
+                  disabled={cancelLoading}
+                  className="flex-1 py-3 rounded-xl text-sm font-bold border border-[var(--color-borde-suave)] hover:bg-[var(--color-fondo-hover)] transition-colors disabled:opacity-50"
+                >
+                  Conservar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelarSuscripcion}
+                  disabled={cancelLoading}
+                  className="flex-1 py-3 rounded-xl text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {cancelLoading ? <Loader2 size={16} className="animate-spin" /> : 'Sí, cancelar'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Toggle de ciclo */}

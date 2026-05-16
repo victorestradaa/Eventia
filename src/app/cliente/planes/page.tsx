@@ -16,10 +16,16 @@ export default async function ClientPlanesPage() {
     return redirect('/proveedor/planes');
   }
 
+  if (!perfil.cliente) {
+    return redirect('/login');
+  }
+
   return (
-    <ClientPlanesClient 
-      planActual={perfil.cliente?.plan || 'FREE'} 
-      planExpira={perfil.cliente?.planExpira}
+    <ClientPlanesClient
+      planActual={perfil.cliente.plan || 'FREE'}
+      clienteId={perfil.cliente.id}
+      planExpira={perfil.cliente.planExpira}
+      planCancelado={perfil.cliente.planCancelado || false}
     />
   );
 }

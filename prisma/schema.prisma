@@ -38,6 +38,7 @@ model Proveedor {
   bannerUrl               String?
   plan                    PlanProveedor     @default(GRATIS)
   planExpira              DateTime?
+  planCancelado           Boolean           @default(false)
   stripeSubId             String?           @unique
   puntuacionExp           Int               @default(0)
   activo                  Boolean           @default(true)
@@ -143,6 +144,7 @@ model Cliente {
   usuarioId     String      @unique
   plan          PlanCliente @default(FREE)
   planExpira    DateTime?
+  planCancelado Boolean     @default(false)
   stripeSubId   String?     @unique
   trialExpira   DateTime?
   creadoEn      DateTime    @default(now())

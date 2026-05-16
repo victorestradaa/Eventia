@@ -16,10 +16,11 @@ export default async function ProviderPlanesPage() {
   }
 
   return (
-    <PlanesClient 
-      planActual={perfil.proveedor.plan || 'GRATIS'} 
-      proveedorId={perfil.proveedor.id} 
+    <PlanesClient
+      planActual={perfil.proveedor.plan || 'GRATIS'}
+      proveedorId={perfil.proveedor.id}
       planExpira={perfil.proveedor.planExpira}
+      planCancelado={perfil.proveedor.planCancelado || false}
     />
   );
 }
