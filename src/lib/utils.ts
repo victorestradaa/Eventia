@@ -32,7 +32,17 @@ export function formatearMoneda(monto: number | string): string {
 export function parseFechaLocal(fecha: Date | string): Date {
   if (!fecha) return new Date();
   if (typeof fecha === 'string') {
-    // Extraer componentes del string YYYY-MM-DD o ISO
+    // Si el string trae hora (datetime-local "YYYY-MM-DDTHH:mm" o ISO completo),
+    // preservar la hora en zona local.
+    const tieneHora = fecha.includes('T') && /T\d{2}:\d{2}/.test(fecha);
+    if (tieneHora) {
+      const sinZona = fecha.replace(/(Z|[+-]\d{2}:?\d{2})$/, '');
+      const [datePart, timePart = '00:00'] = sinZona.split('T');
+      const [year, month, day] = datePart.split(/[-/]/).map(Number);
+      const [hour = 0, minute = 0, second = 0] = timePart.split(':').map(Number);
+      return new Date(year, month - 1, day, hour, minute, second);
+    }
+    // Fecha-solo: anclar a mediodía local para evitar shifts por timezone.
     const soloFecha = fecha.split('T')[0];
     const [year, month, day] = soloFecha.split(/[-/]/).map(Number);
     return new Date(year, month - 1, day, 12, 0, 0);
