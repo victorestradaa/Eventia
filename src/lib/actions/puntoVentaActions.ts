@@ -834,29 +834,6 @@ export async function listarSesionesCajaPV(proveedorId: string, take = 30) {
   }
 }
 
-/* ─── Helper: totales por método y por tipo (para el corte) ─────────── */
-
-export function calcularTotalesSesion(movimientos: Array<{
-  tipo: TipoMovPV;
-  metodoPago: MetPagPV;
-  monto: number | string;
-}>) {
-  const tot = {
-    porMetodo: { EFECTIVO: 0, TARJETA: 0, TRANSFERENCIA: 0, OTRO: 0 } as Record<MetPagPV, number>,
-    porTipo:  { VENTA: 0, ABONO: 0, RETIRO: 0, INGRESO: 0, AJUSTE: 0 } as Record<TipoMovPV, number>,
-    netoEfectivo: 0, // EFECTIVO entradas - EFECTIVO salidas
-  };
-  for (const m of movimientos) {
-    const monto = Number(m.monto);
-    tot.porTipo[m.tipo] += monto;
-    tot.porMetodo[m.metodoPago] += (m.tipo === 'RETIRO' ? -monto : monto);
-    if (m.metodoPago === 'EFECTIVO') {
-      tot.netoEfectivo += (m.tipo === 'RETIRO' ? -monto : monto);
-    }
-  }
-  return tot;
-}
-
 /* ─── REPORTES — agregaciones para dashboard ────────────────────────── */
 
 export async function getReportePV(

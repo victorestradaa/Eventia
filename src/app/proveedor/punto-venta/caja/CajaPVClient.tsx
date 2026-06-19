@@ -11,8 +11,8 @@ import {
   registrarMovimientoCajaPV,
   getSesionActivaPV,
   listarSesionesCajaPV,
-  calcularTotalesSesion,
 } from '@/lib/actions/puntoVentaActions';
+import { calcularTotalesSesion } from '@/lib/puntoVentaUtils';
 import { cn, formatearMoneda } from '@/lib/utils';
 
 type MetPag = 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO';
