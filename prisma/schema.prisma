@@ -62,6 +62,14 @@ model Proveedor {
   reservas                Reserva[]
   servicios               Servicio[]
   cuentasBancarias        CuentaBancaria[]
+
+  // Punto de Venta Emprendedor
+  puntoVentaActivo        Boolean           @default(false)
+  productosPV             ProductoPV[]
+  clientesPV              ClientePV[]
+  pedidosPV               PedidoPV[]
+  sesionesCajaPV          SesionCajaPV[]
+  movimientosCajaPV       MovimientoCajaPV[]
 }
 
 model Servicio {
@@ -454,4 +462,179 @@ model UsoCupon {
   proveedorId   String
   fechaUso      DateTime @default(now())
   cupon         Cupon    @relation(fields: [cuponId], references: [id])
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
+// PUNTO DE VENTA EMPRENDEDOR (módulo independiente)
+// ────────────────────────────────────────────────────────────────────────────────
+
+model ProductoPV {
+  id           String        @id @default(cuid())
+  proveedorId  String
+  nombre       String
+  descripcion  String?
+  sku          String?
+  categoria    String?
+  precio       Decimal       @db.Decimal(10, 2)
+  costo        Decimal?      @db.Decimal(10, 2)
+  stock        Int           @default(0)
+  controlStock Boolean       @default(true)
+  imagenes     String[]      @default([])
+  activo       Boolean       @default(true)
+  creadoEn     DateTime      @default(now())
+  actualizadoEn DateTime     @updatedAt
+
+  proveedor    Proveedor     @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+  lineas       LineaPedidoPV[]
+
+  @@index([proveedorId, activo])
+  @@index([proveedorId, categoria])
+}
+
+model ClientePV {
+  id           String     @id @default(cuid())
+  proveedorId  String
+  nombre       String
+  telefono     String?
+  email        String?
+  direccion    String?
+  notas        String?
+  creadoEn     DateTime   @default(now())
+  actualizadoEn DateTime  @updatedAt
+
+  proveedor    Proveedor  @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+  pedidos      PedidoPV[]
+
+  @@index([proveedorId])
+  @@index([proveedorId, telefono])
+}
+
+enum EstadoPedidoPV {
+  PENDIENTE
+  EN_PREPARACION
+  LISTO
+  ENTREGADO
+  CANCELADO
+}
+
+enum TipoPedidoPV {
+  VENTA_DIRECTA   // entrega inmediata (mostrador)
+  PEDIDO          // entrega posterior con fecha
+}
+
+enum MetodoPagoPV {
+  EFECTIVO
+  TARJETA
+  TRANSFERENCIA
+  OTRO
+}
+
+model PedidoPV {
+  id              String          @id @default(cuid())
+  folio           Int             @default(autoincrement())
+  proveedorId     String
+  clienteId       String?
+  nombreCliente   String?
+  telefonoCliente String?
+  tipo            TipoPedidoPV    @default(VENTA_DIRECTA)
+  estado          EstadoPedidoPV  @default(PENDIENTE)
+  trackingToken   String          @unique @default(cuid())
+  subtotal        Decimal         @db.Decimal(10, 2) @default(0)
+  descuento       Decimal         @db.Decimal(10, 2) @default(0)
+  total           Decimal         @db.Decimal(10, 2) @default(0)
+  pagado          Decimal         @db.Decimal(10, 2) @default(0)
+  metodoPago      MetodoPagoPV?
+  fechaEntrega    DateTime?
+  notas           String?
+  sesionCajaId    String?
+  creadoEn        DateTime        @default(now())
+  actualizadoEn   DateTime        @updatedAt
+
+  proveedor       Proveedor       @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+  cliente         ClientePV?      @relation(fields: [clienteId], references: [id])
+  lineas          LineaPedidoPV[]
+  movimientos     MovimientoCajaPV[]
+  historial       HistorialPedidoPV[]
+  sesionCaja      SesionCajaPV?   @relation(fields: [sesionCajaId], references: [id])
+
+  @@index([proveedorId, estado])
+  @@index([proveedorId, creadoEn])
+  @@index([trackingToken])
+}
+
+model LineaPedidoPV {
+  id          String     @id @default(cuid())
+  pedidoId    String
+  productoId  String?
+  nombre      String     // snapshot del nombre al momento de venta
+  cantidad    Int        @default(1)
+  precioUnit  Decimal    @db.Decimal(10, 2)
+  subtotal    Decimal    @db.Decimal(10, 2)
+  notas       String?
+
+  pedido      PedidoPV   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  producto    ProductoPV? @relation(fields: [productoId], references: [id])
+
+  @@index([pedidoId])
+}
+
+model HistorialPedidoPV {
+  id         String         @id @default(cuid())
+  pedidoId   String
+  estado     EstadoPedidoPV
+  nota       String?
+  creadoEn   DateTime       @default(now())
+
+  pedido     PedidoPV       @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@index([pedidoId])
+}
+
+enum EstadoSesionCaja {
+  ABIERTA
+  CERRADA
+}
+
+model SesionCajaPV {
+  id            String           @id @default(cuid())
+  proveedorId   String
+  estado        EstadoSesionCaja @default(ABIERTA)
+  montoApertura Decimal          @db.Decimal(10, 2) @default(0)
+  montoCierre   Decimal?         @db.Decimal(10, 2)
+  notas         String?
+  abiertaEn     DateTime         @default(now())
+  cerradaEn     DateTime?
+
+  proveedor     Proveedor        @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+  movimientos   MovimientoCajaPV[]
+  pedidos       PedidoPV[]
+
+  @@index([proveedorId, estado])
+}
+
+enum TipoMovimientoCaja {
+  VENTA
+  ABONO
+  RETIRO
+  INGRESO
+  AJUSTE
+}
+
+model MovimientoCajaPV {
+  id            String           @id @default(cuid())
+  proveedorId   String
+  sesionId      String?
+  pedidoId      String?
+  tipo          TipoMovimientoCaja
+  metodoPago    MetodoPagoPV     @default(EFECTIVO)
+  monto         Decimal          @db.Decimal(10, 2)
+  concepto      String?
+  creadoEn      DateTime         @default(now())
+
+  proveedor     Proveedor        @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+  sesion        SesionCajaPV?    @relation(fields: [sesionId], references: [id])
+  pedido        PedidoPV?        @relation(fields: [pedidoId], references: [id])
+
+  @@index([proveedorId, creadoEn])
+  @@index([sesionId])
 }

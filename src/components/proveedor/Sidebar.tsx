@@ -3,19 +3,20 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  Package, 
-  TrendingUp, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Calendar,
+  Package,
+  TrendingUp,
+  Settings,
   LogOut,
   DollarSign,
   X,
   Bell,
   Image as ImageIcon,
   Landmark,
-  CreditCard
+  CreditCard,
+  Store
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getPendingTasksCount } from '@/lib/actions/providerActions';
@@ -31,6 +32,7 @@ const MENU_ITEMS = [
   { href: '/proveedor/calendario', label: 'Calendario', icon: Calendar },
   { href: '/proveedor/catalogo', label: 'Catálogo', icon: Package },
   { href: '/proveedor/ventas', label: 'Ventas', icon: TrendingUp },
+  { href: '/proveedor/punto-venta', label: 'Punto de Venta', icon: Store, accent: true },
   { href: '/proveedor/portafolio', label: 'Portafolio', icon: ImageIcon },
   { href: '/proveedor/planes', label: 'Mi Plan', icon: DollarSign },
   { href: '/proveedor/datos-bancarios', label: 'Datos Bancarios', icon: Landmark },
