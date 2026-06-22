@@ -69,12 +69,12 @@ export async function seedPlanConfigs() {
     throw new Error('El modelo PlanConfig no existe en el cliente de Prisma.');
   }
   const planes = [
-    // Proveedores
-    { planId: 'DESTACADO', nombre: 'Plan Destacado', precioNormal: 299, precioPromo: 99, comision: 7, rol: 'PROVEEDOR' },
-    { planId: 'PRO', nombre: 'Plan PRO', precioNormal: 799, precioPromo: 399, comision: 4, rol: 'PROVEEDOR' },
-    { planId: 'ELITE', nombre: 'Plan Elite', precioNormal: 1499, precioPromo: 999, comision: 0, rol: 'PROVEEDOR' },
+    // Proveedores — 3 planes activos, todos 0% comisión
+    { planId: 'EMPRENDEDOR', nombre: 'Plan Emprendedor', precioNormal: 0, precioPromo: null, comision: 0, rol: 'PROVEEDOR' },
+    { planId: 'DESTACADO',   nombre: 'Plan Destacado',   precioNormal: 299, precioPromo: 99, comision: 0, rol: 'PROVEEDOR' },
+    { planId: 'ELITE',       nombre: 'Plan Elite',       precioNormal: 1499, precioPromo: 999, comision: 0, rol: 'PROVEEDOR' },
     // Clientes
-    { planId: 'ORO', nombre: 'Plan Oro', precioNormal: 99, precioPromo: 99, rol: 'CLIENTE' },
+    { planId: 'ORO',     nombre: 'Plan Oro',     precioNormal: 99,  precioPromo: 99,  rol: 'CLIENTE' },
     { planId: 'PLANNER', nombre: 'Plan Planner', precioNormal: 299, precioPromo: 299, rol: 'CLIENTE' },
   ];
 
@@ -91,5 +91,30 @@ export async function seedPlanConfigs() {
         rol: p.rol as any
       }
     });
+  }
+}
+
+/**
+ * Asegura que el plan Emprendedor existe en el PlanConfig.
+ * Se llama al cargar la página de admin para que aparezca en instalaciones
+ * que se sembraron antes de añadirlo al seed.
+ */
+export async function ensurePlanesActuales() {
+  if (!(prisma as any).planConfig) return;
+  try {
+    await prisma.planConfig.upsert({
+      where: { planId: 'EMPRENDEDOR' },
+      update: {},
+      create: {
+        planId: 'EMPRENDEDOR',
+        nombre: 'Plan Emprendedor',
+        precioNormal: 0,
+        precioPromo: null,
+        comision: 0,
+        rol: 'PROVEEDOR' as any,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error asegurando Plan Emprendedor:', error);
   }
 }
