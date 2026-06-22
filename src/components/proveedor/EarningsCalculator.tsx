@@ -11,25 +11,24 @@ interface EarningsCalculatorProps {
   onAdvanceChange?: (percentage: number, amount: number) => void;
 }
 
-const TARIFA_MP = 0.04; // 4% estimado de pasarela
-// Comisiones por plan. Acepta tanto los nombres del schema (INTERMEDIO/PREMIUM)
-// como los legacy (DESTACADO/PRO) por compatibilidad.
+const TARIFA_MP = 0.04; // 4% estimado de pasarela (Mercado Pago)
+// Comisión Eventium: 0% para TODOS los planes.
 const PLAN_FEES: Record<string, number> = {
-  GRATIS: 0.10,
-  INTERMEDIO: 0.07,   // schema
-  DESTACADO: 0.07,    // alias legacy
-  PREMIUM: 0.04,      // schema
-  PRO: 0.04,          // alias legacy
-  ELITE: 0.00,
+  GRATIS: 0,
+  INTERMEDIO: 0,
+  DESTACADO: 0,
+  PREMIUM: 0,
+  PRO: 0,
+  ELITE: 0,
 };
 
-// Etiqueta visible en UI según el plan
+// Etiqueta visible en UI según el plan (3 planes: Emprendedor / Destacado / Elite)
 const PLAN_LABELS: Record<string, string> = {
-  GRATIS: 'Gratis',
+  GRATIS: 'Emprendedor',
   INTERMEDIO: 'Destacado',
   DESTACADO: 'Destacado',
-  PREMIUM: 'Premium',
-  PRO: 'Premium',
+  PREMIUM: 'Destacado', // legacy: usuarios PREMIUM se muestran como Destacado
+  PRO: 'Destacado',
   ELITE: 'Elite',
 };
 

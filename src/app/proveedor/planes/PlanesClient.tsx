@@ -12,61 +12,45 @@ import { es } from 'date-fns/locale';
 import confetti from 'canvas-confetti';
 import { Clock } from 'lucide-react';
 
+// 3 planes. TODOS con 0% de comisión. La única diferencia entre ellos es
+// la posición que tendrán en los resultados de búsqueda del cliente.
+// El id 'GRATIS' del schema corresponde al plan Emprendedor; 'INTERMEDIO' a
+// Destacado; 'ELITE' a Elite. (PREMIUM legacy → tratado como Destacado.)
 const PLANES = [
   {
     id: 'GRATIS',
-    nombre: 'Plan Básico',
+    nombre: 'Plan Emprendedor',
     precioMensual: 0,
     precioAnual: 0,
-    comision: '10%',
-    descripcion: 'Para proveedores que están empezando.',
+    descripcion: 'Tu plan al registrarte. Vende sin comisiones desde el primer día.',
     icon: Zap,
     features: [
-      'Hasta 3 fotos por producto',
-      'Gestión de calendario básica',
-      'Comisión del 10% por evento',
-      'Soporte vía email'
+      'Sin comisiones por evento (0%)',
+      'Acepta pagos en efectivo y tarjeta',
+      'Gestión completa de calendario y reservas',
+      'Catálogo de servicios con fotos',
+      'Soporte vía correo',
     ],
-    color: 'border-white/10'
+    color: 'border-white/10',
+    ranking: 'Aparece después de los planes pagados en las búsquedas.',
   },
   {
-    id: 'DESTACADO', // Cambiado de INTERMEDIO para coincidir con el nombre comercial
+    id: 'INTERMEDIO',
     nombre: 'Plan Destacado',
     precioNormal: 299,
     precioMensual: 99,
     precioAnual: 990,
-    comision: '7%',
-    descripcion: 'Mayor visibilidad y menores comisiones.',
+    descripcion: 'Mejor posicionamiento para que más clientes te encuentren.',
     icon: Star,
     features: [
-      'Perfil destacado en el buscador',
-      'Fotos y videos en productos',
-      'Analíticas de visitas',
-      'Comisión del 7% por evento',
+      'Sin comisiones por evento (0%)',
+      'Acepta pagos en efectivo y tarjeta',
+      'Posición media en los resultados de búsqueda',
+      'Etiqueta "Destacado" visible en tu perfil',
       'Soporte prioritario',
-      'Etiqueta de Verificado'
     ],
-    color: 'border-blue-500/50 shadow-blue-500/10'
-  },
-  {
-    id: 'PRO', // Cambiado de PREMIUM
-    nombre: 'Plan PRO',
-    precioNormal: 799,
-    precioMensual: 399,
-    precioAnual: 3990,
-    comision: '4%',
-    descripcion: 'Dominio total del mercado local.',
-    icon: Crown,
-    features: [
-      'Aparición en el Top de resultados',
-      'Mínima comisión del 4%',
-      'Sello de Proveedor Premium',
-      'Soporte 24/7 dedicado',
-      'Publicidad en el Dashboard cliente',
-      'Panel de reportes avanzado',
-      'Control de ventas total'
-    ],
-    color: 'border-amber-500/50 shadow-amber-500/10'
+    color: 'border-blue-500/50 shadow-blue-500/10',
+    ranking: 'Aparece por encima de los proveedores Emprendedor.',
   },
   {
     id: 'ELITE',
@@ -74,20 +58,19 @@ const PLANES = [
     precioNormal: 1499,
     precioMensual: 999,
     precioAnual: 9990,
-    comision: '0%',
-    descripcion: 'Sin comisiones. Libertad absoluta.',
+    descripcion: 'Máxima visibilidad. Siempre aparecerás primero.',
     icon: Gem,
     features: [
-      'Todo lo del Plan PRO incluido',
-      '0% de comisión por evento',
-      'Ventas manuales fuera de la app',
-      'Congelar y apartar fechas sin restricción',
-      'Registro de clientes externos',
+      'Sin comisiones por evento (0%)',
+      'Acepta pagos en efectivo y tarjeta',
+      'Posición TOP — siempre primero en búsquedas',
+      'Etiqueta "Elite" destacada en tu perfil',
       'Máxima prioridad en soporte',
-      'Acceso anticipado a nuevas funciones'
+      'Acceso anticipado a nuevas funciones',
     ],
-    color: 'border-emerald-500/50 shadow-emerald-500/10'
-  }
+    color: 'border-emerald-500/50 shadow-emerald-500/10',
+    ranking: 'Siempre aparece en primer lugar, por encima de todos los demás planes.',
+  },
 ];
 
 interface PlanesClientProps {
@@ -342,7 +325,7 @@ export default function PlanesClient({ planActual, proveedorId, planExpira, plan
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {PLANES.map((plan) => {
           const isActual = planActual === plan.id;
           const isSelected = loading === plan.id;
@@ -396,8 +379,13 @@ export default function PlanesClient({ planActual, proveedorId, planExpira, plan
                 )}
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg w-fit">
                   <DollarSign size={14} />
-                  <span>Comisión por evento: {plan.comision}</span>
+                  <span>0% comisión por evento</span>
                 </div>
+                {plan.ranking && (
+                  <p className="text-[11px] text-[var(--color-texto-suave)] italic leading-snug">
+                    📍 {plan.ranking}
+                  </p>
+                )}
               </div>
 
               <ul className="space-y-4 mb-10 flex-grow">

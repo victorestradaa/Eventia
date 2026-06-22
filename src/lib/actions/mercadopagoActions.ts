@@ -92,19 +92,9 @@ export async function createServicePreference(reservaId: string) {
       return { success: false, error: 'El proveedor no ha vinculado su cuenta de Mercado Pago.' };
     }
 
-    // 3. Obtener la comisión según el plan del proveedor
-    // ELITE tiene 0% de comisión de Eventium
-    let commissionPercent = 0.10; // Default 10%
-    if (proveedor.plan === 'ELITE') {
-      commissionPercent = 0;
-    } else {
-      const config = await prisma.planConfig.findUnique({
-        where: { planId: proveedor.plan }
-      });
-      if (config?.comision) {
-        commissionPercent = config.comision / 100;
-      }
-    }
+    // 3. Comisión Eventium: SIEMPRE 0% para todos los planes.
+    // El modelo de negocio se basa solo en suscripciones (no comisiones por transacción).
+    const commissionPercent = 0;
     
     // 4. Calcular el monto a cobrar (Anticipo si es el primero)
     // Buscamos si ya tiene transacciones pagadas
