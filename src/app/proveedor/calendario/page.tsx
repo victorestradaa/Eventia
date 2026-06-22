@@ -1,6 +1,7 @@
 import { getCurrentProfile } from '@/lib/actions/authActions';
 import { getReservasCalendario, getResumenProveedor, autoCancelExpiredReservations } from '@/lib/actions/providerActions';
 import { redirect } from 'next/navigation';
+import { validarVigenciaPlan } from '@/lib/utils';
 import CalendarioClient from './CalendarioClient';
 
 export default async function CalendarPage() {
@@ -12,6 +13,10 @@ export default async function CalendarPage() {
   }
 
   const perfil = profileRes.data;
+
+  if (perfil.proveedor && !validarVigenciaPlan(perfil.proveedor.planExpira)) {
+    return redirect('/proveedor/planes');
+  }
   
   if (perfil.rol !== 'PROVEEDOR' || !perfil.proveedor) {
     return redirect('/cliente/dashboard');

@@ -2,6 +2,7 @@ import { getCurrentProfile } from '@/lib/actions/authActions';
 import { getResumenProveedor, autoCancelExpiredReservations } from '@/lib/actions/providerActions';
 import DashboardProviderClient from './DashboardProviderClient';
 import { redirect } from 'next/navigation';
+import { validarVigenciaPlan } from '@/lib/utils';
 
 export default async function ProviderDashboardPage() {
   await autoCancelExpiredReservations();
@@ -34,6 +35,10 @@ export default async function ProviderDashboardPage() {
   }
 
   const perfil = profileRes.data;
+
+  if (perfil.proveedor && !validarVigenciaPlan(perfil.proveedor.planExpira)) {
+    return redirect('/proveedor/planes');
+  }
   
   if (perfil.rol !== 'PROVEEDOR') {
     return redirect('/cliente/dashboard');

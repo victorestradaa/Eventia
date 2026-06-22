@@ -3,6 +3,7 @@ import { getPortfolioItems } from '@/lib/actions/portfolioActions';
 import { prisma } from '@/lib/prisma';
 import PortafolioClient from '@/components/proveedor/portafolio/PortafolioClient';
 import { redirect } from 'next/navigation';
+import { validarVigenciaPlan } from '@/lib/utils';
 
 export const metadata = {
   title: 'Mi Portafolio | Gestor Eventos',
@@ -17,6 +18,10 @@ export default async function PortfolioPage() {
   }
 
   const perfil = profileRes.data;
+
+  if (perfil.proveedor && !validarVigenciaPlan(perfil.proveedor.planExpira)) {
+    return redirect('/proveedor/planes');
+  }
 
   const proveedor = await prisma.proveedor.findUnique({
     where: { usuarioId: perfil.id }

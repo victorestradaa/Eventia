@@ -134,7 +134,8 @@ export async function registrarUsuario(data: {
               categoria: data.categoria || 'SALON',
               ciudad: data.municipio || 'Sin asignar',
               estado: data.estado || 'Sin asignar',
-              plan: 'ELITE'
+              plan: 'GRATIS',
+              planExpira: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000)
             }
           }
         })

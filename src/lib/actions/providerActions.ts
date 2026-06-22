@@ -609,7 +609,13 @@ export async function getExplorarServicios() {
     const servicios = await prisma.servicio.findMany({
       where: {
         activo: true,
-        proveedor: { activo: true }
+        proveedor: { 
+          activo: true,
+          OR: [
+            { planExpira: null },
+            { planExpira: { gte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) } }
+          ]
+        }
       },
       include: {
         proveedor: {
@@ -668,7 +674,14 @@ export async function getExplorarServiciosByCategoria(categoria: string, ciudad?
   try {
     const baseWhere = {
       activo: true,
-      proveedor: { activo: true, categoria: categoria as any }
+      proveedor: { 
+        activo: true, 
+        categoria: categoria as any,
+        OR: [
+          { planExpira: null },
+          { planExpira: { gte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) } }
+        ]
+      }
     };
 
     const includeConfig = {

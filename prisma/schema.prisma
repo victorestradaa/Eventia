@@ -448,6 +448,7 @@ model Cupon {
   id            String   @id @default(cuid())
   codigo        String   @unique
   mesesGratis   Int
+  planObjetivo  PlanProveedor? // Opcional: Si está presente, actualiza al usuario a este plan
   maxUsos       Int?     // Opcional: límite de canjes totales
   usosActuales  Int      @default(0)
   fechaExpira   DateTime?

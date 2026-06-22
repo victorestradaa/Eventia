@@ -1,6 +1,7 @@
 import { getCurrentProfile } from '@/lib/actions/authActions';
 import { getCuentasBancarias } from '@/lib/actions/bancosActions';
 import { redirect } from 'next/navigation';
+import { validarVigenciaPlan } from '@/lib/utils';
 import DatosBancariosClient from './DatosBancariosClient';
 
 export const metadata = {
@@ -16,6 +17,10 @@ export default async function BancosPage() {
   }
 
   const proveedor = profileRes.data.proveedor;
+
+  if (!validarVigenciaPlan(proveedor.planExpira)) {
+    redirect('/proveedor/planes');
+  }
   if (!proveedor) {
     redirect('/proveedor/configuracion');
   }

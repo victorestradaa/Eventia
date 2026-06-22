@@ -1,6 +1,7 @@
 import { getCurrentProfile } from '@/lib/actions/authActions';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
+import { validarVigenciaPlan } from '@/lib/utils';
 import ConfigClient from './ConfigClient';
 
 export const metadata = {
@@ -16,6 +17,10 @@ export default async function ConfigPage() {
   }
 
   const perfil = profileRes.data;
+
+  if (perfil.proveedor && !validarVigenciaPlan(perfil.proveedor.planExpira)) {
+    return redirect('/proveedor/planes');
+  }
 
   const proveedor = await prisma.proveedor.findUnique({
     where: { usuarioId: perfil.id }

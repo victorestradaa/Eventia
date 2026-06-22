@@ -121,19 +121,56 @@ export default function ProductosPVClient({ proveedorId, productosIniciales }: P
     setError('');
   };
 
+  const recortarCuadrado = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const size = Math.min(img.width, img.height);
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return reject(new Error('No canvas context'));
+          
+          const startX = (img.width - size) / 2;
+          const startY = (img.height - size) / 2;
+          
+          ctx.drawImage(img, startX, startY, size, size, 0, 0, size, size);
+          
+          canvas.toBlob((blob) => {
+            if (!blob) return reject(new Error('Canvas to Blob failed'));
+            resolve(new File([blob], file.name, { type: file.type || 'image/jpeg' }));
+          }, file.type || 'image/jpeg', 0.9);
+        };
+        img.onerror = () => reject(new Error('Image load failed'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('FileReader failed'));
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
     setError('');
     const nuevasUrls: string[] = [];
     for (const file of Array.from(files)) {
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('proveedorId', proveedorId);
-      const res = await subirImagenProductoPV(fd);
-      if (res.success && res.url) nuevasUrls.push(res.url);
-      else {
-        setError(res.error || 'Error al subir imagen.');
+      try {
+        const croppedFile = await recortarCuadrado(file);
+        const fd = new FormData();
+        fd.append('file', croppedFile);
+        fd.append('proveedorId', proveedorId);
+        const res = await subirImagenProductoPV(fd);
+        if (res.success && res.url) nuevasUrls.push(res.url);
+        else {
+          setError(res.error || 'Error al subir imagen.');
+          break;
+        }
+      } catch (err) {
+        setError('Error al procesar la imagen.');
         break;
       }
     }

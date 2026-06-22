@@ -11,6 +11,7 @@ interface Cupon {
   id: string;
   codigo: string;
   mesesGratis: number;
+  planObjetivo: string | null;
   maxUsos: number | null;
   usosActuales: number;
   fechaExpira: Date | string | null;
@@ -32,13 +33,14 @@ export default function CuponAdminClient({ initialCupones }: CuponAdminClientPro
   const [newCupon, setNewCupon] = useState({
     codigo: '',
     mesesGratis: 1,
+    planObjetivo: '',
     maxUsos: '',
     fechaExpira: '',
     activo: true,
   });
 
   const resetForm = () => {
-    setNewCupon({ codigo: '', mesesGratis: 1, maxUsos: '', fechaExpira: '', activo: true });
+    setNewCupon({ codigo: '', mesesGratis: 1, planObjetivo: '', maxUsos: '', fechaExpira: '', activo: true });
     setEditingId(null);
   };
 
@@ -50,6 +52,7 @@ export default function CuponAdminClient({ initialCupones }: CuponAdminClientPro
       const res = await actualizarCupon(editingId, {
         codigo: newCupon.codigo,
         mesesGratis: Number(newCupon.mesesGratis),
+        planObjetivo: newCupon.planObjetivo || null,
         maxUsos: newCupon.maxUsos ? Number(newCupon.maxUsos) : null,
         fechaExpira: newCupon.fechaExpira ? new Date(newCupon.fechaExpira) : null,
         activo: newCupon.activo,
@@ -65,6 +68,7 @@ export default function CuponAdminClient({ initialCupones }: CuponAdminClientPro
       const res = await crearCupon({
         codigo: newCupon.codigo,
         mesesGratis: Number(newCupon.mesesGratis),
+        planObjetivo: newCupon.planObjetivo || undefined,
         maxUsos: newCupon.maxUsos ? Number(newCupon.maxUsos) : undefined,
         fechaExpira: newCupon.fechaExpira ? new Date(newCupon.fechaExpira) : null,
       });
@@ -85,6 +89,7 @@ export default function CuponAdminClient({ initialCupones }: CuponAdminClientPro
     setNewCupon({
       codigo: cupon.codigo,
       mesesGratis: cupon.mesesGratis,
+      planObjetivo: cupon.planObjetivo || '',
       maxUsos: cupon.maxUsos != null ? String(cupon.maxUsos) : '',
       fechaExpira: cupon.fechaExpira ? new Date(cupon.fechaExpira).toISOString().split('T')[0] : '',
       activo: cupon.activo,
@@ -155,6 +160,19 @@ export default function CuponAdminClient({ initialCupones }: CuponAdminClientPro
                 value={newCupon.mesesGratis}
                 onChange={e => setNewCupon({...newCupon, mesesGratis: Number(e.target.value)})}
               />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Plan Aplicable</label>
+              <select 
+                className="input w-full"
+                value={newCupon.planObjetivo}
+                onChange={e => setNewCupon({...newCupon, planObjetivo: e.target.value})}
+              >
+                <option value="">Cualquier Plan (Solo extiende vigencia)</option>
+                <option value="GRATIS">Plan Emprendedor</option>
+                <option value="INTERMEDIO">Plan Destacado</option>
+                <option value="ELITE">Plan Elite</option>
+              </select>
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Límite de Usos (Opcional)</label>
@@ -250,6 +268,11 @@ export default function CuponAdminClient({ initialCupones }: CuponAdminClientPro
               <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
                 {cupon.mesesGratis} MESES GRATIS
               </span>
+              {cupon.planObjetivo && (
+                <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-widest">
+                  {cupon.planObjetivo === 'GRATIS' ? 'EMPRENDEDOR' : cupon.planObjetivo === 'INTERMEDIO' ? 'DESTACADO' : 'ELITE'}
+                </span>
+              )}
               {!cupon.activo && (
                 <span className="px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest">
                   Inactivo

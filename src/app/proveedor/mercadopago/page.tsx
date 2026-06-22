@@ -1,6 +1,7 @@
 
 import { redirect } from 'next/navigation';
 import { getCurrentProfile } from '@/lib/actions/authActions';
+import { validarVigenciaPlan } from '@/lib/utils';
 import MercadoPagoClient from './MercadoPagoClient';
 
 export default async function MercadoPagoPage() {
@@ -11,6 +12,10 @@ export default async function MercadoPagoPage() {
   }
 
   const proveedor = profile.data.proveedor;
+
+  if (!validarVigenciaPlan(proveedor.planExpira)) {
+    redirect('/proveedor/planes');
+  }
   
   // Generar URL de Autorización de Mercado Pago
   const appId = process.env.MERCADOPAGO_APP_ID || '';

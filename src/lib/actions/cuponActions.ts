@@ -24,6 +24,7 @@ export async function crearCupon(data: {
   codigo: string;
   mesesGratis: number;
   maxUsos?: number;
+  planObjetivo?: string | null;
   fechaExpira?: Date | null;
 }) {
   try {
@@ -31,6 +32,7 @@ export async function crearCupon(data: {
       data: {
         codigo: data.codigo.toUpperCase(),
         mesesGratis: data.mesesGratis,
+        planObjetivo: data.planObjetivo as any ?? null,
         maxUsos: data.maxUsos,
         fechaExpira: data.fechaExpira,
         activo: true
@@ -59,6 +61,7 @@ export async function eliminarCupon(id: string) {
 export async function actualizarCupon(id: string, data: {
   codigo: string;
   mesesGratis: number;
+  planObjetivo?: string | null;
   maxUsos?: number | null;
   fechaExpira?: Date | null;
   activo?: boolean;
@@ -69,6 +72,7 @@ export async function actualizarCupon(id: string, data: {
       data: {
         codigo: data.codigo.toUpperCase(),
         mesesGratis: data.mesesGratis,
+        ...(data.planObjetivo !== undefined ? { planObjetivo: data.planObjetivo as any } : {}),
         maxUsos: data.maxUsos ?? null,
         fechaExpira: data.fechaExpira ?? null,
         ...(data.activo !== undefined ? { activo: data.activo } : {}),
@@ -146,7 +150,10 @@ export async function aplicarCupon(codigo: string, proveedorId: string) {
       // Actualizar proveedor
       prisma.proveedor.update({
         where: { id: proveedor.id },
-        data: { planExpira: nuevaFecha }
+        data: { 
+          planExpira: nuevaFecha,
+          ...(cupon.planObjetivo ? { plan: cupon.planObjetivo as any } : {})
+        }
       })
     ]);
 
