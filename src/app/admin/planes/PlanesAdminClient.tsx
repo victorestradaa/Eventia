@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { updatePlanConfig } from '@/lib/actions/planActions';
-import { Save, Sparkles, Calendar, DollarSign, Percent } from 'lucide-react';
+import { Save, Sparkles, Calendar, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PlanConfig {
@@ -35,7 +35,8 @@ export default function PlanesAdminClient({ initialConfigs }: PlanesAdminClientP
       precioPromo: config.precioPromo || undefined,
       promoDesde: config.promoDesde ? new Date(config.promoDesde) : null,
       promoHasta: config.promoHasta ? new Date(config.promoHasta) : null,
-      comision: config.comision || undefined,
+      // Modelo sin comisiones: siempre 0% en cualquier plan.
+      comision: 0,
       rol: config.rol as 'CLIENTE' | 'PROVEEDOR'
     });
 
@@ -106,21 +107,6 @@ export default function PlanesAdminClient({ initialConfigs }: PlanesAdminClientP
                     />
                   </div>
                 </div>
-
-                {rol === 'PROVEEDOR' && (
-                  <div className="space-y-2 col-span-2">
-                    <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Comisión (%)</label>
-                    <div className="relative">
-                      <Percent size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400" />
-                      <input 
-                        type="number"
-                        value={config.comision || 0}
-                        onChange={(e) => handleChange(config.planId, 'comision', parseFloat(e.target.value))}
-                        className="input w-full pl-10"
-                      />
-                    </div>
-                  </div>
-                )}
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-[var(--color-texto-muted)]">Desde (Promo)</label>

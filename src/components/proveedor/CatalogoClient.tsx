@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Edit2, Trash2, Camera, X, Loader2, UploadCloud, Star, Trash, CalendarDays, Package, CheckCircle2, Users, ShieldCheck } from 'lucide-react';
 import { ProfileCompleteModal } from './ProfileCompleteModal';
-import EarningsCalculator from './EarningsCalculator';
 import { CATEGORIAS_LABELS, TIPO_EVENTO_LABELS, formatearMoneda } from '@/lib/utils';
 import { createServicio, updateServicio, deleteServicio, upsertVariaciones, createComplemento, updateComplemento, deleteComplemento } from '@/lib/actions/providerActions';
 import { uploadServiceImage } from '@/lib/actions/uploadActions';
@@ -492,14 +491,23 @@ export default function CatalogoClient({ servicios: initialServicios, proveedor,
                   </div>
                 </div>
 
-                {/* CALCULADORA DE GANANCIAS */}
-                <div className="md:col-span-2 py-4">
-                  <EarningsCalculator 
-                    planProveedor={proveedor.plan}
-                    precioTotal={parseFloat(formData.precio) || 0}
-                    metodosPagoSelected={formData.metodosPago}
-                    onAdvanceChange={(pct) => setFormData(prev => ({...prev, porcentajeAnticipo: pct}))}
+                {/* PORCENTAJE DE ANTICIPO */}
+                <div className="md:col-span-2 space-y-3 bg-[var(--color-fondo-input)] p-4 rounded-2xl border border-[var(--color-borde-suave)]">
+                  <label className="text-sm font-bold text-[var(--color-texto-suave)] flex justify-between items-center">
+                    <span className="flex items-center gap-2"><ShieldCheck size={16} /> Porcentaje de Anticipo</span>
+                    <span className="text-base font-black text-emerald-500">{formData.porcentajeAnticipo}%</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={10}
+                    max={100}
+                    value={formData.porcentajeAnticipo}
+                    onChange={(e) => setFormData(prev => ({ ...prev, porcentajeAnticipo: Number(e.target.value) }))}
+                    className="w-full h-2 bg-[var(--color-fondo-hover)] rounded-lg appearance-none cursor-pointer accent-emerald-500"
                   />
+                  <p className="text-[11px] text-[var(--color-texto-muted)]">
+                    El cliente paga este porcentaje al reservar; el resto lo cobras directamente.
+                  </p>
                 </div>
 
                 {/* DÍAS DISPONIBLES */}

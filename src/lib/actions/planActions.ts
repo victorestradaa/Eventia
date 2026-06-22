@@ -98,6 +98,9 @@ export async function seedPlanConfigs() {
  * Asegura que el plan Emprendedor existe en el PlanConfig.
  * Se llama al cargar la página de admin para que aparezca en instalaciones
  * que se sembraron antes de añadirlo al seed.
+ *
+ * También fuerza a 0 la comisión de TODOS los planes de proveedor,
+ * porque el modelo de negocio actual no cobra comisión sobre transacciones.
  */
 export async function ensurePlanesActuales() {
   if (!(prisma as any).planConfig) return;
@@ -113,6 +116,11 @@ export async function ensurePlanesActuales() {
         comision: 0,
         rol: 'PROVEEDOR' as any,
       },
+    });
+    // Reset de comisiones legacy: el modelo ya no cobra comisión por transacción.
+    await prisma.planConfig.updateMany({
+      where: { rol: 'PROVEEDOR' as any, comision: { not: 0 } },
+      data: { comision: 0 },
     });
   } catch (error: any) {
     console.error('Error asegurando Plan Emprendedor:', error);
