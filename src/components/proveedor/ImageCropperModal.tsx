@@ -68,7 +68,7 @@ export default function ImageCropperModal({
           </button>
         </div>
 
-        <div className="relative w-full bg-black" style={{ height: 'min(70vh, 520px)' }}>
+        <div className="relative w-full bg-[#f4f4f4]" style={{ height: 'min(70vh, 520px)' }}>
           {imageUrl && (
             <Cropper
               image={imageUrl}
@@ -76,12 +76,14 @@ export default function ImageCropperModal({
               zoom={zoom}
               rotation={rotation}
               aspect={aspect}
+              minZoom={0.3}
               maxZoom={6}
+              restrictPosition={false}
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onRotationChange={setRotation}
               onCropComplete={onCropComplete}
-              objectFit="cover"
+              objectFit="contain"
               showGrid
             />
           )}
@@ -92,7 +94,7 @@ export default function ImageCropperModal({
             <ZoomOut size={14} className="text-[var(--color-texto-muted)]" />
             <input
               type="range"
-              min={1}
+              min={0.3}
               max={6}
               step={0.05}
               value={zoom}
@@ -171,6 +173,12 @@ async function getCroppedBlob(
   out.height = outputSize;
   const octx = out.getContext('2d');
   if (!octx) throw new Error('Sin canvas context');
+
+  // Fondo blanco para que las zonas vacías (cuando el recorte excede a la
+  // imagen porque el usuario movió la foto con libertad) no salgan negras
+  // al exportar a JPEG.
+  octx.fillStyle = '#ffffff';
+  octx.fillRect(0, 0, outputSize, outputSize);
 
   // Reposicionamos el lienzo al recorte que pidió el usuario.
   const tmp = document.createElement('canvas');
