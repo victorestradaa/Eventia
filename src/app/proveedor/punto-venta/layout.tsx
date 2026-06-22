@@ -1,18 +1,12 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentProfile } from '@/lib/actions/authActions';
-import { ShoppingCart, Package, Users, Receipt, Home, Plus, LineChart } from 'lucide-react';
+import { Home } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 const TABS = [
-  { href: '/proveedor/punto-venta',           label: 'Menú',        icon: Home },
-  { href: '/proveedor/punto-venta/nueva',     label: 'Iniciar venta', icon: Plus, primary: true },
-  { href: '/proveedor/punto-venta/pedidos',   label: 'Pedidos',     icon: ShoppingCart },
-  { href: '/proveedor/punto-venta/productos', label: 'Productos',   icon: Package },
-  { href: '/proveedor/punto-venta/clientes',  label: 'Clientes',    icon: Users },
-  { href: '/proveedor/punto-venta/caja',      label: 'Caja',        icon: Receipt },
-  { href: '/proveedor/punto-venta/reportes',  label: 'Reportes',    icon: LineChart },
+  { href: '/proveedor/punto-venta', label: 'Menú', icon: Home },
 ];
 
 export default async function PuntoVentaLayout({ children }: { children: React.ReactNode }) {
@@ -45,11 +39,7 @@ export default async function PuntoVentaLayout({ children }: { children: React.R
             <Link
               key={tab.href}
               href={tab.href}
-              className={`shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                tab.primary
-                  ? 'bg-[#d4af37] text-black hover:brightness-110'
-                  : 'text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)] hover:text-[var(--color-texto)]'
-              }`}
+              className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)] hover:text-[var(--color-texto)] transition-colors"
             >
               <Icon size={16} />
               {tab.label}
