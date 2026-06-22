@@ -262,7 +262,20 @@ export default function ProductosPVClient({ proveedorId, productosIniciales }: P
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {/* Card de "Agregar producto" como primer ítem */}
+          <button
+            type="button"
+            onClick={abrirNuevo}
+            className="group aspect-square rounded-2xl border-2 border-dashed border-[#d4af37]/40 bg-[#d4af37]/5 flex flex-col items-center justify-center gap-2 text-[#d4af37] hover:bg-[#d4af37]/10 hover:border-[#d4af37] hover:scale-[1.02] transition-all"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-[#d4af37] text-black flex items-center justify-center shadow-lg shadow-[#d4af37]/30 group-hover:scale-110 transition-transform">
+              <Plus size={28} strokeWidth={3} />
+            </div>
+            <p className="text-sm font-black uppercase tracking-widest">Nuevo producto</p>
+            <p className="text-[10px] text-center text-[#d4af37]/70 px-3">Agrega un artículo a tu catálogo</p>
+          </button>
+
           {filtrados.map((p) => (
             <ProductoCard
               key={p.id}
@@ -498,16 +511,19 @@ function ProductoCard({
   const sinStock = producto.controlStock && producto.stock === 0;
 
   return (
-    <div
+    <button
+      type="button"
+      onClick={onEditar}
+      aria-label={`Editar ${producto.nombre}`}
       className={cn(
-        'rounded-2xl border bg-[var(--color-fondo-card)] overflow-hidden flex flex-col transition-all hover:-translate-y-0.5 hover:shadow-lg',
+        'group rounded-2xl border bg-[var(--color-fondo-card)] overflow-hidden flex flex-col transition-all hover:-translate-y-0.5 hover:shadow-lg hover:border-[#d4af37]/40 text-left',
         producto.activo ? 'border-[var(--color-borde-suave)]' : 'border-[var(--color-borde-suave)] opacity-60'
       )}
     >
       {/* Imagen */}
       <div className="relative aspect-square bg-[var(--color-fondo-input)]">
         {imgPrincipal ? (
-          <img src={imgPrincipal} alt={producto.nombre} className="w-full h-full object-cover" />
+          <img src={imgPrincipal} alt={producto.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-[var(--color-texto-muted)]">
             <ImageOff size={32} />
@@ -523,6 +539,12 @@ function ProductoCard({
             Sin stock
           </div>
         )}
+        {/* Overlay con hint de edición */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 text-[#1F2937] text-[10px] font-black uppercase tracking-widest">
+            <Pencil size={11} /> Editar
+          </span>
+        </div>
       </div>
 
       {/* Info */}
@@ -543,24 +565,21 @@ function ProductoCard({
             {producto.controlStock ? `Stock: ${producto.stock}` : 'Stock libre'}
           </p>
           <div className="flex items-center gap-1">
-            <button
-              onClick={onEditar}
-              className="p-1.5 rounded-lg text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)] hover:text-[var(--color-texto)]"
-              aria-label="Editar"
-            >
-              <Pencil size={14} />
-            </button>
-            <button
-              onClick={onEliminar}
-              disabled={eliminando}
-              className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 disabled:opacity-50"
+            <span
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); onEliminar(); }}
+              role="button"
+              tabIndex={0}
               aria-label="Eliminar"
+              className={cn(
+                'p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 cursor-pointer inline-flex',
+                eliminando && 'opacity-50 pointer-events-none'
+              )}
             >
               {eliminando ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-            </button>
+            </span>
           </div>
         </div>
       </div>
-    </div>
+    </button>
   );
 }

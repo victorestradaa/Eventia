@@ -1,18 +1,18 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentProfile } from '@/lib/actions/authActions';
-import { ShoppingCart, Package, Users, Receipt, BarChart3, Plus, LineChart } from 'lucide-react';
+import { ShoppingCart, Package, Users, Receipt, Home, Plus, LineChart } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 const TABS = [
-  { href: '/proveedor/punto-venta',           label: 'Inicio',     icon: BarChart3 },
-  { href: '/proveedor/punto-venta/nueva',     label: 'Nueva venta', icon: Plus, primary: true },
-  { href: '/proveedor/punto-venta/pedidos',   label: 'Pedidos',    icon: ShoppingCart },
-  { href: '/proveedor/punto-venta/productos', label: 'Productos',  icon: Package },
-  { href: '/proveedor/punto-venta/clientes',  label: 'Clientes',   icon: Users },
-  { href: '/proveedor/punto-venta/caja',      label: 'Caja',       icon: Receipt },
-  { href: '/proveedor/punto-venta/reportes',  label: 'Reportes',   icon: LineChart },
+  { href: '/proveedor/punto-venta',           label: 'Menú',        icon: Home },
+  { href: '/proveedor/punto-venta/nueva',     label: 'Iniciar venta', icon: Plus, primary: true },
+  { href: '/proveedor/punto-venta/pedidos',   label: 'Pedidos',     icon: ShoppingCart },
+  { href: '/proveedor/punto-venta/productos', label: 'Productos',   icon: Package },
+  { href: '/proveedor/punto-venta/clientes',  label: 'Clientes',    icon: Users },
+  { href: '/proveedor/punto-venta/caja',      label: 'Caja',        icon: Receipt },
+  { href: '/proveedor/punto-venta/reportes',  label: 'Reportes',    icon: LineChart },
 ];
 
 export default async function PuntoVentaLayout({ children }: { children: React.ReactNode }) {
