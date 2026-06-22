@@ -9,6 +9,7 @@ import {
   subirImagenProductoPV,
 } from '@/lib/actions/puntoVentaActions';
 import { cn, formatearMoneda } from '@/lib/utils';
+import ImageCropperModal from '@/components/proveedor/ImageCropperModal';
 
 type Producto = {
   id: string;
@@ -67,6 +68,8 @@ export default function ProductosPVClient({ proveedorId, productosIniciales }: P
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [eliminando, setEliminando] = useState<string | null>(null);
+  // Cola de archivos pendientes de recorte (uno a la vez en el modal).
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -121,62 +124,39 @@ export default function ProductosPVClient({ proveedorId, productosIniciales }: P
     setError('');
   };
 
-  const recortarCuadrado = (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const size = Math.min(img.width, img.height);
-          canvas.width = size;
-          canvas.height = size;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) return reject(new Error('No canvas context'));
-          
-          const startX = (img.width - size) / 2;
-          const startY = (img.height - size) / 2;
-          
-          ctx.drawImage(img, startX, startY, size, size, 0, 0, size, size);
-          
-          canvas.toBlob((blob) => {
-            if (!blob) return reject(new Error('Canvas to Blob failed'));
-            resolve(new File([blob], file.name, { type: file.type || 'image/jpeg' }));
-          }, file.type || 'image/jpeg', 0.9);
-        };
-        img.onerror = () => reject(new Error('Image load failed'));
-        img.src = e.target?.result as string;
-      };
-      reader.onerror = () => reject(new Error('FileReader failed'));
-      reader.readAsDataURL(file);
-    });
+  // El usuario eligió uno o varios archivos: los pasamos al cropper de uno en uno.
+  const handleSelectFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setError('');
+    setCropQueue(Array.from(files));
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+  // El usuario aceptó el recorte del archivo actual: subimos a Supabase
+  // y pasamos al siguiente archivo en la cola (si lo hay).
+  const handleCropConfirm = async (cropped: File) => {
     setUploading(true);
-    setError('');
-    const nuevasUrls: string[] = [];
-    for (const file of Array.from(files)) {
-      try {
-        const croppedFile = await recortarCuadrado(file);
-        const fd = new FormData();
-        fd.append('file', croppedFile);
-        fd.append('proveedorId', proveedorId);
-        const res = await subirImagenProductoPV(fd);
-        if (res.success && res.url) nuevasUrls.push(res.url);
-        else {
-          setError(res.error || 'Error al subir imagen.');
-          break;
-        }
-      } catch (err) {
-        setError('Error al procesar la imagen.');
-        break;
+    try {
+      const fd = new FormData();
+      fd.append('file', cropped);
+      fd.append('proveedorId', proveedorId);
+      const res = await subirImagenProductoPV(fd);
+      if (res.success && res.url) {
+        const url = res.url;
+        setForm((prev) => ({ ...prev, imagenes: [...prev.imagenes, url] }));
+      } else {
+        setError(res.error || 'Error al subir imagen.');
       }
+    } catch {
+      setError('Error al subir la imagen.');
+    } finally {
+      setUploading(false);
+      setCropQueue((prev) => prev.slice(1));
     }
-    setForm((prev) => ({ ...prev, imagenes: [...prev.imagenes, ...nuevasUrls] }));
-    setUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleCropCancel = () => {
+    setCropQueue((prev) => prev.slice(1));
   };
 
   const quitarImagen = (url: string) => {
@@ -325,6 +305,17 @@ export default function ProductosPVClient({ proveedorId, productosIniciales }: P
         </div>
       )}
 
+      {/* Modal de recorte (se apila por encima del modal de producto) */}
+      {cropQueue.length > 0 && (
+        <ImageCropperModal
+          file={cropQueue[0]}
+          aspect={1}
+          outputSize={1024}
+          onCancel={handleCropCancel}
+          onConfirm={handleCropConfirm}
+        />
+      )}
+
       {/* Modal crear / editar */}
       {modalOpen && (
         <div
@@ -382,7 +373,7 @@ export default function ProductosPVClient({ proveedorId, productosIniciales }: P
                       accept="image/*"
                       multiple
                       className="hidden"
-                      onChange={(e) => handleUpload(e.target.files)}
+                      onChange={(e) => handleSelectFiles(e.target.files)}
                       disabled={uploading}
                     />
                     {uploading ? <Loader2 size={18} className="animate-spin text-[var(--color-texto-muted)]" /> : <Upload size={18} className="text-[var(--color-texto-muted)]" />}
