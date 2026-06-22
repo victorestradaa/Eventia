@@ -1,9 +1,12 @@
 import { getCurrentProfile } from '@/lib/actions/authActions';
+import { getPlanConfigs } from '@/lib/actions/planActions';
 import PlanesClient from './PlanesClient';
 import { redirect } from 'next/navigation';
 
 export default async function ProviderPlanesPage() {
   const profileRes = await getCurrentProfile();
+  const planConfigsRes = await getPlanConfigs();
+  const planConfigs = planConfigsRes.success ? planConfigsRes.data : [];
 
   if (!profileRes.success || !profileRes.data) {
     return redirect('/login');
@@ -21,6 +24,7 @@ export default async function ProviderPlanesPage() {
       proveedorId={perfil.proveedor.id}
       planExpira={perfil.proveedor.planExpira}
       planCancelado={perfil.proveedor.planCancelado || false}
+      planConfigs={planConfigs}
     />
   );
 }

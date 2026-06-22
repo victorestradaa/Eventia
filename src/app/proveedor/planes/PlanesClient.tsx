@@ -78,9 +78,10 @@ interface PlanesClientProps {
   proveedorId: string;
   planExpira?: Date | string | null;
   planCancelado?: boolean;
+  planConfigs?: any[];
 }
 
-export default function PlanesClient({ planActual, proveedorId, planExpira, planCancelado = false }: PlanesClientProps) {
+export default function PlanesClient({ planActual, proveedorId, planExpira, planCancelado = false, planConfigs = [] }: PlanesClientProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'mensual' | 'anual'>('mensual');
@@ -90,6 +91,34 @@ export default function PlanesClient({ planActual, proveedorId, planExpira, plan
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const router = useRouter();
+
+  const DB_PLAN_ID_MAP: Record<string, string> = {
+    'GRATIS': 'EMPRENDEDOR',
+    'INTERMEDIO': 'DESTACADO',
+    'ELITE': 'ELITE'
+  };
+
+  const dynamicPlanes = PLANES.map(plan => {
+    const dbPlanId = DB_PLAN_ID_MAP[plan.id];
+    const config = planConfigs?.find(c => c.planId === dbPlanId);
+    
+    if (config) {
+      const isPromoActive = config.precioPromo !== null && config.precioPromo !== undefined && 
+                            (!config.promoDesde || new Date(config.promoDesde) <= new Date()) && 
+                            (!config.promoHasta || new Date(config.promoHasta) >= new Date());
+                            
+      const precioMensual = isPromoActive ? config.precioPromo : config.precioNormal;
+      const precioNormalAntiguo = isPromoActive ? config.precioNormal : null;
+      
+      return {
+        ...plan,
+        precioNormal: precioNormalAntiguo,
+        precioMensual: precioMensual,
+        precioAnual: precioMensual * 10
+      };
+    }
+    return plan;
+  });
 
   const handleCancelarSuscripcion = async () => {
     setCancelLoading(true);
@@ -326,7 +355,7 @@ export default function PlanesClient({ planActual, proveedorId, planExpira, plan
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {PLANES.map((plan) => {
+        {dynamicPlanes.map((plan) => {
           const isActual = planActual === plan.id;
           const isSelected = loading === plan.id;
           const Icon = plan.icon;
@@ -428,7 +457,7 @@ export default function PlanesClient({ planActual, proveedorId, planExpira, plan
               <div className="space-y-2">
                 <h3 className="text-2xl font-bold">¡Plan Actualizado!</h3>
                 <p className="text-sm text-[var(--color-texto-suave)] px-6">
-                  Tu negocio ahora forma parte del **{PLANES.find(p => p.id === success)?.nombre}**.
+                  Tu negocio ahora forma parte del **{dynamicPlanes.find(p => p.id === success)?.nombre}**.
                 </p>
                 <div className="text-[10px] font-black tracking-widest text-[var(--color-primario-claro)] uppercase mt-2">Prueba habilitada con éxito</div>
               </div>
