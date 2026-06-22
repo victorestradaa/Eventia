@@ -372,7 +372,7 @@ export default function UsuariosClient({ initialUsers }: UsuariosClientProps) {
                            <option value="FOTOGRAFIA" className="bg-[#111]">FOTO & VIDEO</option>
                            <option value="DECORACION" className="bg-[#111]">DECORACIÓN</option>
                            <option value="RECUERDOS" className="bg-[#111]">RECUERDOS</option>
-                           <option value="MOBILIARIO" className="bg-[#111]">INMOBILIARIO</option>
+                           <option value="MOBILIARIO" className="bg-[#111]">MOBILIARIO</option>
                         </select>
                       </div>
                     )}

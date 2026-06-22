@@ -290,7 +290,7 @@ export default function RegisterPage() {
                   { id: 'FOTOGRAFIA', label: 'Foto & Video', icon: Camera,      color: 'text-teal-500 dark:text-teal-400' },
                   { id: 'DECORACION', label: 'Decoración',   icon: Palette,     color: 'text-yellow-500 dark:text-yellow-400' },
                   { id: 'RECUERDOS',  label: 'Recuerdos',    icon: Gift,        color: 'text-rose-500 dark:text-rose-400' },
-                  { id: 'MOBILIARIO', label: 'Inmobiliario', icon: Armchair,    color: 'text-amber-600 dark:text-amber-500' },
+                  { id: 'MOBILIARIO', label: 'Mobiliario',   icon: Armchair,    color: 'text-amber-600 dark:text-amber-500' },
                 ].map((item) => (
                   <button
                     key={item.id}
