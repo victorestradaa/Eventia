@@ -5,7 +5,9 @@ import {
   Search, X, Loader2, AlertCircle, ShoppingCart, ChevronRight, MessageCircle, Copy, CheckCircle2, Clock, Truck, Package, XCircle, Hash, ArrowRight, Calendar, DollarSign, ImageOff, History, CreditCard, TrendingUp, AlarmClock,
 } from 'lucide-react';
 import { getPedidoDetallePV, cambiarEstadoPedidoPV, registrarAbonoPedidoPV, listarPedidosPV } from '@/lib/actions/puntoVentaActions';
+import { descargarReciboPDF, compartirReciboPDF } from '@/lib/pdf/reciboPV';
 import { cn, formatearMoneda } from '@/lib/utils';
+import { FileText, Send } from 'lucide-react';
 
 type EstadoPV = 'PENDIENTE' | 'EN_PREPARACION' | 'LISTO' | 'ENTREGADO' | 'CANCELADO';
 type TipoPV = 'VENTA_DIRECTA' | 'PEDIDO';
@@ -49,6 +51,7 @@ const SIGUIENTE_ESTADO: Partial<Record<EstadoPV, EstadoPV>> = {
 export default function PedidosPVClient({ proveedorId, pedidosIniciales }: Props) {
   const [pedidos, setPedidos] = useState<PedidoResumen[]>(pedidosIniciales);
   const [filtroEstado, setFiltroEstado] = useState<EstadoPV | 'TODOS'>('TODOS');
+  const [filtroAdeudo, setFiltroAdeudo] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [refrescando, setRefrescando] = useState(false);
 
@@ -107,6 +110,11 @@ export default function PedidosPVClient({ proveedorId, pedidosIniciales }: Props
   const filtrados = useMemo(() => {
     return pedidos.filter((p) => {
       if (filtroEstado !== 'TODOS' && p.estado !== filtroEstado) return false;
+      if (filtroAdeudo) {
+        if (p.estado === 'CANCELADO') return false;
+        const pendienteP = Number(p.total) - Number(p.pagado);
+        if (pendienteP <= 0) return false;
+      }
       const q = busqueda.trim().toLowerCase();
       if (!q) return true;
       const digits = q.replace(/\D/g, '');
@@ -118,7 +126,7 @@ export default function PedidosPVClient({ proveedorId, pedidosIniciales }: Props
         (digits && tel.includes(digits))
       );
     });
-  }, [pedidos, filtroEstado, busqueda]);
+  }, [pedidos, filtroEstado, filtroAdeudo, busqueda]);
 
   /* ─── Recargar lista (después de cambios) ─────────────────────────── */
 
@@ -250,8 +258,10 @@ export default function PedidosPVClient({ proveedorId, pedidosIniciales }: Props
           icon={DollarSign}
           label="Por cobrar"
           valor={formatearMoneda(stats.porCobrar)}
-          hint="Saldo pendiente en pedidos"
+          hint={filtroAdeudo ? 'Filtro activo — click para quitar' : 'Click para ver solo con adeudo'}
           tono={stats.porCobrar > 0 ? 'rose' : 'emerald'}
+          onClick={() => setFiltroAdeudo((v) => !v)}
+          activo={filtroAdeudo}
         />
         <StatCard
           icon={AlarmClock}
@@ -579,6 +589,22 @@ function DrawerDetalle({
                     Enviar tracking por WhatsApp
                   </button>
                 )}
+                {/* Botones de recibo PDF */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => descargarReciboPDF(detalle)}
+                    className="flex-1 py-2 rounded-xl text-xs font-bold border border-[var(--color-borde-suave)] hover:bg-[var(--color-fondo-hover)] inline-flex items-center justify-center gap-1.5"
+                  >
+                    <FileText size={12} /> Descargar PDF
+                  </button>
+                  <button
+                    onClick={() => compartirReciboPDF(detalle)}
+                    className="flex-1 py-2 rounded-xl text-xs font-bold bg-[#d4af37]/10 text-[#d4af37] hover:bg-[#d4af37]/20 inline-flex items-center justify-center gap-1.5"
+                  >
+                    <Send size={12} /> Enviar recibo
+                  </button>
+                </div>
+
                 <div className="flex gap-2">
                   {detalle.tipo === 'PEDIDO' && (
                     <button onClick={() => onCopiarLink(detalle.trackingToken)} className="flex-1 py-2 rounded-xl text-xs font-bold border border-[var(--color-borde-suave)] hover:bg-[var(--color-fondo-hover)] inline-flex items-center justify-center gap-1.5">
@@ -701,26 +727,38 @@ function Linea({ label, value, className = '', bold = false }: { label: string; 
 }
 
 function StatCard({
-  icon: Icon, label, valor, hint, tono,
+  icon: Icon, label, valor, hint, tono, onClick, activo,
 }: {
-  icon: any; label: string; valor: string; hint?: string; tono: 'gold' | 'blue' | 'rose' | 'emerald' | 'violet';
+  icon: any; label: string; valor: string; hint?: string;
+  tono: 'gold' | 'blue' | 'rose' | 'emerald' | 'violet';
+  onClick?: () => void;
+  activo?: boolean;
 }) {
-  const palette: Record<string, { bg: string; fg: string }> = {
-    gold:    { bg: 'bg-[#d4af37]/10',  fg: 'text-[#d4af37]' },
-    blue:    { bg: 'bg-blue-500/10',   fg: 'text-blue-600' },
-    rose:    { bg: 'bg-rose-500/10',   fg: 'text-rose-600' },
-    emerald: { bg: 'bg-emerald-500/10', fg: 'text-emerald-600' },
-    violet:  { bg: 'bg-violet-500/10', fg: 'text-violet-600' },
+  const palette: Record<string, { bg: string; fg: string; ring: string }> = {
+    gold:    { bg: 'bg-[#d4af37]/10',  fg: 'text-[#d4af37]', ring: 'ring-[#d4af37]' },
+    blue:    { bg: 'bg-blue-500/10',   fg: 'text-blue-600',   ring: 'ring-blue-500' },
+    rose:    { bg: 'bg-rose-500/10',   fg: 'text-rose-600',   ring: 'ring-rose-500' },
+    emerald: { bg: 'bg-emerald-500/10', fg: 'text-emerald-600', ring: 'ring-emerald-500' },
+    violet:  { bg: 'bg-violet-500/10', fg: 'text-violet-600', ring: 'ring-violet-500' },
   };
   const c = palette[tono];
+  const interactive = !!onClick;
+  const Comp: any = interactive ? 'button' : 'div';
   return (
-    <div className="rounded-2xl border border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] p-4">
+    <Comp
+      onClick={onClick}
+      className={cn(
+        'rounded-2xl border bg-[var(--color-fondo-card)] p-4 text-left transition-all w-full',
+        interactive && 'hover:-translate-y-0.5 hover:shadow-md cursor-pointer',
+        activo ? cn('ring-2', c.ring, 'border-transparent') : 'border-[var(--color-borde-suave)]'
+      )}
+    >
       <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center mb-2', c.bg, c.fg)}>
         <Icon size={16} />
       </div>
       <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)]">{label}</p>
       <p className="text-lg font-black mt-0.5 tracking-tight text-[var(--color-texto)]">{valor}</p>
       {hint && <p className="text-[10px] text-[var(--color-texto-muted)] mt-0.5 truncate">{hint}</p>}
-    </div>
+    </Comp>
   );
 }

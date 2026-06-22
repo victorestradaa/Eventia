@@ -1,15 +1,17 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import {
-  Plus, Pencil, Trash2, Search, X, Loader2, Users, AlertCircle, Phone, Mail, MapPin, MessageCircle, ShoppingCart,
+  Plus, Pencil, Trash2, Search, X, Loader2, Users, AlertCircle, Phone, Mail, MapPin, MessageCircle, ShoppingCart, History, ChevronRight,
 } from 'lucide-react';
 import {
   crearClientePV,
   actualizarClientePV,
   eliminarClientePV,
+  getPedidosPorClientePV,
 } from '@/lib/actions/puntoVentaActions';
-import { cn } from '@/lib/utils';
+import { cn, formatearMoneda } from '@/lib/utils';
 
 type Cliente = {
   id: string;
@@ -53,7 +55,23 @@ export default function ClientesPVClient({ proveedorId, clientesIniciales }: Pro
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [eliminando, setEliminando] = useState<string | null>(null);
-  const [detalleAbierto, setDetalleAbierto] = useState<string | null>(null);
+
+  // Drawer de historial del cliente
+  const [historialCliente, setHistorialCliente] = useState<Cliente | null>(null);
+  const [historialPedidos, setHistorialPedidos] = useState<any[]>([]);
+  const [cargandoHistorial, setCargandoHistorial] = useState(false);
+
+  useEffect(() => {
+    if (!historialCliente) {
+      setHistorialPedidos([]);
+      return;
+    }
+    setCargandoHistorial(true);
+    getPedidosPorClientePV(historialCliente.id, proveedorId).then((res) => {
+      setCargandoHistorial(false);
+      if (res.success) setHistorialPedidos(res.data as any[]);
+    });
+  }, [historialCliente, proveedorId]);
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -205,9 +223,8 @@ export default function ClientesPVClient({ proveedorId, clientesIniciales }: Pro
               <ClienteRow
                 key={c.id}
                 cliente={c}
-                abierto={detalleAbierto === c.id}
                 eliminando={eliminando === c.id}
-                onToggleDetalle={() => setDetalleAbierto((prev) => (prev === c.id ? null : c.id))}
+                onVerHistorial={() => setHistorialCliente(c)}
                 onEditar={() => abrirEditar(c)}
                 onEliminar={() => handleEliminar(c)}
                 onWhatsApp={() => enviarWhatsApp(c)}
@@ -215,6 +232,143 @@ export default function ClientesPVClient({ proveedorId, clientesIniciales }: Pro
             ))}
           </div>
         </>
+      )}
+
+      {/* Drawer de historial del cliente */}
+      {historialCliente && (
+        <div
+          className="fixed inset-0 z-[100] flex justify-end animate-in fade-in duration-200"
+          style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}
+          onClick={() => setHistorialCliente(null)}
+        >
+          <aside
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md h-full bg-[var(--color-fondo-card)] border-l border-[var(--color-borde-suave)] shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-200"
+          >
+            <div className="sticky top-0 bg-[var(--color-fondo-card)] border-b border-[var(--color-borde-suave)] px-5 py-4 flex items-center justify-between z-10">
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-widest font-black text-[var(--color-texto-muted)]">Historial</p>
+                <h3 className="text-lg font-black truncate">{historialCliente.nombre}</h3>
+              </div>
+              <button onClick={() => setHistorialCliente(null)} className="p-2 rounded-lg hover:bg-[var(--color-fondo-hover)]">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-5">
+              {/* Datos del cliente */}
+              <section className="rounded-xl bg-[var(--color-fondo)]/50 border border-[var(--color-borde-suave)] p-3 space-y-1">
+                {historialCliente.telefono && (
+                  <p className="text-xs text-[var(--color-texto-suave)] flex items-center gap-1.5">
+                    <Phone size={12} /> {historialCliente.telefono}
+                  </p>
+                )}
+                {historialCliente.email && (
+                  <p className="text-xs text-[var(--color-texto-suave)] flex items-center gap-1.5">
+                    <Mail size={12} /> {historialCliente.email}
+                  </p>
+                )}
+                {historialCliente.direccion && (
+                  <p className="text-xs text-[var(--color-texto-suave)] flex items-center gap-1.5">
+                    <MapPin size={12} /> {historialCliente.direccion}
+                  </p>
+                )}
+                {historialCliente.notas && (
+                  <p className="text-xs italic text-[var(--color-texto-muted)] mt-1 border-l-2 border-[#d4af37]/40 pl-2">
+                    "{historialCliente.notas}"
+                  </p>
+                )}
+              </section>
+
+              {/* Resumen */}
+              {historialPedidos.length > 0 && (() => {
+                const total = historialPedidos.reduce((s, p) => s + Number(p.total), 0);
+                const pendiente = historialPedidos.reduce((s, p) => s + (p.estado === 'CANCELADO' ? 0 : Math.max(0, Number(p.total) - Number(p.pagado))), 0);
+                return (
+                  <section className="grid grid-cols-3 gap-2 text-center">
+                    <div className="rounded-xl bg-[var(--color-fondo)]/50 border border-[var(--color-borde-suave)] p-2">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-[var(--color-texto-muted)]">Pedidos</p>
+                      <p className="text-base font-black mt-0.5">{historialPedidos.length}</p>
+                    </div>
+                    <div className="rounded-xl bg-[#d4af37]/10 border border-[#d4af37]/30 p-2">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-[#d4af37]">Total</p>
+                      <p className="text-base font-black text-[#d4af37] mt-0.5">{formatearMoneda(total)}</p>
+                    </div>
+                    <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-2">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-rose-600">Adeudo</p>
+                      <p className="text-base font-black text-rose-600 mt-0.5">{formatearMoneda(pendiente)}</p>
+                    </div>
+                  </section>
+                );
+              })()}
+
+              {/* Lista de pedidos */}
+              <section>
+                <p className="text-[10px] uppercase tracking-widest font-black text-[var(--color-texto-muted)] mb-2 flex items-center gap-1.5">
+                  <History size={11} /> Pedidos realizados
+                </p>
+                {cargandoHistorial ? (
+                  <div className="flex items-center justify-center py-8 text-[var(--color-texto-muted)]">
+                    <Loader2 className="animate-spin mr-2" size={16} /> Cargando...
+                  </div>
+                ) : historialPedidos.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-[var(--color-borde-suave)] bg-[var(--color-fondo)]/50 p-6 text-center">
+                    <ShoppingCart size={20} className="mx-auto text-[var(--color-texto-muted)] mb-2" />
+                    <p className="text-xs text-[var(--color-texto-suave)]">Este cliente aún no tiene pedidos.</p>
+                  </div>
+                ) : (
+                  <ol className="space-y-2">
+                    {historialPedidos.map((p) => {
+                      const total = Number(p.total);
+                      const pagado = Number(p.pagado);
+                      const pend = Math.max(0, total - pagado);
+                      const estadoStyle: Record<string, string> = {
+                        PENDIENTE: 'bg-amber-500/15 text-amber-600',
+                        EN_PREPARACION: 'bg-blue-500/15 text-blue-600',
+                        LISTO: 'bg-violet-500/15 text-violet-600',
+                        ENTREGADO: 'bg-emerald-500/15 text-emerald-600',
+                        CANCELADO: 'bg-rose-500/15 text-rose-600',
+                      };
+                      return (
+                        <li key={p.id} className="rounded-xl bg-[var(--color-fondo)]/50 border border-[var(--color-borde-suave)] p-3">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)]">#{p.folio}</span>
+                              <span className={cn('text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded', estadoStyle[p.estado] || '')}>
+                                {p.estado.replace('_', ' ')}
+                              </span>
+                              {p.tipo === 'PEDIDO' && (
+                                <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-[var(--color-fondo-hover)] text-[var(--color-texto-suave)]">Pedido</span>
+                              )}
+                            </div>
+                            <p className="text-sm font-black whitespace-nowrap">{formatearMoneda(total)}</p>
+                          </div>
+                          <div className="flex items-center justify-between text-[11px]">
+                            <p className="text-[var(--color-texto-muted)]">
+                              {new Date(p.creadoEn).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} · {p._count?.lineas ?? 0} {p._count?.lineas === 1 ? 'ítem' : 'ítems'}
+                            </p>
+                            {pend > 0 && p.estado !== 'CANCELADO' && (
+                              <p className="font-bold text-rose-600">Pendiente: {formatearMoneda(pend)}</p>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                )}
+              </section>
+
+              {historialPedidos.length > 0 && (
+                <Link
+                  href="/proveedor/punto-venta/pedidos"
+                  className="block text-center text-xs font-bold text-[#d4af37] hover:underline"
+                >
+                  Ver todos los pedidos →
+                </Link>
+              )}
+            </div>
+          </aside>
+        </div>
       )}
 
       {/* Modal */}
@@ -334,12 +488,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function ClienteRow({
-  cliente, abierto, eliminando, onToggleDetalle, onEditar, onEliminar, onWhatsApp,
+  cliente, eliminando, onVerHistorial, onEditar, onEliminar, onWhatsApp,
 }: {
   cliente: Cliente;
-  abierto: boolean;
   eliminando: boolean;
-  onToggleDetalle: () => void;
+  onVerHistorial: () => void;
   onEditar: () => void;
   onEliminar: () => void;
   onWhatsApp: () => void;
@@ -349,87 +502,64 @@ function ClienteRow({
   const tienePedidos = (cliente._count?.pedidos || 0) > 0;
 
   return (
-    <div className="px-4 py-3">
-      {/* Línea principal */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onToggleDetalle}
-          className="w-10 h-10 rounded-full bg-[var(--color-fondo-hover)] flex items-center justify-center text-sm font-black text-[var(--color-texto)] shrink-0"
-        >
-          {iniciales || '?'}
-        </button>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold truncate">{cliente.nombre}</p>
-          <div className="flex items-center gap-3 text-[11px] text-[var(--color-texto-suave)] mt-0.5">
-            {cliente.telefono && (
-              <span className="inline-flex items-center gap-1">
-                <Phone size={11} /> {cliente.telefono}
-              </span>
-            )}
-            {cliente._count && (
-              <span className="inline-flex items-center gap-1">
-                <ShoppingCart size={11} /> {cliente._count.pedidos} {cliente._count.pedidos === 1 ? 'pedido' : 'pedidos'}
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
+    <div className="px-4 py-3 flex items-center gap-3 hover:bg-[var(--color-fondo-hover)] transition-colors cursor-pointer" onClick={onVerHistorial}>
+      <div className="w-10 h-10 rounded-full bg-[var(--color-fondo-hover)] flex items-center justify-center text-sm font-black text-[var(--color-texto)] shrink-0">
+        {iniciales || '?'}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-bold truncate">{cliente.nombre}</p>
+        <div className="flex items-center gap-3 text-[11px] text-[var(--color-texto-suave)] mt-0.5 flex-wrap">
           {cliente.telefono && (
-            <button
-              onClick={onWhatsApp}
-              aria-label="Enviar WhatsApp"
-              title="Enviar WhatsApp"
-              className="p-2 rounded-lg text-emerald-500 hover:bg-emerald-500/10"
-            >
-              <MessageCircle size={14} fill="currentColor" strokeWidth={0} />
-            </button>
+            <span className="inline-flex items-center gap-1">
+              <Phone size={11} /> {cliente.telefono}
+            </span>
           )}
-          <button
-            onClick={onEditar}
-            aria-label="Editar"
-            className="p-2 rounded-lg text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)] hover:text-[var(--color-texto)]"
-          >
-            <Pencil size={14} />
-          </button>
-          <button
-            onClick={onEliminar}
-            disabled={eliminando || tienePedidos}
-            title={tienePedidos ? 'No se puede eliminar: tiene pedidos asociados' : 'Eliminar'}
-            aria-label="Eliminar"
-            className={cn(
-              'p-2 rounded-lg',
-              tienePedidos
-                ? 'text-[var(--color-texto-muted)] opacity-40 cursor-not-allowed'
-                : 'text-rose-500 hover:bg-rose-500/10'
-            )}
-          >
-            {eliminando ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-          </button>
+          {cliente._count && (
+            <span className="inline-flex items-center gap-1">
+              <ShoppingCart size={11} /> {cliente._count.pedidos} {cliente._count.pedidos === 1 ? 'pedido' : 'pedidos'}
+            </span>
+          )}
+          {cliente.email && (
+            <span className="inline-flex items-center gap-1">
+              <Mail size={11} /> {cliente.email}
+            </span>
+          )}
         </div>
       </div>
-
-      {/* Detalle desplegable */}
-      {abierto && (
-        <div className="mt-3 pl-13 ml-13 grid sm:grid-cols-2 gap-3 text-xs text-[var(--color-texto-suave)] animate-in fade-in slide-in-from-top-1 duration-200">
-          {cliente.email && (
-            <p className="inline-flex items-start gap-2">
-              <Mail size={12} className="mt-0.5 text-[var(--color-texto-muted)]" />
-              <span>{cliente.email}</span>
-            </p>
+      <div className="flex items-center gap-1 shrink-0">
+        {cliente.telefono && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onWhatsApp(); }}
+            aria-label="Enviar WhatsApp"
+            title="Enviar WhatsApp"
+            className="p-2 rounded-lg text-emerald-500 hover:bg-emerald-500/10"
+          >
+            <MessageCircle size={14} fill="currentColor" strokeWidth={0} />
+          </button>
+        )}
+        <button
+          onClick={(e) => { e.stopPropagation(); onEditar(); }}
+          aria-label="Editar"
+          className="p-2 rounded-lg text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)] hover:text-[var(--color-texto)]"
+        >
+          <Pencil size={14} />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onEliminar(); }}
+          disabled={eliminando || tienePedidos}
+          title={tienePedidos ? 'No se puede eliminar: tiene pedidos asociados' : 'Eliminar'}
+          aria-label="Eliminar"
+          className={cn(
+            'p-2 rounded-lg',
+            tienePedidos
+              ? 'text-[var(--color-texto-muted)] opacity-40 cursor-not-allowed'
+              : 'text-rose-500 hover:bg-rose-500/10'
           )}
-          {cliente.direccion && (
-            <p className="inline-flex items-start gap-2">
-              <MapPin size={12} className="mt-0.5 text-[var(--color-texto-muted)]" />
-              <span>{cliente.direccion}</span>
-            </p>
-          )}
-          {cliente.notas && (
-            <p className="sm:col-span-2 italic text-[var(--color-texto-muted)] border-l-2 border-[#d4af37]/40 pl-3">
-              "{cliente.notas}"
-            </p>
-          )}
-        </div>
-      )}
+        >
+          {eliminando ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+        </button>
+        <ChevronRight size={14} className="text-[var(--color-texto-muted)]" />
+      </div>
     </div>
   );
 }

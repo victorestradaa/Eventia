@@ -490,12 +490,55 @@ export async function getPedidoDetallePV(id: string, proveedorId: string) {
         lineas: { include: { producto: { select: { imagenes: true } } } },
         historial: { orderBy: { creadoEn: 'desc' } },
         movimientos: { orderBy: { creadoEn: 'desc' } },
+        proveedor: {
+          select: {
+            nombre: true,
+            logoUrl: true,
+            ciudad: true,
+            estado: true,
+            direccion: true,
+            usuario: { select: { telefono: true, email: true } },
+          },
+        },
       },
     });
     if (!pedido) return { success: false, error: 'Pedido no encontrado.' };
     return { success: true, data: serialize(pedido) };
   } catch (error: any) {
     console.error('Error al cargar detalle PV:', error);
+    return { success: false, error: error.message || 'Error del servidor.' };
+  }
+}
+
+export async function getPedidosPorClientePV(clienteId: string, proveedorId: string) {
+  try {
+    const pedidos = await prisma.pedidoPV.findMany({
+      where: { clienteId, proveedorId },
+      orderBy: { creadoEn: 'desc' },
+      include: { _count: { select: { lineas: true } } },
+      take: 50,
+    });
+    return { success: true, data: serialize(pedidos) };
+  } catch (error: any) {
+    console.error('Error al cargar pedidos del cliente:', error);
+    return { success: false, error: error.message || 'Error del servidor.' };
+  }
+}
+
+export async function listarVentasRecientesPV(proveedorId: string, limite = 30) {
+  try {
+    const pedidos = await prisma.pedidoPV.findMany({
+      where: { proveedorId, estado: { not: 'CANCELADO' } },
+      orderBy: { creadoEn: 'desc' },
+      take: limite,
+      include: {
+        cliente: { select: { id: true, nombre: true, telefono: true } },
+        _count: { select: { lineas: true } },
+      },
+    });
+    return { success: true, data: serialize(pedidos) };
+  } catch (error: any) {
+    console.error('Error al listar ventas recientes:', error);
     return { success: false, error: error.message || 'Error del servidor.' };
   }
 }

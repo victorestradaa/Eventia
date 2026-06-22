@@ -5,8 +5,10 @@ import Link from 'next/link';
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, User, X, Loader2, AlertCircle, MessageCircle, Copy, CheckCircle2, ImageOff, Package, ArrowRight, Calendar, Hash,
 } from 'lucide-react';
-import { crearPedidoPV, crearClientePV } from '@/lib/actions/puntoVentaActions';
+import { crearPedidoPV, crearClientePV, listarVentasRecientesPV, getPedidoDetallePV } from '@/lib/actions/puntoVentaActions';
+import { descargarReciboPDF, compartirReciboPDF } from '@/lib/pdf/reciboPV';
 import { cn, formatearMoneda } from '@/lib/utils';
+import { History, FileText, Send } from 'lucide-react';
 
 type Producto = {
   id: string;
@@ -78,6 +80,29 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
   const [quickClienteOpen, setQuickClienteOpen] = useState(false);
   const [quickClienteForm, setQuickClienteForm] = useState({ nombre: '', telefono: '' });
   const [quickClienteSaving, setQuickClienteSaving] = useState(false);
+
+  // Drawer historial de ventas
+  const [historialOpen, setHistorialOpen] = useState(false);
+  const [historialList, setHistorialList] = useState<any[]>([]);
+  const [historialCargando, setHistorialCargando] = useState(false);
+  const [reciboCargandoId, setReciboCargandoId] = useState<string | null>(null);
+
+  const abrirHistorial = async () => {
+    setHistorialOpen(true);
+    setHistorialCargando(true);
+    const res = await listarVentasRecientesPV(proveedorId, 30);
+    setHistorialCargando(false);
+    if (res.success) setHistorialList(res.data as any[]);
+  };
+
+  const reenviarRecibo = async (pedidoId: string, modo: 'descargar' | 'compartir') => {
+    setReciboCargandoId(pedidoId);
+    const res = await getPedidoDetallePV(pedidoId, proveedorId);
+    setReciboCargandoId(null);
+    if (!res.success || !res.data) { alert(res.error || 'No se pudo cargar el pedido.'); return; }
+    if (modo === 'descargar') await descargarReciboPDF(res.data as any);
+    else await compartirReciboPDF(res.data as any);
+  };
 
   /* ─── Cálculos ────────────────────────────────────────────────────── */
 
@@ -397,19 +422,29 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
 
         {/* Catálogo de productos */}
         <section className="rounded-2xl border border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] p-5">
-          <div className="flex items-center justify-between mb-3 gap-3">
+          <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--color-texto-muted)] flex items-center gap-2 shrink-0">
               <Package size={14} /> Productos
             </h3>
-            <div className="relative flex-1 max-w-xs">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)]" />
-              <input
-                type="text"
-                className="input w-full pl-9 text-sm"
-                placeholder="Buscar..."
-                value={busquedaProducto}
-                onChange={(e) => setBusquedaProducto(e.target.value)}
-              />
+            <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
+              <div className="relative flex-1 max-w-xs">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-texto-muted)]" />
+                <input
+                  type="text"
+                  className="input w-full pl-9 text-sm"
+                  placeholder="Buscar..."
+                  value={busquedaProducto}
+                  onChange={(e) => setBusquedaProducto(e.target.value)}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={abrirHistorial}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--color-fondo-hover)] hover:bg-[var(--color-borde-suave)] text-xs font-bold text-[var(--color-texto)] shrink-0"
+                title="Ver historial de ventas"
+              >
+                <History size={14} /> Historial
+              </button>
             </div>
           </div>
 
@@ -709,6 +744,97 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
         </div>
       )}
 
+      {/* Drawer historial de ventas */}
+      {historialOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex justify-end"
+          style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}
+          onClick={() => setHistorialOpen(false)}
+        >
+          <aside
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md h-full bg-[var(--color-fondo-card)] border-l border-[var(--color-borde-suave)] shadow-2xl overflow-y-auto animate-in slide-in-from-right duration-200"
+          >
+            <div className="sticky top-0 bg-[var(--color-fondo-card)] border-b border-[var(--color-borde-suave)] px-5 py-4 flex items-center justify-between z-10">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest font-black text-[var(--color-texto-muted)]">Últimas 30</p>
+                <h3 className="text-lg font-black flex items-center gap-2"><History size={16} /> Historial de ventas</h3>
+              </div>
+              <button onClick={() => setHistorialOpen(false)} className="p-2 rounded-lg hover:bg-[var(--color-fondo-hover)]">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-5">
+              {historialCargando ? (
+                <div className="flex items-center justify-center py-10 text-[var(--color-texto-muted)]">
+                  <Loader2 className="animate-spin mr-2" size={16} /> Cargando...
+                </div>
+              ) : historialList.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-[var(--color-borde-suave)] bg-[var(--color-fondo)]/50 p-8 text-center">
+                  <ShoppingCart size={20} className="mx-auto text-[var(--color-texto-muted)] mb-2" />
+                  <p className="text-xs text-[var(--color-texto-suave)]">No hay ventas registradas aún.</p>
+                </div>
+              ) : (
+                <ol className="space-y-2">
+                  {historialList.map((p) => {
+                    const total = Number(p.total);
+                    const pagado = Number(p.pagado);
+                    const pend = Math.max(0, total - pagado);
+                    const estadoStyle: Record<string, string> = {
+                      PENDIENTE: 'bg-amber-500/15 text-amber-600',
+                      EN_PREPARACION: 'bg-blue-500/15 text-blue-600',
+                      LISTO: 'bg-violet-500/15 text-violet-600',
+                      ENTREGADO: 'bg-emerald-500/15 text-emerald-600',
+                    };
+                    const cargando = reciboCargandoId === p.id;
+                    return (
+                      <li key={p.id} className="rounded-xl bg-[var(--color-fondo)]/50 border border-[var(--color-borde-suave)] p-3">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)]">#{p.folio}</span>
+                            <span className={cn('text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded', estadoStyle[p.estado] || 'bg-[var(--color-fondo-hover)] text-[var(--color-texto-suave)]')}>
+                              {p.estado.replace('_', ' ')}
+                            </span>
+                          </div>
+                          <p className="text-sm font-black whitespace-nowrap">{formatearMoneda(total)}</p>
+                        </div>
+                        <p className="text-xs font-bold truncate text-[var(--color-texto)]">
+                          {p.cliente?.nombre || p.nombreCliente || 'Cliente rápido'}
+                        </p>
+                        <p className="text-[10px] text-[var(--color-texto-muted)]">
+                          {new Date(p.creadoEn).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          {' · '}{p._count?.lineas ?? 0} {p._count?.lineas === 1 ? 'ítem' : 'ítems'}
+                          {pend > 0 && <span className="text-rose-600 font-bold"> · Pendiente {formatearMoneda(pend)}</span>}
+                        </p>
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            onClick={() => reenviarRecibo(p.id, 'descargar')}
+                            disabled={cargando}
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-[var(--color-borde-suave)] hover:bg-[var(--color-fondo-hover)] text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                          >
+                            {cargando ? <Loader2 size={10} className="animate-spin" /> : <FileText size={10} />}
+                            PDF
+                          </button>
+                          <button
+                            onClick={() => reenviarRecibo(p.id, 'compartir')}
+                            disabled={cargando}
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-[#d4af37]/10 text-[#d4af37] hover:bg-[#d4af37]/20 text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                          >
+                            {cargando ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
+                            Enviar
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
+
       {/* Modal éxito */}
       {pedidoCreado && (
         <PedidoCreadoModal pedido={pedidoCreado} onCerrar={resetForm} />
@@ -796,6 +922,20 @@ function PedidoCreadoModal({ pedido, onCerrar }: { pedido: any; onCerrar: () => 
         )}
 
         <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => descargarReciboPDF(pedido)}
+              className="py-3 rounded-xl border border-[var(--color-borde-suave)] hover:bg-[var(--color-fondo-hover)] text-xs font-black uppercase tracking-widest inline-flex items-center justify-center gap-2"
+            >
+              <FileText size={14} /> PDF
+            </button>
+            <button
+              onClick={() => compartirReciboPDF(pedido)}
+              className="py-3 rounded-xl bg-[#d4af37]/15 text-[#d4af37] hover:bg-[#d4af37]/25 text-xs font-black uppercase tracking-widest inline-flex items-center justify-center gap-2"
+            >
+              <Send size={14} /> Enviar recibo
+            </button>
+          </div>
           {(pedido.cliente?.telefono || pedido.telefonoCliente) && (
             <button
               onClick={enviarWhatsApp}
@@ -803,7 +943,7 @@ function PedidoCreadoModal({ pedido, onCerrar }: { pedido: any; onCerrar: () => 
               className="w-full py-3 rounded-xl text-white font-black uppercase text-xs tracking-widest hover:brightness-110 inline-flex items-center justify-center gap-2"
             >
               <MessageCircle size={14} fill="currentColor" strokeWidth={0} />
-              Enviar por WhatsApp
+              Solo texto por WhatsApp
             </button>
           )}
           <button onClick={onCerrar} className="w-full py-3 rounded-xl bg-[#d4af37] text-black font-black uppercase text-xs tracking-widest hover:brightness-110">
