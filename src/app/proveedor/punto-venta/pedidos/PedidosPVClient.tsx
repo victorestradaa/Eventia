@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Search, X, Loader2, AlertCircle, ShoppingCart, ChevronRight, MessageCircle, Copy, CheckCircle2, Clock, Truck, Package, XCircle, Hash, ArrowRight, Calendar, DollarSign, ImageOff, History, CreditCard,
+  Search, X, Loader2, AlertCircle, ShoppingCart, ChevronRight, MessageCircle, Copy, CheckCircle2, Clock, Truck, Package, XCircle, Hash, ArrowRight, Calendar, DollarSign, ImageOff, History, CreditCard, TrendingUp, AlarmClock,
 } from 'lucide-react';
 import { getPedidoDetallePV, cambiarEstadoPedidoPV, registrarAbonoPedidoPV, listarPedidosPV } from '@/lib/actions/puntoVentaActions';
 import { cn, formatearMoneda } from '@/lib/utils';
@@ -76,6 +76,32 @@ export default function PedidosPVClient({ proveedorId, pedidosIniciales }: Props
     };
     for (const p of pedidos) c[p.estado]++;
     return c;
+  }, [pedidos]);
+
+  // Stats rápidas
+  const stats = useMemo(() => {
+    const hoyInicio = new Date(); hoyInicio.setHours(0, 0, 0, 0);
+    const ahora = new Date();
+    let hoyCount = 0; let hoyTotal = 0;
+    let porCobrar = 0; let activos = 0;
+    let proximaEntrega: { folio: number; fecha: Date } | null = null;
+
+    for (const p of pedidos) {
+      const creado = new Date(p.creadoEn);
+      if (p.estado !== 'CANCELADO') {
+        if (creado >= hoyInicio) { hoyCount++; hoyTotal += Number(p.total); }
+        const pendienteP = Number(p.total) - Number(p.pagado);
+        if (pendienteP > 0) porCobrar += pendienteP;
+        if (['PENDIENTE', 'EN_PREPARACION', 'LISTO'].includes(p.estado)) activos++;
+        if (p.fechaEntrega) {
+          const fe = new Date(p.fechaEntrega);
+          if (fe >= ahora && (!proximaEntrega || fe < proximaEntrega.fecha)) {
+            proximaEntrega = { folio: p.folio, fecha: fe };
+          }
+        }
+      }
+    }
+    return { hoyCount, hoyTotal, porCobrar, activos, proximaEntrega };
   }, [pedidos]);
 
   const filtrados = useMemo(() => {
@@ -204,6 +230,38 @@ export default function PedidosPVClient({ proveedorId, pedidosIniciales }: Props
 
   return (
     <div className="space-y-4">
+      {/* Stats rápidas */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard
+          icon={TrendingUp}
+          label="Ventas de hoy"
+          valor={formatearMoneda(stats.hoyTotal)}
+          hint={`${stats.hoyCount} ${stats.hoyCount === 1 ? 'pedido' : 'pedidos'}`}
+          tono="gold"
+        />
+        <StatCard
+          icon={ShoppingCart}
+          label="Pedidos activos"
+          valor={String(stats.activos)}
+          hint="Pendiente / preparando / listo"
+          tono="blue"
+        />
+        <StatCard
+          icon={DollarSign}
+          label="Por cobrar"
+          valor={formatearMoneda(stats.porCobrar)}
+          hint="Saldo pendiente en pedidos"
+          tono={stats.porCobrar > 0 ? 'rose' : 'emerald'}
+        />
+        <StatCard
+          icon={AlarmClock}
+          label="Próxima entrega"
+          valor={stats.proximaEntrega ? `#${stats.proximaEntrega.folio}` : '—'}
+          hint={stats.proximaEntrega ? stats.proximaEntrega.fecha.toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' }) : 'Sin pedidos futuros'}
+          tono="violet"
+        />
+      </div>
+
       {/* Tabs estado */}
       <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
         {(['TODOS', 'PENDIENTE', 'EN_PREPARACION', 'LISTO', 'ENTREGADO', 'CANCELADO'] as const).map((e) => {
@@ -638,6 +696,31 @@ function Linea({ label, value, className = '', bold = false }: { label: string; 
     <div className="flex items-center justify-between">
       <span className={cn('text-xs', bold ? 'font-black' : 'font-bold text-[var(--color-texto-suave)]', className)}>{label}</span>
       <span className={cn(bold ? 'text-base font-black' : 'text-sm font-bold', className)}>{value}</span>
+    </div>
+  );
+}
+
+function StatCard({
+  icon: Icon, label, valor, hint, tono,
+}: {
+  icon: any; label: string; valor: string; hint?: string; tono: 'gold' | 'blue' | 'rose' | 'emerald' | 'violet';
+}) {
+  const palette: Record<string, { bg: string; fg: string }> = {
+    gold:    { bg: 'bg-[#d4af37]/10',  fg: 'text-[#d4af37]' },
+    blue:    { bg: 'bg-blue-500/10',   fg: 'text-blue-600' },
+    rose:    { bg: 'bg-rose-500/10',   fg: 'text-rose-600' },
+    emerald: { bg: 'bg-emerald-500/10', fg: 'text-emerald-600' },
+    violet:  { bg: 'bg-violet-500/10', fg: 'text-violet-600' },
+  };
+  const c = palette[tono];
+  return (
+    <div className="rounded-2xl border border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] p-4">
+      <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center mb-2', c.bg, c.fg)}>
+        <Icon size={16} />
+      </div>
+      <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)]">{label}</p>
+      <p className="text-lg font-black mt-0.5 tracking-tight text-[var(--color-texto)]">{valor}</p>
+      {hint && <p className="text-[10px] text-[var(--color-texto-muted)] mt-0.5 truncate">{hint}</p>}
     </div>
   );
 }

@@ -836,6 +836,48 @@ export async function listarSesionesCajaPV(proveedorId: string, take = 30) {
 
 /* ─── REPORTES — agregaciones para dashboard ────────────────────────── */
 
+async function agregarPedidosEnRango(proveedorId: string, inicio: Date, fin: Date) {
+  const pedidos = await prisma.pedidoPV.findMany({
+    where: {
+      proveedorId,
+      creadoEn: { gte: inicio, lte: fin },
+      estado: { not: 'CANCELADO' },
+    },
+    select: {
+      id: true,
+      tipo: true,
+      estado: true,
+      total: true,
+      pagado: true,
+      creadoEn: true,
+      lineas: {
+        select: {
+          productoId: true,
+          nombre: true,
+          cantidad: true,
+          subtotal: true,
+          producto: { select: { categoria: true, costo: true } },
+        },
+      },
+    },
+  });
+
+  const cancelados = await prisma.pedidoPV.count({
+    where: { proveedorId, creadoEn: { gte: inicio, lte: fin }, estado: 'CANCELADO' },
+  });
+
+  const movs = await prisma.movimientoCajaPV.findMany({
+    where: {
+      proveedorId,
+      creadoEn: { gte: inicio, lte: fin },
+      tipo: { in: ['VENTA', 'ABONO'] },
+    },
+    select: { metodoPago: true, monto: true },
+  });
+
+  return { pedidos, cancelados, movs };
+}
+
 export async function getReportePV(
   proveedorId: string,
   desde?: string | null,
@@ -847,76 +889,53 @@ export async function getReportePV(
     if (hasta) fin.setHours(23, 59, 59, 999);
     if (inicio > fin) return { success: false, error: 'El rango de fechas es inválido.' };
 
-    // 1. Pedidos (no cancelados) en el periodo
-    const pedidos = await prisma.pedidoPV.findMany({
-      where: {
-        proveedorId,
-        creadoEn: { gte: inicio, lte: fin },
-        estado: { not: 'CANCELADO' },
-      },
-      select: {
-        id: true,
-        tipo: true,
-        estado: true,
-        total: true,
-        pagado: true,
-        creadoEn: true,
-        lineas: {
-          select: {
-            productoId: true,
-            nombre: true,
-            cantidad: true,
-            subtotal: true,
-          },
-        },
-      },
-    });
+    // Periodo actual
+    const { pedidos, cancelados, movs } = await agregarPedidosEnRango(proveedorId, inicio, fin);
 
-    // 2. Cancelados (solo conteo)
-    const cancelados = await prisma.pedidoPV.count({
-      where: {
-        proveedorId,
-        creadoEn: { gte: inicio, lte: fin },
-        estado: 'CANCELADO',
-      },
-    });
+    // Periodo anterior (mismo tamaño en días) para comparativa
+    const duracionMs = fin.getTime() - inicio.getTime();
+    const finAnt = new Date(inicio.getTime() - 1);
+    const inicioAnt = new Date(finAnt.getTime() - duracionMs);
+    const anterior = await agregarPedidosEnRango(proveedorId, inicioAnt, finAnt);
 
-    // 3. Movimientos de ingreso (VENTA + ABONO) para desglosar por método
-    const movs = await prisma.movimientoCajaPV.findMany({
-      where: {
-        proveedorId,
-        creadoEn: { gte: inicio, lte: fin },
-        tipo: { in: ['VENTA', 'ABONO'] },
-      },
-      select: { metodoPago: true, monto: true },
-    });
-
-    // ─── Agregaciones ────────────────────────────────────────────────
+    /* ─── Agregaciones del periodo actual ─────────────────────────── */
     const totalVentas = pedidos.reduce((s, p) => s + Number(p.total), 0);
     const totalCobrado = pedidos.reduce((s, p) => s + Number(p.pagado), 0);
     const totalPendiente = Math.max(0, totalVentas - totalCobrado);
     const numPedidos = pedidos.length;
     const ticketPromedio = numPedidos > 0 ? totalVentas / numPedidos : 0;
 
-    // Por tipo
+    // Unidades vendidas + margen estimado (usando costo del producto)
+    let unidadesVendidas = 0;
+    let costoTotal = 0;
+    let costoCubierto = false;
+    pedidos.forEach((p) => {
+      p.lineas.forEach((l) => {
+        unidadesVendidas += l.cantidad;
+        if (l.producto?.costo != null) {
+          costoTotal += Number(l.producto.costo) * l.cantidad;
+          costoCubierto = true;
+        }
+      });
+    });
+    const margenEstimado = costoCubierto ? totalVentas - costoTotal : null;
+
     const porTipo = {
       VENTA_DIRECTA: pedidos.filter((p) => p.tipo === 'VENTA_DIRECTA').length,
       PEDIDO: pedidos.filter((p) => p.tipo === 'PEDIDO').length,
     };
 
-    // Por estado (no cancelados)
     const porEstado: Record<string, number> = {
       PENDIENTE: 0, EN_PREPARACION: 0, LISTO: 0, ENTREGADO: 0,
     };
     pedidos.forEach((p) => { porEstado[p.estado] = (porEstado[p.estado] || 0) + 1; });
 
-    // Por método de pago (cobranza real desde movimientos)
     const porMetodo: Record<string, number> = {
       EFECTIVO: 0, TARJETA: 0, TRANSFERENCIA: 0, OTRO: 0,
     };
     movs.forEach((m) => { porMetodo[m.metodoPago] += Number(m.monto); });
 
-    // Por día (para gráfica)
+    // Por día
     const diasMap: Record<string, { fecha: string; ventas: number; pedidos: number }> = {};
     pedidos.forEach((p) => {
       const d = new Date(p.creadoEn);
@@ -926,6 +945,19 @@ export async function getReportePV(
       diasMap[key].pedidos += 1;
     });
     const porDia = Object.values(diasMap).sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+    // Mejor día
+    const mejorDia = porDia.length > 0
+      ? porDia.reduce((max, d) => (d.ventas > max.ventas ? d : max), porDia[0])
+      : null;
+
+    // Por hora (0-23) — útil para identificar horas pico
+    const porHora: { hora: number; ventas: number; pedidos: number }[] = Array.from({ length: 24 }, (_, i) => ({ hora: i, ventas: 0, pedidos: 0 }));
+    pedidos.forEach((p) => {
+      const h = new Date(p.creadoEn).getHours();
+      porHora[h].ventas += Number(p.total);
+      porHora[h].pedidos += 1;
+    });
 
     // Productos top
     const prodMap: Record<string, { nombre: string; cantidad: number; total: number }> = {};
@@ -941,21 +973,55 @@ export async function getReportePV(
       .sort((a, b) => b.total - a.total)
       .slice(0, 10);
 
+    // Categorías (suma de ventas por categoría)
+    const catMap: Record<string, { categoria: string; total: number; cantidad: number }> = {};
+    pedidos.forEach((p) => {
+      p.lineas.forEach((l) => {
+        const cat = l.producto?.categoria || 'Sin categoría';
+        if (!catMap[cat]) catMap[cat] = { categoria: cat, total: 0, cantidad: 0 };
+        catMap[cat].total += Number(l.subtotal);
+        catMap[cat].cantidad += l.cantidad;
+      });
+    });
+    const porCategoria = Object.values(catMap).sort((a, b) => b.total - a.total).slice(0, 8);
+
+    /* ─── Comparativa con periodo anterior ─────────────────────────── */
+    const totalVentasAnt = anterior.pedidos.reduce((s, p) => s + Number(p.total), 0);
+    const numPedidosAnt = anterior.pedidos.length;
+    const ticketAnt = numPedidosAnt > 0 ? totalVentasAnt / numPedidosAnt : 0;
+
+    const deltaVentas = totalVentasAnt > 0 ? ((totalVentas - totalVentasAnt) / totalVentasAnt) * 100 : null;
+    const deltaPedidos = numPedidosAnt > 0 ? ((numPedidos - numPedidosAnt) / numPedidosAnt) * 100 : null;
+    const deltaTicket = ticketAnt > 0 ? ((ticketPromedio - ticketAnt) / ticketAnt) * 100 : null;
+
     return {
       success: true,
       data: serialize({
         periodo: { inicio: inicio.toISOString(), fin: fin.toISOString() },
+        periodoAnterior: { inicio: inicioAnt.toISOString(), fin: finAnt.toISOString() },
         totalVentas,
         totalCobrado,
         totalPendiente,
         numPedidos,
         ticketPromedio,
+        unidadesVendidas,
+        margenEstimado,
         cancelados,
         porTipo,
         porEstado,
         porMetodo,
         porDia,
+        porHora,
         productosTop,
+        porCategoria,
+        mejorDia,
+        // comparativa
+        totalVentasAnt,
+        numPedidosAnt,
+        ticketAnt,
+        deltaVentas,
+        deltaPedidos,
+        deltaTicket,
       }),
     };
   } catch (error: any) {
