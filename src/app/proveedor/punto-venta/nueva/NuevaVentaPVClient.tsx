@@ -272,6 +272,11 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
     }
 
     setCreando(true);
+    // El input datetime-local devuelve "YYYY-MM-DDTHH:mm" sin zona horaria.
+    // Si lo enviamos así al servidor (Amplify corre en UTC) `new Date(...)` lo
+    // interpreta como UTC y se desfasa por la zona horaria local. Convertimos
+    // en el cliente — donde sí conocemos la TZ — al ISO correcto.
+    const fechaEntregaISO = fechaEntrega ? new Date(fechaEntrega).toISOString() : null;
     const res = await crearPedidoPV(proveedorId, {
       tipo,
       ...clienteFinal,
@@ -284,7 +289,7 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
       })),
       descuento: dscNum,
       metodoPago,
-      fechaEntrega: fechaEntrega || null,
+      fechaEntrega: fechaEntregaISO,
       notas: notas || null,
       pagado: parseFloat(pagado || '0') || 0,
     });
