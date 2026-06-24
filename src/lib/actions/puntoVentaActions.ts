@@ -395,6 +395,18 @@ export async function crearPedidoPV(
           lineas: true,
           historial: { orderBy: { creadoEn: 'desc' } },
           cliente: true,
+          // Datos del proveedor para que el PDF de recibo muestre logo,
+          // nombre y dirección al descargarlo desde el modal de "pedido creado".
+          proveedor: {
+            select: {
+              nombre: true,
+              logoUrl: true,
+              ciudad: true,
+              estado: true,
+              direccion: true,
+              usuario: { select: { telefono: true, email: true } },
+            },
+          },
         },
       });
 
