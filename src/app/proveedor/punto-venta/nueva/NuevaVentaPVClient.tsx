@@ -359,38 +359,53 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
                   onChange={(e) => setBusquedaCliente(e.target.value)}
                 />
               </div>
-              <div className="max-h-44 overflow-y-auto rounded-xl border border-[var(--color-borde-suave)] divide-y divide-[var(--color-borde-suave)]">
+              <div className="max-h-72 overflow-y-auto -mx-1 px-1">
                 {clientesFiltrados.length === 0 ? (
-                  <div className="p-4 text-center">
+                  <div className="p-4 text-center rounded-xl border border-[var(--color-borde-suave)]">
                     <p className="text-xs text-[var(--color-texto-muted)]">No hay clientes.</p>
                     <button onClick={() => setQuickClienteOpen(true)} className="mt-2 text-xs font-bold text-[#d4af37] hover:underline">
                       + Crear cliente rápido
                     </button>
                   </div>
                 ) : (
-                  clientesFiltrados.map((c) => (
-                    <label
-                      key={c.id}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[var(--color-fondo-hover)] transition-colors',
-                        clienteId === c.id && 'bg-[#d4af37]/10'
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="cliente"
-                        className="accent-[#d4af37]"
-                        checked={clienteId === c.id}
-                        onChange={() => setClienteId(c.id)}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate">{c.nombre}</p>
-                        {c.telefono && (
-                          <p className="text-[10px] text-[var(--color-texto-muted)]">{c.telefono}</p>
-                        )}
-                      </div>
-                    </label>
-                  ))
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                    {clientesFiltrados.map((c) => {
+                      const selected = clienteId === c.id;
+                      const { initials, color } = avatarFromName(c.nombre);
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setClienteId(c.id)}
+                          className={cn(
+                            'flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition-all',
+                            selected
+                              ? 'border-[#d4af37] bg-[#d4af37]/10 ring-1 ring-[#d4af37]/40'
+                              : 'border-[var(--color-borde-suave)] hover:border-[#d4af37]/40 hover:bg-[var(--color-fondo-hover)]'
+                          )}
+                          aria-pressed={selected}
+                        >
+                          <span
+                            className={cn(
+                              'w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-black shrink-0',
+                              color
+                            )}
+                          >
+                            {initials}
+                          </span>
+                          <span className="flex-1 min-w-0">
+                            <p className="text-sm font-bold truncate leading-tight">{c.nombre}</p>
+                            {c.telefono && (
+                              <p className="text-[11px] text-[var(--color-texto-muted)] truncate">{c.telefono}</p>
+                            )}
+                          </span>
+                          {selected && (
+                            <span className="w-2 h-2 rounded-full bg-[#d4af37] shrink-0" aria-hidden />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
               <button onClick={() => setQuickClienteOpen(true)} className="text-xs font-bold text-[#d4af37] hover:underline">
@@ -961,4 +976,27 @@ function PedidoCreadoModal({ pedido, onCerrar }: { pedido: any; onCerrar: () => 
       </div>
     </div>
   );
+}
+
+/* ─── Helpers ──────────────────────────────────────────────────────────── */
+
+const AVATAR_COLORS = [
+  'bg-blue-500/20 text-blue-600 dark:text-blue-300',
+  'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300',
+  'bg-amber-500/20 text-amber-600 dark:text-amber-300',
+  'bg-violet-500/20 text-violet-600 dark:text-violet-300',
+  'bg-rose-500/20 text-rose-600 dark:text-rose-300',
+  'bg-cyan-500/20 text-cyan-600 dark:text-cyan-300',
+  'bg-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-300',
+  'bg-teal-500/20 text-teal-600 dark:text-teal-300',
+];
+
+function avatarFromName(nombre: string): { initials: string; color: string } {
+  const parts = nombre.trim().split(/\s+/).filter(Boolean);
+  const initials = (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
+  // Hash determinista del nombre para escoger color
+  let h = 0;
+  for (let i = 0; i < nombre.length; i++) h = (h * 31 + nombre.charCodeAt(i)) | 0;
+  const color = AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+  return { initials: initials.toUpperCase() || '?', color };
 }
