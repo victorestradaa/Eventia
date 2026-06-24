@@ -58,10 +58,10 @@ export default async function NuevaVentaPVPage() {
             <p className="text-xs font-black text-amber-600 uppercase tracking-widest">Sin sesión de caja abierta</p>
             <p className="text-[11px] text-[var(--color-texto-suave)] mt-1">
               Puedes vender, pero tus movimientos no se enlazarán a ninguna sesión de caja.{' '}
-              <Link href="/proveedor/punto-venta" className="font-bold text-amber-600 underline">
-                Volver al menú
+              <Link href="/proveedor/punto-venta/caja" className="font-bold text-amber-600 underline">
+                Abrir caja
               </Link>{' '}
-              para abrir caja primero (recomendado).
+              primero (recomendado).
             </p>
           </div>
         </div>
