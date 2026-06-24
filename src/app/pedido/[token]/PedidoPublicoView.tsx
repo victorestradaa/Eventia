@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Clock, Package, CheckCircle2, Truck, XCircle, Phone, MapPin, Calendar, Hash, RefreshCw, MessageCircle, ImageOff, Sparkles,
+  ClipboardCheck, Settings, PackageCheck, Store, XCircle, Phone, MapPin, Calendar, Hash, RefreshCw, MessageCircle, ImageOff, Check,
 } from 'lucide-react';
 import { getPedidoPublicoPV } from '@/lib/actions/puntoVentaActions';
 import { cn, formatearMoneda } from '@/lib/utils';
@@ -40,12 +40,14 @@ interface Pedido {
 
 const PASOS: EstadoPV[] = ['PENDIENTE', 'EN_PREPARACION', 'LISTO', 'ENTREGADO'];
 
-const META: Record<EstadoPV, { label: string; emoji: string; icon: any; color: string; bg: string; descripcion: string }> = {
-  PENDIENTE:       { label: 'Confirmado',    emoji: '📝', icon: Clock,        color: 'text-amber-500',   bg: 'bg-amber-500',   descripcion: 'Tu pedido fue recibido.' },
-  EN_PREPARACION:  { label: 'En preparación', emoji: '👨‍🍳', icon: Package,      color: 'text-blue-500',    bg: 'bg-blue-500',    descripcion: 'Lo estamos preparando con cuidado.' },
-  LISTO:           { label: 'Listo',          emoji: '✨', icon: Sparkles,     color: 'text-violet-500',  bg: 'bg-violet-500',  descripcion: '¡Ya está listo para entregar!' },
-  ENTREGADO:       { label: 'Entregado',      emoji: '🎉', icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500', descripcion: 'Pedido entregado. ¡Gracias por tu compra!' },
-  CANCELADO:       { label: 'Cancelado',      emoji: '🚫', icon: XCircle,      color: 'text-rose-500',    bg: 'bg-rose-500',    descripcion: 'Este pedido fue cancelado.' },
+// Iconos inspirados en el infográfico "Proceso para realizar pedidos":
+// clipboard → engranaje → impresora/empaque → tienda
+const META: Record<EstadoPV, { label: string; labelShort: string; icon: any; color: string; bg: string; descripcion: string }> = {
+  PENDIENTE:       { label: 'Confirmado',           labelShort: 'Confirmado',           icon: ClipboardCheck, color: 'text-[#d4af37]',   bg: 'bg-[#1F2937]',   descripcion: 'Tu pedido fue recibido.' },
+  EN_PREPARACION:  { label: 'En preparación',       labelShort: 'En preparación',       icon: Settings,       color: 'text-[#d4af37]',   bg: 'bg-[#1F2937]',   descripcion: 'Lo estamos preparando con cuidado.' },
+  LISTO:           { label: 'Listo para recolectar', labelShort: 'Listo para recolectar', icon: PackageCheck,   color: 'text-[#d4af37]',   bg: 'bg-[#1F2937]',   descripcion: '¡Ya está listo! Puedes pasar a recolectarlo.' },
+  ENTREGADO:       { label: 'Entregado',            labelShort: 'Entregado',            icon: Store,          color: 'text-emerald-500', bg: 'bg-emerald-500', descripcion: 'Pedido entregado. ¡Gracias por tu compra!' },
+  CANCELADO:       { label: 'Cancelado',            labelShort: 'Cancelado',            icon: XCircle,        color: 'text-rose-500',    bg: 'bg-rose-500',    descripcion: 'Este pedido fue cancelado.' },
 };
 
 export default function PedidoPublicoView({ pedido: pedidoInicial, token }: { pedido: Pedido; token: string }) {
@@ -130,12 +132,26 @@ export default function PedidoPublicoView({ pedido: pedidoInicial, token }: { pe
       <main className="max-w-2xl mx-auto px-5 py-6 space-y-6 pb-24">
         {/* Hero del estado */}
         <section className="text-center pt-2">
-          <div className="text-6xl mb-3">{meta.emoji}</div>
+          {/* Ícono principal estilo IdentiKrea: círculo negro con icono dorado */}
+          {(() => {
+            const HeroIcon = meta.icon;
+            return (
+              <div className="relative mx-auto w-24 h-24 mb-4">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#d4af37]/30 via-[#d4af37]/10 to-transparent blur-xl" aria-hidden />
+                <div className={cn(
+                  'relative w-24 h-24 rounded-full flex items-center justify-center ring-4 ring-[#d4af37]/30',
+                  esCancelado ? 'bg-rose-500' : 'bg-[#1F2937]'
+                )}>
+                  <HeroIcon size={42} className={esCancelado ? 'text-white' : 'text-[#d4af37]'} strokeWidth={2.2} />
+                </div>
+              </div>
+            );
+          })()}
           <p className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[#d4af37]/30 shadow-sm mb-3">
             <Hash size={12} className="text-[#d4af37]" />
             <span className="text-xs font-black uppercase tracking-widest">Folio #{pedido.folio}</span>
           </p>
-          <h1 className={cn('text-3xl md:text-4xl font-black tracking-tight mb-2', meta.color)}>
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight mb-2 text-[#1F2937]">
             {meta.label}
           </h1>
           <p className="text-[#1F2937]/70 max-w-md mx-auto">{meta.descripcion}</p>
@@ -149,19 +165,31 @@ export default function PedidoPublicoView({ pedido: pedidoInicial, token }: { pe
           )}
         </section>
 
-        {/* Timeline progresivo (solo si no es cancelado) */}
+        {/* Timeline progresivo — estilo IdentiKrea (negro + dorado) */}
         {!esCancelado && (
-          <section className="bg-white rounded-3xl p-6 shadow-sm border border-[#d4af37]/15">
-            <p className="text-[10px] uppercase tracking-widest font-black text-[#1F2937]/60 mb-4">Progreso</p>
+          <section className="rounded-3xl p-5 sm:p-6 shadow-xl bg-gradient-to-br from-[#1F2937] via-[#111827] to-[#1F2937] border border-[#d4af37]/40 relative overflow-hidden">
+            {/* Decoración de esquinas */}
+            <div className="absolute -top-8 -left-8 w-24 h-24 bg-[#d4af37]/10 rounded-full blur-2xl" aria-hidden />
+            <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-[#d4af37]/10 rounded-full blur-2xl" aria-hidden />
+
+            <p className="relative text-[10px] uppercase tracking-[0.25em] font-black text-[#d4af37] mb-5 text-center">
+              Progreso de tu pedido
+            </p>
+
             <div className="relative">
               {/* Línea de fondo */}
-              <div className="absolute top-5 left-5 right-5 h-1 bg-[#d4af37]/15 rounded-full" />
+              <div className="absolute top-7 left-8 right-8 h-0.5 bg-white/15 rounded-full" />
               {/* Línea de progreso */}
               <div
-                className="absolute top-5 left-5 h-1 bg-gradient-to-r from-[#d4af37] to-[#b89547] rounded-full transition-all duration-700"
-                style={{ width: idxActual >= 0 ? `${(idxActual / (PASOS.length - 1)) * (100 - (10 / PASOS.length))}%` : '0%' }}
+                className="absolute top-7 left-8 h-0.5 bg-[#d4af37] rounded-full transition-all duration-700"
+                style={{
+                  width: idxActual <= 0
+                    ? '0%'
+                    : `calc(${(idxActual / (PASOS.length - 1)) * 100}% - ${(idxActual / (PASOS.length - 1)) * 64}px)`,
+                }}
               />
-              <div className="grid grid-cols-4 relative">
+
+              <div className="grid grid-cols-4 relative gap-1">
                 {PASOS.map((paso, i) => {
                   const m = META[paso];
                   const Icon = m.icon;
@@ -169,22 +197,34 @@ export default function PedidoPublicoView({ pedido: pedidoInicial, token }: { pe
                   const actual = i === idxActual;
                   return (
                     <div key={paso} className="flex flex-col items-center text-center gap-2">
-                      <div
-                        className={cn(
-                          'w-10 h-10 rounded-full flex items-center justify-center z-10 ring-4 ring-white transition-all',
-                          completado
-                            ? `${m.bg} text-white shadow-lg`
-                            : 'bg-[#d4af37]/10 text-[#1F2937]/30',
-                          actual && 'scale-110 shadow-xl animate-pulse'
+                      <div className="relative">
+                        <div
+                          className={cn(
+                            'w-14 h-14 rounded-full flex items-center justify-center z-10 ring-4 transition-all',
+                            completado
+                              ? 'bg-white text-[#1F2937] ring-[#d4af37] shadow-[0_0_20px_rgba(212,175,55,0.4)]'
+                              : 'bg-[#1F2937] text-white/30 ring-white/10',
+                            actual && 'scale-110'
+                          )}
+                        >
+                          <Icon size={22} strokeWidth={2.2} />
+                        </div>
+                        {/* Check sello para pasos ya completados (que no son el actual) */}
+                        {completado && !actual && (
+                          <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#d4af37] flex items-center justify-center ring-2 ring-[#1F2937] shadow-md">
+                            <Check size={12} className="text-[#1F2937]" strokeWidth={3.5} />
+                          </span>
                         )}
-                      >
-                        <Icon size={16} />
+                        {/* Punto pulsante para el paso actual */}
+                        {actual && (
+                          <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-[#d4af37] ring-2 ring-[#1F2937] animate-pulse" />
+                        )}
                       </div>
                       <p className={cn(
-                        'text-[10px] font-black uppercase tracking-tight leading-tight max-w-[80px]',
-                        completado ? 'text-[#1F2937]' : 'text-[#1F2937]/40'
+                        'text-[9px] sm:text-[10px] font-black uppercase tracking-wide leading-tight max-w-[88px] transition-colors',
+                        completado ? 'text-white' : 'text-white/40'
                       )}>
-                        {m.label}
+                        {m.labelShort}
                       </p>
                     </div>
                   );
@@ -201,14 +241,19 @@ export default function PedidoPublicoView({ pedido: pedidoInicial, token }: { pe
             <ol className="space-y-4">
               {[...pedido.historial].reverse().map((h, i) => {
                 const m = META[h.estado];
+                const HIcon = m.icon;
+                const isFinalState = h.estado === 'ENTREGADO' || h.estado === 'CANCELADO';
                 return (
                   <li key={h.id} className="flex items-start gap-3">
-                    <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0', m.bg)}>
-                      <span className="text-sm">{m.emoji}</span>
+                    <div className={cn(
+                      'w-9 h-9 rounded-full flex items-center justify-center shrink-0 ring-2 ring-[#d4af37]/30',
+                      isFinalState ? `${m.bg} text-white` : 'bg-[#1F2937] text-[#d4af37]'
+                    )}>
+                      <HIcon size={16} strokeWidth={2.2} />
                     </div>
                     <div className="flex-1 min-w-0 pt-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className={cn('text-sm font-black uppercase tracking-tight', m.color)}>{m.label}</p>
+                        <p className={cn('text-sm font-black uppercase tracking-tight', isFinalState ? m.color : 'text-[#1F2937]')}>{m.label}</p>
                         {i === 0 && <span className="text-[9px] font-black uppercase tracking-widest bg-[#d4af37]/20 text-[#1F2937] px-2 py-0.5 rounded-full">Actual</span>}
                       </div>
                       <p className="text-[11px] text-[#1F2937]/50">
