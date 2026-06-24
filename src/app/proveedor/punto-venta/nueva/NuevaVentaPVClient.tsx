@@ -529,15 +529,21 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
       </div>
 
       {/* DERECHA: carrito sticky */}
-      <aside className="lg:sticky lg:top-4 self-start">
-        <div className="rounded-2xl border border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] overflow-hidden">
+      <aside className="lg:sticky lg:top-20 self-start">
+        <div className="rounded-2xl border border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] overflow-hidden shadow-sm">
           {/* Header carrito */}
-          <div className="px-5 py-4 border-b border-[var(--color-borde-suave)] flex items-center justify-between">
+          <div className="px-5 py-3.5 border-b border-[var(--color-borde-suave)] flex items-center justify-between bg-[var(--color-fondo)]/40">
             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--color-texto)] flex items-center gap-2">
-              <ShoppingCart size={14} /> Carrito ({lineas.length})
+              <span className="w-7 h-7 rounded-lg bg-[#d4af37]/15 text-[#d4af37] inline-flex items-center justify-center">
+                <ShoppingCart size={14} />
+              </span>
+              Carrito
+              <span className="text-[11px] font-black bg-[var(--color-fondo-input)] text-[var(--color-texto-suave)] px-2 py-0.5 rounded-full">
+                {lineas.length}
+              </span>
             </h3>
             {lineas.length > 0 && (
-              <button onClick={() => setLineas([])} className="text-[10px] font-bold text-rose-500 hover:underline uppercase tracking-widest">
+              <button onClick={() => setLineas([])} className="text-[10px] font-bold text-rose-500 hover:bg-rose-500/10 px-2 py-1 rounded-md uppercase tracking-widest">
                 Vaciar
               </button>
             )}
@@ -546,9 +552,12 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
           {/* Líneas */}
           <div className="max-h-64 overflow-y-auto divide-y divide-[var(--color-borde-suave)]">
             {lineas.length === 0 ? (
-              <div className="p-8 text-center">
-                <ShoppingCart size={24} className="mx-auto text-[var(--color-texto-muted)] mb-2" />
-                <p className="text-xs text-[var(--color-texto-muted)]">Selecciona productos para empezar.</p>
+              <div className="p-8 text-center flex flex-col items-center">
+                <div className="w-14 h-14 rounded-2xl bg-[var(--color-fondo-input)] flex items-center justify-center text-[var(--color-texto-muted)] mb-3">
+                  <ShoppingCart size={22} />
+                </div>
+                <p className="text-xs font-bold text-[var(--color-texto-suave)]">Carrito vacío</p>
+                <p className="text-[11px] text-[var(--color-texto-muted)] mt-0.5">Selecciona productos para empezar.</p>
               </div>
             ) : (
               lineas.map((l) => (
@@ -596,48 +605,66 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
           </div>
 
           {/* Totales */}
-          <div className="px-5 py-4 space-y-3 border-t border-[var(--color-borde-suave)] bg-[var(--color-fondo)]/50">
-            <Row label="Subtotal" value={formatearMoneda(subtotal)} />
+          <div className="px-5 py-4 space-y-2.5 border-t border-[var(--color-borde-suave)] bg-[var(--color-fondo)]/40">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[var(--color-texto-suave)]">Subtotal</span>
+              <span className="text-sm font-bold text-[var(--color-texto)]">{formatearMoneda(subtotal)}</span>
+            </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs font-bold text-[var(--color-texto-suave)]">Descuento</span>
               <div className="relative w-28">
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-[var(--color-texto-muted)]">$</span>
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--color-texto-muted)] pointer-events-none">$</span>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
-                  className="input w-full pl-5 text-right text-xs py-1.5"
+                  className="input w-full pl-6 pr-2 text-right text-xs py-1.5"
                   value={descuento}
                   onChange={(e) => setDescuento(e.target.value)}
                 />
               </div>
             </div>
-            <Row label="Total" value={formatearMoneda(total)} highlight />
+            <div className="pt-2 mt-1 border-t border-dashed border-[var(--color-borde-suave)] flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase tracking-widest text-[var(--color-texto-suave)]">Total</span>
+              <span className="text-2xl font-black text-[#d4af37]">{formatearMoneda(total)}</span>
+            </div>
           </div>
 
           {/* Configuración del pedido */}
-          <div className="px-5 py-4 border-t border-[var(--color-borde-suave)] space-y-3">
-            {/* Tipo */}
+          <div className="px-5 py-4 border-t border-[var(--color-borde-suave)] space-y-4">
+            {/* Tipo de venta */}
             <div className="grid grid-cols-2 gap-2">
               {([
-                { v: 'VENTA_DIRECTA' as TipoVenta, label: 'Venta directa', desc: 'Entrega inmediata' },
-                { v: 'PEDIDO' as TipoVenta, label: 'Pedido', desc: 'Entrega futura' },
-              ] as const).map((opt) => (
-                <button
-                  key={opt.v}
-                  type="button"
-                  onClick={() => setTipo(opt.v)}
-                  className={cn(
-                    'rounded-xl border p-2.5 text-left transition-all',
-                    tipo === opt.v
-                      ? 'border-[#d4af37] bg-[#d4af37]/10 text-[var(--color-texto)]'
-                      : 'border-[var(--color-borde-suave)] text-[var(--color-texto-suave)] hover:border-[var(--color-borde)]'
-                  )}
-                >
-                  <p className="text-xs font-black">{opt.label}</p>
-                  <p className="text-[10px] opacity-70">{opt.desc}</p>
-                </button>
-              ))}
+                { v: 'VENTA_DIRECTA' as TipoVenta, label: 'Venta directa', desc: 'Entrega inmediata', accent: 'emerald' },
+                { v: 'PEDIDO' as TipoVenta, label: 'Pedido', desc: 'Entrega futura', accent: 'amber' },
+              ] as const).map((opt) => {
+                const selected = tipo === opt.v;
+                return (
+                  <button
+                    key={opt.v}
+                    type="button"
+                    onClick={() => setTipo(opt.v)}
+                    className={cn(
+                      'rounded-xl border-2 p-3 text-left transition-all',
+                      selected
+                        ? opt.accent === 'emerald'
+                          ? 'border-emerald-500 bg-emerald-500/10'
+                          : 'border-amber-500 bg-amber-500/10'
+                        : 'border-[var(--color-borde-suave)] text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)]'
+                    )}
+                    aria-pressed={selected}
+                  >
+                    <p className={cn(
+                      'text-xs font-black',
+                      selected && opt.accent === 'emerald' && 'text-emerald-600 dark:text-emerald-400',
+                      selected && opt.accent === 'amber' && 'text-amber-600 dark:text-amber-400',
+                    )}>
+                      {opt.label}
+                    </p>
+                    <p className="text-[10px] opacity-70 mt-0.5">{opt.desc}</p>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Fecha entrega si es pedido */}
@@ -659,21 +686,33 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
             <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)] mb-1.5">Método de pago</label>
               <div className="grid grid-cols-4 gap-1.5">
-                {(['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'] as MetodoPago[]).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setMetodoPago(m)}
-                    className={cn(
-                      'rounded-lg border py-2 text-[10px] font-black uppercase tracking-widest',
-                      metodoPago === m
-                        ? 'border-[#d4af37] bg-[#d4af37]/10 text-[var(--color-texto)]'
-                        : 'border-[var(--color-borde-suave)] text-[var(--color-texto-muted)] hover:border-[var(--color-borde)]'
-                    )}
-                  >
-                    {m.slice(0, 4)}
-                  </button>
-                ))}
+                {([
+                  { v: 'EFECTIVO' as MetodoPago, label: 'EFEC', accent: 'emerald' },
+                  { v: 'TARJETA' as MetodoPago, label: 'TARJ', accent: 'blue' },
+                  { v: 'TRANSFERENCIA' as MetodoPago, label: 'TRAN', accent: 'cyan' },
+                  { v: 'OTRO' as MetodoPago, label: 'OTRO', accent: 'slate' },
+                ] as const).map((m) => {
+                  const selected = metodoPago === m.v;
+                  return (
+                    <button
+                      key={m.v}
+                      type="button"
+                      onClick={() => setMetodoPago(m.v)}
+                      className={cn(
+                        'rounded-lg border-2 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all',
+                        selected
+                          ? m.accent === 'emerald' ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                          : m.accent === 'blue' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                          : m.accent === 'cyan' ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'
+                          : 'border-slate-500 bg-slate-500/10 text-slate-600 dark:text-slate-400'
+                          : 'border-[var(--color-borde-suave)] text-[var(--color-texto-muted)] hover:bg-[var(--color-fondo-hover)]'
+                      )}
+                      aria-pressed={selected}
+                    >
+                      {m.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -683,7 +722,7 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
                 {tipo === 'VENTA_DIRECTA' ? 'Cobrado' : 'Anticipo (opcional)'}
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-texto-muted)]">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-texto-muted)] pointer-events-none">$</span>
                 <input
                   type="number"
                   step="0.01"
@@ -701,7 +740,7 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
             <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)] mb-1.5">Notas internas</label>
               <textarea
-                className="input w-full text-xs min-h-[50px]"
+                className="input w-full text-xs min-h-[60px]"
                 placeholder="Instrucciones, dirección de entrega..."
                 value={notas}
                 onChange={(e) => setNotas(e.target.value)}
@@ -717,9 +756,9 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
             <button
               onClick={handleCrear}
               disabled={creando || lineas.length === 0}
-              className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#d4af37] text-black font-black uppercase text-xs tracking-widest hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#d4af37]/20"
+              className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#d4af37] text-black font-black uppercase text-sm tracking-widest hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#d4af37]/30"
             >
-              {creando ? <Loader2 size={14} className="animate-spin" /> : <ArrowRight size={14} />}
+              {creando ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
               {tipo === 'VENTA_DIRECTA' ? 'Cobrar' : 'Crear pedido'} · {formatearMoneda(total)}
             </button>
           </div>
