@@ -322,9 +322,44 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
   return (
     <div className="grid lg:grid-cols-[1fr_400px] gap-5">
       {/* IZQUIERDA: cliente + productos */}
-      <div className="space-y-5">
-        {/* Cliente */}
-        <section className="rounded-3xl bg-[var(--color-fondo-card)] p-5 sm:p-6 shadow-sm shadow-black/[0.03] dark:shadow-black/30 border border-[var(--color-borde-suave)]/50">
+      <div className="space-y-4">
+        {/* Cliente — colapsa al chip cuando hay uno seleccionado */}
+        <section className="rounded-3xl bg-[var(--color-fondo-card)] p-4 sm:p-5 shadow-sm shadow-black/[0.03] dark:shadow-black/30 border border-[var(--color-borde-suave)]/50">
+          {modoCliente === 'EXISTENTE' && clienteId ? (
+            // ─── Vista compacta: chip del cliente seleccionado ────────────
+            (() => {
+              const clienteSel = clientes.find((c) => c.id === clienteId);
+              if (!clienteSel) return null;
+              const { initials, color } = avatarFromName(clienteSel.nombre);
+              return (
+                <div className="flex items-center gap-3">
+                  <span className="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-500 inline-flex items-center justify-center ring-1 ring-emerald-500/20 shrink-0">
+                    <User size={16} strokeWidth={2.3} />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Cliente</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={cn('w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black shrink-0', color)}>{initials}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold truncate leading-tight">{clienteSel.nombre}</p>
+                        {clienteSel.telefono && (
+                          <p className="text-[11px] text-[var(--color-texto-muted)] truncate">{clienteSel.telefono}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setClienteId('')}
+                    className="px-3 py-1.5 rounded-lg bg-[var(--color-fondo-input)] hover:bg-[var(--color-fondo-hover)] text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-suave)] shrink-0"
+                  >
+                    Cambiar
+                  </button>
+                </div>
+              );
+            })()
+          ) : (
+            <>
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <h3 className="text-base font-black tracking-tight text-[var(--color-texto)] flex items-center gap-2.5">
               <span className="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-500 inline-flex items-center justify-center ring-1 ring-emerald-500/20">
@@ -441,6 +476,8 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
               <p className="text-[10px] text-[var(--color-texto-muted)]">No se guardará en tu base de clientes. Solo para esta venta.</p>
             </div>
           )}
+            </>
+          )}
         </section>
 
         {/* Catálogo de productos */}
@@ -495,7 +532,7 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-2.5 sm:gap-3">
               {productosFiltrados.map((p) => {
                 const sinStock = p.controlStock && p.stock === 0;
                 return (
@@ -505,8 +542,9 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
                     onClick={() => agregarProducto(p)}
                     disabled={sinStock}
                     className={cn(
-                      'group relative rounded-2xl bg-[var(--color-fondo)] text-left overflow-hidden border border-[var(--color-borde-suave)] transition-all',
+                      'group relative rounded-2xl bg-[var(--color-fondo)] text-left overflow-hidden border border-[var(--color-borde-suave)]/60 transition-all',
                       'hover:-translate-y-0.5 hover:shadow-lg hover:border-[#d4af37]/40 hover:shadow-[#d4af37]/10',
+                      'active:scale-[0.98] active:transition-none',
                       'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none'
                     )}
                   >
@@ -515,24 +553,29 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
                         <img src={p.imagenes[0]} alt={p.nombre} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-[var(--color-texto-muted)]">
-                          <ImageOff size={24} />
+                          <ImageOff size={22} />
                         </div>
                       )}
                       {sinStock && (
-                        <div className="absolute top-2 right-2 bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-md">Sin stock</div>
+                        <div className="absolute top-1.5 right-1.5 bg-rose-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-md">Sin stock</div>
                       )}
                       {!sinStock && (
-                        <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/95 dark:bg-[#1F2937]/95 text-[#d4af37] flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all">
+                        <div className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-gradient-to-br from-[#d4af37] to-[#b89547] text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all">
                           <Plus size={14} strokeWidth={3} />
                         </div>
                       )}
+                      {p.controlStock && p.stock <= 5 && !sinStock && (
+                        <div className="absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-sm text-white text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tabular-nums">
+                          {p.stock} ud.
+                        </div>
+                      )}
                     </div>
-                    <div className="p-3">
-                      <p className="text-xs font-bold truncate leading-tight">{p.nombre}</p>
-                      <div className="flex items-center justify-between mt-1.5">
-                        <p className="text-sm font-black text-[#d4af37] tabular-nums">{formatearMoneda(Number(p.precio))}</p>
-                        {p.controlStock && (
-                          <p className="text-[10px] font-bold text-[var(--color-texto-muted)] tabular-nums">{p.stock} ud.</p>
+                    <div className="p-2.5">
+                      <p className="text-[11px] font-bold truncate leading-tight">{p.nombre}</p>
+                      <div className="flex items-center justify-between mt-1.5 gap-1">
+                        <p className="text-xs font-black text-[#d4af37] tabular-nums truncate">{formatearMoneda(Number(p.precio))}</p>
+                        {p.controlStock && p.stock > 5 && (
+                          <p className="text-[9px] font-bold text-[var(--color-texto-muted)] tabular-nums shrink-0">{p.stock}</p>
                         )}
                       </div>
                     </div>

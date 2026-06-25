@@ -30,9 +30,19 @@ export default async function PuntoVentaLayout({ children }: { children: React.R
   if (perfil.rol !== 'PROVEEDOR' || !perfil.proveedor) redirect('/cliente/dashboard');
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--color-fondo)]">
+    <div className="min-h-screen flex flex-col bg-[var(--color-fondo)] relative">
+      {/* Gradiente sutil de fondo — da profundidad sin saturar */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-br from-[#d4af37]/[0.03] via-transparent to-[#d4af37]/[0.05]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed top-0 right-0 -z-10 w-96 h-96 bg-[#d4af37]/[0.08] rounded-full blur-3xl"
+      />
+
       {/* Top bar: identidad + nav rápido + SALIR */}
-      <header className="sticky top-0 z-40 bg-[var(--color-fondo-card)]/95 backdrop-blur-md border-b border-[var(--color-borde-suave)]">
+      <header className="sticky top-0 z-40 bg-[var(--color-fondo-card)]/85 backdrop-blur-xl border-b border-[var(--color-borde-suave)]/60">
         <div className="px-3 sm:px-5 h-16 flex items-center justify-between gap-2 sm:gap-3">
           {/* Branding */}
           <Link
