@@ -5,6 +5,7 @@
  */
 
 import { jsPDF } from 'jspdf';
+import QRCode from 'qrcode';
 
 export type PedidoPDF = {
   folio: number;
@@ -253,24 +254,60 @@ export async function generarReciboPDF(pedido: PedidoPDF): Promise<Blob> {
     y += 4;
   }
 
-  // ─── Tracking URL si es pedido ────────────────────────────────────────
+  // ─── Tracking URL si es pedido — bloque visual con QR ────────────────
   if (pedido.tipo === 'PEDIDO' && pedido.trackingToken && typeof window !== 'undefined') {
-    y += 3;
     const url = `${window.location.origin}/pedido/${pedido.trackingToken}`;
+    y += 4;
+
+    // Caja con borde dorado
+    const boxX = 6;
+    const boxY = y;
+    const boxW = W - 12;
+    const qrSize = 32; // mm
+    const boxH = qrSize + 22;
+
+    // Fondo + borde dorado
+    doc.setFillColor(255, 250, 230); // crema muy suave
     doc.setDrawColor(...GOLD);
-    doc.setLineWidth(0.3);
-    doc.line(8, y, W - 8, y);
-    y += 4;
+    doc.setLineWidth(0.6);
+    doc.roundedRect(boxX, boxY, boxW, boxH, 3, 3, 'FD');
+
+    // Título arriba
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.setTextColor(...GOLD);
-    doc.text('SEGUIMIENTO EN LÍNEA', W / 2, y, { align: 'center' });
-    y += 3.5;
+    doc.setFontSize(8);
+    doc.setTextColor(...DARK);
+    doc.text('SIGUE TU PEDIDO EN VIVO', W / 2, boxY + 5, { align: 'center' });
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6);
+    doc.setFontSize(6.5);
     doc.setTextColor(...GRAY);
-    doc.text(url, W / 2, y, { align: 'center', maxWidth: W - 16 });
-    y += 4;
+    doc.text('Escanea el código con tu cámara', W / 2, boxY + 9, { align: 'center' });
+
+    // QR centrado
+    try {
+      const qrDataUrl = await QRCode.toDataURL(url, {
+        width: 400,
+        margin: 1,
+        color: { dark: '#1F2937', light: '#FFFFFF' },
+        errorCorrectionLevel: 'M',
+      });
+      const qrX = (W - qrSize) / 2;
+      const qrY = boxY + 11;
+      doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+    } catch {
+      // Fallback: si falla el QR, escribe la URL en grande
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(...GOLD);
+      doc.text(url, W / 2, boxY + qrSize / 2 + 11, { align: 'center', maxWidth: boxW - 6 });
+    }
+
+    // Footer con la URL corta abajo del QR
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(5.5);
+    doc.setTextColor(...GRAY);
+    doc.text(url, W / 2, boxY + boxH - 4, { align: 'center', maxWidth: boxW - 6 });
+
+    y = boxY + boxH + 3;
   }
 
   // ─── Notas ────────────────────────────────────────────────────────────

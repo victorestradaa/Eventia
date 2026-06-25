@@ -566,16 +566,36 @@ export async function cambiarEstadoPedidoPV(
 
     const pedido = await prisma.pedidoPV.findFirst({
       where: { id, proveedorId },
-      select: { id: true, estado: true, tipo: true, lineas: { select: { productoId: true, cantidad: true } } },
+      select: {
+        id: true,
+        folio: true,
+        estado: true,
+        tipo: true,
+        sesionCajaId: true,
+        lineas: { select: { productoId: true, cantidad: true } },
+      },
     });
     if (!pedido) return { success: false, error: 'Pedido no encontrado.' };
     if (pedido.estado === nuevoEstado) return { success: true };
 
-    // Restituir stock si pasa a CANCELADO (sólo si venía de estados que ya descontaron)
-    const debeRestituir = nuevoEstado === 'CANCELADO' && pedido.estado !== 'CANCELADO';
+    const esCancelacion = nuevoEstado === 'CANCELADO' && pedido.estado !== 'CANCELADO';
+
+    // Si vamos a cancelar, traemos los movimientos positivos (VENTA/ABONO/INGRESO)
+    // del pedido para revertirlos con AJUSTEs negativos. Así el corte de caja
+    // no sigue contando dinero que se devolvió.
+    const movimientosARevertir = esCancelacion
+      ? await prisma.movimientoCajaPV.findMany({
+          where: {
+            pedidoId: id,
+            tipo: { in: ['VENTA', 'ABONO', 'INGRESO'] },
+          },
+          select: { metodoPago: true, monto: true, sesionId: true },
+        })
+      : [];
 
     await prisma.$transaction(async (tx) => {
-      if (debeRestituir) {
+      if (esCancelacion) {
+        // 1) Restituir stock
         for (const l of pedido.lineas) {
           if (!l.productoId) continue;
           const prod = await tx.productoPV.findUnique({ where: { id: l.productoId }, select: { controlStock: true } });
@@ -586,6 +606,27 @@ export async function cambiarEstadoPedidoPV(
             });
           }
         }
+
+        // 2) Revertir cada cobro en caja con un AJUSTE negativo
+        for (const mov of movimientosARevertir) {
+          await tx.movimientoCajaPV.create({
+            data: {
+              proveedorId,
+              sesionId: mov.sesionId || pedido.sesionCajaId || null,
+              pedidoId: id,
+              tipo: 'AJUSTE',
+              metodoPago: mov.metodoPago,
+              monto: -Number(mov.monto),
+              concepto: `Cancelación folio #${pedido.folio}`,
+            },
+          });
+        }
+
+        // 3) Resetear pagado del pedido a 0 (porque ya devolviste el dinero)
+        await tx.pedidoPV.update({
+          where: { id },
+          data: { pagado: 0 },
+        });
       }
 
       await tx.pedidoPV.update({
@@ -600,6 +641,7 @@ export async function cambiarEstadoPedidoPV(
 
     revalidatePath('/proveedor/punto-venta/pedidos');
     revalidatePath('/proveedor/punto-venta/productos');
+    revalidatePath('/proveedor/punto-venta/caja');
     return { success: true };
   } catch (error: any) {
     console.error('Error al cambiar estado PV:', error);
