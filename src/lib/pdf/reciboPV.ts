@@ -254,7 +254,7 @@ export async function generarReciboPDF(pedido: PedidoPDF): Promise<Blob> {
     y += 4;
   }
 
-  // ─── Tracking URL si es pedido — bloque visual con QR ────────────────
+  // ─── Tracking URL si es pedido — bloque visual con QR clickeable ─────
   if (pedido.tipo === 'PEDIDO' && pedido.trackingToken && typeof window !== 'undefined') {
     const url = `${window.location.origin}/pedido/${pedido.trackingToken}`;
     y += 4;
@@ -263,8 +263,8 @@ export async function generarReciboPDF(pedido: PedidoPDF): Promise<Blob> {
     const boxX = 6;
     const boxY = y;
     const boxW = W - 12;
-    const qrSize = 32; // mm
-    const boxH = qrSize + 22;
+    const qrSize = 34; // mm
+    const boxH = qrSize + 26;
 
     // Fondo + borde dorado
     doc.setFillColor(255, 250, 230); // crema muy suave
@@ -280,9 +280,10 @@ export async function generarReciboPDF(pedido: PedidoPDF): Promise<Blob> {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.5);
     doc.setTextColor(...GRAY);
-    doc.text('Escanea el código con tu cámara', W / 2, boxY + 9, { align: 'center' });
+    doc.text('Escanea el QR con tu cámara, o toca aquí', W / 2, boxY + 9, { align: 'center' });
 
-    // QR centrado
+    // QR centrado + clickeable
+    let qrRendered = false;
     try {
       const qrDataUrl = await QRCode.toDataURL(url, {
         width: 400,
@@ -293,19 +294,41 @@ export async function generarReciboPDF(pedido: PedidoPDF): Promise<Blob> {
       const qrX = (W - qrSize) / 2;
       const qrY = boxY + 11;
       doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+      // Hacer todo el cuadro del QR clickeable
+      doc.link(qrX, qrY, qrSize, qrSize, { url });
+      qrRendered = true;
+
+      // Banderín dorado debajo del QR: "TOCA PARA ABRIR"
+      const tagW = 30;
+      const tagH = 5;
+      const tagX = (W - tagW) / 2;
+      const tagY = qrY + qrSize + 2;
+      doc.setFillColor(...GOLD);
+      doc.roundedRect(tagX, tagY, tagW, tagH, 1.5, 1.5, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text('TOCA PARA ABRIR  ↗', W / 2, tagY + 3.5, { align: 'center' });
+      doc.link(tagX, tagY, tagW, tagH, { url });
     } catch {
-      // Fallback: si falla el QR, escribe la URL en grande
+      // Fallback: si falla el QR, escribe la URL en grande clickeable
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7);
       doc.setTextColor(...GOLD);
-      doc.text(url, W / 2, boxY + qrSize / 2 + 11, { align: 'center', maxWidth: boxW - 6 });
+      const fallbackY = boxY + qrSize / 2 + 11;
+      doc.text(url, W / 2, fallbackY, { align: 'center', maxWidth: boxW - 6 });
+      doc.link(boxX + 3, fallbackY - 4, boxW - 6, 10, { url });
     }
 
-    // Footer con la URL corta abajo del QR
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5.5);
-    doc.setTextColor(...GRAY);
-    doc.text(url, W / 2, boxY + boxH - 4, { align: 'center', maxWidth: boxW - 6 });
+    // Footer con la URL corta abajo del QR (también clickeable)
+    if (qrRendered) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(5.5);
+      doc.setTextColor(...GRAY);
+      const footerY = boxY + boxH - 3;
+      doc.text(url, W / 2, footerY, { align: 'center', maxWidth: boxW - 6 });
+      doc.link(boxX + 3, footerY - 3, boxW - 6, 5, { url });
+    }
 
     y = boxY + boxH + 3;
   }
