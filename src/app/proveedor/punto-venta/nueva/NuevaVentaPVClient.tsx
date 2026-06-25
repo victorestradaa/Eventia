@@ -750,14 +750,14 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
               <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)] mb-1.5">
                 {tipo === 'VENTA_DIRECTA' ? 'Cobrado' : 'Anticipo (opcional)'}
               </label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-bold text-[var(--color-texto-muted)] pointer-events-none">$</span>
+              <div className="flex items-stretch rounded-xl bg-[var(--color-fondo-input)] border-2 border-[var(--color-borde-suave)] focus-within:border-[#d4af37] transition-colors overflow-hidden">
+                <span className="flex items-center pl-4 pr-1 text-base font-bold text-[var(--color-texto-muted)] select-none">$</span>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
                   max={total}
-                  className="w-full pl-10 pr-3 py-3 rounded-xl bg-[var(--color-fondo-input)] border-2 border-[var(--color-borde-suave)] focus:border-[#d4af37] outline-none text-base font-bold tabular-nums transition-colors"
+                  className="flex-1 min-w-0 py-3 pr-3 pl-1 bg-transparent border-0 outline-none text-base font-bold tabular-nums"
                   value={pagado}
                   onChange={(e) => setPagado(e.target.value)}
                   placeholder="0.00"
