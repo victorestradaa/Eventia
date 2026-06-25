@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
-  Search, Plus, Minus, Trash2, ShoppingCart, User, X, Loader2, AlertCircle, MessageCircle, Copy, CheckCircle2, ImageOff, Package, ArrowRight, Calendar, Hash,
+  Search, Plus, Minus, Trash2, ShoppingCart, User, X, Loader2, AlertCircle, MessageCircle, Copy, CheckCircle2, ImageOff, Package, ArrowRight, Calendar, Hash, Zap, Banknote, CreditCard, ArrowRightLeft, MoreHorizontal, Sparkles,
 } from 'lucide-react';
 import { crearPedidoPV, crearClientePV, listarVentasRecientesPV, getPedidoDetallePV } from '@/lib/actions/puntoVentaActions';
 import { descargarReciboPDF, compartirReciboPDF } from '@/lib/pdf/reciboPV';
@@ -530,21 +530,26 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
 
       {/* DERECHA: carrito sticky */}
       <aside className="lg:sticky lg:top-20 self-start">
-        <div className="rounded-2xl border border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] overflow-hidden shadow-sm">
+        <div className="rounded-3xl border border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] overflow-hidden shadow-xl shadow-black/[0.04] dark:shadow-black/30">
           {/* Header carrito */}
-          <div className="px-5 py-3.5 border-b border-[var(--color-borde-suave)] flex items-center justify-between bg-[var(--color-fondo)]/40">
-            <h3 className="text-sm font-black uppercase tracking-widest text-[var(--color-texto)] flex items-center gap-2">
-              <span className="w-7 h-7 rounded-lg bg-[#d4af37]/15 text-[#d4af37] inline-flex items-center justify-center">
-                <ShoppingCart size={14} />
+          <div className="px-5 py-4 border-b border-[var(--color-borde-suave)] flex items-center justify-between bg-gradient-to-r from-[#d4af37]/[0.04] via-transparent to-[#d4af37]/[0.04]">
+            <h3 className="text-sm font-black tracking-tight text-[var(--color-texto)] flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#d4af37] to-[#b89547] text-white inline-flex items-center justify-center shadow-md shadow-[#d4af37]/30">
+                <ShoppingCart size={15} strokeWidth={2.3} />
               </span>
               Carrito
-              <span className="text-[11px] font-black bg-[var(--color-fondo-input)] text-[var(--color-texto-suave)] px-2 py-0.5 rounded-full">
+              <span className={cn(
+                'text-[11px] font-black px-2 py-0.5 rounded-full transition-colors',
+                lineas.length > 0
+                  ? 'bg-[#d4af37] text-black'
+                  : 'bg-[var(--color-fondo-input)] text-[var(--color-texto-muted)]'
+              )}>
                 {lineas.length}
               </span>
             </h3>
             {lineas.length > 0 && (
-              <button onClick={() => setLineas([])} className="text-[10px] font-bold text-rose-500 hover:bg-rose-500/10 px-2 py-1 rounded-md uppercase tracking-widest">
-                Vaciar
+              <button onClick={() => setLineas([])} className="text-[10px] font-bold text-rose-500 hover:bg-rose-500/10 px-2 py-1 rounded-md uppercase tracking-widest inline-flex items-center gap-1">
+                <Trash2 size={11} /> Vaciar
               </button>
             )}
           </div>
@@ -552,12 +557,16 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
           {/* Líneas */}
           <div className="max-h-64 overflow-y-auto divide-y divide-[var(--color-borde-suave)]">
             {lineas.length === 0 ? (
-              <div className="p-8 text-center flex flex-col items-center">
-                <div className="w-14 h-14 rounded-2xl bg-[var(--color-fondo-input)] flex items-center justify-center text-[var(--color-texto-muted)] mb-3">
-                  <ShoppingCart size={22} />
+              <div className="px-6 py-10 text-center flex flex-col items-center">
+                <div className="relative mb-4">
+                  <div className="absolute inset-0 rounded-full bg-[#d4af37]/10 blur-xl" aria-hidden />
+                  <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-fondo-input)] to-[var(--color-fondo-hover)] flex items-center justify-center text-[var(--color-texto-muted)] ring-1 ring-[var(--color-borde-suave)]">
+                    <ShoppingCart size={26} strokeWidth={1.7} />
+                  </div>
+                  <Sparkles size={12} className="absolute -top-1 -right-1 text-[#d4af37]" />
                 </div>
-                <p className="text-xs font-bold text-[var(--color-texto-suave)]">Carrito vacío</p>
-                <p className="text-[11px] text-[var(--color-texto-muted)] mt-0.5">Selecciona productos para empezar.</p>
+                <p className="text-sm font-black text-[var(--color-texto)]">Carrito vacío</p>
+                <p className="text-[11px] text-[var(--color-texto-muted)] mt-1">Selecciona productos para empezar.</p>
               </div>
             ) : (
               lineas.map((l) => (
@@ -604,64 +613,81 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
             )}
           </div>
 
-          {/* Totales */}
-          <div className="px-5 py-4 space-y-2.5 border-t border-[var(--color-borde-suave)] bg-[var(--color-fondo)]/40">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[var(--color-texto-suave)]">Subtotal</span>
-              <span className="text-sm font-bold text-[var(--color-texto)]">{formatearMoneda(subtotal)}</span>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-xs font-bold text-[var(--color-texto-suave)]">Descuento</span>
-              <div className="relative w-28">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--color-texto-muted)] pointer-events-none">$</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  className="input w-full pl-6 pr-2 text-right text-xs py-1.5"
-                  value={descuento}
-                  onChange={(e) => setDescuento(e.target.value)}
-                />
+          {/* Resumen de totales — tarjeta visual destacada */}
+          <div className="px-5 pt-5 pb-4 border-t border-[var(--color-borde-suave)]">
+            <div className="rounded-2xl bg-gradient-to-br from-[#d4af37]/[0.06] via-transparent to-transparent border border-[var(--color-borde-suave)] p-4 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[var(--color-texto-suave)]">Subtotal</span>
+                <span className="text-sm font-bold tabular-nums text-[var(--color-texto)]">{formatearMoneda(subtotal)}</span>
               </div>
-            </div>
-            <div className="pt-2 mt-1 border-t border-dashed border-[var(--color-borde-suave)] flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-widest text-[var(--color-texto-suave)]">Total</span>
-              <span className="text-2xl font-black text-[#d4af37]">{formatearMoneda(total)}</span>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs font-bold text-[var(--color-texto-suave)]">Descuento</span>
+                <div className="relative w-28">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[var(--color-texto-muted)] pointer-events-none">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="w-full pl-6 pr-2 py-1.5 text-right text-xs tabular-nums rounded-lg bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] focus:border-[#d4af37] outline-none transition-colors"
+                    value={descuento}
+                    onChange={(e) => setDescuento(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="pt-3 mt-1 border-t border-dashed border-[#d4af37]/30 flex items-end justify-between">
+                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--color-texto-suave)] pb-1">Total</span>
+                <span className="text-3xl font-black tabular-nums bg-gradient-to-br from-[#d4af37] to-[#b89547] bg-clip-text text-transparent leading-none">
+                  {formatearMoneda(total)}
+                </span>
+              </div>
             </div>
           </div>
 
           {/* Configuración del pedido */}
-          <div className="px-5 py-4 border-t border-[var(--color-borde-suave)] space-y-4">
-            {/* Tipo de venta */}
+          <div className="px-5 pb-5 space-y-4">
+            {/* Tipo de venta — segmented control con iconos */}
             <div className="grid grid-cols-2 gap-2">
               {([
-                { v: 'VENTA_DIRECTA' as TipoVenta, label: 'Venta directa', desc: 'Entrega inmediata', accent: 'emerald' },
-                { v: 'PEDIDO' as TipoVenta, label: 'Pedido', desc: 'Entrega futura', accent: 'amber' },
+                { v: 'VENTA_DIRECTA' as TipoVenta, label: 'Venta directa', desc: 'Entrega inmediata', icon: Zap,      accent: 'emerald' },
+                { v: 'PEDIDO'        as TipoVenta, label: 'Pedido',        desc: 'Entrega futura',    icon: Calendar, accent: 'amber'   },
               ] as const).map((opt) => {
                 const selected = tipo === opt.v;
+                const Icon = opt.icon;
                 return (
                   <button
                     key={opt.v}
                     type="button"
                     onClick={() => setTipo(opt.v)}
                     className={cn(
-                      'rounded-xl border-2 p-3 text-left transition-all',
+                      'group rounded-2xl border-2 p-3 text-left transition-all flex items-start gap-2.5',
                       selected
                         ? opt.accent === 'emerald'
-                          ? 'border-emerald-500 bg-emerald-500/10'
-                          : 'border-amber-500 bg-amber-500/10'
-                        : 'border-[var(--color-borde-suave)] text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)]'
+                          ? 'border-emerald-500 bg-emerald-500/10 shadow-sm shadow-emerald-500/20'
+                          : 'border-amber-500 bg-amber-500/10 shadow-sm shadow-amber-500/20'
+                        : 'border-[var(--color-borde-suave)] text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)] hover:border-[var(--color-borde)]'
                     )}
                     aria-pressed={selected}
                   >
-                    <p className={cn(
-                      'text-xs font-black',
-                      selected && opt.accent === 'emerald' && 'text-emerald-600 dark:text-emerald-400',
-                      selected && opt.accent === 'amber' && 'text-amber-600 dark:text-amber-400',
+                    <span className={cn(
+                      'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors',
+                      selected
+                        ? opt.accent === 'emerald'
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-amber-500 text-white'
+                        : 'bg-[var(--color-fondo-input)] text-[var(--color-texto-muted)]'
                     )}>
-                      {opt.label}
-                    </p>
-                    <p className="text-[10px] opacity-70 mt-0.5">{opt.desc}</p>
+                      <Icon size={14} strokeWidth={2.3} />
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <p className={cn(
+                        'text-xs font-black leading-tight',
+                        selected && opt.accent === 'emerald' && 'text-emerald-600 dark:text-emerald-400',
+                        selected && opt.accent === 'amber' && 'text-amber-600 dark:text-amber-400',
+                      )}>
+                        {opt.label}
+                      </p>
+                      <p className="text-[10px] opacity-70 mt-0.5 leading-tight">{opt.desc}</p>
+                    </span>
                   </button>
                 );
               })}
@@ -682,53 +708,56 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
               </div>
             )}
 
-            {/* Método pago */}
+            {/* Método de pago — con iconos en lugar de letras */}
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)] mb-1.5">Método de pago</label>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)] mb-2">Método de pago</label>
               <div className="grid grid-cols-4 gap-1.5">
                 {([
-                  { v: 'EFECTIVO' as MetodoPago, label: 'EFEC', accent: 'emerald' },
-                  { v: 'TARJETA' as MetodoPago, label: 'TARJ', accent: 'blue' },
-                  { v: 'TRANSFERENCIA' as MetodoPago, label: 'TRAN', accent: 'cyan' },
-                  { v: 'OTRO' as MetodoPago, label: 'OTRO', accent: 'slate' },
+                  { v: 'EFECTIVO'      as MetodoPago, label: 'Efectivo',     short: 'Efec', icon: Banknote,        accent: 'emerald' },
+                  { v: 'TARJETA'       as MetodoPago, label: 'Tarjeta',      short: 'Tarj', icon: CreditCard,      accent: 'blue'    },
+                  { v: 'TRANSFERENCIA' as MetodoPago, label: 'Transferencia', short: 'Tran', icon: ArrowRightLeft, accent: 'cyan'    },
+                  { v: 'OTRO'          as MetodoPago, label: 'Otro',         short: 'Otro', icon: MoreHorizontal,  accent: 'slate'   },
                 ] as const).map((m) => {
                   const selected = metodoPago === m.v;
+                  const Icon = m.icon;
                   return (
                     <button
                       key={m.v}
                       type="button"
                       onClick={() => setMetodoPago(m.v)}
                       className={cn(
-                        'rounded-lg border-2 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all',
+                        'rounded-xl border-2 py-2.5 px-1 flex flex-col items-center justify-center gap-1 transition-all',
                         selected
-                          ? m.accent === 'emerald' ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                          : m.accent === 'blue' ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                          : m.accent === 'cyan' ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'
-                          : 'border-slate-500 bg-slate-500/10 text-slate-600 dark:text-slate-400'
-                          : 'border-[var(--color-borde-suave)] text-[var(--color-texto-muted)] hover:bg-[var(--color-fondo-hover)]'
+                          ? m.accent === 'emerald' ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm shadow-emerald-500/20'
+                          : m.accent === 'blue'    ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400 shadow-sm shadow-blue-500/20'
+                          : m.accent === 'cyan'    ? 'border-cyan-500 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 shadow-sm shadow-cyan-500/20'
+                          : 'border-slate-500 bg-slate-500/10 text-slate-600 dark:text-slate-400 shadow-sm shadow-slate-500/20'
+                          : 'border-[var(--color-borde-suave)] text-[var(--color-texto-muted)] hover:bg-[var(--color-fondo-hover)] hover:border-[var(--color-borde)]'
                       )}
                       aria-pressed={selected}
+                      title={m.label}
                     >
-                      {m.label}
+                      <Icon size={18} strokeWidth={2.2} />
+                      <span className="text-[10px] font-black uppercase tracking-wider">{m.short}</span>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Pagado */}
+            {/* Pagado — input más visible y grande */}
             <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)] mb-1.5">
                 {tipo === 'VENTA_DIRECTA' ? 'Cobrado' : 'Anticipo (opcional)'}
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-texto-muted)] pointer-events-none">$</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base font-bold text-[var(--color-texto-muted)] pointer-events-none">$</span>
                 <input
                   type="number"
                   step="0.01"
                   min="0"
                   max={total}
-                  className="input w-full pl-7 text-sm"
+                  className="w-full pl-9 pr-3 py-3 rounded-xl bg-[var(--color-fondo-input)] border-2 border-[var(--color-borde-suave)] focus:border-[#d4af37] outline-none text-base font-bold tabular-nums transition-colors"
                   value={pagado}
                   onChange={(e) => setPagado(e.target.value)}
                   placeholder="0.00"
@@ -740,7 +769,7 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
             <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)] mb-1.5">Notas internas</label>
               <textarea
-                className="input w-full text-xs min-h-[60px]"
+                className="w-full px-3 py-2.5 rounded-xl bg-[var(--color-fondo-input)] border border-[var(--color-borde-suave)] focus:border-[#d4af37] outline-none text-xs min-h-[60px] resize-y transition-colors"
                 placeholder="Instrucciones, dirección de entrega..."
                 value={notas}
                 onChange={(e) => setNotas(e.target.value)}
@@ -756,10 +785,14 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
             <button
               onClick={handleCrear}
               disabled={creando || lineas.length === 0}
-              className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#d4af37] text-black font-black uppercase text-sm tracking-widest hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#d4af37]/30"
+              className="group relative w-full inline-flex items-center justify-center gap-2 py-4 rounded-2xl bg-gradient-to-br from-[#d4af37] to-[#b89547] text-black font-black uppercase text-sm tracking-widest hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-[#d4af37]/30 transition-all overflow-hidden"
             >
-              {creando ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-              {tipo === 'VENTA_DIRECTA' ? 'Cobrar' : 'Crear pedido'} · {formatearMoneda(total)}
+              {/* Brillo sutil que pasa al hover */}
+              <span aria-hidden className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+              <span className="relative inline-flex items-center gap-2">
+                {creando ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} strokeWidth={2.5} />}
+                {tipo === 'VENTA_DIRECTA' ? 'Cobrar' : 'Crear pedido'} · {formatearMoneda(total)}
+              </span>
             </button>
           </div>
         </div>
