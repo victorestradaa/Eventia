@@ -33,6 +33,8 @@ type Linea = {
   nombre: string;
   cantidad: number;
   precioUnit: number;
+  /** Precio del catálogo cuando se agregó (para detectar override sin tocar BD) */
+  precioOriginal?: number;
   notas?: string;
   stockDisponible?: number;
   controlStock?: boolean;
@@ -172,6 +174,7 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
           nombre: p.nombre,
           cantidad: 1,
           precioUnit: Number(p.precio),
+          precioOriginal: Number(p.precio),
           stockDisponible: p.stock,
           controlStock: p.controlStock,
         },
@@ -635,47 +638,68 @@ export default function NuevaVentaPVClient({ proveedorId, productos, clientes: c
                 <p className="text-[11px] text-[var(--color-texto-muted)] mt-1">Selecciona productos para empezar.</p>
               </div>
             ) : (
-              lineas.map((l) => (
-                <div key={l.key} className="px-4 py-3 space-y-2">
-                  {l.productoId ? (
-                    <p className="text-sm font-bold">{l.nombre}</p>
-                  ) : (
-                    <input
-                      type="text"
-                      className="input w-full text-sm"
-                      placeholder="Nombre del producto"
-                      value={l.nombre}
-                      onChange={(e) => actualizarLinea(l.key, { nombre: e.target.value })}
-                    />
-                  )}
-                  <div className="flex items-center gap-2">
-                    <div className="inline-flex items-center rounded-lg border border-[var(--color-borde-suave)]">
-                      <button onClick={() => cambiarCantidad(l.key, -1)} className="p-1.5 text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)] rounded-l-lg">
-                        <Minus size={12} />
-                      </button>
-                      <span className="px-2 text-xs font-bold min-w-[28px] text-center">{l.cantidad}</span>
-                      <button onClick={() => cambiarCantidad(l.key, 1)} className="p-1.5 text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)] rounded-r-lg">
-                        <Plus size={12} />
-                      </button>
-                    </div>
-                    {!l.productoId && (
+              lineas.map((l) => {
+                const precioOverride = l.precioOriginal != null && Math.abs(l.precioUnit - l.precioOriginal) > 0.005;
+                return (
+                  <div key={l.key} className="px-4 py-3 space-y-2">
+                    {l.productoId ? (
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold flex-1 min-w-0 truncate">{l.nombre}</p>
+                        {precioOverride && (
+                          <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-md shrink-0" title={`Precio original: ${formatearMoneda(l.precioOriginal!)}`}>
+                            Precio modificado
+                          </span>
+                        )}
+                      </div>
+                    ) : (
                       <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className="input w-24 text-xs"
-                        placeholder="Precio"
-                        value={l.precioUnit || ''}
-                        onChange={(e) => actualizarLinea(l.key, { precioUnit: parseFloat(e.target.value) || 0 })}
+                        type="text"
+                        className="input w-full text-sm"
+                        placeholder="Nombre del producto"
+                        value={l.nombre}
+                        onChange={(e) => actualizarLinea(l.key, { nombre: e.target.value })}
                       />
                     )}
-                    <p className="text-xs font-bold ml-auto">{formatearMoneda(l.cantidad * l.precioUnit)}</p>
-                    <button onClick={() => quitarLinea(l.key)} className="p-1 text-rose-500 hover:bg-rose-500/10 rounded-md">
-                      <Trash2 size={12} />
-                    </button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Cantidad */}
+                      <div className="inline-flex items-center rounded-lg border border-[var(--color-borde-suave)] shrink-0">
+                        <button onClick={() => cambiarCantidad(l.key, -1)} className="p-1.5 text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)] rounded-l-lg">
+                          <Minus size={12} />
+                        </button>
+                        <span className="px-2 text-xs font-bold min-w-[28px] text-center tabular-nums">{l.cantidad}</span>
+                        <button onClick={() => cambiarCantidad(l.key, 1)} className="p-1.5 text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)] rounded-r-lg">
+                          <Plus size={12} />
+                        </button>
+                      </div>
+
+                      {/* Precio unitario editable */}
+                      <div className={cn(
+                        'flex items-stretch rounded-lg border overflow-hidden shrink-0',
+                        precioOverride
+                          ? 'border-amber-500/60 bg-amber-500/5'
+                          : 'border-[var(--color-borde-suave)]'
+                      )}>
+                        <span className="flex items-center px-1.5 text-[10px] font-bold text-[var(--color-texto-muted)] select-none">$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className="w-20 py-1 pr-1.5 bg-transparent border-0 outline-none text-xs font-bold tabular-nums text-right"
+                          placeholder="0.00"
+                          value={l.precioUnit || ''}
+                          onChange={(e) => actualizarLinea(l.key, { precioUnit: parseFloat(e.target.value) || 0 })}
+                          title={l.precioOriginal != null ? `Precio original: ${formatearMoneda(l.precioOriginal)}` : undefined}
+                        />
+                      </div>
+
+                      <p className="text-xs font-black ml-auto tabular-nums">{formatearMoneda(l.cantidad * l.precioUnit)}</p>
+                      <button onClick={() => quitarLinea(l.key)} className="p-1 text-rose-500 hover:bg-rose-500/10 rounded-md shrink-0" aria-label="Quitar">
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 

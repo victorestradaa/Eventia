@@ -7,7 +7,8 @@ import {
 import { getPedidoDetallePV, cambiarEstadoPedidoPV, registrarAbonoPedidoPV, listarPedidosPV } from '@/lib/actions/puntoVentaActions';
 import { descargarReciboPDF, compartirReciboPDF } from '@/lib/pdf/reciboPV';
 import { cn, formatearMoneda } from '@/lib/utils';
-import { FileText, Send } from 'lucide-react';
+import { FileText, Send, Pencil } from 'lucide-react';
+import EditarPedidoModal from './EditarPedidoModal';
 
 type EstadoPV = 'PENDIENTE' | 'EN_PREPARACION' | 'LISTO' | 'ENTREGADO' | 'CANCELADO';
 type TipoPV = 'VENTA_DIRECTA' | 'PEDIDO';
@@ -59,6 +60,7 @@ export default function PedidosPVClient({ proveedorId, pedidosIniciales }: Props
   const [detalleId, setDetalleId] = useState<string | null>(null);
   const [detalle, setDetalle] = useState<any | null>(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
+  const [editandoOpen, setEditandoOpen] = useState(false);
 
   // Acciones en curso
   const [transicionando, setTransicionando] = useState(false);
@@ -362,8 +364,28 @@ export default function PedidosPVClient({ proveedorId, pedidosIniciales }: Props
           onCambiarEstado={cambiarA}
           onConfirmarCancelar={confirmarCancelar}
           onAbonar={registrarAbono}
+          onEditar={() => setEditandoOpen(true)}
           onCopiarLink={copiarLink}
           onWhatsApp={enviarWhatsApp}
+        />
+      )}
+
+      {/* Modal editar pedido */}
+      {editandoOpen && detalle && (
+        <EditarPedidoModal
+          proveedorId={proveedorId}
+          pedido={detalle}
+          onClose={() => setEditandoOpen(false)}
+          onSaved={(actualizado) => {
+            setDetalle(actualizado);
+            setEditandoOpen(false);
+            // Refrescar la lista para reflejar el nuevo total
+            setPedidos((prev) => prev.map((p) => p.id === actualizado.id ? {
+              ...p,
+              total: actualizado.total,
+              pagado: actualizado.pagado,
+            } : p));
+          }}
         />
       )}
     </div>
@@ -425,7 +447,7 @@ function DrawerDetalle({
   detalle, cargando, transicionando, abonando, copiado,
   showAbono, showCancelar, abonoMonto, abonoMetodo, cancelMotivo,
   setShowAbono, setShowCancelar, setAbonoMonto, setAbonoMetodo, setCancelMotivo,
-  onCerrar, onAvanzar, onCambiarEstado, onConfirmarCancelar, onAbonar,
+  onCerrar, onAvanzar, onCambiarEstado, onConfirmarCancelar, onAbonar, onEditar,
   onCopiarLink, onWhatsApp,
 }: any) {
   if (!detalle && !cargando) return null;
@@ -604,6 +626,13 @@ function DrawerDetalle({
                     <Send size={12} /> Enviar recibo
                   </button>
                 </div>
+
+                <button
+                  onClick={onEditar}
+                  className="w-full py-2.5 rounded-xl text-xs font-black border-2 border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/10 uppercase tracking-widest inline-flex items-center justify-center gap-1.5"
+                >
+                  <Pencil size={12} /> Editar pedido
+                </button>
 
                 <div className="flex gap-2">
                   {detalle.tipo === 'PEDIDO' && (

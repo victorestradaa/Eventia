@@ -649,6 +649,181 @@ export async function cambiarEstadoPedidoPV(
   }
 }
 
+/**
+ * Edita las líneas (productos, cantidades, precios) de un pedido ya creado.
+ * Ajusta el stock por diferencia, recalcula totales y deja un registro en
+ * el historial. No se permite editar pedidos cancelados ni entregados.
+ */
+export async function editarPedidoPV(
+  id: string,
+  proveedorId: string,
+  lineasNuevas: Array<{
+    productoId?: string | null;
+    nombre: string;
+    cantidad: number;
+    precioUnit: number;
+    notas?: string | null;
+  }>,
+  notaCambio?: string,
+) {
+  try {
+    if (!lineasNuevas || lineasNuevas.length === 0) {
+      return { success: false, error: 'El pedido debe tener al menos un producto.' };
+    }
+    for (const l of lineasNuevas) {
+      if (!l.nombre?.trim()) return { success: false, error: 'Cada línea necesita un nombre.' };
+      if (l.cantidad <= 0) return { success: false, error: 'La cantidad debe ser mayor a 0.' };
+      if (l.precioUnit < 0) return { success: false, error: 'El precio unitario no puede ser negativo.' };
+    }
+
+    const pedido = await prisma.pedidoPV.findFirst({
+      where: { id, proveedorId },
+      select: {
+        id: true,
+        folio: true,
+        estado: true,
+        descuento: true,
+        pagado: true,
+        sesionCajaId: true,
+        lineas: { select: { productoId: true, cantidad: true } },
+      },
+    });
+    if (!pedido) return { success: false, error: 'Pedido no encontrado.' };
+    if (pedido.estado === 'CANCELADO') {
+      return { success: false, error: 'No se puede editar un pedido cancelado.' };
+    }
+    if (pedido.estado === 'ENTREGADO') {
+      return { success: false, error: 'No se puede editar un pedido ya entregado.' };
+    }
+
+    // Diff de stock: para cada productoId, calcular delta (cantidad nueva - cantidad vieja)
+    const stockDiff = new Map<string, number>();
+    for (const l of pedido.lineas) {
+      if (l.productoId) {
+        stockDiff.set(l.productoId, (stockDiff.get(l.productoId) || 0) - l.cantidad);
+      }
+    }
+    for (const l of lineasNuevas) {
+      if (l.productoId) {
+        stockDiff.set(l.productoId, (stockDiff.get(l.productoId) || 0) + l.cantidad);
+      }
+    }
+
+    // Validar stock: si el delta es positivo (necesitamos más), validar que haya
+    if (stockDiff.size > 0) {
+      const productos = await prisma.productoPV.findMany({
+        where: { id: { in: Array.from(stockDiff.keys()) }, proveedorId },
+        select: { id: true, nombre: true, stock: true, controlStock: true },
+      });
+      for (const p of productos) {
+        if (!p.controlStock) continue;
+        const delta = stockDiff.get(p.id) || 0;
+        if (delta > 0 && p.stock < delta) {
+          return {
+            success: false,
+            error: `Stock insuficiente para "${p.nombre}". Necesitas ${delta} más, disponible: ${p.stock}.`,
+          };
+        }
+      }
+    }
+
+    // Calcular nuevos totales
+    const subtotal = lineasNuevas.reduce((s, l) => s + l.cantidad * l.precioUnit, 0);
+    const descuento = Number(pedido.descuento);
+    const total = Math.max(0, subtotal - descuento);
+    const pagadoActual = Number(pedido.pagado);
+    // Si el nuevo total < pagado, hay un sobrepago que hay que devolver
+    const sobrepago = Math.max(0, pagadoActual - total);
+
+    const pedidoActualizado = await prisma.$transaction(async (tx) => {
+      // 1) Ajustar stock por diff
+      for (const [productoId, delta] of stockDiff.entries()) {
+        if (delta === 0) continue;
+        const prod = await tx.productoPV.findUnique({ where: { id: productoId }, select: { controlStock: true } });
+        if (prod?.controlStock) {
+          await tx.productoPV.update({
+            where: { id: productoId },
+            data: { stock: { decrement: delta } }, // delta positivo decrementa, negativo incrementa
+          });
+        }
+      }
+
+      // 2) Borrar líneas viejas y crear nuevas
+      await tx.lineaPedidoPV.deleteMany({ where: { pedidoId: id } });
+      await tx.lineaPedidoPV.createMany({
+        data: lineasNuevas.map((l) => ({
+          pedidoId: id,
+          productoId: l.productoId || null,
+          nombre: l.nombre.trim(),
+          cantidad: l.cantidad,
+          precioUnit: l.precioUnit,
+          subtotal: l.cantidad * l.precioUnit,
+          notas: l.notas?.trim() || null,
+        })),
+      });
+
+      // 3) Actualizar pedido
+      await tx.pedidoPV.update({
+        where: { id },
+        data: {
+          subtotal,
+          total,
+          pagado: Math.min(pagadoActual, total),
+        },
+      });
+
+      // 4) Si hubo sobrepago, registrar AJUSTE negativo en caja (devolución)
+      if (sobrepago > 0) {
+        await tx.movimientoCajaPV.create({
+          data: {
+            proveedorId,
+            sesionId: pedido.sesionCajaId || null,
+            pedidoId: id,
+            tipo: 'AJUSTE',
+            metodoPago: 'EFECTIVO', // asumimos efectivo; el proveedor sabe cuál devuelve
+            monto: -sobrepago,
+            concepto: `Devolución por edición folio #${pedido.folio}`,
+          },
+        });
+      }
+
+      // 5) Registrar la modificación en historial
+      const notaBase = `Pedido editado. Subtotal: ${subtotal.toFixed(2)}. Total: ${total.toFixed(2)}.`;
+      const nota = notaCambio?.trim() ? `${notaBase} ${notaCambio.trim()}` : notaBase;
+      await tx.historialPedidoPV.create({
+        data: { pedidoId: id, estado: pedido.estado as any, nota },
+      });
+
+      return tx.pedidoPV.findUnique({
+        where: { id },
+        include: {
+          lineas: true,
+          historial: { orderBy: { creadoEn: 'desc' } },
+          cliente: true,
+          proveedor: {
+            select: {
+              nombre: true,
+              logoUrl: true,
+              ciudad: true,
+              estado: true,
+              direccion: true,
+              usuario: { select: { telefono: true, email: true } },
+            },
+          },
+        },
+      });
+    });
+
+    revalidatePath('/proveedor/punto-venta/pedidos');
+    revalidatePath('/proveedor/punto-venta/productos');
+    revalidatePath('/proveedor/punto-venta/caja');
+    return { success: true, data: serialize(pedidoActualizado) };
+  } catch (error: any) {
+    console.error('Error al editar pedido PV:', error);
+    return { success: false, error: error.message || 'Error del servidor.' };
+  }
+}
+
 export async function registrarAbonoPedidoPV(
   id: string,
   proveedorId: string,
