@@ -70,6 +70,7 @@ model Proveedor {
   pedidosPV               PedidoPV[]
   sesionesCajaPV          SesionCajaPV[]
   movimientosCajaPV       MovimientoCajaPV[]
+  gastosPV                GastoPV[]
 }
 
 model Servicio {
@@ -487,6 +488,7 @@ model ProductoPV {
 
   proveedor    Proveedor     @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
   lineas       LineaPedidoPV[]
+  gastos       GastoPV[]
 
   @@index([proveedorId, activo])
   @@index([proveedorId, categoria])
@@ -609,6 +611,7 @@ model SesionCajaPV {
   proveedor     Proveedor        @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
   movimientos   MovimientoCajaPV[]
   pedidos       PedidoPV[]
+  gastos        GastoPV[]
 
   @@index([proveedorId, estado])
 }
@@ -619,6 +622,7 @@ enum TipoMovimientoCaja {
   RETIRO
   INGRESO
   AJUSTE
+  GASTO
 }
 
 model MovimientoCajaPV {
@@ -626,6 +630,7 @@ model MovimientoCajaPV {
   proveedorId   String
   sesionId      String?
   pedidoId      String?
+  gastoId       String?
   tipo          TipoMovimientoCaja
   metodoPago    MetodoPagoPV     @default(EFECTIVO)
   monto         Decimal          @db.Decimal(10, 2)
@@ -635,7 +640,86 @@ model MovimientoCajaPV {
   proveedor     Proveedor        @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
   sesion        SesionCajaPV?    @relation(fields: [sesionId], references: [id])
   pedido        PedidoPV?        @relation(fields: [pedidoId], references: [id])
+  gasto         GastoPV?         @relation(fields: [gastoId], references: [id])
 
   @@index([proveedorId, creadoEn])
   @@index([sesionId])
+  @@index([gastoId])
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
+// GASTOS — Compras / egresos del proveedor
+// ────────────────────────────────────────────────────────────────────────────────
+
+enum TipoGastoPV {
+  MERCANCIA   // ↗ inventario (productos para reventa)
+  INSUMOS     // material de uso, consumibles
+  MAQUINARIA  // equipo de trabajo, herramientas
+  OPERATIVO   // renta, sueldos, servicios, otros
+}
+
+enum FormaPagoGastoPV {
+  CONTADO     // se paga al momento (afecta caja inmediatamente)
+  CREDITO     // se paga después (genera cuentas por pagar)
+}
+
+model GastoPV {
+  id              String           @id @default(cuid())
+  proveedorId     String
+  sesionCajaId    String?
+  tipo            TipoGastoPV
+  concepto        String
+  cantidad        Int              @default(1)
+  precioUnit      Decimal          @db.Decimal(10, 2)
+  total           Decimal          @db.Decimal(10, 2)
+  // Si es MERCANCIA y se asoció a un producto del catálogo
+  productoId      String?
+  proveedorTerceroNombre String?    // proveedor externo (a quién le compré)
+  formaPago       FormaPagoGastoPV
+  fechaCompra     DateTime         @default(now())
+  notas           String?
+  // Si es CONTADO: pagos por método; si es CREDITO: cronograma
+  anulado         Boolean          @default(false)
+  creadoEn        DateTime         @default(now())
+  actualizadoEn   DateTime         @updatedAt
+
+  proveedor       Proveedor        @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+  producto        ProductoPV?      @relation(fields: [productoId], references: [id])
+  sesionCaja      SesionCajaPV?    @relation(fields: [sesionCajaId], references: [id])
+  pagosContado    GastoPagoContadoPV[]
+  pagosCredito    GastoPagoCreditoPV[]
+  movimientos     MovimientoCajaPV[]
+
+  @@index([proveedorId, fechaCompra])
+  @@index([proveedorId, tipo])
+}
+
+// Para gastos pagados al CONTADO — desglose por método (puede ser combinación)
+model GastoPagoContadoPV {
+  id          String       @id @default(cuid())
+  gastoId     String
+  metodoPago  MetodoPagoPV
+  monto       Decimal      @db.Decimal(10, 2)
+
+  gasto       GastoPV      @relation(fields: [gastoId], references: [id], onDelete: Cascade)
+
+  @@index([gastoId])
+}
+
+// Para gastos a CREDITO — cronograma de pagos / mensualidades
+model GastoPagoCreditoPV {
+  id              String        @id @default(cuid())
+  gastoId         String
+  numeroPago      Int           // 1, 2, 3... para meses
+  montoEsperado   Decimal       @db.Decimal(10, 2)
+  fechaVencimiento DateTime
+  pagado          Boolean       @default(false)
+  fechaPago       DateTime?
+  montoPagado     Decimal?      @db.Decimal(10, 2)
+  metodoPagoUsado MetodoPagoPV?
+
+  gasto           GastoPV       @relation(fields: [gastoId], references: [id], onDelete: Cascade)
+
+  @@index([gastoId])
+  @@index([pagado, fechaVencimiento])
 }

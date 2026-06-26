@@ -1342,3 +1342,328 @@ export async function subirImagenProductoPV(
     return { success: false, error: error.message || 'Error del servidor.' };
   }
 }
+
+/* ─── GASTOS ──────────────────────────────────────────────────────────────── */
+
+type TipoGasto = 'MERCANCIA' | 'INSUMOS' | 'MAQUINARIA' | 'OPERATIVO';
+type FormaPagoGasto = 'CONTADO' | 'CREDITO';
+type MetPag = 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO';
+
+export async function crearGastoPV(
+  proveedorId: string,
+  data: {
+    tipo: TipoGasto;
+    concepto: string;
+    cantidad: number;
+    precioUnit: number;
+    proveedorTerceroNombre?: string | null;
+    notas?: string | null;
+    fechaCompra?: string | null;
+    // Mercancía
+    productoId?: string | null;
+    /** Si productoId es null y se quiere CREAR un nuevo producto al vuelo */
+    productoNuevo?: {
+      nombre: string;
+      categoria?: string | null;
+      sku?: string | null;
+    } | null;
+    // Forma de pago
+    formaPago: FormaPagoGasto;
+    /** Si CONTADO: desglose por método (la suma debe igualar el total) */
+    pagosContado?: Array<{ metodoPago: MetPag; monto: number }>;
+    /** Si CREDITO: cronograma de pagos */
+    pagosCredito?: Array<{ numeroPago: number; fechaVencimiento: string; montoEsperado: number }>;
+  }
+) {
+  try {
+    // ─── Validaciones ─────────────────────────────────────────────────
+    if (!data.concepto?.trim()) return { success: false, error: 'Falta el concepto.' };
+    if (data.cantidad <= 0) return { success: false, error: 'La cantidad debe ser mayor a 0.' };
+    if (data.precioUnit < 0) return { success: false, error: 'El precio no puede ser negativo.' };
+    const total = data.cantidad * data.precioUnit;
+    if (total <= 0) return { success: false, error: 'El total debe ser mayor a 0.' };
+
+    if (data.formaPago === 'CONTADO') {
+      if (!data.pagosContado || data.pagosContado.length === 0) {
+        return { success: false, error: 'Selecciona al menos un método de pago.' };
+      }
+      const suma = data.pagosContado.reduce((s, p) => s + Number(p.monto), 0);
+      if (Math.abs(suma - total) > 0.01) {
+        return { success: false, error: `La suma de pagos (${suma.toFixed(2)}) no cuadra con el total (${total.toFixed(2)}).` };
+      }
+    } else {
+      if (!data.pagosCredito || data.pagosCredito.length === 0) {
+        return { success: false, error: 'El crédito necesita al menos un pago programado.' };
+      }
+      const suma = data.pagosCredito.reduce((s, p) => s + Number(p.montoEsperado), 0);
+      if (Math.abs(suma - total) > 0.01) {
+        return { success: false, error: `La suma del cronograma (${suma.toFixed(2)}) no cuadra con el total (${total.toFixed(2)}).` };
+      }
+    }
+
+    // Sesión de caja abierta (si la hay)
+    const sesion = await prisma.sesionCajaPV.findFirst({
+      where: { proveedorId, estado: 'ABIERTA' },
+      select: { id: true },
+      orderBy: { abiertaEn: 'desc' },
+    });
+    const sesionId = sesion?.id || null;
+
+    const fechaCompra = data.fechaCompra ? new Date(data.fechaCompra) : new Date();
+
+    const gasto = await prisma.$transaction(async (tx) => {
+      // 1) Si es MERCANCIA y el usuario está creando un producto nuevo, lo creamos
+      let productoIdFinal: string | null = data.productoId || null;
+      if (data.tipo === 'MERCANCIA' && !productoIdFinal && data.productoNuevo) {
+        const nuevoProd = await tx.productoPV.create({
+          data: {
+            proveedorId,
+            nombre: data.productoNuevo.nombre.trim(),
+            categoria: data.productoNuevo.categoria?.trim() || null,
+            sku: data.productoNuevo.sku?.trim() || null,
+            precio: data.precioUnit, // precio sugerido = costo (el usuario puede ajustarlo luego)
+            costo: data.precioUnit,
+            stock: data.cantidad,
+            controlStock: true,
+            activo: true,
+            imagenes: [],
+          },
+        });
+        productoIdFinal = nuevoProd.id;
+      } else if (data.tipo === 'MERCANCIA' && productoIdFinal) {
+        // Si es MERCANCIA y se ligó a producto existente: aumentar stock + actualizar costo
+        await tx.productoPV.update({
+          where: { id: productoIdFinal },
+          data: {
+            stock: { increment: data.cantidad },
+            costo: data.precioUnit,
+          },
+        });
+      }
+
+      // 2) Crear el gasto
+      const g = await tx.gastoPV.create({
+        data: {
+          proveedorId,
+          sesionCajaId: data.formaPago === 'CONTADO' ? sesionId : null,
+          tipo: data.tipo as any,
+          concepto: data.concepto.trim(),
+          cantidad: data.cantidad,
+          precioUnit: data.precioUnit,
+          total,
+          productoId: productoIdFinal,
+          proveedorTerceroNombre: data.proveedorTerceroNombre?.trim() || null,
+          formaPago: data.formaPago as any,
+          fechaCompra,
+          notas: data.notas?.trim() || null,
+        },
+      });
+
+      // 3) Registrar pagos
+      if (data.formaPago === 'CONTADO' && data.pagosContado) {
+        for (const p of data.pagosContado) {
+          if (p.monto <= 0) continue;
+          // Registrar en GastoPagoContadoPV
+          await tx.gastoPagoContadoPV.create({
+            data: { gastoId: g.id, metodoPago: p.metodoPago as any, monto: p.monto },
+          });
+          // Y en MovimientoCajaPV (descuenta de la caja)
+          await tx.movimientoCajaPV.create({
+            data: {
+              proveedorId,
+              sesionId,
+              gastoId: g.id,
+              tipo: 'GASTO',
+              metodoPago: p.metodoPago as any,
+              monto: p.monto,
+              concepto: `Gasto: ${data.concepto.trim()}`,
+            },
+          });
+        }
+      } else if (data.formaPago === 'CREDITO' && data.pagosCredito) {
+        for (const c of data.pagosCredito) {
+          await tx.gastoPagoCreditoPV.create({
+            data: {
+              gastoId: g.id,
+              numeroPago: c.numeroPago,
+              fechaVencimiento: new Date(c.fechaVencimiento),
+              montoEsperado: c.montoEsperado,
+              pagado: false,
+            },
+          });
+        }
+      }
+
+      return g;
+    });
+
+    revalidatePath('/proveedor/punto-venta/caja');
+    revalidatePath('/proveedor/punto-venta/gastos');
+    revalidatePath('/proveedor/punto-venta/productos');
+    return { success: true, data: serialize(gasto) };
+  } catch (error: any) {
+    console.error('Error al crear gasto PV:', error);
+    return { success: false, error: error.message || 'Error del servidor.' };
+  }
+}
+
+export async function listarGastosPV(
+  proveedorId: string,
+  filters?: { desde?: string | null; hasta?: string | null; tipo?: TipoGasto | 'TODOS' }
+) {
+  try {
+    const where: any = { proveedorId, anulado: false };
+    if (filters?.desde || filters?.hasta) {
+      where.fechaCompra = {};
+      if (filters.desde) where.fechaCompra.gte = new Date(filters.desde);
+      if (filters.hasta) where.fechaCompra.lte = new Date(filters.hasta);
+    }
+    if (filters?.tipo && filters.tipo !== 'TODOS') where.tipo = filters.tipo;
+
+    const gastos = await prisma.gastoPV.findMany({
+      where,
+      orderBy: { fechaCompra: 'desc' },
+      include: {
+        producto: { select: { id: true, nombre: true } },
+        pagosContado: true,
+        pagosCredito: { orderBy: { numeroPago: 'asc' } },
+      },
+    });
+    return { success: true, data: serialize(gastos) };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function listarCuentasPorPagarPV(proveedorId: string) {
+  try {
+    const pagos = await prisma.gastoPagoCreditoPV.findMany({
+      where: { pagado: false, gasto: { proveedorId, anulado: false } },
+      orderBy: { fechaVencimiento: 'asc' },
+      include: {
+        gasto: {
+          select: {
+            id: true,
+            concepto: true,
+            tipo: true,
+            proveedorTerceroNombre: true,
+            total: true,
+          },
+        },
+      },
+    });
+    return { success: true, data: serialize(pagos) };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function pagarCuotaCreditoPV(
+  pagoCreditoId: string,
+  proveedorId: string,
+  data: { monto: number; metodoPago: MetPag; fechaPago?: string | null }
+) {
+  try {
+    if (data.monto <= 0) return { success: false, error: 'Monto inválido.' };
+
+    const cuota = await prisma.gastoPagoCreditoPV.findFirst({
+      where: { id: pagoCreditoId, gasto: { proveedorId } },
+      include: { gasto: { select: { id: true, concepto: true, sesionCajaId: true } } },
+    });
+    if (!cuota) return { success: false, error: 'Cuota no encontrada.' };
+    if (cuota.pagado) return { success: false, error: 'Esta cuota ya está pagada.' };
+
+    const sesion = await prisma.sesionCajaPV.findFirst({
+      where: { proveedorId, estado: 'ABIERTA' },
+      select: { id: true },
+      orderBy: { abiertaEn: 'desc' },
+    });
+    const sesionId = sesion?.id || null;
+
+    const fechaPago = data.fechaPago ? new Date(data.fechaPago) : new Date();
+
+    await prisma.$transaction(async (tx) => {
+      await tx.gastoPagoCreditoPV.update({
+        where: { id: pagoCreditoId },
+        data: {
+          pagado: true,
+          fechaPago,
+          montoPagado: data.monto,
+          metodoPagoUsado: data.metodoPago as any,
+        },
+      });
+      await tx.movimientoCajaPV.create({
+        data: {
+          proveedorId,
+          sesionId,
+          gastoId: cuota.gasto.id,
+          tipo: 'GASTO',
+          metodoPago: data.metodoPago as any,
+          monto: data.monto,
+          concepto: `Pago crédito #${cuota.numeroPago}: ${cuota.gasto.concepto}`,
+        },
+      });
+    });
+
+    revalidatePath('/proveedor/punto-venta/caja');
+    revalidatePath('/proveedor/punto-venta/gastos');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error al pagar cuota crédito:', error);
+    return { success: false, error: error.message || 'Error del servidor.' };
+  }
+}
+
+export async function anularGastoPV(gastoId: string, proveedorId: string) {
+  try {
+    const gasto = await prisma.gastoPV.findFirst({
+      where: { id: gastoId, proveedorId },
+      include: {
+        movimientos: { select: { id: true, metodoPago: true, monto: true, sesionId: true } },
+      },
+    });
+    if (!gasto) return { success: false, error: 'Gasto no encontrado.' };
+    if (gasto.anulado) return { success: false, error: 'Este gasto ya está anulado.' };
+
+    await prisma.$transaction(async (tx) => {
+      // Revertir movimientos en caja (AJUSTE positivo por cada movimiento GASTO)
+      for (const mov of gasto.movimientos) {
+        await tx.movimientoCajaPV.create({
+          data: {
+            proveedorId,
+            sesionId: mov.sesionId,
+            gastoId: gasto.id,
+            tipo: 'AJUSTE',
+            metodoPago: mov.metodoPago,
+            monto: Number(mov.monto), // positivo, devuelve a caja
+            concepto: `Anulación gasto: ${gasto.concepto}`,
+          },
+        });
+      }
+
+      // Si era MERCANCIA y ligó a producto: regresar stock
+      if (gasto.tipo === 'MERCANCIA' && gasto.productoId) {
+        const prod = await tx.productoPV.findUnique({ where: { id: gasto.productoId }, select: { controlStock: true } });
+        if (prod?.controlStock) {
+          await tx.productoPV.update({
+            where: { id: gasto.productoId },
+            data: { stock: { decrement: gasto.cantidad } },
+          });
+        }
+      }
+
+      await tx.gastoPV.update({
+        where: { id: gastoId },
+        data: { anulado: true },
+      });
+    });
+
+    revalidatePath('/proveedor/punto-venta/caja');
+    revalidatePath('/proveedor/punto-venta/gastos');
+    revalidatePath('/proveedor/punto-venta/productos');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error al anular gasto:', error);
+    return { success: false, error: error.message || 'Error del servidor.' };
+  }
+}

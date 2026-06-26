@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import {
   Receipt, Lock, Unlock, ArrowDownCircle, ArrowUpCircle, Banknote, CreditCard, ArrowLeftRight, MoreHorizontal,
   Plus, Minus, X, Loader2, AlertCircle, Clock, CheckCircle2, History, Hash, Calendar, TrendingUp,
+  Wallet, AlertTriangle, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import {
   abrirSesionCajaPV,
@@ -11,12 +12,15 @@ import {
   registrarMovimientoCajaPV,
   getSesionActivaPV,
   listarSesionesCajaPV,
+  listarCuentasPorPagarPV,
+  pagarCuotaCreditoPV,
 } from '@/lib/actions/puntoVentaActions';
 import { calcularTotalesSesion } from '@/lib/puntoVentaUtils';
 import { cn, formatearMoneda } from '@/lib/utils';
+import RegistrarGastoModal from './RegistrarGastoModal';
 
 type MetPag = 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | 'OTRO';
-type TipoMov = 'VENTA' | 'ABONO' | 'RETIRO' | 'INGRESO' | 'AJUSTE';
+type TipoMov = 'VENTA' | 'ABONO' | 'RETIRO' | 'INGRESO' | 'AJUSTE' | 'GASTO';
 
 type Movimiento = {
   id: string;
@@ -40,10 +44,26 @@ type Sesion = {
   _count?: { movimientos: number; pedidos: number };
 };
 
+type CuotaCredito = {
+  id: string;
+  numeroPago: number;
+  montoEsperado: number | string;
+  fechaVencimiento: string;
+  pagado: boolean;
+  gasto: {
+    id: string;
+    concepto: string;
+    tipo: 'MERCANCIA' | 'INSUMOS' | 'MAQUINARIA' | 'OPERATIVO';
+    proveedorTerceroNombre: string | null;
+    total: number | string;
+  };
+};
+
 interface Props {
   proveedorId: string;
   sesionActivaInicial: Sesion | null;
   historicoInicial: Sesion[];
+  cuentasPorPagarInicial: CuotaCredito[];
 }
 
 const ICONO_METODO: Record<MetPag, any> = {
@@ -59,11 +79,21 @@ const META_TIPO: Record<TipoMov, { label: string; color: string; bg: string; sig
   INGRESO: { label: 'Ingreso', color: 'text-blue-600',    bg: 'bg-blue-500/10',    signo: '+' },
   RETIRO:  { label: 'Retiro',  color: 'text-rose-600',    bg: 'bg-rose-500/10',    signo: '-' },
   AJUSTE:  { label: 'Ajuste',  color: 'text-amber-600',   bg: 'bg-amber-500/10',   signo: '+' },
+  GASTO:   { label: 'Gasto',   color: 'text-rose-600',    bg: 'bg-rose-500/10',    signo: '-' },
 };
 
-export default function CajaPVClient({ proveedorId, sesionActivaInicial, historicoInicial }: Props) {
+export default function CajaPVClient({ proveedorId, sesionActivaInicial, historicoInicial, cuentasPorPagarInicial }: Props) {
   const [sesion, setSesion] = useState<Sesion | null>(sesionActivaInicial);
   const [historico, setHistorico] = useState<Sesion[]>(historicoInicial);
+  const [cuentasPorPagar, setCuentasPorPagar] = useState<CuotaCredito[]>(cuentasPorPagarInicial);
+  const [showGastoModal, setShowGastoModal] = useState(false);
+  const [verCuentas, setVerCuentas] = useState(true);
+
+  // Pagar cuota crédito
+  const [pagandoCuotaId, setPagandoCuotaId] = useState<string | null>(null);
+  const [cuotaMonto, setCuotaMonto] = useState('');
+  const [cuotaMetodo, setCuotaMetodo] = useState<MetPag>('EFECTIVO');
+  const [guardandoCuota, setGuardandoCuota] = useState(false);
 
   // Apertura
   const [montoApertura, setMontoApertura] = useState('0');
@@ -107,6 +137,33 @@ export default function CajaPVClient({ proveedorId, sesionActivaInicial, histori
   const recargarHistorico = async () => {
     const res = await listarSesionesCajaPV(proveedorId, 10);
     if (res.success) setHistorico(res.data as Sesion[]);
+  };
+  const recargarCuentas = async () => {
+    const res = await listarCuentasPorPagarPV(proveedorId);
+    if (res.success) setCuentasPorPagar(res.data as CuotaCredito[]);
+  };
+
+  const onGastoGuardado = async () => {
+    setShowGastoModal(false);
+    await Promise.all([recargarSesion(), recargarCuentas()]);
+  };
+
+  const abrirPagoCuota = (cuota: CuotaCredito) => {
+    setPagandoCuotaId(cuota.id);
+    setCuotaMonto(String(Number(cuota.montoEsperado).toFixed(2)));
+    setCuotaMetodo('EFECTIVO');
+  };
+
+  const confirmarPagoCuota = async () => {
+    if (!pagandoCuotaId) return;
+    const monto = parseFloat(cuotaMonto);
+    if (!monto || monto <= 0) { setError('Monto inválido.'); return; }
+    setGuardandoCuota(true);
+    const res = await pagarCuotaCreditoPV(pagandoCuotaId, proveedorId, { monto, metodoPago: cuotaMetodo });
+    setGuardandoCuota(false);
+    if (!res.success) { setError(res.error || 'Error.'); return; }
+    setPagandoCuotaId(null);
+    await Promise.all([recargarSesion(), recargarCuentas()]);
   };
 
   const handleAbrir = async () => {
@@ -287,6 +344,12 @@ export default function CajaPVClient({ proveedorId, sesionActivaInicial, histori
       {/* Acciones rápidas */}
       <section className="flex gap-2 flex-wrap">
         <button
+          onClick={() => setShowGastoModal(true)}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-500 text-white text-sm font-black uppercase tracking-widest hover:brightness-110 shadow-sm shadow-rose-500/30"
+        >
+          <Wallet size={14} /> Registrar gasto
+        </button>
+        <button
           onClick={() => { setMovModal('INGRESO'); setError(''); }}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] text-sm font-bold hover:bg-[var(--color-fondo-hover)]"
         >
@@ -299,6 +362,94 @@ export default function CajaPVClient({ proveedorId, sesionActivaInicial, histori
           <ArrowUpCircle size={14} className="text-rose-500" /> Registrar retiro
         </button>
       </section>
+
+      {/* Cuentas por pagar — solo aparece si hay cuotas pendientes */}
+      {cuentasPorPagar.length > 0 && (() => {
+        const hoy = new Date();
+        const vencidas = cuentasPorPagar.filter((c) => new Date(c.fechaVencimiento) < hoy);
+        const proximas = cuentasPorPagar.filter((c) => new Date(c.fechaVencimiento) >= hoy);
+        const totalVencido = vencidas.reduce((s, c) => s + Number(c.montoEsperado), 0);
+        const totalProximo = proximas.reduce((s, c) => s + Number(c.montoEsperado), 0);
+        return (
+          <section className="rounded-2xl border border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] overflow-hidden">
+            <button
+              onClick={() => setVerCuentas((v) => !v)}
+              className="w-full px-5 py-4 border-b border-[var(--color-borde-suave)] flex items-center justify-between hover:bg-[var(--color-fondo-hover)]/30"
+            >
+              <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                <Wallet size={14} className="text-rose-500" /> Cuentas por pagar ({cuentasPorPagar.length})
+                {vencidas.length > 0 && (
+                  <span className="inline-flex items-center gap-1 ml-2 px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-500 text-[10px] font-black uppercase">
+                    <AlertTriangle size={10} /> {vencidas.length} vencida{vencidas.length > 1 ? 's' : ''}
+                  </span>
+                )}
+              </h3>
+              {verCuentas ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+
+            {verCuentas && (
+              <>
+                <div className="grid grid-cols-2 gap-2 p-4 bg-[var(--color-fondo)]/30">
+                  <div className="rounded-xl border border-rose-500/30 bg-rose-500/[0.06] p-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-rose-500">Vencido</p>
+                    <p className="text-xl font-black tabular-nums mt-1">{formatearMoneda(totalVencido)}</p>
+                  </div>
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.06] p-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Próximo a vencer</p>
+                    <p className="text-xl font-black tabular-nums mt-1">{formatearMoneda(totalProximo)}</p>
+                  </div>
+                </div>
+
+                <div className="divide-y divide-[var(--color-borde-suave)] max-h-72 overflow-y-auto">
+                  {cuentasPorPagar.map((c) => {
+                    const venc = new Date(c.fechaVencimiento);
+                    const vencido = venc < hoy;
+                    const dias = Math.ceil((venc.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+                    return (
+                      <div key={c.id} className="p-3 flex items-center gap-3">
+                        <div className={cn(
+                          'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
+                          vencido ? 'bg-rose-500/15 text-rose-500' : dias <= 7 ? 'bg-amber-500/15 text-amber-600' : 'bg-[var(--color-fondo-input)] text-[var(--color-texto-muted)]'
+                        )}>
+                          {vencido ? <AlertTriangle size={16} /> : <Calendar size={16} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className="text-sm font-bold truncate">{c.gasto.concepto}</p>
+                            <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-[var(--color-fondo-hover)] text-[var(--color-texto-suave)] shrink-0">
+                              Pago {c.numeroPago}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[var(--color-texto-muted)]">
+                            {c.gasto.proveedorTerceroNombre && <>A {c.gasto.proveedorTerceroNombre} · </>}
+                            Vence: {venc.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            {vencido ? (
+                              <span className="text-rose-500 font-bold"> · Vencido hace {Math.abs(dias)} día{Math.abs(dias) !== 1 ? 's' : ''}</span>
+                            ) : dias === 0 ? (
+                              <span className="text-amber-600 font-bold"> · Hoy</span>
+                            ) : dias <= 7 ? (
+                              <span className="text-amber-600 font-bold"> · En {dias} día{dias !== 1 ? 's' : ''}</span>
+                            ) : null}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-black tabular-nums">{formatearMoneda(Number(c.montoEsperado))}</p>
+                          <button
+                            onClick={() => abrirPagoCuota(c)}
+                            className="text-[10px] font-black uppercase tracking-widest text-[#d4af37] hover:underline"
+                          >
+                            Pagar →
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </section>
+        );
+      })()}
 
       {/* Movimientos de la sesión */}
       <section className="rounded-2xl border border-[var(--color-borde-suave)] bg-[var(--color-fondo-card)] overflow-hidden">
@@ -467,6 +618,52 @@ export default function CajaPVClient({ proveedorId, sesionActivaInicial, histori
       {/* Histórico */}
       {historico.length > 0 && (
         <HistoricoSesiones sesiones={historico} />
+      )}
+
+      {/* Modal registrar gasto */}
+      {showGastoModal && (
+        <RegistrarGastoModal
+          proveedorId={proveedorId}
+          onClose={() => setShowGastoModal(false)}
+          onSaved={onGastoGuardado}
+        />
+      )}
+
+      {/* Modal pagar cuota */}
+      {pagandoCuotaId && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setPagandoCuotaId(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-[var(--color-fondo-card)] border border-[var(--color-borde-suave)] rounded-3xl w-full max-w-sm p-6 space-y-4">
+            <h3 className="text-lg font-black">Registrar pago</h3>
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)] mb-1.5">Monto pagado</label>
+              <div className="flex items-stretch rounded-xl border-2 border-[var(--color-borde-suave)] bg-[var(--color-fondo-input)] overflow-hidden focus-within:border-[#d4af37]">
+                <span className="flex items-center px-3 text-base font-bold text-[var(--color-texto-muted)]">$</span>
+                <input type="number" min="0" step="0.01" className="flex-1 min-w-0 py-3 pr-3 bg-transparent border-0 outline-none text-base font-bold tabular-nums" value={cuotaMonto} onChange={(e) => setCuotaMonto(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--color-texto-muted)] mb-1.5">Método</label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {(['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'] as MetPag[]).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setCuotaMetodo(m)}
+                    className={cn('rounded-lg border-2 py-2 text-[10px] font-black uppercase tracking-widest', cuotaMetodo === m ? 'border-[#d4af37] bg-[#d4af37]/10 text-[var(--color-texto)]' : 'border-[var(--color-borde-suave)] text-[var(--color-texto-muted)]')}
+                  >
+                    {m.slice(0, 4)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setPagandoCuotaId(null)} disabled={guardandoCuota} className="px-4 py-2 rounded-xl text-sm font-bold text-[var(--color-texto-suave)] hover:bg-[var(--color-fondo-hover)]">Cancelar</button>
+              <button onClick={confirmarPagoCuota} disabled={guardandoCuota} className="px-5 py-2 rounded-xl bg-[#d4af37] text-black font-black uppercase text-xs tracking-widest disabled:opacity-50 inline-flex items-center gap-2">
+                {guardandoCuota && <Loader2 size={14} className="animate-spin" />}
+                Confirmar pago
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
